@@ -1,0 +1,56 @@
+{
+    "common": {
+        "name":                     "influxdb",
+        "title":                    "History with InfluxDB",
+        "desc":                     {
+            "en": "Logging of states into InfluxDB",
+            "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
+            "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
+        },
+        "version":                  "0.0.1",
+        "mode":                     "daemon",
+        "platform":                 "Javascript/Node.js",
+        "loglevel":                 "info",
+        "messagebox":               true,
+        "subscribe":                "messagebox",
+        "keywords":                 ["charts", "logging", "influxdb"],
+        "preserveSettings":         "history",
+        "enabled":                  true,
+        "stopBeforeUpdate":         true,
+        "authors": [
+            "Bluefox <dogafox@gmail.com>"
+        ],
+        "license":                  "MIT",
+        "readme":                   "https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md",
+        "icon":                     "influxdb.png",
+        "extIcon":                  "https://raw.githubusercontent.com/ioBroker/ioBroker.influxdb/master/admin/influxdb.png",
+		"type":                     "storage",
+        "config":{
+            "minWidth": 570,
+            "width ": 435,
+            "minHeight": 200,
+            "height": 540
+        }
+    },
+    "native": {
+        "debounce":  10000,
+        "retention": 31536000,
+        "host":      "localhost",
+        "protocol":  "http",
+        "port":      8086,
+        "user":      "",
+        "password":  "",
+        "round":     4
+    },
+    "objects": [
+        {
+            "_id": "_design/history",
+            "language": "javascript",
+            "views": {
+                "state": {
+                    "map": "function(doc) { if (doc.type=='state' && doc.common.history) emit(doc._id, doc.common.history) }"
+                }
+            }
+        }
+    ]
+}

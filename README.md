@@ -1,6 +1,43 @@
+![Logo](admin/influxdb.png)
+# ioBroker.influxdb
+
+This adapter saves state history into InfluxDB. 
+There is additional charting tool for InfluxDB - Grafana. 
+It must be installed additionally.
+
+## Installation of InfluxDB
+There is no InfluxDB for Windows!
+Under debian you can install it with:
+```
+sudo apt-get update
+sudo apt-get install influxdb
+```
+
+Explanation for other OS can be found [here](https://influxdb.com/docs/v0.9/introduction/installation.html).
+
+## Installation of Grafana
+Under debian you can install it with:
+
+```
+$ wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.5.0_amd64.deb
+$ sudo apt-get install -y adduser libfontconfig
+$ sudo dpkg -i grafana_2.5.0_amd64.deb
+```
+
+Explanation for other OS can be found [here](http://docs.grafana.org/installation/).
+
+After the Grafana is installed, follow [this](http://docs.grafana.org/datasources/influxdb/) to create connection. 
+
+## Changelog
+
+### 0.0.1 (2015-12-12)
+* (bluefox) initial commit
+
+## License
+
 The MIT License (MIT)
 
-Copyright (c) 2014 hobbyquaker
+Copyright (c) 2015 bluefox
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
