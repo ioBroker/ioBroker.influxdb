@@ -343,7 +343,7 @@ function getHistory(msg) {
         query += ' *';
     }
 
-    query += ' from ' + msg.message.id ;
+    query += ' from "' + msg.message.id + '"';
 
     if (!influxDPs[options.id]) {
         adapter.sendTo(msg.from, msg.command, {
@@ -383,26 +383,38 @@ function getHistory(msg) {
         }
         var result = [];
         if (rows && rows.length) {
-            for (var r = rows[0].points.length - 1; r >= 0; r--) {
-                var obj = {};
-                for (var c = 0; c < rows[0].columns.length; c++) {
-                    if (rows[0].columns[c] === 'time') {
-                        obj.ts = rows[0].points[r][c] / 1000;
-                        if (options.ms) rows[r].ms = rows[0].points[r][c] % 1000;
-                    } else if (rows[0].columns[c] === 'from') {
-                        if (options.from) obj.from = rows[0].points[r][c];
-                    } else if (rows[0].columns[c] === 'q') {
-                        if (options.from) obj.q = rows[0].points[r][c];
-                    } else if (rows[0].columns[c] === 'ack') {
-                        if (options.from) obj.ack = rows[0].points[r][c];
-                    } else if (rows[0].columns[c] === 'value') {
-                        obj.val = adapter.config.round ? Math.round(rows[0].points[r][c] * adapter.config.round) / adapter.config.round : rows[0].points[r][c];
-                    } else {
-                        obj[rows[0].columns[c]] = adapter.config.round ? Math.round(rows[0].points[r][c] * adapter.config.round) / adapter.config.round : rows[0].points[r][c];
+            // InfluxDB 0.8
+            if (rows[0].points) {
+                for (var r = rows[0].points.length - 1; r >= 0; r--) {
+                    var obj = {};
+                    for (var c = 0; c < rows[0].columns.length; c++) {
+                        if (rows[0].columns[c] === 'time') {
+                            obj.ts = Math.round(rows[0].points[r][c] / 1000);
+                            if (options.ms) obj.ms = rows[0].points[r][c] % 1000;
+                        } else if (rows[0].columns[c] === 'from') {
+                            if (options.from) obj.from = rows[0].points[r][c];
+                        } else if (rows[0].columns[c] === 'q') {
+                            if (options.from) obj.q = rows[0].points[r][c];
+                        } else if (rows[0].columns[c] === 'ack') {
+                            if (options.from) obj.ack = rows[0].points[r][c];
+                        } else if (rows[0].columns[c] === 'value') {
+                            obj.val = adapter.config.round ? Math.round(rows[0].points[r][c] * adapter.config.round) / adapter.config.round : rows[0].points[r][c];
+                        } else {
+                            obj[rows[0].columns[c]] = adapter.config.round ? Math.round(rows[0].points[r][c] * adapter.config.round) / adapter.config.round : rows[0].points[r][c];
+                        }
                     }
+                    if (options.ack && obj.ack === undefined) obj.ack = null;
+                    result.push(obj);
                 }
-                if (options.ack && obj.ack === undefined) obj.ack = null;
-                result.push(obj);
+            } else {
+                for (var r = rows[0].length - 1; r >= 0; r--) {
+                    var t = new Date(rows[0][r].time).getTime();
+                    rows[0][r].ts = Math.round(t / 1000);
+                    if (options.ms) rows[0][r].ms = t % 1000;
+                    rows[0][r].val = adapter.config.round ? Math.round(rows[0][r].val * adapter.config.round) / adapter.config.round : rows[0][r].val;
+                    delete rows[0][r].time;
+                }
+                result = rows[0];
             }
         }
 

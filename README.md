@@ -1,9 +1,23 @@
 ![Logo](admin/influxdb.png)
 # ioBroker.influxdb
 
-This adapter saves state history into InfluxDB. 
-There is additional charting tool for InfluxDB - Grafana. 
-It must be installed additionally.
+This adapter saves state history into InfluxDB.
+
+**Important. This version supports only >= 0.9.x of InfluxDB.**.
+
+If you want to use InfluxDB 0.8.x, modify *iobroker.influxdb/package.json* 
+
+```
+  "dependencies": {
+      "influx": "^3.5.0"
+  },
+```
+and write 
+
+```
+cd /opt/iobroker/node_modules/iobroker.influxbd
+npm install --production
+```
 
 ## Installation of InfluxDB
 There is no InfluxDB for Windows!
@@ -15,7 +29,38 @@ sudo apt-get install influxdb
 
 Explanation for other OS can be found [here](https://influxdb.com/docs/v0.9/introduction/installation.html).
 
+### Setup authentication for influxDB (can be omitted)
+If you use DB localy you may leave authentication disabled and skip this part.
+
+- Start service: ``` service influxdb start ```
+- Go to admin page: http://<ip>:8083
+- Create users:
+```
+CREATE USER "admin" WITH PASSWORD '<adminpassword>' WITH ALL PRIVILEGES
+CREATE USER "user" WITH PASSWORD '<userpassword>'
+CREATE DATABASE "iobroker"
+GRANT ALL ON "iobroker" TO "user"
+```
+Enable authentication, by editing /etc/influxdb/influxdb.conf:
+```
+ [http]  
+ enabled = true  
+ bind-address = ":8086"  
+ auth-enabled = true # ✨
+ log-enabled = true  
+ write-tracing = false  
+ pprof-enabled = false  
+ https-enabled = false  
+ https-certificate = "/etc/ssl/influxdb.pem"  
+```
+- Restart service: ``` service influxdb restart ```
+
+
+
 ## Installation of Grafana
+There is additional charting tool for InfluxDB - Grafana. 
+It must be installed additionally.
+
 Under debian you can install it with:
 
 ```
@@ -29,6 +74,9 @@ Explanation for other OS can be found [here](http://docs.grafana.org/installatio
 After the Grafana is installed, follow [this](http://docs.grafana.org/datasources/influxdb/) to create connection. 
 
 ## Changelog
+
+### 0.0.2 (2015-12-14)
+* (bluefox) change supported InfluxDB version to 0.9.x
 
 ### 0.0.1 (2015-12-12)
 * (bluefox) initial commit
