@@ -54,7 +54,8 @@ function connect() {
         protocol: adapter.config.protocol, // optional, default 'http'
         username: adapter.config.user,
         password: adapter.config.password,
-        database: 'iobroker'
+        database: 'iobroker',
+        timePrecision: 'ms'
     });
 
     client.createDatabase('iobroker', function (err) {
@@ -141,8 +142,10 @@ function processMessage(msg) {
         testConnection(msg);
     } else if (msg.command == 'destroy') {
         destroyDB(msg);
-    }else if (msg.command == 'generateDemo') {
-        generateDemo(msg)
+    } else if (msg.command == 'generateDemo') {
+        generateDemo(msg);
+    } else if (msg.command == 'query') {
+        query(msg);
     }
 }
 
@@ -278,7 +281,8 @@ function pushValueIntoDB(id, state) {
         value: state.val,
         time: new Date(state.ts),
         from: state.from,
-        q:    state.q
+        q:    state.q,
+        ack:  state.ack
     }, {}, function (err, result) {
         if (err) adapter.log.warn(err);
     });
@@ -286,58 +290,17 @@ function pushValueIntoDB(id, state) {
     checkRetention(id);
 }
 
-function sortByTs(a, b) {
-    var aTs = a.ts;
-    var bTs = b.ts;
-    return ((aTs < bTs) ? -1 : ((aTs > bTs) ? 1 : 0));
-}
+function toDateString(date) {
+    if (typeof date !== 'object') {
+        date = new Date(date);
+    }
+    return date.getFullYear() + '-' + ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2) + ' ' +
+        ('0' + date.getHours()).slice(-2) + ':' + ('0' + date.getMinutes()).slice(-2) + ':' + ('0' + date.getSeconds()).slice(-2);
 
-function getDataFromDB(db, options, callback) {
-    if (options.start) options.start *= 1000;
-    if (options.end)   options.end   *= 1000;
-    if (options.step)  options.step  *= 1000;
-
-    var query = SQLFuncs.getHistory(db, options);
-    adapter.log.debug(query);
-
-    clientPool.borrow(function (err, client) {
-        if (err) {
-            if (callback) callback(err);
-            return;
-        }
-        client.execute(query, function (err, rows, fields) {
-            if (rows && rows.rows) rows = rows.rows;
-            // because descending
-            if (!err && rows && !options.start && options.count) {
-                rows.sort(sortByTs);
-            }
-
-            if (rows) {
-                for (var c = 0; c < rows.length; c++) {
-                    // todo change it after ms are added
-                    if (options.ms) rows[c].ms = rows[c].ts % 1000;
-                    if (adapter.common.loglevel == 'debug') rows[c].date = new Date(parseInt(rows[c].ts, 10));
-                    rows[c].ts = Math.round(rows[c].ts / 1000);
-
-                    if (options.ack) rows[c].ack = !!rows[c].ack;
-                    if (adapter.config.round) rows[c].val = Math.round(rows[c].val * adapter.config.round) / adapter.config.round;
-                    if (influxDPs[options.index].type === 2) rows[c].val = !!rows[c].val;
-                }
-            }
-
-            // todo change it after ms are added
-            if (options.start) options.start /= 1000;
-            if (options.end)   options.end   /= 1000;
-            if (options.step)  options.step  /= 1000;
-
-            clientPool.return(client);
-            if (callback) callback(err, rows);
-        });
-    });
 }
 
 function getHistory(msg) {
-    var startTime = new Date().getTime();
+
     var options = {
         id:         msg.message.id == '*' ? null : msg.message.id,
         start:      msg.message.options.start,
@@ -352,59 +315,102 @@ function getHistory(msg) {
         ack:        msg.message.options.ack   || false,
         ms:         msg.message.options.ms    || false
     };
+    var query = 'SELECT';
+    if (options.step) {
+        switch (options.aggregate) {
+            case 'average':
+                query += ' mean(value) as val';
+                break;
+
+            case 'max':
+                query += ' max(value) as val';
+                break;
+
+            case 'min':
+                query += ' min(value) as val';
+                break;
+
+            case 'total':
+                query += ' sum(value) as val';
+                break;
+
+            default:
+                query += ' mean(value) as val';
+                break;
+        }
+
+    } else {
+        query += ' *';
+    }
+
+    query += ' from ' + msg.message.id ;
 
     if (!influxDPs[options.id]) {
-        commons.sendResponse(adapter, msg, options, [], startTime);
+        adapter.sendTo(msg.from, msg.command, {
+            result: [],
+            step:   0,
+            error:  'No connection'
+        }, msg.callback);
         return;
     }
 
     if (options.start > options.end) {
         var _end = options.end;
         options.end   = options.start;
-        options.start =_end;
+        options.start = _end;
     }
 
     if (!options.start && !options.count) {
-        options.start = Math.round((new Date()).getTime() / 1000) - 5030; // - 1 year
+        options.start = Math.round((new Date()).getTime() / 1000) - 86400; // - 1 day
+    }
+    query += " WHERE ";
+    if (options.start) " time > '" + toDateString(options.start * 1000) + "' AND ";
+    query += " time < '" + toDateString(options.end * 1000) + "'";
+
+    if (options.step) {
+        query += ' GROUP BY time(' + options.step + 's)';
+        if (options.limit) query += ' LIMIT ' + options.limit;
+    } else {
+        query += ' LIMIT ' + options.count;
     }
 
-    if (options.id && influxDPs[options.id].index === undefined) {
-        // read or create in DB
-        return getId(options.id, null, function (err) {
-            if (err) {
-                adapter.log.warn('Cannot get index of "' + options.id + '": ' + err);
-                commons.sendResponse(adapter, msg, options, [], startTime);
-            } else {
-                getHistory(msg);
-            }
-        });
-    }
-    var type = influxDPs[options.id].type;
-    if (options.id) {
-        options.index = options.id;
-        options.id = influxDPs[options.id].index;
-    }
+    adapter.log.debug(query);
 
     // if specific id requested
-    if (options.id || options.id === 0) {
-        getDataFromDB(dbNames[type], options, function (err, data) {
-            commons.sendResponse(adapter, msg, options, (err ? err.toString() : null) || data, startTime);
-        });
-    } else {
-        // if all IDs requested
-        var rows = [];
-        var count = 0;
-        for (var db = 0; db < dbNames.length; db++) {
-            count++;
-            getDataFromDB(dbNames[db], options, function (err, data) {
-                if (data) rows = rows.concat(data);
-                if (!--count) {
-                    rows.sort(sortByTs);
-                    commons.sendResponse(adapter, msg, options, rows, startTime);
-                }
-            });
+    client.query(query, function (err, rows) {
+        if (err) {
+            adapter.log.error(err);
         }
-    }
+        var result = [];
+        if (rows && rows.length) {
+            for (var r = rows[0].points.length - 1; r >= 0; r--) {
+                var obj = {};
+                for (var c = 0; c < rows[0].columns.length; c++) {
+                    if (rows[0].columns[c] === 'time') {
+                        obj.ts = rows[0].points[r][c] / 1000;
+                        if (options.ms) rows[r].ms = rows[0].points[r][c] % 1000;
+                    } else if (rows[0].columns[c] === 'from') {
+                        if (options.from) obj.from = rows[0].points[r][c];
+                    } else if (rows[0].columns[c] === 'q') {
+                        if (options.from) obj.q = rows[0].points[r][c];
+                    } else if (rows[0].columns[c] === 'ack') {
+                        if (options.from) obj.ack = rows[0].points[r][c];
+                    } else if (rows[0].columns[c] === 'value') {
+                        obj.val = adapter.config.round ? Math.round(rows[0].points[r][c] * adapter.config.round) / adapter.config.round : rows[0].points[r][c];
+                    } else {
+                        obj[rows[0].columns[c]] = adapter.config.round ? Math.round(rows[0].points[r][c] * adapter.config.round) / adapter.config.round : rows[0].points[r][c];
+                    }
+                }
+                if (options.ack && obj.ack === undefined) obj.ack = null;
+                result.push(obj);
+            }
+        }
+
+        adapter.sendTo(msg.from, msg.command, {
+            result: result,
+            error:  err
+        }, msg.callback);
+    });
 }
 
 function generateDemo(msg) {
@@ -489,6 +495,34 @@ function generateDemo(msg) {
     influxDPs[id][adapter.namespace] = obj.common.history[adapter.namespace];
 
     generate();
+}
+
+function query(msg) {
+    if (client) {
+        client.query(msg.message.query, function (err, rows) {
+            if (err) {
+                adapter.log.error(err);
+            }
+
+            for (var r = 0, l = rows.length; r < l; r++) {
+                if (rows[r].time) {
+                    rows[r].ts = rows[r].time / 1000;
+                    rows[r].ms = rows[r].time % 1000;
+                    delete rows[r].time;
+                }
+            }
+
+            adapter.sendTo(msg.from, msg.command, {
+                result: rows,
+                error:  err
+            }, msg.callback);
+        });
+    } else {
+        adapter.sendTo(msg.from, msg.command, {
+            result: [],
+            error:  'No connection'
+        }, msg.callback);
+    }
 }
 
 process.on('uncaughtException', function(err) {
