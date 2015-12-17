@@ -23,8 +23,8 @@
             "de": "History Einstellungen mussen für jeden State einzeln gemacht werden auf der Lasche \"States\" und nur wenn adapter aktiv ist",
             "ru": "Настройки профайлера делаются для каждого состояния отдельно в закладке \"Состояния\" и только, когда драйвер активирован"
         },
-        "Default settings:": {
-            "de": "Default Einstellungen für Zuständen:",
+        "Default settings": {
+            "de": "Default Einstellungen für Zuständen",
             "ru": "Настройки по умолчанию для состояний"
         },
         "Start or enable adapter first": {
@@ -59,7 +59,8 @@
         "File for sqlite:":     {"en": "File for sqlite:",      "de": "Datei für sqlite:",              "ru": "Файл для sqlite:"},
         "Encrypt:":             {"en": "Encrypt:",              "de": "Verschlüsseln:",                 "ru": "Шифрование:"},
         "Test connection":      {"en": "Test connection",       "de": "Verbindung testen",              "ru": "Проверить соединение"},
-        "Round real to:":       {"en": "Round real to:",        "de": "Aufrunden auf: ",                "ru": "Округлять до"},
+        "Round real to":        {"en": "Round real to",         "de": "Aufrunden auf",                  "ru": "Округлять до"},
+        "InfluxDB Version":     {"en": "InfluxDB Version",      "de": "InfluxDB Version",               "ru": "Версия InfluxDB"},
         "Are you sure? All data will be dropped.": {
             "en": "Are you sure? All data will be dropped.",
             "de": "Sind Sie sicher? ALLE Daten werden geöscht.",
@@ -282,6 +283,15 @@
     <table>
         <tr><td colspan="3"><h4 class="translate">DB settings:</h4></td></tr>
         <tr>
+            <td class="translate">InfluxDB Version</td>
+            <td><select id="version" class="value">
+                <option value="0.9">&gt;=0.9</option>
+                <option value="0.8">&lt;=0.8</option>
+            </select>
+            </td>
+            <td class="translate"></td>
+        </tr>
+        <tr>
             <td class="translate">Host</td>
             <td><input id="host" type="text" class="value"/></td>
             <td class="translate"></td>
@@ -315,11 +325,11 @@
             <td class="translate"></td>
         </tr>
         <tr>
-            <td class="translate">Round real to:</td>
+            <td class="translate">Round real to</td>
             <td><input id="round" type="text" class="value"/></td>
             <td class="translate"></td>
         </tr>
-        <tr><td colspan="3"><h4 class="translate">Default settings:</h4></td></tr>
+        <tr><td colspan="3"><h4 class="translate">Default settings</h4></td></tr>
         <tr>
             <td class="translate">debounce</td>
             <td><input id="debounce" type="text" size="5" class="value number"/></td>

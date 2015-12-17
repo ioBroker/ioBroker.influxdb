@@ -7,7 +7,7 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version":                  "0.0.2",
+        "version":                  "0.0.3",
         "mode":                     "daemon",
         "platform":                 "Javascript/Node.js",
         "loglevel":                 "info",
@@ -40,7 +40,8 @@
         "port":      8086,
         "user":      "",
         "password":  "",
-        "round":     4
+        "round":     4,
+        "version":   "0.9"
     },
     "objects": [
         {

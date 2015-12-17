@@ -25,7 +25,9 @@
   "optionalDependencies": {
   },
   "dependencies": {
-      "influx": "^4.0.1"
+      "lodash": "^3.10.0",
+      "request": "2.x",
+      "underscore": "^1.7.0"
   },
   "devDependencies": {
       "grunt": "^0.4.5",

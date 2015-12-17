@@ -1,0 +1,38 @@
+{
+  "name": "influx",
+  "version": "4.0.1",
+  "description": "InfluxDB Client",
+  "main": "index.js",
+  "scripts": {
+    "lint": "standard",
+    "test": "./node_modules/.bin/mocha -R spec",
+    "travis-test": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha --report lcovonly -- -R spec && npm run lint"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/node-influx/node-influx.git"
+  },
+  "keywords": [
+    "influx",
+    "influxdb",
+    "time",
+    "series",
+    "client",
+    "db"
+  ],
+  "author": "Ben Evans <ben@bensbit.co.uk> (http://bensbit.co.uk)",
+  "contributors": [
+    "Steffen Konerow <steffen@nrg-media.de> (http://www.nrg-media.de)"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "lodash": "^3.10.0",
+    "request": "2.x"
+  },
+  "devDependencies": {
+    "coveralls": "^2.11.1",
+    "istanbul": "^0.3.2",
+    "mocha": "2.2.x",
+    "standard": "4.5.x"
+  }
+}

@@ -3,7 +3,7 @@
 "use strict";
 
 var utils  = require(__dirname + '/lib/utils'); // Get common adapter utils
-var influx = require('influx');
+var influx;
 
 var subscribeAll = false;
 var influxDPs    = {};
@@ -157,6 +157,7 @@ function main() {
     } else {
         adapter.config.round = null;
     }
+    influx = (adapter.config.version == '0.8') ? require(__dirname + '/lib/node-influx-3.5.0') : require(__dirname + '/lib/node-influx');
 
     // read all history settings
     adapter.objects.getObjectView('history', 'state', {}, function (err, doc) {
