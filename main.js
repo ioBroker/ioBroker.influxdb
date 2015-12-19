@@ -62,6 +62,12 @@ function connect() {
         if (err && err.message != 'database iobroker exists') {
             console.log(err);
         } else {
+            if (!err && adapter.config.retention && adapter.config.version != '0.8') {
+                client.query('CREATE RETENTION POLICY "global" ON iobroker DURATION ' + adapter.config.retention + 's REPLICATION 1 DEFAULT', function (err) {
+                    if (err) adapter.log.error(err);
+                });
+            }
+
             adapter.log.info('Connected!');
         }
     });
@@ -251,16 +257,20 @@ function pushHelper(_id) {
 }
 
 function checkRetention(id) {
-    if (influxDPs[id][adapter.namespace].retention) {
+    if (influxDPs[id][adapter.namespace].retention && adapter.config.version == '0.8') {
         var d = new Date();
         var dt = d.getTime();
         // check every 6 hours
         if (!influxDPs[id].lastCheck || dt - influxDPs[id].lastCheck >= 21600000/* 6 hours */) {
             influxDPs[id].lastCheck = dt;
             d.setSeconds(-influxDPs[id][adapter.namespace].retention);
+            var query;
             var time = d.toISOString();
             time = time.replace('T', ' ').replace(/\.\d\d\dZ/, '');
-            client.query("DELETE FROM " + id + " WHERE time < '" + time + "'", function (err) {
+            query = "DELETE FROM " + id + " WHERE time < '" + time + "'";
+
+            adapter.log.debug(query);
+            client.query(query, function (err) {
                 if (err) {
                     adapter.log.warn('Cannot delete from influxdb: ' + err);
                 }

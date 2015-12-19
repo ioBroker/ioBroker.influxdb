@@ -74,6 +74,9 @@ Explanation for other OS can be found [here](http://docs.grafana.org/installatio
 After the Grafana is installed, follow [this](http://docs.grafana.org/datasources/influxdb/) to create connection. 
 
 ## Changelog
+### 0.1.1 (2015-12-19)
+* (bluefox) retention policy for 0.9.x
+
 ### 0.1.0 (2015-12-19)
 * (bluefox) supported InfluxDB version 0.9.x and 0.8.x
 
