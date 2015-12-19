@@ -223,7 +223,7 @@ function pushHistory(id, state) {
         // Do not store values ofter than 1 second
         if (!influxDPs[id].timeout && settings.debounce) {
             influxDPs[id].timeout = setTimeout(pushHelper, settings.debounce, id);
-        } else {
+        } else if (!settings.debounce) {
             pushHelper(id);
         }
     }
@@ -365,8 +365,13 @@ function getHistory(msg) {
         options.start = Math.round((new Date()).getTime() / 1000) - 86400; // - 1 day
     }
     query += " WHERE ";
-    if (options.start) " time > '" + toDateString(options.start * 1000) + "' AND ";
-    query += " time < '" + toDateString(options.end * 1000) + "'";
+    if (adapter.config.version == "0.8") {
+        if (options.start) query += " time > '" + toDateString(options.start * 1000) + "' AND ";
+        query += " time < '" + toDateString(options.end * 1000) + "'";
+    } else {
+        if (options.start) query += " time > '" + new Date(options.start * 1000).toISOString() + "' AND ";
+        query += " time < '" + new Date(options.end * 1000).toISOString() + "'";
+    }
 
     if (options.step) {
         query += ' GROUP BY time(' + options.step + 's)';
@@ -409,6 +414,10 @@ function getHistory(msg) {
                 }
             } else {
                 for (var r = rows[0].length - 1; r >= 0; r--) {
+                    if (rows[0][r].val === undefined) {
+                        rows[0][r].val = rows[0][r].value;
+                        delete rows[0][r].value;
+                    }
                     var t = new Date(rows[0][r].time).getTime();
                     rows[0][r].ts = Math.round(t / 1000);
                     if (options.ms) rows[0][r].ms = t % 1000;
