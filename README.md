@@ -3,22 +3,6 @@
 
 This adapter saves state history into InfluxDB.
 
-**Important. This version supports only >= 0.9.x of InfluxDB.**.
-
-If you want to use InfluxDB 0.8.x, modify *iobroker.influxdb/package.json* 
-
-```
-  "dependencies": {
-      "influx": "^3.5.0"
-  },
-```
-and write 
-
-```
-cd /opt/iobroker/node_modules/iobroker.influxbd
-npm install --production
-```
-
 ## Installation of InfluxDB
 There is no InfluxDB for Windows!
 Under debian you can install it with:
