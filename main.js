@@ -345,6 +345,10 @@ function getHistory(msg) {
                 query += ' sum(value) as val';
                 break;
 
+            case 'onchange':
+                query += ' value';
+                break;
+
             default:
                 query += ' mean(value) as val';
                 break;
@@ -383,7 +387,7 @@ function getHistory(msg) {
         query += " time < '" + new Date(options.end * 1000).toISOString() + "'";
     }
 
-    if (options.step) {
+    if (options.step && options.aggregate !== 'onchange') {
         query += ' GROUP BY time(' + options.step + 's)';
         if (options.limit) query += ' LIMIT ' + options.limit;
     } else {
