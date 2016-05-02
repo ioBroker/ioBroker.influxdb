@@ -58,6 +58,9 @@ Explanation for other OS can be found [here](http://docs.grafana.org/installatio
 After the Grafana is installed, follow [this](http://docs.grafana.org/datasources/influxdb/) to create connection. 
 
 ## Changelog
+### 0.2.0 (2016-04-30)
+* (bluefox) support of milliseconds instead of seconds
+
 ### 0.1.2 (2015-12-19)
 * (bluefox) make onchange work
 

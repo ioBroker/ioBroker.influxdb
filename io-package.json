@@ -7,7 +7,7 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "0.1.2",
+        "version": "0.2.0",
         "mode":                     "daemon",
         "platform":                 "Javascript/Node.js",
         "loglevel":                 "info",
@@ -26,10 +26,10 @@
         "extIcon":                  "https://raw.githubusercontent.com/ioBroker/ioBroker.influxdb/master/admin/influxdb.png",
 		"type":                     "storage",
         "config":{
-            "minWidth": 570,
-            "width ": 435,
+            "minWidth":  570,
+            "width ":    435,
             "minHeight": 200,
-            "height": 540
+            "height":    540
         }
     },
     "native": {

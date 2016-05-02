@@ -409,8 +409,7 @@ function getHistory(msg) {
                     var obj = {};
                     for (var c = 0; c < rows[0].columns.length; c++) {
                         if (rows[0].columns[c] === 'time') {
-                            obj.ts = Math.round(rows[0].points[r][c] / 1000);
-                            if (options.ms) obj.ms = rows[0].points[r][c] % 1000;
+                            obj.ts = rows[0].points[r][c];
                         } else if (rows[0].columns[c] === 'from') {
                             if (options.from) obj.from = rows[0].points[r][c];
                         } else if (rows[0].columns[c] === 'q') {
@@ -433,8 +432,7 @@ function getHistory(msg) {
                         delete rows[0][r].value;
                     }
                     var t = new Date(rows[0][r].time).getTime();
-                    rows[0][r].ts = Math.round(t / 1000);
-                    if (options.ms) rows[0][r].ms = t % 1000;
+                    rows[0][r].ts = t;
                     rows[0][r].val = adapter.config.round ? Math.round(rows[0][r].val * adapter.config.round) / adapter.config.round : rows[0][r].val;
                     delete rows[0][r].time;
                 }
@@ -492,7 +490,7 @@ function generateDemo(msg) {
         start += step;
 
         pushValueIntoDB(id, {
-            ts:     new Date(start).getTime() / 1000,
+            ts:     new Date(start).getTime(),
             val:    value,
             q:      0,
             ack:    true
@@ -542,8 +540,7 @@ function query(msg) {
 
             for (var r = 0, l = rows.length; r < l; r++) {
                 if (rows[r].time) {
-                    rows[r].ts = rows[r].time / 1000;
-                    rows[r].ms = rows[r].time % 1000;
+                    rows[r].ts = rows[r].time;
                     delete rows[r].time;
                 }
             }
