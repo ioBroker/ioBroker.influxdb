@@ -29,7 +29,7 @@
         },
         "Start or enable adapter first": {
             "de": "Adapter muss zuerst aktiviert werden",
-            "ru": "Сначала надо активировать драйвер SQL"
+            "ru": "Сначала надо активировать драйвер"
         },
         "debounce":             {"en": "De-bounce interval(ms)", "de": "Entprellzeit(ms)",              "ru": "Минимальный интервал(ms)"},
         "retention":            {"en": "Storage retention",     "de": "Storage Vorhaltezeit",           "ru": "Время хранения в базе"},
@@ -49,14 +49,14 @@
             "de": "SQL history adapter Einstellungen",
             "ru": "Настройки профайлера в SQL базу данных"
         },
-        "DB settings:":         {"en": "DB settings:",          "de": "DB Einstellungen:",              "ru": "DB settings:"},
-        "DB Type":              {"en": "DB Type",               "de": "DB Typ",                         "ru": "DB Type"},
+        "DB settings:":         {"en": "DB settings:",          "de": "DB Einstellungen:",              "ru": "Настройки DB:"},
+        "DB Type":              {"en": "DB Type",               "de": "DB Typ",                         "ru": "Тип DB"},
+        "DB Name":              {"en": "DB Name",               "de": "DB Name",                        "ru": "Имя DB"},
         "Host":                 {"en": "Host",                  "de": "Host",                           "ru": "Хост"},
         "Port":                 {"en": "Port",                  "de": "Port",                           "ru": "Порт"},
         "User":                 {"en": "User",                  "de": "Login",                          "ru": "Пользователь"},
         "Password":             {"en": "Password",              "de": "Kennwort",                       "ru": "Пароль"},
         "Password confirm":     {"en": "Password confirm",      "de": "Kennwort-Wiederholung",          "ru": "Подтверждение пароля"},
-        "File for sqlite:":     {"en": "File for sqlite:",      "de": "Datei für sqlite:",              "ru": "Файл для sqlite:"},
         "Encrypt:":             {"en": "Encrypt:",              "de": "Verschlüsseln:",                 "ru": "Шифрование:"},
         "Test connection":      {"en": "Test connection",       "de": "Verbindung testen",              "ru": "Проверить соединение"},
         "Round real to":        {"en": "Round real to",         "de": "Aufrunden auf",                  "ru": "Округлять до"},
@@ -117,7 +117,8 @@
                             host:     $('#host').val(),
                             user:     $('#user').val(),
                             protocol: $('#protocol').val(),
-                            password: $('#password').val()
+                            password: $('#password').val(),
+                            dbname:   $('#dbname').val()
                         }
                     }, function (response) {
                         $('#test').button('option', 'disabled', false);
@@ -159,15 +160,15 @@
 
         $('#demoStart, #demoEnd').datepicker().val(new Date().toDateString());
         $('#generateDemo').button().click(function () {
-            $(".loader").show();
-            sendTo("", "generateDemo", {
+            $('.loader').show();
+            sendTo('', 'generateDemo', {
                 id: $('#demoID').val(),
                 start: $('#demoStart').val(),
                 end: $('#demoEnd').val(),
                 step: $('#demoStep').val(),
                 curve: $('#demoCurve').val()
             }, function (e) {
-                $(".loader").hide();
+                $('.loader').hide();
             })
         });
         onChange(false);
@@ -322,6 +323,11 @@
         <tr >
             <td class="translate">Password confirm</td>
             <td><input id="passwordConfirm" type="password"/></td>
+            <td class="translate"></td>
+        </tr>
+        <tr>
+            <td class="translate">DB Name</td>
+            <td><input id="dbname" type="text" class="value"/></td>
             <td class="translate"></td>
         </tr>
         <tr>

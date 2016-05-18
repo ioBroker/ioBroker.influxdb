@@ -2,6 +2,7 @@
 /*jslint node: true */
 "use strict";
 
+//noinspection JSUnresolvedFunction
 var utils  = require(__dirname + '/lib/utils'); // Get common adapter utils
 var influx;
 
@@ -16,8 +17,8 @@ adapter.on('objectChange', function (id, obj) {
 
         if (!influxDPs[id] && !subscribeAll) {
             // unsubscribe
-            for (var id in influxDPs) {
-                adapter.unsubscribeForeignStates(id);
+            for (var _id in influxDPs) {
+                adapter.unsubscribeForeignStates(_id);
             }
             subscribeAll = true;
             adapter.subscribeForeignStates('*');
@@ -48,22 +49,24 @@ function connect() {
 
     adapter.log.info('Connecting ' + adapter.config.protocol + '://' + adapter.config.host + ':' + adapter.config.port + ' ...');
 
+    adapter.config.dbname = adapter.config.dbname || utils.appName;
+
     client = influx({
         host:     adapter.config.host,
         port:     adapter.config.port, // optional, default 8086
         protocol: adapter.config.protocol, // optional, default 'http'
         username: adapter.config.user,
         password: adapter.config.password,
-        database: 'iobroker',
+        database: adapter.config.dbname,
         timePrecision: 'ms'
     });
 
-    client.createDatabase('iobroker', function (err) {
-        if (err && err.message != 'database iobroker exists') {
+    client.createDatabase(adapter.config.dbname, function (err) {
+        if (err && err.message != 'database ' + adapter.config.dbname + ' exists') {
             console.log(err);
         } else {
             if (!err && adapter.config.retention && adapter.config.version != '0.8') {
-                client.query('CREATE RETENTION POLICY "global" ON iobroker DURATION ' + adapter.config.retention + 's REPLICATION 1 DEFAULT', function (err) {
+                client.query('CREATE RETENTION POLICY "global" ON ' + adapter.config.dbname + ' DURATION ' + adapter.config.retention + 's REPLICATION 1 DEFAULT', function (err) {
                     if (err) adapter.log.error(err);
                 });
             }
@@ -83,16 +86,16 @@ function testConnection(msg) {
             adapter.sendTo(msg.from, msg.command, {error: 'connect timeout'}, msg.callback);
         }, 5000);
 
-        var lclient = influx({
+        var lClient = influx({
             host:     msg.message.config.host,
             port:     msg.message.config.port,
             protocol: msg.message.config.protocol,  // optional, default 'http'
             username: msg.message.config.user,
             password: msg.message.config.password,
-            database: 'iobroker'
+            database: msg.message.config.dbname || utils.appName
         });
 
-        lclient.getDatabaseNames(function (err, arrayDatabaseNames) {
+        lClient.getDatabaseNames(function (err, arrayDatabaseNames) {
             if (timeout) {
                 clearTimeout(timeout);
                 timeout = null;
@@ -117,7 +120,7 @@ function destroyDB(msg) {
         return adapter.sendTo(msg.from, msg.command, {error: 'Not connected'}, msg.callback);
     }
     try {
-        client.deleteDatabase('iobroker', function (err) {
+        client.deleteDatabase(adapter.config.dbname, function (err) {
             if (err) {
                 adapter.log.error(err);
                 adapter.sendTo(msg.from, msg.command, {error: err.toString()}, msg.callback);
@@ -201,8 +204,8 @@ function main() {
             }
         }
         if (count < 20) {
-            for (var id in influxDPs) {
-                adapter.subscribeForeignStates(id);
+            for (var _id in influxDPs) {
+                adapter.subscribeForeignStates(_id);
             }
         } else {
             subscribeAll = true;
@@ -324,7 +327,8 @@ function getHistory(msg) {
         from:       msg.message.options.from  || false,
         q:          msg.message.options.q     || false,
         ack:        msg.message.options.ack   || false,
-        ms:         msg.message.options.ms    || false
+        ms:         msg.message.options.ms    || false,
+        sessionId:  msg.message.options.sessionId
     };
     var query = 'SELECT';
     if (options.step) {
@@ -426,23 +430,23 @@ function getHistory(msg) {
                     result.push(obj);
                 }
             } else {
-                for (var r = rows[0].length - 1; r >= 0; r--) {
-                    if (rows[0][r].val === undefined) {
-                        rows[0][r].val = rows[0][r].value;
-                        delete rows[0][r].value;
+                for (var rr = rows[0].length - 1; rr >= 0; rr--) {
+                    if (rows[0][rr].val === undefined) {
+                        rows[0][rr].val = rows[0][rr].value;
+                        delete rows[0][rr].value;
                     }
-                    var t = new Date(rows[0][r].time).getTime();
-                    rows[0][r].ts = t;
-                    rows[0][r].val = adapter.config.round ? Math.round(rows[0][r].val * adapter.config.round) / adapter.config.round : rows[0][r].val;
-                    delete rows[0][r].time;
+                    rows[0][rr].ts  = new Date(rows[0][rr].time).getTime();
+                    rows[0][rr].val = adapter.config.round ? Math.round(rows[0][rr].val * adapter.config.round) / adapter.config.round : rows[0][rr].val;
+                    delete rows[0][rr].time;
                 }
                 result = rows[0];
             }
         }
 
         adapter.sendTo(msg.from, msg.command, {
-            result: result,
-            error:  err
+            result:     result,
+            error:      err,
+            sessionId:  options.sessionId
         }, msg.callback);
     });
 }
@@ -457,7 +461,6 @@ function generateDemo(msg) {
     var up = true;
     var curve = msg.message.curve;
     var step = (msg.message.step || 60) * 1000;
-
 
     if (end < start) {
         var tmp = end;
