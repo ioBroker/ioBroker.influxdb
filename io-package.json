@@ -2,6 +2,11 @@
     "common": {
         "name":                     "influxdb",
         "title":                    "History with InfluxDB",
+        "news":                     {
+            "en": "(bluefox) support of milliseconds instead of seconds\n(bluefox) make onchange work",
+            "de": "(bluefox) support of milliseconds instead of seconds\n(bluefox) make onchange work",
+            "ru": "(bluefox) support of milliseconds instead of seconds\n(bluefox) make onchange work"
+        },
         "desc":                     {
             "en": "Logging of states into InfluxDB",
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
