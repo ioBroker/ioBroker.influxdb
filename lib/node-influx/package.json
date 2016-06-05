@@ -1,12 +1,13 @@
 {
   "name": "influx",
-  "version": "4.0.1",
+  "version": "4.2.0",
   "description": "InfluxDB Client",
   "main": "index.js",
   "scripts": {
     "lint": "standard",
     "test": "./node_modules/.bin/mocha -R spec",
-    "travis-test": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha --report lcovonly -- -R spec && npm run lint"
+    "tsd-test": "tsc --noImplicitAny --noEmit index-test.ts",
+    "travis-test": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha --report lcovonly -- -R spec && npm run lint && npm run tsd-test"
   },
   "repository": {
     "type": "git",
@@ -26,13 +27,14 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "lodash": "^3.10.0",
+    "lodash": "^4.11.1",
     "request": "2.x"
   },
   "devDependencies": {
     "coveralls": "^2.11.1",
     "istanbul": "^0.3.2",
     "mocha": "2.2.x",
-    "standard": "4.5.x"
+    "standard": "4.5.x",
+    "typescript": "1.8.10"
   }
 }

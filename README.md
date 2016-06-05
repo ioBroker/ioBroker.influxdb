@@ -9,6 +9,8 @@
 
 This adapter saves state history into InfluxDB.
 
+**No support of influxDB less or equal to 0.8!**
+
 ## Installation of InfluxDB
 There is no InfluxDB for Windows!
 Under debian you can install it with:
@@ -64,6 +66,9 @@ Explanation for other OS can be found [here](http://docs.grafana.org/installatio
 After the Grafana is installed, follow [this](http://docs.grafana.org/datasources/influxdb/) to create connection. 
 
 ## Changelog
+### 0.3.1 (2016-05-18)
+* (bluefox) no support of influxDB 0.8 (please update)
+
 ### 0.3.0 (2016-05-18)
 * (bluefox) make name of DB configurable
 

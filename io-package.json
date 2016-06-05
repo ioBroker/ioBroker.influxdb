@@ -1,18 +1,25 @@
 {
     "common": {
         "name":                     "influxdb",
-        "title":                    "History with InfluxDB",
-        "news":                     {
-            "en": "(bluefox) support of milliseconds instead of seconds\n(bluefox) make onchange work",
-            "de": "(bluefox) support of milliseconds instead of seconds\n(bluefox) make onchange work",
-            "ru": "(bluefox) support of milliseconds instead of seconds\n(bluefox) make onchange work"
-        },
         "desc":                     {
             "en": "Logging of states into InfluxDB",
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "0.3.0",
+        "version": "0.3.1",
+        "title":                    "History with InfluxDB",
+        "news": {
+            "0.3.1": {
+                "en": "update packages",
+                "de": "update packages",
+                "ru": "update packages"
+            },
+            "0.3.0": {
+                "en": "support of milliseconds instead of seconds\n(bluefox) make onchange work",
+                "de": "support of milliseconds instead of seconds\n(bluefox) make onchange work",
+                "ru": "support of milliseconds instead of seconds\n(bluefox) make onchange work"
+            }
+        },
         "mode":                     "daemon",
         "platform":                 "Javascript/Node.js",
         "loglevel":                 "info",
@@ -46,8 +53,7 @@
         "port":      8086,
         "user":      "",
         "password":  "",
-        "round":     4,
-        "version":   "0.9"
+        "round":     4
     },
     "objects": [
         {

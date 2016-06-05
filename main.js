@@ -4,7 +4,7 @@
 
 //noinspection JSUnresolvedFunction
 var utils  = require(__dirname + '/lib/utils'); // Get common adapter utils
-var influx;
+var influx = require('influx');
 
 var subscribeAll = false;
 var influxDPs    = {};
@@ -62,12 +62,14 @@ function connect() {
     });
 
     client.createDatabase(adapter.config.dbname, function (err) {
-        if (err && err.message != 'database ' + adapter.config.dbname + ' exists') {
-            console.log(err);
+        if (err && err.message !== 'database ' + adapter.config.dbname + ' exists' && err.message.indexOf('database exits') !== -1) {
+            console.log('createDatabase: ' + err);
         } else {
-            if (!err && adapter.config.retention && adapter.config.version != '0.8') {
+            if (!err && adapter.config.retention) {
                 client.query('CREATE RETENTION POLICY "global" ON ' + adapter.config.dbname + ' DURATION ' + adapter.config.retention + 's REPLICATION 1 DEFAULT', function (err) {
-                    if (err) adapter.log.error(err);
+                    if (err && err.indexOf('already exists') === -1) {
+                        if (err) adapter.log.error(err);
+                    }
                 });
             }
 
@@ -166,7 +168,6 @@ function main() {
     } else {
         adapter.config.round = null;
     }
-    influx = (adapter.config.version == '0.8') ? require(__dirname + '/lib/node-influx-3.5.0') : require(__dirname + '/lib/node-influx');
 
     // read all history settings
     adapter.objects.getObjectView('history', 'state', {}, function (err, doc) {
@@ -259,58 +260,28 @@ function pushHelper(_id) {
     }
 }
 
-function checkRetention(id) {
-    if (influxDPs[id][adapter.namespace].retention && adapter.config.version == '0.8') {
-        var d = new Date();
-        var dt = d.getTime();
-        // check every 6 hours
-        if (!influxDPs[id].lastCheck || dt - influxDPs[id].lastCheck >= 21600000/* 6 hours */) {
-            influxDPs[id].lastCheck = dt;
-            d.setSeconds(-influxDPs[id][adapter.namespace].retention);
-            var query;
-            var time = d.toISOString();
-            time = time.replace('T', ' ').replace(/\.\d\d\dZ/, '');
-            query = "DELETE FROM " + id + " WHERE time < '" + time + "'";
-
-            adapter.log.debug(query);
-            client.query(query, function (err) {
-                if (err) {
-                    adapter.log.warn('Cannot delete from influxdb: ' + err);
-                }
-            });
-        }
-    }
-}
-
 function pushValueIntoDB(id, state) {
     if (!client) {
         adapter.log.warn('No connection to DB');
         return;
     }
 
-    // todo change it after ms are added
-    state.ts = parseInt(state.ts, 10) * 1000 + (parseInt(state.ms, 10) || 0);
+    state.ts = parseInt(state.ts, 10);
+
+    // if less 2000.01.01 00:00:00
+    if (state.ts < 946681200000) state.ts *= 1000;
+
+    if (typeof state.val === 'object') state.val = JSON.stringify(state.val);
 
     client.writePoint(id, {
         value: state.val,
-        time: new Date(state.ts),
-        from: state.from,
-        q:    state.q,
-        ack:  state.ack
-    }, {}, function (err, result) {
-        if (err) adapter.log.warn(err);
+        time:  new Date(state.ts),
+        from:  state.from,
+        q:     state.q,
+        ack:   state.ack
+    }, null, function (err, result) {
+        if (err) adapter.log.warn('writePoint: ' + err);
     });
-
-    checkRetention(id);
-}
-
-function toDateString(date) {
-    if (typeof date !== 'object') {
-        date = new Date(date);
-    }
-    return date.getFullYear() + '-' + ('0' + (date.getMonth() + 1)).slice(-2) + '-' + ('0' + date.getDate()).slice(-2) + ' ' +
-        ('0' + date.getHours()).slice(-2) + ':' + ('0' + date.getMinutes()).slice(-2) + ':' + ('0' + date.getSeconds()).slice(-2);
-
 }
 
 function getHistory(msg) {
@@ -318,7 +289,7 @@ function getHistory(msg) {
     var options = {
         id:         msg.message.id == '*' ? null : msg.message.id,
         start:      msg.message.options.start,
-        end:        msg.message.options.end || Math.round((new Date()).getTime() / 1000) + 5000,
+        end:        msg.message.options.end || ((new Date()).getTime() + 5000000),
         step:       parseInt(msg.message.options.step) || null,
         count:      parseInt(msg.message.options.count) || 500,
         ignoreNull: msg.message.options.ignoreNull,
@@ -378,18 +349,17 @@ function getHistory(msg) {
         options.end   = options.start;
         options.start = _end;
     }
+    // if less 2000.01.01 00:00:00
+    if (options.end  && options.end    < 946681200000) options.end   *= 1000;
+    if (options.start && options.start < 946681200000) options.start *= 1000;
 
     if (!options.start && !options.count) {
-        options.start = Math.round((new Date()).getTime() / 1000) - 86400; // - 1 day
+        options.start = options.end - 86400000; // - 1 day
     }
+
     query += " WHERE ";
-    if (adapter.config.version == "0.8") {
-        if (options.start) query += " time > '" + toDateString(options.start * 1000) + "' AND ";
-        query += " time < '" + toDateString(options.end * 1000) + "'";
-    } else {
-        if (options.start) query += " time > '" + new Date(options.start * 1000).toISOString() + "' AND ";
-        query += " time < '" + new Date(options.end * 1000).toISOString() + "'";
-    }
+    if (options.start) query += " time > '" + new Date(options.start).toISOString() + "' AND ";
+    query += " time < '" + new Date(options.end).toISOString() + "'";
 
     if (options.step && options.aggregate !== 'onchange') {
         query += ' GROUP BY time(' + options.step + 's)';
@@ -402,45 +372,20 @@ function getHistory(msg) {
 
     // if specific id requested
     client.query(query, function (err, rows) {
-        if (err) {
-            adapter.log.error(err);
-        }
+        if (err) adapter.log.error('getHistory: ' + err);
+        
         var result = [];
         if (rows && rows.length) {
-            // InfluxDB 0.8
-            if (rows[0].points) {
-                for (var r = rows[0].points.length - 1; r >= 0; r--) {
-                    var obj = {};
-                    for (var c = 0; c < rows[0].columns.length; c++) {
-                        if (rows[0].columns[c] === 'time') {
-                            obj.ts = rows[0].points[r][c];
-                        } else if (rows[0].columns[c] === 'from') {
-                            if (options.from) obj.from = rows[0].points[r][c];
-                        } else if (rows[0].columns[c] === 'q') {
-                            if (options.from) obj.q = rows[0].points[r][c];
-                        } else if (rows[0].columns[c] === 'ack') {
-                            if (options.from) obj.ack = rows[0].points[r][c];
-                        } else if (rows[0].columns[c] === 'value') {
-                            obj.val = adapter.config.round ? Math.round(rows[0].points[r][c] * adapter.config.round) / adapter.config.round : rows[0].points[r][c];
-                        } else {
-                            obj[rows[0].columns[c]] = adapter.config.round ? Math.round(rows[0].points[r][c] * adapter.config.round) / adapter.config.round : rows[0].points[r][c];
-                        }
-                    }
-                    if (options.ack && obj.ack === undefined) obj.ack = null;
-                    result.push(obj);
+            for (var rr = rows[0].length - 1; rr >= 0; rr--) {
+                if (rows[0][rr].val === undefined) {
+                    rows[0][rr].val = rows[0][rr].value;
+                    delete rows[0][rr].value;
                 }
-            } else {
-                for (var rr = rows[0].length - 1; rr >= 0; rr--) {
-                    if (rows[0][rr].val === undefined) {
-                        rows[0][rr].val = rows[0][rr].value;
-                        delete rows[0][rr].value;
-                    }
-                    rows[0][rr].ts  = new Date(rows[0][rr].time).getTime();
-                    rows[0][rr].val = adapter.config.round ? Math.round(rows[0][rr].val * adapter.config.round) / adapter.config.round : rows[0][rr].val;
-                    delete rows[0][rr].time;
-                }
-                result = rows[0];
+                rows[0][rr].ts  = new Date(rows[0][rr].time).getTime();
+                rows[0][rr].val = adapter.config.round ? Math.round(rows[0][rr].val * adapter.config.round) / adapter.config.round : rows[0][rr].val;
+                delete rows[0][rr].time;
             }
+            result = rows[0];
         }
 
         adapter.sendTo(msg.from, msg.command, {
@@ -453,14 +398,14 @@ function getHistory(msg) {
 
 function generateDemo(msg) {
 
-    var id = adapter.name +'.' + adapter.instance + '.Demo.' + (msg.message.id || 'Demo_Data');
+    var id    = adapter.name +'.' + adapter.instance + '.Demo.' + (msg.message.id || 'Demo_Data');
     var start = new Date(msg.message.start).getTime();
-    var end = new Date(msg.message.end).getTime();
+    var end   = new Date(msg.message.end).getTime();
     var value = 1;
-    var sin = 0.1;
-    var up = true;
+    var sin   = 0.1;
+    var up    = true;
     var curve = msg.message.curve;
-    var step = (msg.message.step || 60) * 1000;
+    var step  = (msg.message.step || 60) * 1000;
 
     if (end < start) {
         var tmp = end;
