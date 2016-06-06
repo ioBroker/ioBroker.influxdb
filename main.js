@@ -273,6 +273,16 @@ function pushValueIntoDB(id, state) {
 
     if (typeof state.val === 'object') state.val = JSON.stringify(state.val);
 
+    if (state.val === 'true') {
+        state.val = true;
+    } else if (state.val === 'false') {
+        state.val = false;
+    } else {
+        // try to convert to float
+        var f = parseFloat(state.val);
+        if (f == state.val) state.val = f;
+    }
+
     client.writePoint(id, {
         value: state.val,
         time:  new Date(state.ts),
