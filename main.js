@@ -62,12 +62,12 @@ function connect() {
     });
 
     client.createDatabase(adapter.config.dbname, function (err) {
-        if (err && err.message !== 'database ' + adapter.config.dbname + ' exists' && err.message.indexOf('database exits') !== -1) {
-            console.log('createDatabase: ' + err);
+        if (err && (!err.message || (err.message !== 'database ' + adapter.config.dbname + ' exists' && err.message.indexOf('database exits') !== -1))) {
+            console.log('createDatabase: ' + JSON.stringify(err));
         } else {
             if (!err && adapter.config.retention) {
                 client.query('CREATE RETENTION POLICY "global" ON ' + adapter.config.dbname + ' DURATION ' + adapter.config.retention + 's REPLICATION 1 DEFAULT', function (err) {
-                    if (err && err.indexOf('already exists') === -1) {
+                    if (err && err.toString().indexOf('already exists') === -1) {
                         if (err) adapter.log.error(err);
                     }
                 });
@@ -171,6 +171,7 @@ function main() {
 
     // read all history settings
     adapter.objects.getObjectView('history', 'state', {}, function (err, doc) {
+        if (err) adapter.log.error('main/getObjectView: ' + err);
         var count = 0;
         if (doc && doc.rows) {
             for (var i = 0, l = doc.rows.length; i < l; i++) {
@@ -492,9 +493,7 @@ function generateDemo(msg) {
 function query(msg) {
     if (client) {
         client.query(msg.message.query, function (err, rows) {
-            if (err) {
-                adapter.log.error(err);
-            }
+            if (err) adapter.log.error('query: ' + err);
 
             for (var r = 0, l = rows.length; r < l; r++) {
                 if (rows[r].time) {
@@ -516,6 +515,6 @@ function query(msg) {
     }
 }
 
-process.on('uncaughtException', function(err) {
+process.on('uncaughtException', function (err) {
     adapter.log.warn('Exception: ' + err);
 });

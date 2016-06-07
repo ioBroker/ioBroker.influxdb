@@ -66,7 +66,10 @@ Explanation for other OS can be found [here](http://docs.grafana.org/installatio
 After the Grafana is installed, follow [this](http://docs.grafana.org/datasources/influxdb/) to create connection. 
 
 ## Changelog
-### 0.3.1 (2016-05-18)
+### 0.3.1 (2016-06-07)
+* (bluefox) better error handling
+
+### 0.3.1 (2016-06-05)
 * (bluefox) no support of influxDB 0.8 (please update)
 
 ### 0.3.0 (2016-05-18)
