@@ -13,7 +13,11 @@ var client;
 var adapter = utils.adapter('influxdb');
 
 adapter.on('objectChange', function (id, obj) {
-    if (obj && obj.common && obj.common.history && obj.common.history[adapter.namespace]) {
+    if (obj && obj.common && (
+            // todo remove history somewhen (2016.08) - Do not forget object selector in io-package.json
+        (obj.common.history && obj.common.history[adapter.namespace]) ||
+        (obj.common.custom && obj.common.custom[adapter.namespace]))
+    ) {
 
         if (!influxDPs[id] && !subscribeAll) {
             // unsubscribe
@@ -23,7 +27,8 @@ adapter.on('objectChange', function (id, obj) {
             subscribeAll = true;
             adapter.subscribeForeignStates('*');
         }
-        influxDPs[id] = obj.common.history;
+        // todo remove history somewhen (2016.08)
+        influxDPs[id] = obj.common.custom || obj.common.history;
         adapter.log.info('enabled logging of ' + id);
     } else {
         if (influxDPs[id]) {
@@ -169,8 +174,8 @@ function main() {
         adapter.config.round = null;
     }
 
-    // read all history settings
-    adapter.objects.getObjectView('history', 'state', {}, function (err, doc) {
+    // read all custom settings
+    adapter.objects.getObjectView('custom', 'state', {}, function (err, doc) {
         if (err) adapter.log.error('main/getObjectView: ' + err);
         var count = 0;
         if (doc && doc.rows) {
@@ -471,11 +476,11 @@ function generateDemo(msg) {
             name: msg.message.id,
             type: 'state',
             enabled: false,
-            history: {}
+            custom: {}
         }
     };
 
-    obj.common.history[adapter.namespace] = {
+    obj.common.custom[adapter.namespace] = {
         enabled:        true,
         changesOnly:    false,
         debounce:       1000,
@@ -485,7 +490,7 @@ function generateDemo(msg) {
     adapter.setObject('demo.' + msg.message.id, obj);
 
     influxDPs[id] = {};
-    influxDPs[id][adapter.namespace] = obj.common.history[adapter.namespace];
+    influxDPs[id][adapter.namespace] = obj.common.custom[adapter.namespace];
 
     generate();
 }

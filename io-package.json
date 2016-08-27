@@ -6,9 +6,14 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "0.3.2",
+        "version": "0.4.0",
         "title":                    "History with InfluxDB",
         "news": {
+            "0.4.0": {
+                "en": "change name of object from history to custom",
+                "de": "Ändere Name vom Storage-Object von history nach custom",
+                "ru": "Изменено имя объекта для настроек с history на custom"
+            },
             "0.3.2": {
                 "en": "better error handling",
                 "de": "better error handling",
@@ -31,8 +36,10 @@
         "messagebox":               true,
         "subscribe":                "messagebox",
         "keywords":                 ["charts", "logging", "influxdb"],
-        "preserveSettings":         "history",
+        "preserveSettings":         "custom",
+        "supportCustoms":           true,
         "enabled":                  true,
+		"dependencies":             [{"js-controller": ">=0.11.3"}],
         "stopBeforeUpdate":         true,
         "authors": [
             "Bluefox <dogafox@gmail.com>"
@@ -62,11 +69,11 @@
     },
     "objects": [
         {
-            "_id": "_design/history",
+            "_id": "_design/custom",
             "language": "javascript",
             "views": {
                 "state": {
-                    "map": "function(doc) { if (doc.type=='state' && doc.common.history) emit(doc._id, doc.common.history) }"
+                    "map": "function(doc) { if (doc.type==='state' && (doc.common.custom || doc.common.history)) emit(doc._id, doc.common.custom || doc.common.history) }"
                 }
             }
         }
