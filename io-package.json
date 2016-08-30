@@ -6,9 +6,14 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "0.4.0",
+        "version": "0.5.0",
         "title":                    "History with InfluxDB",
         "news": {
+		    "0.5.0": {
+                "en": "сompatible only with new admin",
+                "de": "Nur mit neuem Admin kompatibel",
+                "ru": "Совместимо только с новым админ-драйвером"
+            },
             "0.4.0": {
                 "en": "change name of object from history to custom",
                 "de": "Ändere Name vom Storage-Object von history nach custom",
@@ -38,8 +43,9 @@
         "keywords":                 ["charts", "logging", "influxdb"],
         "preserveSettings":         "custom",
         "supportCustoms":           true,
+        "getHistory":           	true,
         "enabled":                  true,
-		"dependencies":             [{"js-controller": ">=0.11.3"}],
+		"dependencies":             [{"js-controller": ">=0.12.0"}],
         "stopBeforeUpdate":         true,
         "authors": [
             "Bluefox <dogafox@gmail.com>"

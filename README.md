@@ -66,6 +66,9 @@ Explanation for other OS can be found [here](http://docs.grafana.org/installatio
 After the Grafana is installed, follow [this](http://docs.grafana.org/datasources/influxdb/) to create connection. 
 
 ## Changelog
+### 0.5.0 (2016-08-30)
+* (bluefox) Compatible only with new admin
+
 ### 0.4.0 (2016-08-27)
 * (bluefox) change name of object from "history" to "custom"
 
