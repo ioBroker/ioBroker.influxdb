@@ -26,7 +26,7 @@ Interested in becoming a maintainer? Please help out with issues and pull-reques
 
 Version 4.x.x is compatible with InfluxDB 0.9.x
 
-Version 3.x.x is compatible with InfluxDB 0.8.x - 3.x will no longer have updates by core contributers, please consider upgrading.
+Version 3.x.x is compatible with InfluxDB 0.8.x - 3.x will no longer have updates by core contributors, please consider upgrading.
 
 
 ## Usage
