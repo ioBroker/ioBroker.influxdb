@@ -26,7 +26,7 @@ Interested in becoming a maintainer? Please help out with issues and pull-reques
 
 Version 4.x.x is compatible with InfluxDB 0.9.x
 
-Version 3.x.x is compatible with InfluxDB 0.8.x - 3.x will no longer have updates by core contributers, please consider upgrading.
+Version 3.x.x is compatible with InfluxDB 0.8.x - 3.x will no longer have updates by core contributors, please consider upgrading.
 
 
 ## Usage
@@ -214,7 +214,7 @@ client.createUser(username, password, isAdmin, function(err,response) { })
 Sets the users password - requires admin privileges
 
 ```js
-client.setPassword(username, password, function (err, reponse) {} )
+client.setPassword(username, password, function (err, response) {} )
 ```
 
 
@@ -222,28 +222,28 @@ client.setPassword(username, password, function (err, reponse) {} )
 Grants privilege for the given user - requires admin privileges
 
 ```js
-client.grantPrivilege(privilege, databaseName, userName, function (err, reponse) {} )
+client.grantPrivilege(privilege, databaseName, userName, function (err, response) {} )
 ```
 
 ##### revokePrivilege
 Revokes privilege for the given user - requires admin privileges
 
 ```js
-client.revokePrivilege(privilege, databaseName, userName, function (err, reponse) {} )
+client.revokePrivilege(privilege, databaseName, userName, function (err, response) {} )
 ```
 
 ##### grantAdminPrivileges
 Grants admin privileges for the given user - requires admin privileges
 
 ```js
-client.grantAdminPrivileges(userName, function (err, reponse) {} )
+client.grantAdminPrivileges(userName, function (err, response) {} )
 ```
 
 ##### revokeAdminPrivileges
 Revokes all admin privileges for the given user - requires admin privileges
 
 ```js
-client.revokeAdminPrivileges(userName, function (err, reponse) {} )
+client.revokeAdminPrivileges(userName, function (err, response) {} )
 ```
 
 ##### dropUser
