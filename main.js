@@ -231,7 +231,7 @@ function pushHistory(id, state) {
         var settings = influxDPs[id][adapter.namespace];
 
         if (!settings || !state) return;
-        
+
         if (influxDPs[id].state && settings.changesOnly && (state.ts !== state.lc)) return;
 
         influxDPs[id].state = state;
@@ -378,7 +378,7 @@ function getHistory(msg) {
     query += " time < '" + new Date(options.end).toISOString() + "'";
 
     if (options.step && options.aggregate !== 'onchange') {
-        query += ' GROUP BY time(' + options.step + 's)';
+        query += ' GROUP BY time(' + options.step + 'ms)';
         if (options.limit) query += ' LIMIT ' + options.limit;
     } else {
         query += ' LIMIT ' + options.count;
@@ -389,7 +389,7 @@ function getHistory(msg) {
     // if specific id requested
     client.query(query, function (err, rows) {
         if (err) adapter.log.error('getHistory: ' + err);
-        
+
         var result = [];
         if (rows && rows.length) {
             for (var rr = rows[0].length - 1; rr >= 0; rr--) {
