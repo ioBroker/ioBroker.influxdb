@@ -66,6 +66,9 @@ Explanation for other OS can be found [here](http://docs.grafana.org/installatio
 After the Grafana is installed, follow [this](http://docs.grafana.org/datasources/influxdb/) to create connection. 
 
 ## Changelog
+### 0.5.1 (2016-09-20)
+* (Apollon77) Step is given as Milliseconds and not Seconds!
+
 ### 0.5.0 (2016-08-30)
 * (bluefox) Compatible only with new admin
 

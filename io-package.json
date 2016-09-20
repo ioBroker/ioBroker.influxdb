@@ -6,9 +6,14 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "0.5.0",
+        "version": "0.5.1",
         "title":                    "History with InfluxDB",
         "news": {
+			"0.5.1": {
+                "en": "fix step settings",
+                "de": "Schritt korrigiert",
+                "ru": "исправлен шаг"
+            },
 		    "0.5.0": {
                 "en": "сompatible only with new admin",
                 "de": "Nur mit neuem Admin kompatibel",
