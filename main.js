@@ -66,19 +66,29 @@ function connect() {
         timePrecision: 'ms'
     });
 
-    client.createDatabase(adapter.config.dbname, function (err) {
-        if (err && (!err.message || (err.message !== 'database ' + adapter.config.dbname + ' exists' && err.message.indexOf('database exits') !== -1))) {
-            console.log('createDatabase: ' + JSON.stringify(err));
-        } else {
-            if (!err && adapter.config.retention) {
-                client.query('CREATE RETENTION POLICY "global" ON ' + adapter.config.dbname + ' DURATION ' + adapter.config.retention + 's REPLICATION 1 DEFAULT', function (err) {
-                    if (err && err.toString().indexOf('already exists') === -1) {
-                        if (err) adapter.log.error(err);
+    client.getDatabaseNames(function (err, dbNames) {
+        if (err) {
+            adapter.log.error(err);
+        }
+        else {
+            if (dbNames.indexOf(adapter.config.dbname) === -1) {
+                client.createDatabase(adapter.config.dbname, function (err) {
+                    if (err) {
+                        adapter.log.error(err);
+                    } else {
+                        if (!err && adapter.config.retention) {
+                            client.query('CREATE RETENTION POLICY "global" ON ' + adapter.config.dbname + ' DURATION ' + adapter.config.retention + 's REPLICATION 1 DEFAULT', function (err) {
+                                if (err && err.toString().indexOf('already exists') === -1) {
+                                    adapter.log.error(err);
+                                }
+                            });
+                        }
+
+                        adapter.log.info('Connected!');
                     }
                 });
             }
-
-            adapter.log.info('Connected!');
+            else adapter.log.info('Connected!');
         }
     });
 }
@@ -127,7 +137,7 @@ function destroyDB(msg) {
         return adapter.sendTo(msg.from, msg.command, {error: 'Not connected'}, msg.callback);
     }
     try {
-        client.deleteDatabase(adapter.config.dbname, function (err) {
+        client.dropDatabase(adapter.config.dbname, function (err) {
             if (err) {
                 adapter.log.error(err);
                 adapter.sendTo(msg.from, msg.command, {error: err.toString()}, msg.callback);
@@ -252,6 +262,8 @@ function pushHelper(_id) {
     if (_settings) {
         influxDPs[_id].timeout = null;
 
+        if (influxDPs[_id].state.val===null) return; // InfluxDB can not handle null values
+
         if (typeof influxDPs[_id].state.val === 'string') {
             var f = parseFloat(influxDPs[_id].state.val);
             if (f.toString() == influxDPs[_id].state.val) {
@@ -289,6 +301,7 @@ function pushValueIntoDB(id, state) {
         if (f == state.val) state.val = f;
     }
 
+    adapter.log.debug('write value ' + state.val + ' for ' + id);
     client.writePoint(id, {
         value: state.val,
         time:  new Date(state.ts),
@@ -296,7 +309,7 @@ function pushValueIntoDB(id, state) {
         q:     state.q,
         ack:   state.ack
     }, null, function (err, result) {
-        if (err) adapter.log.warn('writePoint: ' + err);
+        if (err) adapter.log.warn('writePoint("'+state.val+'" / '+(typeof state.val)+'): ' + err);
     });
 }
 
@@ -497,18 +510,38 @@ function generateDemo(msg) {
 
 function query(msg) {
     if (client) {
-        client.query(msg.message.query, function (err, rows) {
-            if (err) adapter.log.error('query: ' + err);
+        var query=msg.message.query || msg.message;
+        if ((!query) || (typeof query !== "string")) {
+          adapter.log.error('query missing: ' + query);
+          adapter.sendTo(msg.from, msg.command, {
+              result: [],
+              error:  'Query missing'
+          }, msg.callback);
+          return;
+        }
+        adapter.log.info('query: '+query)
+        client.query(query, function (err, rows) {
+            if (err) {
+              adapter.log.error('query: ' + err);
+              adapter.sendTo(msg.from, msg.command, {
+                  result: [],
+                  error:  'Invalid call'
+              }, msg.callback);
+              return;
+            }
 
+            adapter.log.info('result: '+JSON.stringify(rows));
             for (var r = 0, l = rows.length; r < l; r++) {
-                if (rows[r].time) {
-                    rows[r].ts = rows[r].time;
-                    delete rows[r].time;
+                for (var rr = 0, ll = rows[r].length; rr < ll; rr++) {
+                    if (rows[r][rr].time) {
+                        rows[r][rr].ts = rows[r][rr].time;
+                        delete rows[r][rr].time;
+                    }
                 }
             }
 
             adapter.sendTo(msg.from, msg.command, {
-                result: rows,
+                result: {'result': rows, 'ts': new Date().getTime()},
                 error:  err
             }, msg.callback);
         });
