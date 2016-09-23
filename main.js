@@ -378,7 +378,7 @@ function getHistory(msg) {
     query += " time < '" + new Date(options.end).toISOString() + "'";
 
     if (options.step && options.aggregate !== 'onchange') {
-        query += ' GROUP BY time(' + options.step + 'ms)';
+        query += ' GROUP BY time(' + options.step + 'ms) fill(previous)';
         if (options.limit) query += ' LIMIT ' + options.limit;
     } else {
         query += ' LIMIT ' + options.count;
