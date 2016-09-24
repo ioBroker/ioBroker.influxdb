@@ -9,6 +9,8 @@ var influx = require('influx');
 var subscribeAll = false;
 var influxDPs    = {};
 var client;
+var bufferChecker = null;
+var buffer       = [];
 
 var adapter = utils.adapter('influxdb');
 
@@ -46,9 +48,36 @@ adapter.on('ready', function () {
     main();
 });
 
+adapter.on('unload', function (callback) {
+    finish(callback);
+});
+
 adapter.on('message', function (msg) {
     processMessage(msg);
 });
+
+process.on('SIGINT', function () {
+    if (adapter && adapter.setState) {
+        finish();
+    }
+});
+
+function storeBuffered() { //TODO!!!
+    adapter.log.debug('Store ' + id + ' buffered influxDB history points');
+
+    for (i = 0; i < buffer.length; i-++) {
+      if (!buffer[i]) continue;
+      //handle buffer[i]
+    }
+}
+
+function finish(callback) {
+    if (bufferChecker) clearInterval(bufferChecker);
+
+    storeBuffered();
+    if (callback) callback();
+}
+
 
 function connect() {
 
@@ -66,20 +95,25 @@ function connect() {
         timePrecision: 'ms'
     });
 
-    client.createDatabase(adapter.config.dbname, function (err) {
-        if (err && (!err.message || (err.message !== 'database ' + adapter.config.dbname + ' exists' && err.message.indexOf('database exits') !== -1))) {
-            console.log('createDatabase: ' + JSON.stringify(err));
-        } else {
-            if (!err && adapter.config.retention) {
-                client.query('CREATE RETENTION POLICY "global" ON ' + adapter.config.dbname + ' DURATION ' + adapter.config.retention + 's REPLICATION 1 DEFAULT', function (err) {
-                    if (err && err.toString().indexOf('already exists') === -1) {
-                        if (err) adapter.log.error(err);
+    client.getDatabaseNames(function (err, arrayDatabaseNames) {
+        if (arrayDatabaseNames.indexOf(adapter.config.dbname) === -1) {
+            client.createDatabase(adapter.config.dbname, function (err) {
+                if (err && (!err.message || (err.message !== 'database ' + adapter.config.dbname + ' exists' && err.message.indexOf('database exits') !== -1))) {
+                    console.log('createDatabase: ' + JSON.stringify(err));
+                } else {
+                    if (!err && adapter.config.retention) {
+                        client.query('CREATE RETENTION POLICY "global" ON ' + adapter.config.dbname + ' DURATION ' + adapter.config.retention + 's REPLICATION 1 DEFAULT', function (err) {
+                            if (err && err.toString().indexOf('already exists') === -1) {
+                                if (err) adapter.log.error(err);
+                            }
+                        });
                     }
-                });
-            }
 
-            adapter.log.info('Connected!');
+                    adapter.log.info('DB created and Connected!');
+                }
+            });
         }
+        else adapter.log.info('Connected!');
     });
 }
 
@@ -127,7 +161,7 @@ function destroyDB(msg) {
         return adapter.sendTo(msg.from, msg.command, {error: 'Not connected'}, msg.callback);
     }
     try {
-        client.deleteDatabase(adapter.config.dbname, function (err) {
+        client.dropDatabase(adapter.config.dbname, function (err) {
             if (err) {
                 adapter.log.error(err);
                 adapter.sendTo(msg.from, msg.command, {error: err.toString()}, msg.callback);
@@ -218,6 +252,13 @@ function main() {
             subscribeAll = true;
             adapter.subscribeForeignStates('*');
         }
+
+        storeBuffered();
+        // store all buffered data every 10 minutes to not lost the data
+        bufferChecker = setInterval(function () {
+            storeBuffered();
+        }, 10 * 60000);
+
     });
 
     adapter.subscribeForeignObjects('*');
@@ -226,7 +267,7 @@ function main() {
 }
 
 function pushHistory(id, state) {
-    // Push into redis
+    // Push into InfluxDB
     if (influxDPs[id]) {
         var settings = influxDPs[id][adapter.namespace];
 
@@ -262,9 +303,20 @@ function pushHelper(_id) {
                 influxDPs[_id].state.val = false;
             }
         }
+        addValueToBuffer(_id, influxDPs[_id].state);
+        //to remove when buffering comes really in
         pushValueIntoDB(_id, influxDPs[_id].state);
     }
 }
+
+function addValueToBuffer(id, state) {
+    buffer.push({ 'id': id, 'state':state });
+    if (buffer.length > 100) {
+      //flush out
+      storeBuffered();
+    }
+}
+
 
 function pushValueIntoDB(id, state) {
     if (!client) {
