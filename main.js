@@ -63,12 +63,14 @@ process.on('SIGINT', function () {
 });
 
 function storeBuffered() { //TODO!!!
-    adapter.log.debug('Store ' + id + ' buffered influxDB history points');
+    adapter.log.info('Store ' + buffer.length + ' buffered influxDB history points');
 
-    for (i = 0; i < buffer.length; i-++) {
+    /*for (i = 0; i < buffer.length; i-++) {
       if (!buffer[i]) continue;
       //handle buffer[i]
-    }
+    }*/
+    buffer = [];
+
 }
 
 function finish(callback) {
@@ -80,7 +82,6 @@ function finish(callback) {
 
 
 function connect() {
-
     adapter.log.info('Connecting ' + adapter.config.protocol + '://' + adapter.config.host + ':' + adapter.config.port + ' ...');
 
     adapter.config.dbname = adapter.config.dbname || utils.appName;
@@ -121,7 +122,6 @@ function connect() {
                 adapter.log.info('Connected!');
             }
         }
-        else adapter.log.info('Connected!');
     });
 }
 
@@ -290,7 +290,6 @@ function main() {
 
     adapter.subscribeForeignObjects('*');
 
-    storeBuffered();
     // store all buffered data every 10 minutes to not lost the data
     bufferChecker = setInterval(function () {
         storeBuffered();
@@ -346,7 +345,7 @@ function pushHelper(_id) {
 
 function addValueToBuffer(id, state) {
     buffer.push({ 'id': id, 'state':state });
-    if (buffer.length > 100) {
+    if (buffer.length > 1000) {
       //flush out
       storeBuffered();
     }
@@ -635,16 +634,33 @@ function query(msg) {
 }
 
 function storeState(msg) {
-    if (!msg.message || !msg.message.id || !msg.message.state) {
+    if (!msg.message || !msg.message.id || !msg.message.state || (Array.isArray(msg.message))) {
         adapter.log.error('storeState called with invalid data');
         adapter.sendTo(msg.from, msg.command, {
             error:  'Invalid call'
         }, msg.callback);
         return;
     }
-    addValueToBuffer(msg.message.id, msg.message.state);
-    //to remove when buffering comes really in
-    pushValueIntoDB(msg.message.id, msg.message.state);
+
+    if (Array.isArray(msg.message)) {
+      for (i = 0;i < msg.message.length;i++) {
+          addValueToBuffer(msg.message[i].id, msg.message[i].state);
+          //to remove when buffering comes really in
+          pushValueIntoDB(msg.message[i].id, msg.message[i].state[i]);
+      }
+    }
+    else if (Array.isArray(msg.message.state)) {
+      for (i = 0;i < msg.message.state.length;i++) {
+          addValueToBuffer(msg.message.id, msg.message.state[i]);
+          //to remove when buffering comes really in
+          pushValueIntoDB(msg.message.id, msg.message.state[i]);
+      }
+    }
+    else {
+        addValueToBuffer(msg.message.id, msg.message.state);
+        //to remove when buffering comes really in
+        pushValueIntoDB(msg.message.id, msg.message.state);
+    }
 
     adapter.sendTo(msg.from, msg.command, 'stored', msg.callback);
 
