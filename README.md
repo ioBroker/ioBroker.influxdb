@@ -9,7 +9,7 @@
 
 This adapter saves state history into InfluxDB.
 
-**No support of influxDB less or equal to 0.8!**
+**Only influxDB >= v0.9 supported, v1.0 recommended**
 
 ## Installation of InfluxDB
 The installation package for windows and other OS's can be downloaded [here](https://www.influxdata.com/downloads/).
@@ -24,6 +24,14 @@ Under debian you can install it with:
 ```
 sudo apt-get update
 sudo apt-get install influxdb
+```
+
+Best is to add the Influxdata repository before to get the most current version:
+
+```
+curl -sL https://repos.influxdata.com/influxdb.key | sudo apt-key add -
+source /etc/lsb-release
+echo "deb https://repos.influxdata.com/${DISTRIB_ID,,} ${DISTRIB_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
 ```
 
 ### Setup authentication for influxDB (can be omitted)
@@ -53,20 +61,86 @@ Enable authentication, by editing /etc/influxdb/influxdb.conf:
 - Restart service: ``` service influxdb restart ```
 
 ## Installation of Grafana
-There is additional charting tool for InfluxDB - Grafana. 
+There is additional charting tool for InfluxDB - Grafana.
 It must be installed additionally.
 
-Under debian you can install it with:
+Try to install a current v3.x version of Grafana because InfluxDB support is enhanced there in comparism to v2.x
 
-```
-$ wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.5.0_amd64.deb
-$ sudo apt-get install -y adduser libfontconfig
-$ sudo dpkg -i grafana_2.5.0_amd64.deb
-```
+Under debian you can install it as described at http://docs.grafana.org/installation/debian/ .
+For ARM platforms your can check vor v3.x at https://github.com/fg2it/grafana-on-raspberry.
 
 Explanation for other OS can be found [here](http://docs.grafana.org/installation/).
 
-After the Grafana is installed, follow [this](http://docs.grafana.org/datasources/influxdb/) to create connection. 
+After the Grafana is installed, follow [this](http://docs.grafana.org/datasources/influxdb/) to create connection.
+
+## Custom queries
+The user can execute custom queries on data from javascript adapter.
+
+The multi-query feature is also supported. You can send multiple queries separated by a semicolon.
+
+That's why the result is always an array with one numbered index for each query.
+
+Example with one query:
+
+```
+sendTo('influxdb.0', 'query', 'SELECT * FROM iobroker.global."system.adapter.admin.0.memRss" LIMIT 100', function (result) {
+    if (result.error) {
+        console.error(result.error);
+    } else {
+        // show result
+         console.log('Rows: ' + JSON.stringify(result.result[0]));
+    }
+});
+```
+Two queries:
+
+```
+sendTo('influxdb.0', 'query', 'SELECT * FROM iobroker.global."system.adapter.admin.0.memRss" LIMIT 100; SELECT * FROM iobroker.global."system.adapter.admin.0.memHeapUsed" LIMIT 100', function (result) {
+    if (result.error) {
+        console.error(result.error);
+    } else {
+        // show result
+        console.log('Rows First: ' + JSON.stringify(result.result[0]));
+        console.log('Rows Second: ' + JSON.stringify(result.result[1]));
+    }
+});
+```
+
+
+## Get history
+Additional to custom queries, you can use build in system function **getHistory** to access the stored history for datapoints:
+```
+var end = new Date().getTime();
+sendTo('sql.0', 'getHistory', {
+    id: 'system.adapter.admin.0.memRss',
+    options: {
+        start:      end - 3600000,
+        end:        end,
+        aggregate: 'average' // or 'none' to get raw values
+    }
+}, function (result) {
+    for (var i = 0; i < result.result.length; i++) {
+        console.log(result.result[i].id + ' ' + new Date(result.result[i].ts).toISOString());
+    }
+});
+```
+Possible options:
+- **start** - (optional) time in ms - *new Date().getTime()*'
+- **end** - (optional) time in ms - *new Date().getTime()*', by default is (now + 5000 seconds)
+- **step** - (optional) used in aggregate (m4, max, min, average, total) step in ms of intervals
+- **count** - number of values if aggregate is 'onchange' or number of intervals if other aggregate method. Count will be ignored if step is set.
+- **limit** - do not return more entries than limit
+- **addId** - if *id* field should be included in answer
+- **aggregate** - aggregate method:
+    - *max* - Splice the whole time range in small intervals and find for every interval max value and use it for this interval (nulls will be ignored).
+    - *min* - Same as max, but take minimal value.
+    - *average* - Same as max, but take average value.
+    - *total* - Same as max, but calculate total value.
+    - *count* - Same as max, but calculate number of values (nulls will be calculated).
+    - *none* - No aggregation at all. Only raw values in given period.
+
+For the aggregation method "none" the returned fields are ts, val, ack, q and from.
+For all others the returned fields are ts and val.
 
 ## Changelog
 ### 0.5.2 (2016-09-25)
