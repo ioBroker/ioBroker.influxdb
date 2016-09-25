@@ -6,10 +6,15 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "0.5.1",
+        "version": "0.5.2",
         "title":                    "History with InfluxDB",
         "news": {
-			"0.5.1": {
+            "0.5.2": {
+                "en": "change custom queries. Fix delete DB",
+                "de": "Korrigiert Anwenderanfragen und DB Löschen",
+                "ru": "исправлены пользовательские запросы и удаление базы"
+            },
+            "0.5.1": {
                 "en": "fix step settings",
                 "de": "Schritt korrigiert",
                 "ru": "исправлен шаг"
