@@ -12,14 +12,19 @@ This adapter saves state history into InfluxDB.
 **No support of influxDB less or equal to 0.8!**
 
 ## Installation of InfluxDB
-There is no InfluxDB for Windows!
+The installation package for windows and other OS's can be downloaded [here](https://www.influxdata.com/downloads/).
+
+Before you start influxd.exe under windows, you must edit influxdb.conf file to remove all linux paths. You can use ioBroker certificate as certificate:
+
+```
+https-certificate = "C:/ioBroker/node_modules/ioBroker.js-controller/conf.key"
+```
+
 Under debian you can install it with:
 ```
 sudo apt-get update
 sudo apt-get install influxdb
 ```
-
-Explanation for other OS can be found [here](https://influxdb.com/docs/v0.9/introduction/installation.html).
 
 ### Setup authentication for influxDB (can be omitted)
 If you use DB localy you may leave authentication disabled and skip this part.
@@ -47,8 +52,6 @@ Enable authentication, by editing /etc/influxdb/influxdb.conf:
 ```
 - Restart service: ``` service influxdb restart ```
 
-
-
 ## Installation of Grafana
 There is additional charting tool for InfluxDB - Grafana. 
 It must be installed additionally.
@@ -66,6 +69,9 @@ Explanation for other OS can be found [here](http://docs.grafana.org/installatio
 After the Grafana is installed, follow [this](http://docs.grafana.org/datasources/influxdb/) to create connection. 
 
 ## Changelog
+### 0.5.2 (2016-09-25)
+* (Apollon77) change custom queries. Fix delete DB
+
 ### 0.5.1 (2016-09-20)
 * (Apollon77) Step is given as Milliseconds and not Seconds!
 
@@ -106,7 +112,7 @@ After the Grafana is installed, follow [this](http://docs.grafana.org/datasource
 
 The MIT License (MIT)
 
-Copyright (c) 2015 bluefox
+Copyright (c) 2015-2016 bluefox
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

@@ -1,6 +1,6 @@
 /* jshint -W097 */// jshint strict:false
 /*jslint node: true */
-"use strict";
+'use strict';
 
 //noinspection JSUnresolvedFunction
 var utils  = require(__dirname + '/lib/utils'); // Get common adapter utils
@@ -14,7 +14,7 @@ var adapter = utils.adapter('influxdb');
 
 adapter.on('objectChange', function (id, obj) {
     if (obj && obj.common && (
-            // todo remove history somewhen (2016.08) - Do not forget object selector in io-package.json
+            // todo remove history sometime (2016.08) - Do not forget object selector in io-package.json
         (obj.common.history && obj.common.history[adapter.namespace]) ||
         (obj.common.custom && obj.common.custom[adapter.namespace]))
     ) {
@@ -88,7 +88,9 @@ function connect() {
                     }
                 });
             }
-            else adapter.log.info('Connected!');
+            else {
+                adapter.log.info('Connected!');
+            }
         }
     });
 }
@@ -124,7 +126,7 @@ function testConnection(msg) {
             clearTimeout(timeout);
             timeout = null;
         }
-        if (ex.toString() == 'TypeError: undefined is not a function') {
+        if (ex.toString() === 'TypeError: undefined is not a function') {
             return adapter.sendTo(msg.from, msg.command, {error: 'Node.js DB driver could not be installed.'}, msg.callback);
         } else {
             return adapter.sendTo(msg.from, msg.command, {error: ex.toString()}, msg.callback);
@@ -162,17 +164,39 @@ function destroyDB(msg) {
 }
 
 function processMessage(msg) {
-    if (msg.command == 'getHistory') {
+    if (msg.command === 'getHistory') {
         getHistory(msg);
-    } else if (msg.command == 'test') {
+    } else if (msg.command === 'test') {
         testConnection(msg);
-    } else if (msg.command == 'destroy') {
+    } else if (msg.command === 'destroy') {
         destroyDB(msg);
-    } else if (msg.command == 'generateDemo') {
+    } else if (msg.command === 'generateDemo') {
         generateDemo(msg);
-    } else if (msg.command == 'query') {
+    } else if (msg.command === 'query') {
         query(msg);
     }
+}
+
+function fixSelector(callback) {
+    // fix _design/custom object
+    adapter.getForeignObject('_design/custom', function (err, obj) {
+        if (!obj || obj.views.state.map.indexOf('common.history') === -1 || obj.views.state.map.indexOf('common.custom') === -1) {
+            obj = {
+                _id: '_design/custom',
+                language: 'javascript',
+                views: {
+                    state: {
+                        map: 'function(doc) { if (doc.type===\'state\' && (doc.common.custom || doc.common.history)) emit(doc._id, doc.common.custom || doc.common.history) }'
+                    }
+                }
+            };
+            adapter.setForeignObject('_design/custom', obj, function (err) {
+                if (callback) callback(err);
+            });
+        } else {
+            if (callback) callback(err);
+        }
+    });
 }
 
 function main() {
@@ -184,50 +208,52 @@ function main() {
         adapter.config.round = null;
     }
 
-    // read all custom settings
-    adapter.objects.getObjectView('custom', 'state', {}, function (err, doc) {
-        if (err) adapter.log.error('main/getObjectView: ' + err);
-        var count = 0;
-        if (doc && doc.rows) {
-            for (var i = 0, l = doc.rows.length; i < l; i++) {
-                if (doc.rows[i].value) {
-                    var id = doc.rows[i].id;
-                    influxDPs[id] = doc.rows[i].value;
+    fixSelector(function () {
+        // read all custom settings
+        adapter.objects.getObjectView('custom', 'state', {}, function (err, doc) {
+            if (err) adapter.log.error('main/getObjectView: ' + err);
+            var count = 0;
+            if (doc && doc.rows) {
+                for (var i = 0, l = doc.rows.length; i < l; i++) {
+                    if (doc.rows[i].value) {
+                        var id = doc.rows[i].id;
+                        influxDPs[id] = doc.rows[i].value;
 
-                    if (!influxDPs[id][adapter.namespace]) {
-                        delete influxDPs[id];
-                    } else {
-                        count++;
-                        adapter.log.info('enabled logging of ' + id);
-                        if (influxDPs[id][adapter.namespace].retention !== undefined && influxDPs[id][adapter.namespace].retention !== null && influxDPs[id][adapter.namespace].retention !== '') {
-                            influxDPs[id][adapter.namespace].retention = parseInt(influxDPs[id][adapter.namespace].retention || adapter.config.retention, 10) || 0;
+                        if (!influxDPs[id][adapter.namespace]) {
+                            delete influxDPs[id];
                         } else {
-                            influxDPs[id][adapter.namespace].retention = adapter.config.retention;
-                        }
+                            count++;
+                            adapter.log.info('enabled logging of ' + id);
+                            if (influxDPs[id][adapter.namespace].retention !== undefined && influxDPs[id][adapter.namespace].retention !== null && influxDPs[id][adapter.namespace].retention !== '') {
+                                influxDPs[id][adapter.namespace].retention = parseInt(influxDPs[id][adapter.namespace].retention || adapter.config.retention, 10) || 0;
+                            } else {
+                                influxDPs[id][adapter.namespace].retention = adapter.config.retention;
+                            }
 
-                        if (influxDPs[id][adapter.namespace].debounce !== undefined && influxDPs[id][adapter.namespace].debounce !== null && influxDPs[id][adapter.namespace].debounce !== '') {
-                            influxDPs[id][adapter.namespace].debounce = parseInt(influxDPs[id][adapter.namespace].debounce, 10) || 0;
-                        } else {
-                            influxDPs[id][adapter.namespace].debounce = adapter.config.debounce;
-                        }
-                        influxDPs[id][adapter.namespace].changesOnly = influxDPs[id][adapter.namespace].changesOnly === 'true' || influxDPs[id][adapter.namespace].changesOnly === true;
+                            if (influxDPs[id][adapter.namespace].debounce !== undefined && influxDPs[id][adapter.namespace].debounce !== null && influxDPs[id][adapter.namespace].debounce !== '') {
+                                influxDPs[id][adapter.namespace].debounce = parseInt(influxDPs[id][adapter.namespace].debounce, 10) || 0;
+                            } else {
+                                influxDPs[id][adapter.namespace].debounce = adapter.config.debounce;
+                            }
+                            influxDPs[id][adapter.namespace].changesOnly = influxDPs[id][adapter.namespace].changesOnly === 'true' || influxDPs[id][adapter.namespace].changesOnly === true;
 
-                        // add one day if retention is too small
-                        if (influxDPs[id][adapter.namespace].retention <= 604800) {
-                            influxDPs[id][adapter.namespace].retention += 86400;
+                            // add one day if retention is too small
+                            if (influxDPs[id][adapter.namespace].retention <= 604800) {
+                                influxDPs[id][adapter.namespace].retention += 86400;
+                            }
                         }
                     }
                 }
             }
-        }
-        if (count < 20) {
-            for (var _id in influxDPs) {
-                adapter.subscribeForeignStates(_id);
+            if (count < 20) {
+                for (var _id in influxDPs) {
+                    adapter.subscribeForeignStates(_id);
+                }
+            } else {
+                subscribeAll = true;
+                adapter.subscribeForeignStates('*');
             }
-        } else {
-            subscribeAll = true;
-            adapter.subscribeForeignStates('*');
-        }
+        });
     });
 
     adapter.subscribeForeignObjects('*');
@@ -262,7 +288,7 @@ function pushHelper(_id) {
     if (_settings) {
         influxDPs[_id].timeout = null;
 
-        if (influxDPs[_id].state.val===null) return; // InfluxDB can not handle null values
+        if (influxDPs[_id].state.val === null) return; // InfluxDB can not handle null values
 
         if (typeof influxDPs[_id].state.val === 'string') {
             var f = parseFloat(influxDPs[_id].state.val);
@@ -309,17 +335,17 @@ function pushValueIntoDB(id, state) {
         q:     state.q,
         ack:   state.ack
     }, null, function (err, result) {
-        if (err) adapter.log.warn('writePoint("'+state.val+'" / '+(typeof state.val)+'): ' + err);
+        if (err) adapter.log.warn('writePoint("' + state.val + '" / ' + (typeof state.val) + '): ' + err);
     });
 }
 
 function getHistory(msg) {
 
     var options = {
-        id:         msg.message.id == '*' ? null : msg.message.id,
+        id:         msg.message.id === '*' ? null : msg.message.id,
         start:      msg.message.options.start,
         end:        msg.message.options.end || ((new Date()).getTime() + 5000000),
-        step:       parseInt(msg.message.options.step, 10)  || null,
+        step:       parseInt(msg.message.options.step,  10) || null,
         count:      parseInt(msg.message.options.count, 10) || 500,
         ignoreNull: msg.message.options.ignoreNull,
         aggregate:  msg.message.options.aggregate || 'average', // One of: max, min, average, total
@@ -438,27 +464,27 @@ function generateDemo(msg) {
 
     if (end < start) {
         var tmp = end;
-        end = start;
-        start = tmp;
+        end     = start;
+        start   = tmp;
     }
 
     end = new Date(end).setHours(24);
 
     function generate() {
 
-        if (curve == 'sin') {
-            if (sin == 6.2) {
+        if (curve === 'sin') {
+            if (sin === 6.2) {
                 sin = 0
             } else {
                 sin = Math.round((sin + 0.1) * 10) / 10;
             }
             value = Math.round(Math.sin(sin) * 10000) / 100;
-        } else if (curve == 'dec') {
+        } else if (curve === 'dec') {
             value++
-        } else if (curve == 'inc') {
+        } else if (curve === 'inc') {
             value--
         } else {
-            if (up == true) {
+            if (up === true) {
                 value++;
             } else {
                 value--;
@@ -486,10 +512,10 @@ function generateDemo(msg) {
     var obj = {
         type: 'state',
         common: {
-            name: msg.message.id,
-            type: 'state',
+            name:    msg.message.id,
+            type:    'state',
             enabled: false,
-            custom: {}
+            custom:  {}
         }
     };
 
@@ -510,8 +536,9 @@ function generateDemo(msg) {
 
 function query(msg) {
     if (client) {
-        var query=msg.message.query || msg.message;
-        if ((!query) || (typeof query !== "string")) {
+        var query = msg.message.query || msg.message;
+
+        if (!query || typeof query !== 'string') {
           adapter.log.error('query missing: ' + query);
           adapter.sendTo(msg.from, msg.command, {
               result: [],
@@ -519,7 +546,9 @@ function query(msg) {
           }, msg.callback);
           return;
         }
-        adapter.log.info('query: '+query)
+
+        adapter.log.debug('query: ' + query);
+
         client.query(query, function (err, rows) {
             if (err) {
               adapter.log.error('query: ' + err);
@@ -530,18 +559,20 @@ function query(msg) {
               return;
             }
 
-            adapter.log.info('result: '+JSON.stringify(rows));
+            adapter.log.debug('result: ' + JSON.stringify(rows));
+
             for (var r = 0, l = rows.length; r < l; r++) {
                 for (var rr = 0, ll = rows[r].length; rr < ll; rr++) {
                     if (rows[r][rr].time) {
-                        rows[r][rr].ts = rows[r][rr].time;
+                        rows[r][rr].ts = new Date(rows[r][rr].time).getTime();
                         delete rows[r][rr].time;
                     }
                 }
             }
 
             adapter.sendTo(msg.from, msg.command, {
-                result: {'result': rows, 'ts': new Date().getTime()},
+                result: rows,
+                ts:     new Date().getTime(),
                 error:  err
             }, msg.callback);
         });
