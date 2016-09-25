@@ -202,6 +202,8 @@ function processMessage(msg) {
         generateDemo(msg);
     } else if (msg.command == 'query') {
         query(msg);
+    } else if (msg.command == 'storeState') {
+        storeState(msg);
     }
 }
 
@@ -599,6 +601,22 @@ function query(msg) {
             error:  'No connection'
         }, msg.callback);
     }
+}
+
+function storeState(msg) {
+    if (!msg.message || !msg.message.id || !msg.message.state) {
+        adapter.log.error('storeState called with invalid data');
+        adapter.sendTo(msg.from, msg.command, {
+            error:  'Invalid call'
+        }, msg.callback);
+        return;
+    }
+    addValueToBuffer(msg.message.id, msg.message.state);
+    //to remove when buffering comes really in
+    pushValueIntoDB(msg.message.id, msg.message.state);
+
+    adapter.sendTo(msg.from, msg.command, 'stored', msg.callback);
+
 }
 
 process.on('uncaughtException', function (err) {
