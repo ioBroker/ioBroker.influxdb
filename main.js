@@ -347,14 +347,9 @@ function getHistory(msg) {
         end:        msg.message.options.end || ((new Date()).getTime() + 5000000),
         step:       parseInt(msg.message.options.step,  10) || null,
         count:      parseInt(msg.message.options.count, 10) || 500,
-        ignoreNull: msg.message.options.ignoreNull,
         aggregate:  msg.message.options.aggregate || 'average', // One of: max, min, average, total
         limit:      msg.message.options.limit || adapter.config.limit || 2000,
-        from:       msg.message.options.from  || false,
-        q:          msg.message.options.q     || false,
-        ack:        msg.message.options.ack   || false,
-        ms:         msg.message.options.ms    || false,
-        sessionId:  msg.message.options.sessionId
+        addId:      msg.message.options.addId || false
     };
     var query = 'SELECT';
     if (options.step) {
@@ -375,8 +370,13 @@ function getHistory(msg) {
                 query += ' sum(value) as val';
                 break;
 
+            case 'count':
+                query += ' count(value) as val';
+                break;
+
+            case 'none':
             case 'onchange':
-                query += ' value';
+                query += ' time, value as val, ack, "from", q';
                 break;
 
             default:
@@ -439,6 +439,7 @@ function getHistory(msg) {
                 rows[0][rr].ts  = new Date(rows[0][rr].time).getTime();
                 rows[0][rr].val = adapter.config.round ? Math.round(rows[0][rr].val * adapter.config.round) / adapter.config.round : rows[0][rr].val;
                 delete rows[0][rr].time;
+                if (options.addId) rows[0][rr].id = msg.message.id;
             }
             result = rows[0];
         }
