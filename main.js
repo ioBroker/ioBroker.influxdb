@@ -397,7 +397,8 @@ function getHistory(msg) {
         count:      parseInt(msg.message.options.count, 10) || 500,
         aggregate:  msg.message.options.aggregate || 'average', // One of: max, min, average, total
         limit:      msg.message.options.limit || adapter.config.limit || 2000,
-        addId:      msg.message.options.addId || false
+        addId:      msg.message.options.addId || false,
+        sessionId:  msg.message.options.sessionId
     };
     var query = 'SELECT';
     if (options.step) {
