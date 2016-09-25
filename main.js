@@ -425,7 +425,7 @@ function getHistory(msg) {
 
             case 'none':
             case 'onchange':
-                query += ' time, value as val, ack, "from", q';
+                query += ' value';
                 break;
 
             default:
