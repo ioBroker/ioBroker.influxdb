@@ -111,7 +111,7 @@ sendTo('influxdb.0', 'query', 'SELECT * FROM iobroker.global."system.adapter.adm
 Additional to custom queries, you can use build in system function **getHistory** to access the stored history for datapoints:
 ```
 var end = new Date().getTime();
-sendTo('sql.0', 'getHistory', {
+sendTo('influxdb.0', 'getHistory', {
     id: 'system.adapter.admin.0.memRss',
     options: {
         start:      end - 3600000,
@@ -120,16 +120,16 @@ sendTo('sql.0', 'getHistory', {
     }
 }, function (result) {
     for (var i = 0; i < result.result.length; i++) {
-        console.log(result.result[i].id + ' ' + new Date(result.result[i].ts).toISOString());
+        console.log(result.result[i].val + ' ' + new Date(result.result[i].ts).toISOString());
     }
 });
 ```
 Possible options:
 - **start** - (optional) time in ms - *new Date().getTime()*'
 - **end** - (optional) time in ms - *new Date().getTime()*', by default is (now + 5000 seconds)
-- **step** - (optional) used in aggregate (m4, max, min, average, total) step in ms of intervals
-- **count** - number of values if aggregate is 'onchange' or number of intervals if other aggregate method. Count will be ignored if step is set.
-- **limit** - do not return more entries than limit
+- **step** - (optional) used for  aggregate (max, min, average, total, count) step in ms of intervals
+- **count** - (optional) number of values if aggregate is 'onchange'/'none' or number of intervals if other aggregate method. Count will be ignored if step is set.
+- **limit** - do not return more entries than limit (only used if aggregate is 'onchange'/'none')
 - **addId** - if *id* field should be included in answer
 - **aggregate** - aggregate method:
     - *max* - Splice the whole time range in small intervals and find for every interval max value and use it for this interval (nulls will be ignored).
@@ -137,10 +137,12 @@ Possible options:
     - *average* - Same as max, but take average value.
     - *total* - Same as max, but calculate total value.
     - *count* - Same as max, but calculate number of values (nulls will be calculated).
-    - *none* - No aggregation at all. Only raw values in given period.
+    - *none*/*onchange* - No aggregation at all. Only raw values in given period.
 
-For the aggregation method "none" the returned fields are ts, val, ack, q and from.
-For all others the returned fields are ts and val.
+When raw data are selected without using 'step' the returned fields are ts, val, ack, q and from.
+As soon as step is used the returned fields are ts and val.
+
+Please hold in mind that InfluxDB aggregates on "rounded time boundaries" (see https://docs.influxdata.com/influxdb/v0.11/troubleshooting/frequently_encountered_issues/#understanding-the-time-intervals-returned-from-group-by-time-queries)
 
 ## Changelog
 ### 0.5.2 (2016-09-25)

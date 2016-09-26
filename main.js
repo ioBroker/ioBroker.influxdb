@@ -465,9 +465,12 @@ function getHistory(msg) {
     if (options.start) query += " time > '" + new Date(options.start).toISOString() + "' AND ";
     query += " time < '" + new Date(options.end).toISOString() + "'";
 
-    if (options.step && options.aggregate !== 'onchange') {
-        query += ' GROUP BY time(' + options.step + 'ms) fill(previous)';
-        if (options.limit) query += ' LIMIT ' + options.limit;
+    if (options.aggregate !== 'onchange' && options.aggregate !== 'none') {
+        if (!options.step) {
+            //calculate "step" based on differnce between start and end using count
+            options.step=parseInt((options.end-options.start)/options.count,10);
+        }
+        query += ' GROUP BY time(' + options.step + 'ms) fill(previous) LIMIT ' + options.limit;
     } else {
         query += ' LIMIT ' + options.count;
     }
