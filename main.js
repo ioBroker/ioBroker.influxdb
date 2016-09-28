@@ -9,8 +9,10 @@ var influx = require('influx');
 var subscribeAll = false;
 var influxDPs    = {};
 var client;
-var bufferChecker = null;
-var buffer       = [];
+var seriesBufferChecker = null;
+var seriesBufferCounter = 0;
+var seriesBuffer        = {};
+var conflictingPoints   = [];
 
 var adapter = utils.adapter('influxdb');
 
@@ -62,29 +64,12 @@ process.on('SIGINT', function () {
     }
 });
 
-function storeBuffered() { //TODO!!!
-    adapter.log.info('Store ' + buffer.length + ' buffered influxDB history points');
-
-    /*for (i = 0; i < buffer.length; i-++) {
-      if (!buffer[i]) continue;
-      //handle buffer[i]
-    }*/
-    buffer = [];
-
-}
-
-function finish(callback) {
-    if (bufferChecker) clearInterval(bufferChecker);
-
-    storeBuffered();
-    if (callback) callback();
-}
-
-
 function connect() {
     adapter.log.info('Connecting ' + adapter.config.protocol + '://' + adapter.config.host + ':' + adapter.config.port + ' ...');
 
     adapter.config.dbname = adapter.config.dbname || utils.appName;
+
+    adapter.config.seriesBufferMax = adapter.config.seriesBufferMax || 0;
 
     client = influx({
         host:     adapter.config.host,
@@ -290,10 +275,12 @@ function main() {
 
     adapter.subscribeForeignObjects('*');
 
-    // store all buffered data every 10 minutes to not lost the data
-    bufferChecker = setInterval(function () {
-        storeBuffered();
-    }, 10 * 60000);
+    if (adapter.config.seriesBufferMax>0) {
+        // store all buffered data every 10 minutes to not lost the data
+        seriesBufferChecker = setInterval(function () {
+            storeBufferedSeries();
+        }, 10 * 60000);
+    }
 
     connect();
 }
@@ -337,20 +324,9 @@ function pushHelper(_id) {
                 influxDPs[_id].state.val = false;
             }
         }
-        addValueToBuffer(_id, influxDPs[_id].state);
-        //to remove when buffering comes really in
         pushValueIntoDB(_id, influxDPs[_id].state);
     }
 }
-
-function addValueToBuffer(id, state) {
-    buffer.push({ 'id': id, 'state':state });
-    if (buffer.length > 1000) {
-      //flush out
-      storeBuffered();
-    }
-}
-
 
 function pushValueIntoDB(id, state) {
     if (!client) {
@@ -376,15 +352,74 @@ function pushValueIntoDB(id, state) {
     }
 
     adapter.log.debug('write value ' + state.val + ' for ' + id);
-    client.writePoint(id, {
+    var influxFields = {
         value: state.val,
         time:  new Date(state.ts),
         from:  state.from,
         q:     state.q,
         ack:   state.ack
-    }, null, function (err, result) {
-        if (err) adapter.log.warn('writePoint("' + state.val + '" / ' + (typeof state.val) + '): ' + err);
+    };
+
+    if (conflictingPoints[id] || (adapter.config.seriesBufferMax===0)) {
+        client.writePoint(id, influxFields, null, function (err, result) {
+            if (err) adapter.log.warn('writePoint("' + JSON.stringify(influxFields) + '): ' + err);
+        });
+    }
+    else {
+        addPointToSeriesBuffer(id, influxFields);
+    }
+}
+
+function addPointToSeriesBuffer(id, stateObj) {
+    if (!seriesBuffer[id]) seriesBuffer[id] = [];
+    seriesBuffer[id].push([stateObj]);
+    seriesBufferCounter++;
+    if (seriesBufferCounter > adapter.config.seriesBufferMax) {
+      //flush out
+      storeBufferedSeries();
+    }
+}
+
+function storeBufferedSeries() { //TODO!!!
+    adapter.log.info('Store ' + seriesBufferCounter + ' buffered influxDB history points');
+
+    var seriesToWrite = seriesBuffer;
+    seriesBuffer = {};
+    seriesBufferCounter = 0;
+
+    client.writeSeries(seriesToWrite, function (err, result) {
+        // {"error":"field type conflict"} HTTP 400
+        if (err) {
+            adapter.log.warn('Error on writeSeries: ' + err);
+            adapter.log.warn('Try to write ' + seriesToWrite.length + ' Points separate to find the conflicting id');
+            // fallback and send data per id to find out problematic id!
+            for (var id in seriesToWrite) {
+                client.writePoints(id, seriesToWrite[id], function(err) {
+                    if (err) {
+                        adapter.log.warn('Error on writePoints for ' + id + ': ' + err);
+                        adapter.log.warn('Try to write ' + seriesToWrite[id].length + ' Points separate to find the conflicting one');
+                        // we found the conflicting id
+                        for (var i = 0; i < seriesToWrite[id].length; i++) {
+                            client.writePoint(id, seriesToWrite[id][i][0], null, function (err, result) {
+                                if (err) {
+                                    adapter.log.warn('Error on writePoint("' + JSON.stringify(seriesToWrite[id][i][0]) + '): ' + err);
+                                    conflictingPoints[id]=1;
+                                    adapter.log.warn('Add ' + id + ' to conflicting Points (' + conflictingPoints.length + ' now)');
+                                }
+                            });
+                        }
+                    }
+                });
+            }
+        }
     });
+}
+
+function finish(callback) {
+    if (seriesBufferChecker) clearInterval(seriesBufferChecker);
+
+    storeBufferedSeries();
+    if (callback) callback();
 }
 
 function getHistory(msg) {
@@ -648,21 +683,15 @@ function storeState(msg) {
 
     if (Array.isArray(msg.message)) {
       for (i = 0;i < msg.message.length;i++) {
-          addValueToBuffer(msg.message[i].id, msg.message[i].state);
-          //to remove when buffering comes really in
           pushValueIntoDB(msg.message[i].id, msg.message[i].state[i]);
       }
     }
     else if (Array.isArray(msg.message.state)) {
       for (i = 0;i < msg.message.state.length;i++) {
-          addValueToBuffer(msg.message.id, msg.message.state[i]);
-          //to remove when buffering comes really in
           pushValueIntoDB(msg.message.id, msg.message.state[i]);
       }
     }
     else {
-        addValueToBuffer(msg.message.id, msg.message.state);
-        //to remove when buffering comes really in
         pushValueIntoDB(msg.message.id, msg.message.state);
     }
 
