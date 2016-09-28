@@ -20,7 +20,7 @@ adapter.on('objectChange', function (id, obj) {
     if (obj && obj.common && (
             // todo remove history sometime (2016.08) - Do not forget object selector in io-package.json
         (obj.common.history && obj.common.history[adapter.namespace]) ||
-        (obj.common.custom && obj.common.custom[adapter.namespace]))
+        (obj.common.custom  && obj.common.custom[adapter.namespace]))
     ) {
 
         if (!influxDPs[id] && !subscribeAll) {
@@ -489,7 +489,7 @@ function getHistory(msg) {
         options.start = _end;
     }
     // if less 2000.01.01 00:00:00
-    if (options.end  && options.end    < 946681200000) options.end   *= 1000;
+    if (options.end   && options.end   < 946681200000) options.end   *= 1000;
     if (options.start && options.start < 946681200000) options.start *= 1000;
 
     if (!options.start && !options.count) {
@@ -503,7 +503,7 @@ function getHistory(msg) {
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none') {
         if (!options.step) {
             //calculate "step" based on differnce between start and end using count
-            options.step=parseInt((options.end-options.start)/options.count,10);
+            options.step = parseInt((options.end - options.start) / options.count, 10);
         }
         query += ' GROUP BY time(' + options.step + 'ms) fill(previous) LIMIT ' + options.limit;
     } else {
@@ -562,15 +562,15 @@ function generateDemo(msg) {
 
         if (curve === 'sin') {
             if (sin === 6.2) {
-                sin = 0
+                sin = 0;
             } else {
                 sin = Math.round((sin + 0.1) * 10) / 10;
             }
             value = Math.round(Math.sin(sin) * 10000) / 100;
         } else if (curve === 'dec') {
-            value++
+            value++;
         } else if (curve === 'inc') {
-            value--
+            value--;
         } else {
             if (up === true) {
                 value++;
