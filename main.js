@@ -225,6 +225,8 @@ function main() {
         adapter.config.round = null;
     }
 
+    adapter.config.seriesBufferFlushInterval = parseInt(adapter.config.seriesBufferFlushInterval, 10) || 600;
+
     fixSelector(function () {
         // read all custom settings
         adapter.objects.getObjectView('custom', 'state', {}, function (err, doc) {
@@ -279,7 +281,7 @@ function main() {
         // store all buffered data every 10 minutes to not lost the data
         seriesBufferChecker = setInterval(function () {
             storeBufferedSeries();
-        }, 10 * 60000);
+        }, adapter.config.seriesBufferFlushInterval*1000);
     }
 
     connect();
@@ -361,6 +363,8 @@ function pushValueIntoDB(id, state) {
     };
 
     if (conflictingPoints[id] || (adapter.config.seriesBufferMax===0)) {
+        if (adapter.config.seriesBufferMax!==0)
+            adapter.log.info('Direct writePoint("' + id + ' - ' + influxFields.value + ' / ' + influxFields.time + ')');
         client.writePoint(id, influxFields, null, function (err, result) {
             if (err) adapter.log.warn('writePoint("' + JSON.stringify(influxFields) + '): ' + err);
         });
@@ -391,25 +395,45 @@ function storeBufferedSeries() { //TODO!!!
         // {"error":"field type conflict"} HTTP 400
         if (err) {
             adapter.log.warn('Error on writeSeries: ' + err);
-            adapter.log.warn('Try to write ' + seriesToWrite.length + ' Points separate to find the conflicting id');
+            adapter.log.warn('Try to write ' + Object.keys(seriesToWrite).length + ' Points separate to find the conflicting id');
             // fallback and send data per id to find out problematic id!
             for (var id in seriesToWrite) {
-                client.writePoints(id, seriesToWrite[id], function(err) {
-                    if (err) {
-                        adapter.log.warn('Error on writePoints for ' + id + ': ' + err);
-                        adapter.log.warn('Try to write ' + seriesToWrite[id].length + ' Points separate to find the conflicting one');
-                        // we found the conflicting id
-                        for (var i = 0; i < seriesToWrite[id].length; i++) {
-                            client.writePoint(id, seriesToWrite[id][i][0], null, function (err, result) {
-                                if (err) {
-                                    adapter.log.warn('Error on writePoint("' + JSON.stringify(seriesToWrite[id][i][0]) + '): ' + err);
-                                    conflictingPoints[id]=1;
-                                    adapter.log.warn('Add ' + id + ' to conflicting Points (' + conflictingPoints.length + ' now)');
-                                }
-                            });
+                (function(seriesId, points) {
+                    adapter.log.debug('writePoints for ' + seriesId);
+                    client.writePoints(seriesId, points, function(err) {
+                        if (err) {
+                            adapter.log.warn('Error on writePoints for ' + seriesId + ': ' + err);
+                            adapter.log.warn('Try to write ' + points.length + ' Points separate to find the conflicting one');
+                            // we found the conflicting id
+                            for (var i = 0; i < points.length; i++) {
+                                (function(pointId, point) {
+                                    client.writePoint(pointId, point, null, function (err, result) {
+                                        if (err) {
+                                            adapter.log.warn('Error on writePoint("' + JSON.stringify(point) + '): ' + err);
+                                            if ((typeof err === 'string') && (err.indexof('field type conflict') !== -1)) {
+                                                // remember this as a pot. conflicing point and write synchronous
+                                                conflictingPoints[pointId]=1;
+                                                adapter.log.warn('Add ' + pointId + ' to conflicting Points (' + conflictingPoints.keys().length + ' now)');
+                                            }
+                                            else if (err.error && (err.error.indexof('field type conflict') !== -1)) {
+                                                // remember this as a pot. conflicing point and write synchronous
+                                                conflictingPoints[pointId]=1;
+                                                adapter.log.warn('Add2 ' + pointId + ' to conflicting Points (' + conflictingPoints.keys().length + ' now)');
+                                            }
+                                            else {
+                                                adapter.log.warn('1: ' + (typeof err) + ' - ' + err.indexof('field type conflict'));
+                                                if (err.error) adapter.log.warn('2: ' + (typeof err.error) + ' - ' + err.error.indexof('field type conflict'));
+                                                // re-add that point to buffer to try write again
+                                                addPointToSeriesBuffer(pointId, point);
+                                                adapter.log.warn('Add point that had error for ' + pointId + ' to buffer again');
+                                            }
+                                        }
+                                    });
+                                })(seriesId,points[i][0]);
+                            }
                         }
-                    }
-                });
+                    });
+                })(id, seriesToWrite[id]);
             }
         }
     });
