@@ -6,9 +6,14 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "0.5.2",
+        "version": "0.5.3",
         "title":                    "History with InfluxDB",
         "news": {
+            "0.5.3": {
+                "en": "enhance and correct documentation\nimplement step calculation for aggregation if only count is set",
+                "de": "Dokumentation erwitert\nSchrittkalkulation implementiert, falls nur count gesetzt ist",
+                "ru": "Исправлена документация\nВычисление шага, если задано только количество точек"
+            },
             "0.5.2": {
                 "en": "change custom queries. Fix delete DB",
                 "de": "Korrigiert Anwenderanfragen und DB Löschen",
