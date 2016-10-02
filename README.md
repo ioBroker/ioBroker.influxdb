@@ -145,6 +145,10 @@ As soon as step is used the returned fields are ts and val.
 Please hold in mind that InfluxDB aggregates on "rounded time boundaries" (see https://docs.influxdata.com/influxdb/v0.11/troubleshooting/frequently_encountered_issues/#understanding-the-time-intervals-returned-from-group-by-time-queries)
 
 ## Changelog
+### 0.5.3 (2016-09-30)
+* (Apollon77) enhance and correct documentation
+* (Apollon77) implement "step" calculation for aggregation if only "count" is set
+
 ### 0.5.2 (2016-09-25)
 * (Apollon77) change custom queries. Fix delete DB
 
