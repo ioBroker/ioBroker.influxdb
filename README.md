@@ -11,7 +11,25 @@ This adapter saves state history into InfluxDB.
 
 **Only influxDB >= v0.9 supported, v1.0 recommended**
 
+## Direct writes or buffered writes?
+With the default configuration the adapter stores each single datapoint directly into the database and only use the internal buffer if the database is not available. If database was not available the buffer is flushed at the given interval, so it can take the defined interval till the missing points are written!
+
+By changing the configuration it is possible to cache new datapoints up to a defined count or a defined maximum interval after which all points are stored into the database. This also gives better performance and less system load compared to writing the datapoints directly.
+InfluxDB has a limitation of the maximum size for writes which is at around 2MB. It should be save to have up to 15.000 datapoints as buffer maximum, maybe also 20.000, but this highly depends on the length of your datapoint-IDs.
+
+On exit of the adapter the buffer is stored and reinitialized with next start, so no datapoints should be lost and will be written after next start.
+
+## InfluxDB and datatypes
+InfluxDB is very strict on datatypes. The datatype for a measurement value is defined with it's first write.
+The adapter tries to write with the correct value, but if the datatype changes for the same state then there may be write
+errors into the InfluxDB. The adapter detects this and will write these potential conflicting datapoints always directly, but write errors mean that the value is not written into the DB at all. So make sure to check the logs for such cases.
+
+Additionally InfluxDB do not support "null" values, so these are not written at all into the DB.
+
 ## Installation of InfluxDB
+
+**Only influxDB >= v0.9 supported, v1.0 recommended**
+
 The installation package for windows and other OS's can be downloaded [here](https://www.influxdata.com/downloads/).
 
 Before you start influxd.exe under windows, you must edit influxdb.conf file to remove all linux paths. You can use ioBroker certificate as certificate:
@@ -143,6 +161,26 @@ When raw data are selected without using 'step' the returned fields are ts, val,
 As soon as step is used the returned fields are ts and val.
 
 Please hold in mind that InfluxDB aggregates on "rounded time boundaries" (see https://docs.influxdata.com/influxdb/v0.11/troubleshooting/frequently_encountered_issues/#understanding-the-time-intervals-returned-from-group-by-time-queries)
+
+InfluxDB is very strict when it comes to datatypes. This has effects for aggregator functions, e.g.:
+* average (MEAN) can not be used for boolean values (true/false), only MIN or MAX works here
+* average (MEAN) can not be used for string values (text), no aggregator makes sense here at all
+* ...
+
+## storeState
+If you want to write other data into the InfluxDB you can use the build in system function **storeState**.
+This function can also be used to convert data from other History adapters like History or SQL.
+
+The given ids are not checked against the ioBroker database and do not need to be set up there, but can only be accessed directly.
+
+The Message can have one of the following three formats:
+
+### one ID and one state object
+
+### one ID and array of state objects
+
+### array of multiple IDs with state objects
+
 
 ## Changelog
 ### 0.5.3 (2016-09-30)
