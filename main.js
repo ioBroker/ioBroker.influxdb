@@ -428,65 +428,90 @@ function storeBufferedSeries() {
     if (seriesBufferChecker) clearInterval(seriesBufferChecker);
     seriesBufferChecker = setInterval(storeBufferedSeries, adapter.config.seriesBufferFlushInterval*1000);
 
-    client.writeSeries(seriesToWrite, function (err, result) {
-        if (err) {
-            adapter.log.warn('Error on writeSeries: ' + err);
-            if (client.request.getHostsAvailable().length == 0) {
-                adapter.log.info('Host not available, move all points back in the Buffer');
-                // error caused InfluxDB client to remove the host from available for now
-                for (var id in seriesToWrite) {
-                    for (var i = 0; i < seriesToWrite[id].length; i++) {
-                        if (!seriesBuffer[id]) seriesBuffer[id] = [];
-                        seriesBuffer[id].push(seriesToWrite[id][i]);
-                        seriesBufferCounter++;
+    if (seriesBufferCounter > 15000) {
+        // if we have too many datapoints in buffer; we better writer them per id
+        adapter.log.info('Too many datapoints (' + seriesBufferCounter + ') to write at once; write per ID');
+        writeAllSeriesPerID(seriesToWrite);
+    }
+    else {
+        client.writeSeries(seriesToWrite, function (err, result) {
+            if (err) {
+                adapter.log.warn('Error on writeSeries: ' + err);
+                if (client.request.getHostsAvailable().length == 0) {
+                    adapter.log.info('Host not available, move all points back in the Buffer');
+                    // error caused InfluxDB client to remove the host from available for now
+                    for (var id in seriesToWrite) {
+                        for (var i = 0; i < seriesToWrite[id].length; i++) {
+                            if (!seriesBuffer[id]) seriesBuffer[id] = [];
+                            seriesBuffer[id].push(seriesToWrite[id][i]);
+                            seriesBufferCounter++;
+                        }
                     }
                 }
-            }
-            else if (err.message && (typeof err.message === 'string') && (err.message.indexOf('partial write') !== -1)) {
-                adapter.log.warn('All possisble datapoints were written, others can not really be corrected');
-            }
-            else {
-                adapter.log.debug('Try to write ' + Object.keys(seriesToWrite).length + ' Points separate to find the conflicting id');
-                // fallback and send data per id to find out problematic id!
-                for (var id in seriesToWrite) {
-                    (function(seriesId, points) {
-                        adapter.log.debug('writePoints for ' + seriesId);
-                        client.writePoints(seriesId, points, function(err) {
-                            if (err) {
-                                adapter.log.warn('Error on writePoints for ' + seriesId + ': ' + err);
-                                adapter.log.warn('Try to write ' + points.length + ' Points separate to find the conflicting one');
-                                // we found the conflicting id
-                                for (var i = 0; i < points.length; i++) {
-                                    (function(pointId, point) {
-                                        client.writePoint(pointId, point, null, function (err, result) {
-                                            if (err) {
-                                                adapter.log.warn('Error on writePoint("' + JSON.stringify(point) + '): ' + err + ' / ' + JSON.stringify(err.message));
-                                                if (err.message && (typeof err.message === 'string') && (err.message.indexOf('field type conflict') !== -1)) {
-                                                    // remember this as a pot. conflicing point and write synchronous
-                                                    conflictingPoints[pointId]=1;
-                                                    adapter.log.info('Add ' + pointId + ' to conflicting Points (' + Object.keys(conflictingPoints).length + ' now)');
-                                                }
-                                                else {
-                                                    if (! errorPoints[pointId]) errorPoints[pointId]=1;
-                                                        else errorPoints[pointId]++;
-                                                    if (errorPoints[pointId]<10) {
-                                                        // re-add that point to buffer to try write again
-                                                        adapter.log.info('Add point that had error for ' + pointId + ' to buffer again, error-count=' + errorPoints[pointId]);
-                                                        addPointToSeriesBuffer(pointId, point);
-                                                    }
-                                                    else errorPoints[pointId]=0;
-                                                }
-                                            }
-                                        });
-                                    })(seriesId,points[i][0]);
-                                }
-                            }
-                        });
-                    })(id, seriesToWrite[id]);
+                else if (err.message && (typeof err.message === 'string') && (err.message.indexOf('partial write') !== -1)) {
+                    adapter.log.warn('All possisble datapoints were written, others can not really be corrected');
+                }
+                else {
+                    adapter.log.debug('Try to write ' + Object.keys(seriesToWrite).length + ' Points separate to find the conflicting id');
+                    // fallback and send data per id to find out problematic id!
+                    writeAllSeriesPerID(seriesToWrite);
                 }
             }
-        }
-    });
+        });
+    }
+}
+
+function writeAllSeriesPerID(seriesToWrite) {
+  for (var id in seriesToWrite) {
+      writeSeriesPerID(id, seriesToWrite[id]);
+  }
+}
+
+function writeSeriesPerID(seriesId, points) {
+    adapter.log.debug('writePoints ' + points.length + ' for ' + seriesId);
+
+    if (points.length > 15000) {
+        adapter.log.info('Too many datapoints (' + points.length + ') for "' + seriesId + '" to write at once; write each single one');
+        writeSeriesPerID(seriesId, points.slice(0, 15000));
+        writeSeriesPerID(seriesId, points.slice(15000));
+    }
+    else {
+        client.writePoints(seriesId, points, function(err) {
+            if (err) {
+                adapter.log.warn('Error on writePoints for ' + seriesId + ': ' + err);
+                adapter.log.warn('Try to write ' + points.length + ' Points separate to find the conflicting one');
+                // we found the conflicting id
+                writePointsForID(seriesId, points);
+            }
+        });
+    }
+}
+
+function writePointsForID(seriesId, points) {
+    for (var i = 0; i < points.length; i++) {
+        (function(pointId, point) {
+            client.writePoint(pointId, point, null, function (err, result) {
+                if (err) {
+                    adapter.log.warn('Error on writePoint("' + JSON.stringify(point) + '): ' + err + ' / ' + JSON.stringify(err.message));
+                    if (err.message && (typeof err.message === 'string') && (err.message.indexOf('field type conflict') !== -1)) {
+                        // remember this as a pot. conflicing point and write synchronous
+                        conflictingPoints[pointId]=1;
+                        adapter.log.info('Add ' + pointId + ' to conflicting Points (' + Object.keys(conflictingPoints).length + ' now)');
+                    }
+                    else {
+                        if (! errorPoints[pointId]) errorPoints[pointId]=1;
+                            else errorPoints[pointId]++;
+                        if (errorPoints[pointId]<10) {
+                            // re-add that point to buffer to try write again
+                            adapter.log.info('Add point that had error for ' + pointId + ' to buffer again, error-count=' + errorPoints[pointId]);
+                            addPointToSeriesBuffer(pointId, point);
+                        }
+                        else errorPoints[pointId]=0;
+                    }
+                }
+            });
+        })(seriesId,points[i][0]);
+    }
 }
 
 function finish(callback) {
