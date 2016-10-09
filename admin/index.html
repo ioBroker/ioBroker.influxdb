@@ -60,6 +60,10 @@
         "Encrypt:":             {"en": "Encrypt:",              "de": "Verschlüsseln:",                 "ru": "Шифрование:"},
         "Test connection":      {"en": "Test connection",       "de": "Verbindung testen",              "ru": "Проверить соединение"},
         "Round real to":        {"en": "Round real to",         "de": "Aufrunden auf",                  "ru": "Округлять до"},
+        "Buffer Datapoints":    {"en": "Buffer Datapoints",     "de": "Schreibaktionen sammeln",        "ru": "Buffer Datapoints"},
+        "use 0 to not buffer at all":    {"en": "Use 0 to not buffer at all",     "de": "Wert 0 schreibt Werte direkt",        "ru": "Buse 0 to not buffer at all"},
+        "Buffer Flush Interval":    {"en": "Buffer Flush Interval",     "de": "Schreibintervall",       "ru": "Buffer Flush Interval"},
+        "Seconds":              {"en": "Seconds",               "de": "Sekunden",                       "ru": "Seconds"},
         "Are you sure? All data will be dropped.": {
             "en": "Are you sure? All data will be dropped.",
             "de": "Sind Sie sicher? ALLE Daten werden geöscht.",
@@ -324,6 +328,16 @@
             <td class="translate">Round real to</td>
             <td><input id="round" type="text" class="value"/></td>
             <td class="translate"></td>
+        </tr>
+        <tr>
+            <td class="translate">Buffer Datapoints</td>
+            <td><input id="seriesBufferMax" type="text" class="value"/></td>
+            <td class="translate">use 0 to not buffer at all</td>
+        </tr>
+        <tr>
+            <td class="translate">Buffer Flush Interval</td>
+            <td><input id="seriesBufferFlushInterval" type="text" class="value"/></td>
+            <td class="translate">Seconds</td>
         </tr>
         <tr><td colspan="3"><h4 class="translate">Default settings</h4></td></tr>
         <tr>

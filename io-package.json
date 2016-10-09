@@ -78,15 +78,17 @@
         }
     },
     "native": {
-        "debounce":  10000,
-        "retention": 31536000,
-        "dbname":    "iobroker",
-        "host":      "localhost",
-        "protocol":  "http",
-        "port":      8086,
-        "user":      "",
-        "password":  "",
-        "round":     4
+        "debounce":                  10000,
+        "retention":                 31536000,
+        "dbname":                    "iobroker",
+        "host":                      "localhost",
+        "protocol":                  "http",
+        "port":                      8086,
+        "user":                      "",
+        "password":                  "",
+        "round":                     4,
+        "seriesBufferMax":           0,
+        "seriesBufferFlushInterval": 600
     },
     "objects": [
         {
