@@ -183,6 +183,11 @@ The Message can have one of the following three formats:
 
 
 ## Changelog
+### 1.0.0 (2016-10-10)
+* (Apollon77) bulk write into DB
+* (Apollon77) buffer values if no connection to DB
+* (bluefox) connection indication
+
 ### 0.5.3 (2016-09-30)
 * (Apollon77) enhance and correct documentation
 * (Apollon77) implement "step" calculation for aggregation if only "count" is set

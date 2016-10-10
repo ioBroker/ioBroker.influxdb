@@ -60,10 +60,10 @@
         "Encrypt:":             {"en": "Encrypt:",              "de": "Verschlüsseln:",                 "ru": "Шифрование:"},
         "Test connection":      {"en": "Test connection",       "de": "Verbindung testen",              "ru": "Проверить соединение"},
         "Round real to":        {"en": "Round real to",         "de": "Aufrunden auf",                  "ru": "Округлять до"},
-        "Buffer Datapoints":    {"en": "Buffer Datapoints",     "de": "Schreibaktionen sammeln",        "ru": "Buffer Datapoints"},
-        "use 0 to not buffer at all":    {"en": "Use 0 to not buffer at all",     "de": "Wert 0 schreibt Werte direkt",        "ru": "Buse 0 to not buffer at all"},
-        "Buffer Flush Interval":    {"en": "Buffer Flush Interval",     "de": "Schreibintervall",       "ru": "Buffer Flush Interval"},
-        "Seconds":              {"en": "Seconds",               "de": "Sekunden",                       "ru": "Seconds"},
+        "Buffer Datapoints":    {"en": "Buffer Datapoints",     "de": "Schreibaktionen sammeln",        "ru": "Собирать значения для записи"},
+        "use 0 to not buffer at all":    {"en": "Use 0 to not buffer at all",     "de": "Wert 0 schreibt Werte direkt",        "ru": "Для деактвации буферизации введите 0"},
+        "Buffer Flush Interval":    {"en": "Buffer Flush Interval",     "de": "Schreibintervall",       "ru": "Интервал записи значений"},
+        "Seconds":              {"en": "Seconds",               "de": "Sekunden",                       "ru": "секунд"},
         "Are you sure? All data will be dropped.": {
             "en": "Are you sure? All data will be dropped.",
             "de": "Sind Sie sicher? ALLE Daten werden geöscht.",
@@ -75,7 +75,7 @@
 
     function setValue(id, value, onChange) {
         // example: select elements with id=key and class=value and insert value
-        if ($('#' + id + '.value').attr('type') == 'checkbox') {
+        if ($('#' + id + '.value').attr('type') === 'checkbox') {
             $('#' + id + '.value').prop('checked', value).change(function() {
                 onChange();
             });
@@ -148,10 +148,10 @@
             });
         });
         $('#dbtype').change(function () {
-            if ($(this).val() == 'sqlite') {
+            if ($(this).val() === 'sqlite') {
                 $('.real-sql').hide();
                 $('.baby-sql').show();
-            } else if ($(this).val() == 'mssql') {
+            } else if ($(this).val() === 'mssql') {
                 $('.real-sql').show();
                 $('.baby-sql').hide();
             } else {
@@ -187,14 +187,14 @@
             var $this = $(this);
             var id = $this.attr('id');
 
-            if ($this.attr('type') == 'checkbox') {
+            if ($this.attr('type') === 'checkbox') {
                 settings[id] = $this.prop('checked');
             } else {
                 settings[id] = $this.val();
            }
         });
 
-        if ($('#passwordConfirm').val() != $('#password').val()) {
+        if ($('#passwordConfirm').val() !== $('#password').val()) {
             showMessage(_('Password confirmation is not equal with password!'));
             return;
         }
