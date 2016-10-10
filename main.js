@@ -3,9 +3,12 @@
 'use strict';
 
 //noinspection JSUnresolvedFunction
-var utils  = require(__dirname + '/lib/utils'); // Get common adapter utils
-var influx = require('influx');
-var fs = require('fs');
+var utils     = require(__dirname + '/lib/utils'); // Get common adapter utils
+var influx    = require('influx');
+var fs        = require('fs');
+var path      = require('path');
+var dataDir   = path.normalize(utils.controllerDir + '/' + require(utils.controllerDir + '/lib/tools').getDefaultDataDir());
+var cacheFile = dataDir + 'influxdata.json';
 
 var subscribeAll        = false;
 var influxDPs           = {};
@@ -15,6 +18,7 @@ var seriesBufferCounter = 0;
 var seriesBuffer        = {};
 var conflictingPoints   = {};
 var errorPoints         = {};
+var connected           = null;
 
 var adapter = utils.adapter('influxdb');
 
@@ -33,7 +37,7 @@ adapter.on('objectChange', function (id, obj) {
             subscribeAll = true;
             adapter.subscribeForeignStates('*');
         }
-        // todo remove history somewhen (2016.08)
+        // todo remove history sometime (2016.08)
         influxDPs[id] = obj.common.custom || obj.common.history;
         adapter.log.info('enabled logging of ' + id);
     } else {
@@ -73,12 +77,19 @@ process.on('uncaughtException', function (err) {
     }
 });
 
+function setConnected(isConnected) {
+    if (connected !== isConnected) {
+        connected = isConnected;
+        adapter.setState('info.connected', connected, true);
+    }
+}
+
 function connect() {
     adapter.log.info('Connecting ' + adapter.config.protocol + '://' + adapter.config.host + ':' + adapter.config.port + ' ...');
 
     adapter.config.dbname = adapter.config.dbname || utils.appName;
 
-    adapter.config.seriesBufferMax = adapter.config.seriesBufferMax || 0;
+    adapter.config.seriesBufferMax = parseInt(adapter.config.seriesBufferMax, 10) || 0;
 
     client = influx({
         host:     adapter.config.host,
@@ -93,12 +104,14 @@ function connect() {
     client.getDatabaseNames(function (err, dbNames) {
         if (err) {
             adapter.log.error(err);
-        }
-        else {
+            setConnected(false);
+        } else {
+            setConnected(true);
             if (dbNames.indexOf(adapter.config.dbname) === -1) {
                 client.createDatabase(adapter.config.dbname, function (err) {
                     if (err) {
                         adapter.log.error(err);
+                        setConnected(false);
                     } else {
                         if (!err && adapter.config.retention) {
                             client.query('CREATE RETENTION POLICY "global" ON ' + adapter.config.dbname + ' DURATION ' + adapter.config.retention + 's REPLICATION 1 DEFAULT', function (err) {
@@ -198,7 +211,7 @@ function processMessage(msg) {
         generateDemo(msg);
     } else if (msg.command === 'query') {
         query(msg);
-    } else if (msg.command == 'storeState') {
+    } else if (msg.command === 'storeState') {
         storeState(msg);
     }
 }
@@ -228,6 +241,8 @@ function fixSelector(callback) {
 function main() {
     adapter.config.port = parseInt(adapter.config.port, 10) || 0;
 
+    setConnected(false);
+
     if (adapter.config.round !== null && adapter.config.round !== undefined) {
         adapter.config.round = Math.pow(10, parseInt(adapter.config.round, 10));
     } else {
@@ -236,20 +251,21 @@ function main() {
 
     adapter.config.seriesBufferFlushInterval = parseInt(adapter.config.seriesBufferFlushInterval, 10) || 600;
 
+    // analyse if by the last stop the values were cached into file
     try {
-        if (fs.statSync(__dirname + '/../../iobroker-data/iobroker.influxdata.json').isFile()) {
-            var fileContent = fs.readFileSync(__dirname + '/../../iobroker-data/iobroker.influxdata.json');
-            var tempData = JSON.parse(fileContent, function(key, value) {
+        if (fs.statSync(cacheFile).isFile()) {
+            var fileContent = fs.readFileSync(cacheFile);
+            var tempData = JSON.parse(fileContent, function (key, value) {
                 if (key === 'time') {
-                  return new Date(value);
+                    return new Date(value);
                 }
                 return value;
             });
             if (tempData.seriesBufferCounter) seriesBufferCounter = tempData.seriesBufferCounter;
-            if (tempData.seriesBuffer) seriesBuffer = tempData.seriesBuffer;
-            if (tempData.conflictingPoints) conflictingPoints = tempData.conflictingPoints;
+            if (tempData.seriesBuffer)        seriesBuffer        = tempData.seriesBuffer;
+            if (tempData.conflictingPoints)   conflictingPoints   = tempData.conflictingPoints;
             adapter.log.info('Buffer initialized with data for ' + seriesBufferCounter + ' points and ' + Object.keys(conflictingPoints).length + ' conflicts from last exit');
-            fs.unlinkSync(__dirname + '/../../iobroker-data/iobroker.influxdata.json');
+            fs.unlinkSync(cacheFile);
         }
     }
     catch (err) {
@@ -307,7 +323,7 @@ function main() {
     adapter.subscribeForeignObjects('*');
 
     // store all buffered data every x seconds to not lost the data
-    seriesBufferChecker = setInterval(storeBufferedSeries, adapter.config.seriesBufferFlushInterval*1000);
+    seriesBufferChecker = setInterval(storeBufferedSeries, adapter.config.seriesBufferFlushInterval * 1000);
 
     connect();
 }
@@ -388,16 +404,21 @@ function pushValueIntoDB(id, state) {
     };
 
     if ((conflictingPoints[id] || (adapter.config.seriesBufferMax === 0)) && (client.request) && (client.request.getHostsAvailable().length > 0)) {
-        if (adapter.config.seriesBufferMax !== 0)
+        if (adapter.config.seriesBufferMax !== 0) {
             adapter.log.debug('Direct writePoint("' + id + ' - ' + influxFields.value + ' / ' + influxFields.time + ')');
+        }
         client.writePoint(id, influxFields, null, function (err, result) {
             if (err) {
                 adapter.log.warn('writePoint("' + id + ' - ' + JSON.stringify(influxFields) + '): ' + err);
-                if (client.request.getHostsAvailable().length == 0) addPointToSeriesBuffer(id, influxFields);
+                if (client.request.getHostsAvailable().length === 0) {
+                    setConnected(false);
+                    addPointToSeriesBuffer(id, influxFields);
+                }
+            } else {
+                setConnected(true);
             }
         });
-    }
-    else {
+    } else {
         addPointToSeriesBuffer(id, influxFields);
     }
 }
@@ -416,6 +437,7 @@ function storeBufferedSeries() {
     if (Object.keys(seriesBuffer).length === 0) return;
 
     if (client.request.getHostsAvailable().length === 0) {
+        setConnected(false);
         adapter.log.info('No hosts available currently, try later');
         return;
     }
@@ -432,12 +454,12 @@ function storeBufferedSeries() {
         // if we have too many datapoints in buffer; we better writer them per id
         adapter.log.info('Too many datapoints (' + seriesBufferCounter + ') to write at once; write per ID');
         writeAllSeriesPerID(seriesToWrite);
-    }
-    else {
+    } else {
         client.writeSeries(seriesToWrite, function (err, result) {
             if (err) {
                 adapter.log.warn('Error on writeSeries: ' + err);
-                if (client.request.getHostsAvailable().length == 0) {
+                if (client.request.getHostsAvailable().length === 0) {
+                    setConnected(false);
                     adapter.log.info('Host not available, move all points back in the Buffer');
                     // error caused InfluxDB client to remove the host from available for now
                     for (var id in seriesToWrite) {
@@ -447,15 +469,15 @@ function storeBufferedSeries() {
                             seriesBufferCounter++;
                         }
                     }
-                }
-                else if (err.message && (typeof err.message === 'string') && (err.message.indexOf('partial write') !== -1)) {
-                    adapter.log.warn('All possisble datapoints were written, others can not really be corrected');
-                }
-                else {
+                } else if (err.message && (typeof err.message === 'string') && (err.message.indexOf('partial write') !== -1)) {
+                    adapter.log.warn('All possible datapoints were written, others can not really be corrected');
+                } else {
                     adapter.log.debug('Try to write ' + Object.keys(seriesToWrite).length + ' Points separate to find the conflicting id');
                     // fallback and send data per id to find out problematic id!
                     writeAllSeriesPerID(seriesToWrite);
                 }
+            } else {
+                setConnected(true);
             }
         });
     }
@@ -463,6 +485,7 @@ function storeBufferedSeries() {
 
 function writeAllSeriesPerID(seriesToWrite) {
   for (var id in seriesToWrite) {
+      if (!seriesToWrite.hasOwnProperty(id)) continue;
       writeSeriesPerID(id, seriesToWrite[id]);
   }
 }
@@ -474,8 +497,7 @@ function writeSeriesPerID(seriesId, points) {
         adapter.log.info('Too many datapoints (' + points.length + ') for "' + seriesId + '" to write at once; write each single one');
         writeSeriesPerID(seriesId, points.slice(0, 15000));
         writeSeriesPerID(seriesId, points.slice(15000));
-    }
-    else {
+    } else {
         client.writePoints(seriesId, points, function(err) {
             if (err) {
                 adapter.log.warn('Error on writePoints for ' + seriesId + ': ' + err);
@@ -489,42 +511,50 @@ function writeSeriesPerID(seriesId, points) {
 
 function writePointsForID(seriesId, points) {
     for (var i = 0; i < points.length; i++) {
-        (function(pointId, point) {
+        (function (pointId, point) {
             client.writePoint(pointId, point, null, function (err, result) {
                 if (err) {
                     adapter.log.warn('Error on writePoint("' + JSON.stringify(point) + '): ' + err + ' / ' + JSON.stringify(err.message));
                     if (err.message && (typeof err.message === 'string') && (err.message.indexOf('field type conflict') !== -1)) {
-                        // remember this as a pot. conflicing point and write synchronous
+                        // remember this as a pot. conflicting point and write synchronous
                         conflictingPoints[pointId]=1;
                         adapter.log.info('Add ' + pointId + ' to conflicting Points (' + Object.keys(conflictingPoints).length + ' now)');
-                    }
-                    else {
-                        if (! errorPoints[pointId]) errorPoints[pointId]=1;
-                            else errorPoints[pointId]++;
-                        if (errorPoints[pointId]<10) {
+                    } else {
+                        if (! errorPoints[pointId]) {
+                            errorPoints[pointId] = 1;
+                        } else {
+                            errorPoints[pointId]++;
+                        }
+                        if (errorPoints[pointId] < 10) {
                             // re-add that point to buffer to try write again
                             adapter.log.info('Add point that had error for ' + pointId + ' to buffer again, error-count=' + errorPoints[pointId]);
                             addPointToSeriesBuffer(pointId, point);
+                        } else {
+                            errorPoints[pointId] = 0;
                         }
-                        else errorPoints[pointId]=0;
                     }
                 }
             });
-        })(seriesId,points[i][0]);
+        })(seriesId, points[i][0]);
     }
 }
 
 function finish(callback) {
     if (seriesBufferChecker) clearInterval(seriesBufferChecker);
 
+    // write buffered values into cache file to process it by next start
     var fileData = {};
     fileData.seriesBufferCounter = seriesBufferCounter;
-    fileData.seriesBuffer = seriesBuffer;
-    fileData.conflictingPoints = conflictingPoints;
-    fs.writeFileSync(__dirname + '/../../iobroker-data/iobroker.influxdata.json',JSON.stringify(fileData));
+    fileData.seriesBuffer        = seriesBuffer;
+    fileData.conflictingPoints   = conflictingPoints;
+    fs.writeFileSync(cacheFile, JSON.stringify(fileData));
     adapter.log.warn('Store data for ' + fileData.seriesBufferCounter + ' points and ' + Object.keys(fileData.conflictingPoints).length + ' conflicts');
-    if (callback) callback();
-      else process.exit();
+
+    if (callback) {
+        callback();
+    } else {
+        process.exit();
+    }
 }
 
 function getHistory(msg) {
@@ -607,7 +637,7 @@ function getHistory(msg) {
 
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none') {
         if (!options.step) {
-            //calculate "step" based on differnce between start and end using count
+            // calculate "step" based on difference between start and end using count
             options.step = parseInt((options.end - options.start) / options.count, 10);
         }
         query += ' GROUP BY time(' + options.step + 'ms) fill(previous) LIMIT ' + options.limit;
@@ -619,7 +649,14 @@ function getHistory(msg) {
 
     // if specific id requested
     client.query(query, function (err, rows) {
-        if (err) adapter.log.error('getHistory: ' + err);
+        if (err) {
+            if (client.request.getHostsAvailable().length === 0) {
+                setConnected(false);
+            }
+            adapter.log.error('getHistory: ' + err);
+        } else {
+            setConnected(true);
+        }
 
         var result = [];
         if (rows && rows.length) {
@@ -744,12 +781,17 @@ function query(msg) {
 
         client.query(query, function (err, rows) {
             if (err) {
-              adapter.log.error('query: ' + err);
-              adapter.sendTo(msg.from, msg.command, {
-                  result: [],
-                  error:  'Invalid call'
-              }, msg.callback);
-              return;
+                if (client.request.getHostsAvailable().length === 0) {
+                    setConnected(false);
+                }
+                adapter.log.error('query: ' + err);
+                adapter.sendTo(msg.from, msg.command, {
+                        result: [],
+                        error:  'Invalid call'
+                    }, msg.callback);
+                return;
+            } else {
+                setConnected(true);
             }
 
             adapter.log.debug('result: ' + JSON.stringify(rows));
@@ -787,16 +829,14 @@ function storeState(msg) {
     }
 
     if (Array.isArray(msg.message)) {
-        for (i = 0;i < msg.message.length; i++) {
+        for (var i = 0; i < msg.message.length; i++) {
             pushValueIntoDB(msg.message[i].id, msg.message[i].state);
         }
-    }
-    else if (Array.isArray(msg.message.state)) {
-        for (i = 0;i < msg.message.state.length;i++) {
-            pushValueIntoDB(msg.message.id, msg.message.state[i]);
+    } else if (Array.isArray(msg.message.state)) {
+        for (var j = 0; j < msg.message.state.length; j++) {
+            pushValueIntoDB(msg.message.id, msg.message.state[j]);
         }
-    }
-    else {
+    } else {
         pushValueIntoDB(msg.message.id, msg.message.state);
     }
 

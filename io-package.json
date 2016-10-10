@@ -6,9 +6,14 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "0.5.3",
+        "version": "1.0.0",
         "title":                    "History with InfluxDB",
         "news": {
+            "1.0.0": {
+                "en": "bulk write into DB\nbuffer values if no connection to DB",
+                "de": "Massenschriben ins DB\nPuffer die Werte falls keine Verbindung mit DB",
+                "ru": "Запись нескольких значений за раз\nБуферизация значений, если нет соединения с базой"
+            },
             "0.5.3": {
                 "en": "enhance and correct documentation\nimplement step calculation for aggregation if only count is set",
                 "de": "Dokumentation erwitert\nSchrittkalkulation implementiert, falls nur count gesetzt ist",
@@ -90,6 +95,29 @@
         "seriesBufferMax":           0,
         "seriesBufferFlushInterval": 600
     },
+    "instanceObjects": [
+        {
+            "_id":  "info",
+            "type": "channel",
+            "common": {
+                "name": "Information"
+            },
+            "native": {}
+        },
+        {
+            "_id":  "info.connection",
+            "type": "state",
+            "common": {
+                "role":  "indicator.connected",
+                "name":  "If connected to InfluxDB",
+                "type":  "boolean",
+                "read":  true,
+                "write": false,
+                "def":   false
+            },
+            "native": {}
+        }
+    ],
     "objects": [
         {
             "_id": "_design/custom",
