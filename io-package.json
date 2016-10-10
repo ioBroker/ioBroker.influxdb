@@ -11,17 +11,17 @@
         "news": {
             "1.0.0": {
                 "en": "bulk write into DB\nbuffer values if no connection to DB",
-                "de": "Massenschriben ins DB\nPuffer die Werte falls keine Verbindung mit DB",
+                "de": "Massenschreiben in die DB\nPuffern der Werte falls keine Verbindung mit DB",
                 "ru": "Запись нескольких значений за раз\nБуферизация значений, если нет соединения с базой"
             },
             "0.5.3": {
                 "en": "enhance and correct documentation\nimplement step calculation for aggregation if only count is set",
-                "de": "Dokumentation erwitert\nSchrittkalkulation implementiert, falls nur count gesetzt ist",
+                "de": "Dokumentation erweitert\nSchrittkalkulation implementiert, falls nur count gesetzt ist",
                 "ru": "Исправлена документация\nВычисление шага, если задано только количество точек"
             },
             "0.5.2": {
                 "en": "change custom queries. Fix delete DB",
-                "de": "Korrigiert Anwenderanfragen und DB Löschen",
+                "de": "Anwenderanfragen und DB-Löschen korrigiert ",
                 "ru": "исправлены пользовательские запросы и удаление базы"
             },
             "0.5.1": {
