@@ -7,6 +7,7 @@ var utils     = require(__dirname + '/lib/utils'); // Get common adapter utils
 var influx    = require('influx');
 var fs        = require('fs');
 var path      = require('path');
+var Aggregate = require(__dirname + '/lib/aggregate.js');
 var dataDir   = path.normalize(utils.controllerDir + '/' + require(utils.controllerDir + '/lib/tools').getDefaultDataDir());
 var cacheFile = dataDir + 'influxdata.json';
 
@@ -15,6 +16,7 @@ var influxDPs           = {};
 var client;
 var seriesBufferChecker = null;
 var seriesBufferCounter = 0;
+var seriesBufferFlushPlanned = false;
 var seriesBuffer        = {};
 var conflictingPoints   = {};
 var errorPoints         = {};
@@ -323,7 +325,10 @@ function main() {
     adapter.subscribeForeignObjects('*');
 
     // store all buffered data every x seconds to not lost the data
-    seriesBufferChecker = setInterval(storeBufferedSeries, adapter.config.seriesBufferFlushInterval * 1000);
+    seriesBufferChecker = setInterval(function() {
+        seriesBufferFlushPlanned = true;
+        storeBufferedSeries();
+    }, adapter.config.seriesBufferFlushInterval * 1000);
 
     connect();
 }
@@ -377,6 +382,8 @@ function pushValueIntoDB(id, state) {
         return;
     }
 
+    if (state.val === null) return; // InfluxDB can not handle null values
+
     state.ts = parseInt(state.ts, 10);
 
     // if less 2000.01.01 00:00:00
@@ -400,7 +407,7 @@ function pushValueIntoDB(id, state) {
         time:  new Date(state.ts),
         from:  state.from,
         q:     state.q,
-        ack:   state.ack
+        ack:   !!state.ack
     };
 
     if ((conflictingPoints[id] || (adapter.config.seriesBufferMax === 0)) && (client.request) && (client.request.getHostsAvailable().length > 0)) {
@@ -427,9 +434,10 @@ function addPointToSeriesBuffer(id, stateObj) {
     if (!seriesBuffer[id]) seriesBuffer[id] = [];
     seriesBuffer[id].push([stateObj]);
     seriesBufferCounter++;
-    if ((seriesBufferCounter > adapter.config.seriesBufferMax) && (client.request) && (client.request.getHostsAvailable().length > 0)) {
+    if ((seriesBufferCounter > adapter.config.seriesBufferMax) && (client.request) && (client.request.getHostsAvailable().length > 0) && (!seriesBufferFlushPlanned)) {
         //flush out
-        storeBufferedSeries();
+        seriesBufferFlushPlanned = true;
+        setTimeout(storeBufferedSeries,0);
     }
 }
 
@@ -444,6 +452,7 @@ function storeBufferedSeries() {
     adapter.log.info('Store ' + seriesBufferCounter + ' buffered influxDB history points');
 
     var seriesToWrite = seriesBuffer;
+    seriesBufferFlushPlanned = false;
     seriesBuffer = {};
     seriesBufferCounter = 0;
 
@@ -463,6 +472,7 @@ function storeBufferedSeries() {
                     adapter.log.info('Host not available, move all points back in the Buffer');
                     // error caused InfluxDB client to remove the host from available for now
                     for (var id in seriesToWrite) {
+                        if (!seriesToWrite.hasOwnProperty(id)) continue;
                         for (var i = 0; i < seriesToWrite[id].length; i++) {
                             if (!seriesBuffer[id]) seriesBuffer[id] = [];
                             seriesBuffer[id].push(seriesToWrite[id][i]);
@@ -566,8 +576,9 @@ function getHistory(msg) {
         step:       parseInt(msg.message.options.step,  10) || null,
         count:      parseInt(msg.message.options.count, 10) || 500,
         aggregate:  msg.message.options.aggregate || 'average', // One of: max, min, average, total
-        limit:      msg.message.options.limit || adapter.config.limit || 2000,
+        limit:      parseInt(msg.message.options.limit || adapter.config.limit || 2000),
         addId:      msg.message.options.addId || false,
+        ignoreNull: true,
         sessionId:  msg.message.options.sessionId
     };
     var query = 'SELECT';
@@ -595,6 +606,7 @@ function getHistory(msg) {
 
             case 'none':
             case 'onchange':
+            case 'minmax':
                 query += ' value';
                 break;
 
@@ -635,13 +647,13 @@ function getHistory(msg) {
     if (options.start) query += " time > '" + new Date(options.start).toISOString() + "' AND ";
     query += " time < '" + new Date(options.end).toISOString() + "'";
 
-    if (options.aggregate !== 'onchange' && options.aggregate !== 'none') {
+    if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
         if (!options.step) {
             // calculate "step" based on difference between start and end using count
             options.step = parseInt((options.end - options.start) / options.count, 10);
         }
         query += ' GROUP BY time(' + options.step + 'ms) fill(previous) LIMIT ' + options.limit;
-    } else {
+    } else if (options.aggregate !== 'minmax') {
         query += ' LIMIT ' + options.count;
     }
 
@@ -661,7 +673,7 @@ function getHistory(msg) {
         var result = [];
         if (rows && rows.length) {
             for (var rr = rows[0].length - 1; rr >= 0; rr--) {
-                if (rows[0][rr].val === undefined) {
+                if ((rows[0][rr].val === undefined) &&  (rows[0][rr].value !== undefined)) {
                     rows[0][rr].val = rows[0][rr].value;
                     delete rows[0][rr].value;
                 }
@@ -671,6 +683,13 @@ function getHistory(msg) {
                 if (options.addId) rows[0][rr].id = msg.message.id;
             }
             result = rows[0];
+        }
+
+        if ((result.length > 0) && (options.aggregate === 'minmax')) {
+            Aggregate.initAggregate(options);
+            Aggregate.aggregation(options, result);
+            Aggregate.finishAggregation(options);
+            result = options.result;
         }
 
         adapter.sendTo(msg.from, msg.command, {
