@@ -6,9 +6,14 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.0.0",
+        "version": "1.0.1",
         "title":                    "History with InfluxDB",
         "news": {
+            "1.0.1": {
+                "en": "changed storing values to asynchronous way\nadd support for „minmax“ aggregate type on getHistory",
+                "de": "Async Speichernvon Werten\nUnterstützung von minmax für getHistory",
+                "ru": "сохранение данных асинхронно\nподдержка minmax в getHistory"
+            },
             "1.0.0": {
                 "en": "bulk write into DB\nbuffer values if no connection to DB",
                 "de": "Massenschreiben in die DB\nPuffern der Werte falls keine Verbindung mit DB",
