@@ -183,6 +183,10 @@ The Message can have one of the following three formats:
 
 
 ## Changelog
+### 1.0.1 (2016-10-18)
+* (Apollon77) changed storing values to asynchronous way
+* (Apollon77) add support for „minmax“ aggregate type on getHistory
+
 ### 1.0.0 (2016-10-10)
 * (Apollon77) bulk write into DB
 * (Apollon77) buffer values if no connection to DB

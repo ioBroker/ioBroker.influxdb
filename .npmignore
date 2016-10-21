@@ -1,3 +1,5 @@
 Gruntfile.js
 tasks
 exe
+.idea
+.git
