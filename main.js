@@ -382,7 +382,7 @@ function pushValueIntoDB(id, state) {
         return;
     }
 
-    if (state.val === null) return; // InfluxDB can not handle null values
+    if ((state.val === null) || (state.val === undefined)) return; // InfluxDB can not handle null/non-existing values
 
     state.ts = parseInt(state.ts, 10);
 
@@ -444,6 +444,8 @@ function addPointToSeriesBuffer(id, stateObj) {
 function storeBufferedSeries() {
     if (Object.keys(seriesBuffer).length === 0) return;
 
+    if (seriesBufferChecker) clearInterval(seriesBufferChecker);
+
     if (client.request.getHostsAvailable().length === 0) {
         setConnected(false);
         adapter.log.info('No hosts available currently, try later');
@@ -451,52 +453,52 @@ function storeBufferedSeries() {
     }
     adapter.log.info('Store ' + seriesBufferCounter + ' buffered influxDB history points');
 
-    var seriesToWrite = seriesBuffer;
-    seriesBufferFlushPlanned = false;
-    seriesBuffer = {};
-    seriesBufferCounter = 0;
-
-    if (seriesBufferChecker) clearInterval(seriesBufferChecker);
-    seriesBufferChecker = setInterval(storeBufferedSeries, adapter.config.seriesBufferFlushInterval*1000);
-
     if (seriesBufferCounter > 15000) {
         // if we have too many datapoints in buffer; we better writer them per id
         adapter.log.info('Too many datapoints (' + seriesBufferCounter + ') to write at once; write per ID');
-        writeAllSeriesPerID(seriesToWrite);
+        writeAllSeriesPerID(seriesBuffer);
     } else {
-        client.writeSeries(seriesToWrite, function (err, result) {
-            if (err) {
-                adapter.log.warn('Error on writeSeries: ' + err);
-                if (client.request.getHostsAvailable().length === 0) {
-                    setConnected(false);
-                    adapter.log.info('Host not available, move all points back in the Buffer');
-                    // error caused InfluxDB client to remove the host from available for now
-                    for (var id in seriesToWrite) {
-                        if (!seriesToWrite.hasOwnProperty(id)) continue;
-                        for (var i = 0; i < seriesToWrite[id].length; i++) {
-                            if (!seriesBuffer[id]) seriesBuffer[id] = [];
-                            seriesBuffer[id].push(seriesToWrite[id][i]);
-                            seriesBufferCounter++;
-                        }
-                    }
-                } else if (err.message && (typeof err.message === 'string') && (err.message.indexOf('partial write') !== -1)) {
-                    adapter.log.warn('All possible datapoints were written, others can not really be corrected');
-                } else {
-                    adapter.log.debug('Try to write ' + Object.keys(seriesToWrite).length + ' Points separate to find the conflicting id');
-                    // fallback and send data per id to find out problematic id!
-                    writeAllSeriesPerID(seriesToWrite);
-                }
-            } else {
-                setConnected(true);
-            }
-        });
+        writeAllSeriesAtOnce(seriesBuffer);
     }
+    seriesBuffer = {};
+    seriesBufferCounter = 0;
+    seriesBufferFlushPlanned = false;
+    seriesBufferChecker = setInterval(storeBufferedSeries, adapter.config.seriesBufferFlushInterval*1000);
 }
 
-function writeAllSeriesPerID(seriesToWrite) {
-  for (var id in seriesToWrite) {
-      if (!seriesToWrite.hasOwnProperty(id)) continue;
-      writeSeriesPerID(id, seriesToWrite[id]);
+function writeAllSeriesAtOnce(series) {
+    client.writeSeries(series, function (err, result) {
+        if (err) {
+            adapter.log.warn('Error on writeSeries: ' + err);
+            if (client.request.getHostsAvailable().length === 0) {
+                setConnected(false);
+                adapter.log.info('Host not available, move all points back in the Buffer');
+                // error caused InfluxDB client to remove the host from available for now
+                for (var id in series) {
+                    if (!series.hasOwnProperty(id)) continue;
+                    for (var i = 0; i < series[id].length; i++) {
+                        if (!seriesBuffer[id]) seriesBuffer[id] = [];
+                        seriesBuffer[id].push(series[id][i]);
+                        seriesBufferCounter++;
+                    }
+                }
+            } else if (err.message && (typeof err.message === 'string') && (err.message.indexOf('partial write') !== -1)) {
+                adapter.log.warn('All possible datapoints were written, others can not really be corrected');
+            } else {
+                adapter.log.info('Try to write ' + Object.keys(series).length + ' Points separate to find the conflicting id');
+                // fallback and send data per id to find out problematic id!
+                writeAllSeriesPerID(series);
+            }
+        } else {
+            setConnected(true);
+        }
+    });
+}
+
+function writeAllSeriesPerID(series) {
+  for (var id in series) {
+      if (!series.hasOwnProperty(id)) continue;
+      writeSeriesPerID(id, series[id]);
   }
 }
 
@@ -528,7 +530,7 @@ function writePointsForID(seriesId, points) {
                     if (err.message && (typeof err.message === 'string') && (err.message.indexOf('field type conflict') !== -1)) {
                         // remember this as a pot. conflicting point and write synchronous
                         conflictingPoints[pointId]=1;
-                        adapter.log.info('Add ' + pointId + ' to conflicting Points (' + Object.keys(conflictingPoints).length + ' now)');
+                        adapter.log.warn('Add ' + pointId + ' to conflicting Points (' + Object.keys(conflictingPoints).length + ' now)');
                     } else {
                         if (! errorPoints[pointId]) {
                             errorPoints[pointId] = 1;
