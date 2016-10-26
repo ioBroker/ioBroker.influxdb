@@ -213,10 +213,25 @@ function processMessage(msg) {
         generateDemo(msg);
     } else if (msg.command === 'query') {
         query(msg);
+    } else if (msg.command === 'getConflictingPoints') {
+        getConflictingPoints(msg);
+    } else if (msg.command === 'resetConflictingPoints') {
+        resetConflictingPoints(msg);
     } else if (msg.command === 'storeState') {
         storeState(msg);
     }
 }
+
+function getConflictingPoints(msg) {
+    return adapter.sendTo(msg.from, msg.command, {conflictingPoints: conflictingPoints}, msg.callback);
+}
+
+function resetConflictingPoints(msg) {
+    var resultMsg = {reset: true, conflictingPoints: conflictingPoints}
+    conflictingPoints = {};
+    return adapter.sendTo(msg.from, msg.command, resultMsg, msg.callback);
+}
+
 
 function fixSelector(callback) {
     // fix _design/custom object
@@ -382,7 +397,7 @@ function pushValueIntoDB(id, state) {
         return;
     }
 
-    if ((state.val === null) || (state.val === undefined)) return; // InfluxDB can not handle null/non-existing values
+    if ((state.val === null) || (state.val === undefined) || (isNaN(state.val))) return; // InfluxDB can not handle null/non-existing values
 
     state.ts = parseInt(state.ts, 10);
 
@@ -444,13 +459,14 @@ function addPointToSeriesBuffer(id, stateObj) {
 function storeBufferedSeries() {
     if (Object.keys(seriesBuffer).length === 0) return;
 
-    if (seriesBufferChecker) clearInterval(seriesBufferChecker);
-
     if (client.request.getHostsAvailable().length === 0) {
         setConnected(false);
         adapter.log.info('No hosts available currently, try later');
+        seriesBufferFlushPlanned = false;
         return;
     }
+    if (seriesBufferChecker) clearInterval(seriesBufferChecker);
+
     adapter.log.info('Store ' + seriesBufferCounter + ' buffered influxDB history points');
 
     if (seriesBufferCounter > 15000) {
@@ -861,5 +877,10 @@ function storeState(msg) {
         pushValueIntoDB(msg.message.id, msg.message.state);
     }
 
-    adapter.sendTo(msg.from, msg.command, 'stored', msg.callback);
+    adapter.sendTo(msg.from, msg.command, {
+        success: true,
+        connected: connected,
+        seriesBufferCounter: seriesBufferCounter,
+        seriesBufferFlushPlanned: seriesBufferFlushPlanned
+    }, msg.callback);
 }
