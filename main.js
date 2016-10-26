@@ -512,14 +512,13 @@ function writeAllSeriesAtOnce(series) {
 }
 
 function writeAllSeriesPerID(series) {
-  for (var id in series) {
-      if (!series.hasOwnProperty(id)) continue;
-      writeSeriesPerID(id, series[id]);
-  }
+    for (var id in series) {
+        writeSeriesPerID(id, series[id]);
+    }
 }
 
 function writeSeriesPerID(seriesId, points) {
-    adapter.log.debug('writePoints ' + points.length + ' for ' + seriesId);
+    adapter.log.info('writePoints ' + points.length + ' for ' + seriesId + ' at once');
 
     if (points.length > 15000) {
         adapter.log.info('Too many datapoints (' + points.length + ') for "' + seriesId + '" to write at once; write each single one');
@@ -538,6 +537,8 @@ function writeSeriesPerID(seriesId, points) {
 }
 
 function writePointsForID(seriesId, points) {
+    adapter.log.info('writePoint ' + points.length + ' for ' + seriesId + ' separate');
+
     for (var i = 0; i < points.length; i++) {
         (function (pointId, point) {
             client.writePoint(pointId, point, null, function (err, result) {
