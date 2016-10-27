@@ -213,10 +213,25 @@ function processMessage(msg) {
         generateDemo(msg);
     } else if (msg.command === 'query') {
         query(msg);
+    } else if (msg.command === 'getConflictingPoints') {
+        getConflictingPoints(msg);
+    } else if (msg.command === 'resetConflictingPoints') {
+        resetConflictingPoints(msg);
     } else if (msg.command === 'storeState') {
         storeState(msg);
     }
 }
+
+function getConflictingPoints(msg) {
+    return adapter.sendTo(msg.from, msg.command, {conflictingPoints: conflictingPoints}, msg.callback);
+}
+
+function resetConflictingPoints(msg) {
+    var resultMsg = {reset: true, conflictingPoints: conflictingPoints}
+    conflictingPoints = {};
+    return adapter.sendTo(msg.from, msg.command, resultMsg, msg.callback);
+}
+
 
 function fixSelector(callback) {
     // fix _design/custom object
@@ -382,7 +397,7 @@ function pushValueIntoDB(id, state) {
         return;
     }
 
-    if ((state.val === null) || (state.val === undefined)) return; // InfluxDB can not handle null/non-existing values
+    if ((state.val === null) || (state.val === undefined) || (isNaN(state.val))) return; // InfluxDB can not handle null/non-existing values
 
     state.ts = parseInt(state.ts, 10);
 
@@ -444,13 +459,14 @@ function addPointToSeriesBuffer(id, stateObj) {
 function storeBufferedSeries() {
     if (Object.keys(seriesBuffer).length === 0) return;
 
-    if (seriesBufferChecker) clearInterval(seriesBufferChecker);
-
     if (client.request.getHostsAvailable().length === 0) {
         setConnected(false);
         adapter.log.info('No hosts available currently, try later');
+        seriesBufferFlushPlanned = false;
         return;
     }
+    if (seriesBufferChecker) clearInterval(seriesBufferChecker);
+
     adapter.log.info('Store ' + seriesBufferCounter + ' buffered influxDB history points');
 
     if (seriesBufferCounter > 15000) {
@@ -496,14 +512,13 @@ function writeAllSeriesAtOnce(series) {
 }
 
 function writeAllSeriesPerID(series) {
-  for (var id in series) {
-      if (!series.hasOwnProperty(id)) continue;
-      writeSeriesPerID(id, series[id]);
-  }
+    for (var id in series) {
+        writeSeriesPerID(id, series[id]);
+    }
 }
 
 function writeSeriesPerID(seriesId, points) {
-    adapter.log.debug('writePoints ' + points.length + ' for ' + seriesId);
+    adapter.log.info('writePoints ' + points.length + ' for ' + seriesId + ' at once');
 
     if (points.length > 15000) {
         adapter.log.info('Too many datapoints (' + points.length + ') for "' + seriesId + '" to write at once; write each single one');
@@ -522,6 +537,8 @@ function writeSeriesPerID(seriesId, points) {
 }
 
 function writePointsForID(seriesId, points) {
+    adapter.log.info('writePoint ' + points.length + ' for ' + seriesId + ' separate');
+
     for (var i = 0; i < points.length; i++) {
         (function (pointId, point) {
             client.writePoint(pointId, point, null, function (err, result) {
@@ -861,5 +878,10 @@ function storeState(msg) {
         pushValueIntoDB(msg.message.id, msg.message.state);
     }
 
-    adapter.sendTo(msg.from, msg.command, 'stored', msg.callback);
+    adapter.sendTo(msg.from, msg.command, {
+        success: true,
+        connected: connected,
+        seriesBufferCounter: seriesBufferCounter,
+        seriesBufferFlushPlanned: seriesBufferFlushPlanned
+    }, msg.callback);
 }
