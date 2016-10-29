@@ -3,3 +3,4 @@ tasks
 exe
 .idea
 .git
+node_modules

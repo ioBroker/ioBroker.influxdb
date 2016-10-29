@@ -352,7 +352,7 @@ function main() {
     adapter.subscribeForeignObjects('*');
 
     // store all buffered data every x seconds to not lost the data
-    seriesBufferChecker = setInterval(function() {
+    seriesBufferChecker = setInterval(function () {
         seriesBufferFlushPlanned = true;
         storeBufferedSeries();
     }, adapter.config.seriesBufferFlushInterval * 1000);
@@ -370,9 +370,8 @@ function pushHistory(id, state) {
         if (influxDPs[id].state && settings.changesOnly) {
             if (settings.changesRelogInterval === 0) {
                 if (state.ts !== state.lc) return;
-            }
-            else if (influxDPs[id].lastLogTime) {
-                if ((state.ts !== state.lc) && (Math.abs(influxDPs[id].lastLogTime - state.ts) < settings.changesRelogInterval*1000)) return;
+            } else if (influxDPs[id].lastLogTime) {
+                if ((state.ts !== state.lc) && (Math.abs(influxDPs[id].lastLogTime - state.ts) < settings.changesRelogInterval * 1000)) return;
                 if (state.ts !== state.lc) {
                     adapter.log.debug('relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
                 }
@@ -541,7 +540,7 @@ function writeAllSeriesPerID(series) {
 }
 
 function writeSeriesPerID(seriesId, points) {
-    adapter.log.info('writePoints ' + points.length + ' for ' + seriesId + ' at once');
+    adapter.log.debug('writePoints ' + points.length + ' for ' + seriesId + ' at once');
 
     if (points.length > 15000) {
         adapter.log.info('Too many datapoints (' + points.length + ') for "' + seriesId + '" to write at once; write each single one');
@@ -560,7 +559,7 @@ function writeSeriesPerID(seriesId, points) {
 }
 
 function writePointsForID(seriesId, points) {
-    adapter.log.info('writePoint ' + points.length + ' for ' + seriesId + ' separate');
+    adapter.log.debug('writePoint ' + points.length + ' for ' + seriesId + ' separate');
 
     for (var i = 0; i < points.length; i++) {
         (function (pointId, point) {
@@ -715,7 +714,7 @@ function getHistory(msg) {
         var result = [];
         if (rows && rows.length) {
             for (var rr = rows[0].length - 1; rr >= 0; rr--) {
-                if ((rows[0][rr].val === undefined) &&  (rows[0][rr].value !== undefined)) {
+                if ((rows[0][rr].val === undefined) && (rows[0][rr].value !== undefined)) {
                     rows[0][rr].val = rows[0][rr].value;
                     delete rows[0][rr].value;
                 }
@@ -902,9 +901,9 @@ function storeState(msg) {
     }
 
     adapter.sendTo(msg.from, msg.command, {
-        success: true,
-        connected: connected,
-        seriesBufferCounter: seriesBufferCounter,
+        success:                  true,
+        connected:                connected,
+        seriesBufferCounter:      seriesBufferCounter,
         seriesBufferFlushPlanned: seriesBufferFlushPlanned
     }, msg.callback);
 }

@@ -32,7 +32,11 @@
             "ru": "Сначала надо активировать драйвер"
         },
         "debounce":             {"en": "De-bounce interval(ms)", "de": "Entprellzeit(ms)",              "ru": "Минимальный интервал(ms)"},
-        "log changes interval(s)": {"en": "Log unchanged values any(s)", "de": "Gleiche Werte aufzeichnen(s)",            "ru": "Log unchanged values any(s)"},
+        "log changes interval(s)": {
+            "en": "Log unchanged values any(s)",
+            "de": "Gleiche Werte aufzeichnen(s)",
+            "ru": "Запись неизменённых значений каждые (сек)"
+        },
         "retention":            {"en": "Storage retention",     "de": "Storage Vorhaltezeit",           "ru": "Время хранения в базе"},
         "keep forever":         {"en": "keep forever",          "de": "keine automatische Löschung",    "ru": "хранить вечно"},
         "2 years":              {"en": "2 years",               "de": "2 Jahre",                        "ru": "2 года"},
@@ -62,8 +66,12 @@
         "Test connection":      {"en": "Test connection",       "de": "Verbindung testen",              "ru": "Проверить соединение"},
         "Round real to":        {"en": "Round real to",         "de": "Aufrunden auf",                  "ru": "Округлять до"},
         "Buffer Datapoints":    {"en": "Buffer Datapoints",     "de": "Schreibaktionen sammeln",        "ru": "Собирать значения для записи"},
-        "use 0 to not buffer at all":    {"en": "Use 0 to not buffer at all",     "de": "Wert 0 schreibt Werte direkt",        "ru": "Для деактвации буферизации введите 0"},
-        "Buffer Flush Interval":    {"en": "Buffer Flush Interval",     "de": "Schreibintervall",       "ru": "Интервал записи значений"},
+        "use 0 to not buffer at all": {
+            "en": "Use 0 to not buffer at all",
+            "de": "Wert 0 schreibt Werte direkt",
+            "ru": "Для деактвации буферизации введите 0"
+        },
+        "Buffer Flush Interval": {"en": "Buffer Flush Interval", "de": "Schreibintervall",              "ru": "Интервал записи значений"},
         "Seconds":              {"en": "Seconds",               "de": "Sekunden",                       "ru": "секунд"},
         "Are you sure? All data will be dropped.": {
             "en": "Are you sure? All data will be dropped.",
@@ -77,7 +85,7 @@
     function setValue(id, value, onChange) {
         // example: select elements with id=key and class=value and insert value
         if ($('#' + id + '.value').attr('type') === 'checkbox') {
-            $('#' + id + '.value').prop('checked', value).change(function() {
+            $('#' + id + '.value').prop('checked', value).change(function () {
                 onChange();
             });
         } else {
