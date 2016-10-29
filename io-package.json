@@ -6,9 +6,14 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.0.1",
+        "version": "1.1.0",
         "title":                    "History with InfluxDB",
         "news": {
+            "1.1.0": {
+                "en": "optimizations and enhancements for high traffic situations\nBugfix if InfluxDB is unavailable\nadd functions getConflictingPoints and resetConflictingPoints\nadd option to re-log unchanged values to make it easier for visualization",
+                "de": "Optimierungen und Verbesserungen für High-Traffic-Situationen\nBugfix falls InfluxDB nicht mehr verfügbar ist\nNeue Funktionen getConflictingPoints und resetConflictingPoints hinzugefügt\nNeue Option hinzugefügt um nicht-geänderte Werte in definierten Abständen zu loggen um Visualisierungen einfacher zu machen.",
+                "ru": "optimizations and enhancements for high traffic situations\nBugfix if InfluxDB is unavailable\nadd functions getConflictingPoints and resetConflictingPoints\nadd option to re-log unchanged values to make it easier for visualization"
+            },
             "1.0.1": {
                 "en": "changed storing values to asynchronous way\nadd support for „minmax“ aggregate type on getHistory",
                 "de": "Async Speichernvon Werten\nUnterstützung von minmax für getHistory",
@@ -98,7 +103,8 @@
         "password":                  "",
         "round":                     4,
         "seriesBufferMax":           0,
-        "seriesBufferFlushInterval": 600
+        "seriesBufferFlushInterval": 600,
+        "changesRelogInterval":      0
     },
     "instanceObjects": [
         {

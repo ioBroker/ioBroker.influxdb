@@ -15,6 +15,15 @@
                 <td></td>
                 <td></td>
                 <td></td>
+                <td class="translate">log changes interval(s)</td>
+                <td><input type="number" data-field="changesRelogInterval" min="0" max="86400000" data-default="0"></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
                 <td class="translate">Storage retention</td>
                 <td>
                     <select data-field="retention" data-default="31536000">
@@ -41,21 +50,22 @@
 <!-- translations -->
 <script type="text/javascript">
     systemDictionary = $.extend(systemDictionary, {
-        "enabled":                {"en": "enabled",               "de": "Aktiviert",                    "ru": "активно"},
-        "De-bounce interval(ms)": {"en": "De-bounce interval(ms)", "de": "Entprellzeit(ms)",            "ru": "Минимальный интервал(ms)"},
-        "log changes only":       {"en": "log changes only",      "de": "Nur Änderungen aufzeichnen",   "ru": "Только изменения"},
-        "Storage retention":      {"en": "Storage retention",     "de": "Storage Vorhaltezeit",         "ru": "Сохранять в базе файле"},
-        "keep forever":           {"en": "keep forever",          "de": "keine automatische Löschung",  "ru": "хранить вечно"},
-        "2 years":                {"en": "2 years",               "de": "2 Jahre",                      "ru": "2 года"},
-        "1 year":                 {"en": "1 year",                "de": "1 Jahr",                       "ru": "1 год"},
-        "6 months":               {"en": "6 months",              "de": "6 Monate",                     "ru": "6 месяцев"},
-        "3 months":               {"en": "3 months",              "de": "3 Monate",                     "ru": "3 месяца"},
-        "1 months":               {"en": "1 months",              "de": "1 Monat",                      "ru": "1 месяц"},
-        "2 weeks":                {"en": "2 weeks",               "de": "2 Wochen",                     "ru": "2 недели"},
-        "1 week":                 {"en": "1 week",                "de": "1 Woche",                      "ru": "1 неделя"},
-        "5 days":                 {"en": "5 days",                "de": "5 Tage",                       "ru": "5 дней"},
-        "3 days":                 {"en": "3 days",                "de": "3 Tage",                       "ru": "3 дня"},
-        "1 day":                  {"en": "1 day",                 "de": "1 Tag",                        "ru": "1 день"}
+        "enabled":                 {"en": "enabled",               "de": "Aktiviert",                    "ru": "активно"},
+        "De-bounce interval(ms)":  {"en": "De-bounce interval(ms)", "de": "Entprellzeit(ms)",            "ru": "Минимальный интервал(ms)"},
+        "log changes interval(s)": {"en": "Log unchanged values any(s)", "de": "Gleiche Werte aufzeichnen(s)",            "ru": "Log unchanged values any(s)"},
+        "log changes only":        {"en": "log changes only",      "de": "Nur Änderungen aufzeichnen",   "ru": "Только изменения"},
+        "Storage retention":       {"en": "Storage retention",     "de": "Storage Vorhaltezeit",         "ru": "Сохранять в базе файле"},
+        "keep forever":            {"en": "keep forever",          "de": "keine automatische Löschung",  "ru": "хранить вечно"},
+        "2 years":                 {"en": "2 years",               "de": "2 Jahre",                      "ru": "2 года"},
+        "1 year":                  {"en": "1 year",                "de": "1 Jahr",                       "ru": "1 год"},
+        "6 months":                {"en": "6 months",              "de": "6 Monate",                     "ru": "6 месяцев"},
+        "3 months":                {"en": "3 months",              "de": "3 Monate",                     "ru": "3 месяца"},
+        "1 months":                {"en": "1 months",              "de": "1 Monat",                      "ru": "1 месяц"},
+        "2 weeks":                 {"en": "2 weeks",               "de": "2 Wochen",                     "ru": "2 недели"},
+        "1 week":                  {"en": "1 week",                "de": "1 Woche",                      "ru": "1 неделя"},
+        "5 days":                  {"en": "5 days",                "de": "5 Tage",                       "ru": "5 дней"},
+        "3 days":                  {"en": "3 days",                "de": "3 Tage",                       "ru": "3 дня"},
+        "1 day":                   {"en": "1 day",                 "de": "1 Tag",                        "ru": "1 день"}
     });
     // There are two ways how to predefine default settings:
     // - with attribute "data-default" (content independent)
@@ -68,14 +78,16 @@
                     enabled:     false,
                     changesOnly: false,
                     debounce:    0,
-                    retention:   instanceObj.native.retention
+                    retention:   instanceObj.native.retention,
+                    changesRelogInterval: 0
                 };
             }
             return {
                 enabled:     false,
                 changesOnly: true,
                 debounce:    instanceObj.native.debounce,
-                retention:   instanceObj.native.retention
+                retention:   instanceObj.native.retention,
+                changesRelogInterval: instanceObj.native.changesRelogInterval
             };
         }
     }
