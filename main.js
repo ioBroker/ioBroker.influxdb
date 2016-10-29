@@ -374,7 +374,7 @@ function pushHistory(id, state) {
             else if (influxDPs[id].lastLogTime) {
                 if ((state.ts !== state.lc) && (Math.abs(influxDPs[id].lastLogTime - state.ts) < settings.changesRelogInterval*1000)) return;
                 if (state.ts !== state.lc) {
-                    adapter.log.info('relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
+                    adapter.log.debug('relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
                 }
             }
         }
