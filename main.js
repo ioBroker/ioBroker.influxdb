@@ -265,6 +265,11 @@ function main() {
     } else {
         adapter.config.round = null;
     }
+    if (adapter.config.changesRelogInterval !== null && adapter.config.changesRelogInterval !== undefined) {
+        adapter.config.changesRelogInterval = parseInt(adapter.config.changesRelogInterval, 10);
+    } else {
+        adapter.config.changesRelogInterval = 0;
+    }
 
     adapter.config.seriesBufferFlushInterval = parseInt(adapter.config.seriesBufferFlushInterval, 10) || 600;
 
@@ -316,7 +321,14 @@ function main() {
                             } else {
                                 influxDPs[id][adapter.namespace].debounce = adapter.config.debounce;
                             }
+
                             influxDPs[id][adapter.namespace].changesOnly = influxDPs[id][adapter.namespace].changesOnly === 'true' || influxDPs[id][adapter.namespace].changesOnly === true;
+
+                            if (influxDPs[id][adapter.namespace].changesRelogInterval !== undefined && influxDPs[id][adapter.namespace].changesRelogInterval !== null && influxDPs[id][adapter.namespace].changesRelogInterval !== '') {
+                                influxDPs[id][adapter.namespace].changesRelogInterval = parseInt(influxDPs[id][adapter.namespace].changesRelogInterval, 10) || 0;
+                            } else {
+                                influxDPs[id][adapter.namespace].changesRelogInterval = adapter.config.changesRelogInterval;
+                            }
 
                             // add one day if retention is too small
                             if (influxDPs[id][adapter.namespace].retention <= 604800) {
@@ -355,11 +367,22 @@ function pushHistory(id, state) {
 
         if (!settings || !state) return;
 
-        if (influxDPs[id].state && settings.changesOnly && (state.ts !== state.lc)) return;
+        if (influxDPs[id].state && settings.changesOnly) {
+            if (settings.changesRelogInterval === 0) {
+                if (state.ts !== state.lc) return;
+            }
+            else if (influxDPs[id].lastLogTime) {
+                if ((state.ts !== state.lc) && (Math.abs(influxDPs[id].lastLogTime - state.ts) < settings.changesRelogInterval*1000)) return;
+                if (state.ts !== state.lc) {
+                    adapter.log.info('relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
+                }
+            }
+        }
 
         influxDPs[id].state = state;
+        influxDPs[id].lastLogTime = state.ts;
 
-        // Do not store values ofter than 1 second
+        // Do not store values ofter than debounce time
         if (!influxDPs[id].timeout && settings.debounce) {
             influxDPs[id].timeout = setTimeout(pushHelper, settings.debounce, id);
         } else if (!settings.debounce) {
