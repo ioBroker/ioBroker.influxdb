@@ -183,6 +183,13 @@ The Message can have one of the following three formats:
 
 
 ## Changelog
+
+### 1.1.0 (2016-10-29)
+* (Apollon77) add option to re-log unchanged values to make it easier for visualization
+* (Apollon77) optimizations and enhancements for high traffic situations
+* (Apollon77) Bugfix if InfluxDB is unavailable
+* (Apollon77) add functions getConflictingPoints and resetConflictingPoints
+
 ### 1.0.1 (2016-10-18)
 * (Apollon77) changed storing values to asynchronous way
 * (Apollon77) add support for „minmax“ aggregate type on getHistory
