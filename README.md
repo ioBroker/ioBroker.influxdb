@@ -183,6 +183,11 @@ The Message can have one of the following three formats:
 
 
 ## Changelog
+### 1.2.0 (2016-11-05)
+* (Apollon77) support re-logging also for states that are not updated often (timed relog using relog-Interval)
+* (Apollon77) try to solve easy type conflicts and convert float <--> boolean if needed
+* (Apollon77) enhance getHistory to retrieve also boundary values better by selecting also points outside of the given time boundaries
+
 ### 1.1.1 (2016-11-03)
 * (Apollon77) small final change on custom dialog
 
@@ -191,6 +196,7 @@ The Message can have one of the following three formats:
 * (Apollon77) Bugfix if InfluxDB is unavailable
 * (Apollon77) add functions getConflictingPoints and resetConflictingPoints
 * (Apollon77) add option to re-log unchanged values to make it easier for visualization
+
 ### 1.0.1 (2016-10-18)
 * (Apollon77) changed storing values to asynchronous way
 * (Apollon77) add support for „minmax“ aggregate type on getHistory

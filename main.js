@@ -41,6 +41,34 @@ adapter.on('objectChange', function (id, obj) {
         }
         // todo remove history sometime (2016.08)
         influxDPs[id] = obj.common.custom || obj.common.history;
+        if (influxDPs[id][adapter.namespace].retention !== undefined && influxDPs[id][adapter.namespace].retention !== null && influxDPs[id][adapter.namespace].retention !== '') {
+            influxDPs[id][adapter.namespace].retention = parseInt(influxDPs[id][adapter.namespace].retention || adapter.config.retention, 10) || 0;
+        } else {
+            influxDPs[id][adapter.namespace].retention = adapter.config.retention;
+        }
+
+        if (influxDPs[id][adapter.namespace].debounce !== undefined && influxDPs[id][adapter.namespace].debounce !== null && influxDPs[id][adapter.namespace].debounce !== '') {
+            influxDPs[id][adapter.namespace].debounce = parseInt(influxDPs[id][adapter.namespace].debounce, 10) || 0;
+        } else {
+            influxDPs[id][adapter.namespace].debounce = adapter.config.debounce;
+        }
+
+        influxDPs[id][adapter.namespace].changesOnly = influxDPs[id][adapter.namespace].changesOnly === 'true' || influxDPs[id][adapter.namespace].changesOnly === true;
+
+        if (influxDPs[id][adapter.namespace].changesRelogInterval !== undefined && influxDPs[id][adapter.namespace].changesRelogInterval !== null && influxDPs[id][adapter.namespace].changesRelogInterval !== '') {
+            influxDPs[id][adapter.namespace].changesRelogInterval = parseInt(influxDPs[id][adapter.namespace].changesRelogInterval, 10) || 0;
+        } else {
+            influxDPs[id][adapter.namespace].changesRelogInterval = adapter.config.changesRelogInterval;
+        }
+        if (influxDPs[id].relogTimeout) clearTimeout(influxDPs[id].relogTimeout);
+        if (influxDPs[id][adapter.namespace].changesRelogInterval > 0) {
+            influxDPs[id].relogTimeout = setTimeout(reLogHelper, (influxDPs[id][adapter.namespace].changesRelogInterval * 500 * Math.random()) + influxDPs[id][adapter.namespace].changesRelogInterval * 500, id);
+        }
+
+        // add one day if retention is too small
+        if (influxDPs[id][adapter.namespace].retention <= 604800) {
+            influxDPs[id][adapter.namespace].retention += 86400;
+        }
         adapter.log.info('enabled logging of ' + id);
     } else {
         if (influxDPs[id]) {
@@ -227,7 +255,7 @@ function getConflictingPoints(msg) {
 }
 
 function resetConflictingPoints(msg) {
-    var resultMsg = {reset: true, conflictingPoints: conflictingPoints}
+    var resultMsg = {reset: true, conflictingPoints: conflictingPoints};
     conflictingPoints = {};
     return adapter.sendTo(msg.from, msg.command, resultMsg, msg.callback);
 }
@@ -329,6 +357,9 @@ function main() {
                             } else {
                                 influxDPs[id][adapter.namespace].changesRelogInterval = adapter.config.changesRelogInterval;
                             }
+                            if (influxDPs[id][adapter.namespace].changesRelogInterval > 0) {
+                                influxDPs[id].relogTimeout = setTimeout(reLogHelper, (influxDPs[id][adapter.namespace].changesRelogInterval * 500 * Math.random()) + influxDPs[id][adapter.namespace].changesRelogInterval * 500, id);
+                            }
 
                             // add one day if retention is too small
                             if (influxDPs[id][adapter.namespace].retention <= 604800) {
@@ -360,25 +391,40 @@ function main() {
     connect();
 }
 
-function pushHistory(id, state) {
+function pushHistory(id, state, timerRelog) {
+    if (timerRelog === undefined) timerRelog = false;
     // Push into InfluxDB
     if (influxDPs[id]) {
         var settings = influxDPs[id][adapter.namespace];
 
         if (!settings || !state) return;
 
-        if (influxDPs[id].state && settings.changesOnly) {
+        if (influxDPs[id].relogTimeout) {
+            clearTimeout(influxDPs[id].relogTimeout);
+            influxDPs[id].relogTimeout = null;
+        }
+        if (settings.changesRelogInterval > 0) {
+            influxDPs[id].relogTimeout = setTimeout(reLogHelper, settings.changesRelogInterval * 1000, id);
+        }
+
+        if (influxDPs[id].state && settings.changesOnly && !timerRelog) {
             if (settings.changesRelogInterval === 0) {
                 if (state.ts !== state.lc) return;
             } else if (influxDPs[id].lastLogTime) {
                 if ((state.ts !== state.lc) && (Math.abs(influxDPs[id].lastLogTime - state.ts) < settings.changesRelogInterval * 1000)) return;
                 if (state.ts !== state.lc) {
-                    adapter.log.debug('relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
+                    adapter.log.debug('value-changed-relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
                 }
             }
         }
 
-        influxDPs[id].state = state;
+        if (timerRelog) {
+            state.ts = new Date().getTime();
+            adapter.log.debug('timed-relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
+        } else {
+            // only store state if really changed
+            influxDPs[id].state = state;
+        }
         influxDPs[id].lastLogTime = state.ts;
 
         // Do not store values ofter than debounce time
@@ -388,6 +434,36 @@ function pushHistory(id, state) {
             pushHelper(id);
         }
     }
+}
+
+function reLogHelper(_id) {
+    if (!influxDPs[_id]) {
+        adapter.log.info('non-existing id ' + _id);
+        return;
+    }
+    influxDPs[_id].relogTimeout = null;
+    if (!influxDPs[_id].state) {
+        //we have a not-that-often-updated state to log, so get the last state
+        adapter.getForeignState(_id, function (err, state) {
+            if (err) {
+                adapter.log.info('init timed Relog: can not get State for ' + _id + ' : ' + err);
+            }
+            else if (!state) {
+                adapter.log.info('init timed Relog: disable relog because state not set so far for ' + _id + ': ' + JSON.stringify(state));
+            }
+            else {
+                adapter.log.debug('init timed Relog: getState ' + _id + ':  Value=' + state.val + ', ack=' + state.ack + ', ts=' + state.ts  + ', lc=' + state.lc);
+                // only if state is still not set
+                if (!influxDPs[_id].state) {
+                    influxDPs[_id].state = state;
+                    pushHistory(_id, influxDPs[_id].state, true);
+                }
+            }
+        });
+    } else {
+        pushHistory(_id, influxDPs[_id].state, true);
+    }
+
 }
 
 function pushHelper(_id) {
@@ -451,17 +527,7 @@ function pushValueIntoDB(id, state) {
         if (adapter.config.seriesBufferMax !== 0) {
             adapter.log.debug('Direct writePoint("' + id + ' - ' + influxFields.value + ' / ' + influxFields.time + ')');
         }
-        client.writePoint(id, influxFields, null, function (err, result) {
-            if (err) {
-                adapter.log.warn('writePoint("' + id + ' - ' + JSON.stringify(influxFields) + '): ' + err);
-                if (client.request.getHostsAvailable().length === 0) {
-                    setConnected(false);
-                    addPointToSeriesBuffer(id, influxFields);
-                }
-            } else {
-                setConnected(true);
-            }
-        });
+        writeOnePointForID(id, influxFields, true);
     } else {
         addPointToSeriesBuffer(id, influxFields);
     }
@@ -562,36 +628,83 @@ function writePointsForID(seriesId, points) {
     adapter.log.debug('writePoint ' + points.length + ' for ' + seriesId + ' separate');
 
     for (var i = 0; i < points.length; i++) {
-        (function (pointId, point) {
-            client.writePoint(pointId, point, null, function (err, result) {
-                if (err) {
-                    adapter.log.warn('Error on writePoint("' + JSON.stringify(point) + '): ' + err + ' / ' + JSON.stringify(err.message));
-                    if (err.message && (typeof err.message === 'string') && (err.message.indexOf('field type conflict') !== -1)) {
-                        // remember this as a pot. conflicting point and write synchronous
-                        conflictingPoints[pointId]=1;
-                        adapter.log.warn('Add ' + pointId + ' to conflicting Points (' + Object.keys(conflictingPoints).length + ' now)');
-                    } else {
-                        if (! errorPoints[pointId]) {
-                            errorPoints[pointId] = 1;
-                        } else {
-                            errorPoints[pointId]++;
-                        }
-                        if (errorPoints[pointId] < 10) {
-                            // re-add that point to buffer to try write again
-                            adapter.log.info('Add point that had error for ' + pointId + ' to buffer again, error-count=' + errorPoints[pointId]);
-                            addPointToSeriesBuffer(pointId, point);
-                        } else {
-                            errorPoints[pointId] = 0;
-                        }
+        writeOnePointForID(seriesId, points[i][0]);
+    }
+}
+
+function writeOnePointForID(pointId, point, directWrite) {
+    if (directWrite === undefined) directWrite = false;
+    client.writePoint(pointId, point, null, function (err, result) {
+        if (err) {
+            adapter.log.warn('Error on writePoint("' + JSON.stringify(point) + '): ' + err + ' / ' + JSON.stringify(err.message));
+            if (client.request.getHostsAvailable().length === 0) {
+                setConnected(false);
+                addPointToSeriesBuffer(pointId, point);
+            } else if (err.message && (typeof err.message === 'string') && (err.message.indexOf('field type conflict') !== -1)) {
+                if (! directWrite) {
+                    // remember this as a pot. conflicting point and write synchronous
+                    conflictingPoints[pointId]=1;
+                    adapter.log.warn('Add ' + pointId + ' to conflicting Points (' + Object.keys(conflictingPoints).length + ' now)');
+                }
+
+                // retry write after type correction for some easy cases
+                var retry = false;
+                var convertDirection = '';
+                if (err.message.indexOf('is type bool, already exists as type float') !== -1) {
+                    convertDirection = 'bool -> float';
+                    if (point.value === true) {
+                        point.value = 1;
+                        retry = true;
+                    }
+                    else if (point.value === false) {
+                        point.value = 0;
+                        retry = true;
+                    }
+                } else if (err.message.indexOf('is type float, already exists as type bool') !== -1) {
+                    convertDirection = 'float -> bool';
+                    if (point.value === 1) {
+                        point.value = true;
+                        retry = true;
+                    }
+                    else if (point.value === 0) {
+                        point.value = false;
+                        retry = true;
                     }
                 }
-            });
-        })(seriesId, points[i][0]);
-    }
+                if (retry) {
+                    adapter.log.info('Try to convert ' + convertDirection + ' and re-write for ' + pointId);
+                    writeOnePointForID(pointId, point, true);
+                }
+            } else {
+                if (! errorPoints[pointId]) {
+                    errorPoints[pointId] = 1;
+                } else {
+                    errorPoints[pointId]++;
+                }
+                if (errorPoints[pointId] < 10) {
+                    // re-add that point to buffer to try write again
+                    adapter.log.info('Add point that had error for ' + pointId + ' to buffer again, error-count=' + errorPoints[pointId]);
+                    addPointToSeriesBuffer(pointId, point);
+                } else {
+                    errorPoints[pointId] = 0;
+                }
+            }
+        } else {
+            setConnected(true);
+        }
+    });
 }
 
 function finish(callback) {
     if (seriesBufferChecker) clearInterval(seriesBufferChecker);
+    for (var id in influxDPs) {
+        if (influxDPs[id].relogTimeout) {
+            clearTimeout(influxDPs[id].relogTimeout);
+        }
+        if (influxDPs[id].timeout) {
+            clearTimeout(influxDPs[id].timeout);
+        }
+    }
 
     // write buffered values into cache file to process it by next start
     var fileData = {};
@@ -684,18 +797,37 @@ function getHistory(msg) {
         options.start = options.end - 86400000; // - 1 day
     }
 
-    query += " WHERE ";
-    if (options.start) query += " time > '" + new Date(options.start).toISOString() + "' AND ";
-    query += " time < '" + new Date(options.end).toISOString() + "'";
-
+    // query one timegroup-value more then requested originally at start and end
+    // to make sure to have no 0 values because of the way InfluxDB doies group by time
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
         if (!options.step) {
             // calculate "step" based on difference between start and end using count
             options.step = parseInt((options.end - options.start) / options.count, 10);
         }
+        if (options.start) options.start -= options.step;
+        options.end += options.step;
+        options.limit += 2;
+    }
+
+    query += " WHERE ";
+    if (options.start) query += " time > '" + new Date(options.start).toISOString() + "' AND ";
+    query += " time < '" + new Date(options.end).toISOString() + "'";
+
+    if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
         query += ' GROUP BY time(' + options.step + 'ms) fill(previous) LIMIT ' + options.limit;
     } else if (options.aggregate !== 'minmax') {
         query += ' LIMIT ' + options.count;
+    }
+
+    // select one datapoint more then wanted
+    if (options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none') {
+        var add_query = "";
+        if (options.start) {
+            add_query = 'SELECT value from "' + msg.message.id + '"' + " WHERE time <= '" + new Date(options.start).toISOString() + "' ORDER BY time DESC LIMIT 1;";
+            query = add_query + query;
+        }
+        add_query = ';SELECT value from "' + msg.message.id + '"' + " WHERE time >= '" + new Date(options.end).toISOString() + "' LIMIT 1";
+        query = query + add_query;
     }
 
     adapter.log.debug(query);
@@ -713,17 +845,19 @@ function getHistory(msg) {
 
         var result = [];
         if (rows && rows.length) {
-            for (var rr = rows[0].length - 1; rr >= 0; rr--) {
-                if ((rows[0][rr].val === undefined) && (rows[0][rr].value !== undefined)) {
-                    rows[0][rr].val = rows[0][rr].value;
-                    delete rows[0][rr].value;
+            for (var qr = 0; qr < rows.length; qr++) {
+                for (var rr = 0; rr < rows[qr].length; rr++) {
+                    if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
+                        rows[qr][rr].val = rows[qr][rr].value;
+                        delete rows[qr][rr].value;
+                    }
+                    rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
+                    rows[qr][rr].val = adapter.config.round ? Math.round(rows[qr][rr].val * adapter.config.round) / adapter.config.round : rows[0][rr].val;
+                    delete rows[qr][rr].time;
+                    if (options.addId) rows[qr][rr].id = msg.message.id;
+                    result.push(rows[qr][rr]);
                 }
-                rows[0][rr].ts  = new Date(rows[0][rr].time).getTime();
-                rows[0][rr].val = adapter.config.round ? Math.round(rows[0][rr].val * adapter.config.round) / adapter.config.round : rows[0][rr].val;
-                delete rows[0][rr].time;
-                if (options.addId) rows[0][rr].id = msg.message.id;
             }
-            result = rows[0];
         }
 
         if ((result.length > 0) && (options.aggregate === 'minmax')) {
@@ -792,8 +926,8 @@ function generateDemo(msg) {
 
         if (start <= end) {
             setTimeout(function () {
-                generate()
-            }, 15)
+                generate();
+            }, 15);
         } else {
             adapter.sendTo(msg.from, msg.command, 'finished', msg.callback);
         }
