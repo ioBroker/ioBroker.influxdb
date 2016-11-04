@@ -6,9 +6,14 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.1.1",
+        "version": "1.2.0",
         "title":                    "History with InfluxDB",
         "news": {
+            "1.2.0": {
+                "en": "enhance relogging to also relog states that are not regularly updated (timed-relog)\ntry to do type converting between float <—> boolean when type error is returned by InfluxDB",
+                "de": "Re-Logging erweitert um auch selten aktualisierte Werte regelmäßig zu loggen.\nTyp-Konvertierung boolean <--> float bei Typ-Fehlern",
+                "ru": "enhance relogging to also relog states that are not regularly updated (timed-relog)\ntry to do type converting between float <—> boolean when type error is returned by InfluxDB"
+            },
             "1.1.1": {
                 "en": "small final change on custom dialog",
                 "de": "Kleine Änderungen in Einstellungendialog",
