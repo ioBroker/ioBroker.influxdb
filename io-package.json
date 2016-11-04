@@ -10,9 +10,9 @@
         "title":                    "History with InfluxDB",
         "news": {
             "1.2.0": {
-                "en": "enhance relogging to also relog states that are not regularly updated (timed-relog)\ntry to do type converting between float <—> boolean when type error is returned by InfluxDB",
-                "de": "Re-Logging erweitert um auch selten aktualisierte Werte regelmäßig zu loggen.\nTyp-Konvertierung boolean <--> float bei Typ-Fehlern",
-                "ru": "enhance relogging to also relog states that are not regularly updated (timed-relog)\ntry to do type converting between float <—> boolean when type error is returned by InfluxDB"
+                "en": "enhance relogging to also relog states that are not regularly updated (timed-relog)\ntry to do type converting between float <—> boolean when type error is returned by InfluxDB\nenhance getHistory for better handing on time boundaries",
+                "de": "Re-Logging erweitert um auch selten aktualisierte Werte regelmäßig zu loggen.\nTyp-Konvertierung boolean <--> float bei Typ-Fehlern\ngetHistory um bessere Behandlung an den Zeitgrenzen erweitert",
+                "ru": "enhance relogging to also relog states that are not regularly updated (timed-relog)\ntry to do type converting between float <—> boolean when type error is returned by InfluxDB\nenhance getHistory for better handing on time boundaries"
             },
             "1.1.1": {
                 "en": "small final change on custom dialog",

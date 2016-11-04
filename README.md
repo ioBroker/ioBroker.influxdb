@@ -186,6 +186,7 @@ The Message can have one of the following three formats:
 ### 1.2.0 (2016-11-05)
 * (Apollon77) support re-logging also for states that are not updated often (timed relog using relog-Interval)
 * (Apollon77) try to solve easy type conflicts and convert float <--> boolean if needed
+* (Apollon77) enhance getHistory to retrieve also boundary values better by selecting also points outside of the given time boundaries
 
 ### 1.1.1 (2016-11-03)
 * (Apollon77) small final change on custom dialog

@@ -41,8 +41,32 @@ adapter.on('objectChange', function (id, obj) {
         }
         // todo remove history sometime (2016.08)
         influxDPs[id] = obj.common.custom || obj.common.history;
+        if (influxDPs[id][adapter.namespace].retention !== undefined && influxDPs[id][adapter.namespace].retention !== null && influxDPs[id][adapter.namespace].retention !== '') {
+            influxDPs[id][adapter.namespace].retention = parseInt(influxDPs[id][adapter.namespace].retention || adapter.config.retention, 10) || 0;
+        } else {
+            influxDPs[id][adapter.namespace].retention = adapter.config.retention;
+        }
+
+        if (influxDPs[id][adapter.namespace].debounce !== undefined && influxDPs[id][adapter.namespace].debounce !== null && influxDPs[id][adapter.namespace].debounce !== '') {
+            influxDPs[id][adapter.namespace].debounce = parseInt(influxDPs[id][adapter.namespace].debounce, 10) || 0;
+        } else {
+            influxDPs[id][adapter.namespace].debounce = adapter.config.debounce;
+        }
+
+        influxDPs[id][adapter.namespace].changesOnly = influxDPs[id][adapter.namespace].changesOnly === 'true' || influxDPs[id][adapter.namespace].changesOnly === true;
+
+        if (influxDPs[id][adapter.namespace].changesRelogInterval !== undefined && influxDPs[id][adapter.namespace].changesRelogInterval !== null && influxDPs[id][adapter.namespace].changesRelogInterval !== '') {
+            influxDPs[id][adapter.namespace].changesRelogInterval = parseInt(influxDPs[id][adapter.namespace].changesRelogInterval, 10) || 0;
+        } else {
+            influxDPs[id][adapter.namespace].changesRelogInterval = adapter.config.changesRelogInterval;
+        }
         if (influxDPs[id][adapter.namespace].changesRelogInterval > 0) {
             influxDPs[id].relogTimeout = setTimeout(reLogHelper, (influxDPs[id][adapter.namespace].changesRelogInterval * 500 * Math.random()) + influxDPs[id][adapter.namespace].changesRelogInterval * 500, id);
+        }
+
+        // add one day if retention is too small
+        if (influxDPs[id][adapter.namespace].retention <= 604800) {
+            influxDPs[id][adapter.namespace].retention += 86400;
         }
         adapter.log.info('enabled logging of ' + id);
     } else {
@@ -332,7 +356,6 @@ function main() {
                             } else {
                                 influxDPs[id][adapter.namespace].changesRelogInterval = adapter.config.changesRelogInterval;
                             }
-
                             if (influxDPs[id][adapter.namespace].changesRelogInterval > 0) {
                                 influxDPs[id].relogTimeout = setTimeout(reLogHelper, (influxDPs[id][adapter.namespace].changesRelogInterval * 500 * Math.random()) + influxDPs[id][adapter.namespace].changesRelogInterval * 500, id);
                             }
@@ -425,7 +448,7 @@ function reLogHelper(_id) {
                 adapter.log.info('init timed Relog: can not get State for ' + _id + ' : ' + err);
             }
             else if (!state) {
-                adapter.log.info('init timed Relog: disable relog because state not set so far ' + _id + ': ' + JSON.stringify(state));
+                adapter.log.info('init timed Relog: disable relog because state not set so far for ' + _id + ': ' + JSON.stringify(state));
             }
             else {
                 adapter.log.debug('init timed Relog: getState ' + _id + ':  Value=' + state.val + ', ack=' + state.ack + ', ts=' + state.ts  + ', lc=' + state.lc);
@@ -773,18 +796,37 @@ function getHistory(msg) {
         options.start = options.end - 86400000; // - 1 day
     }
 
-    query += " WHERE ";
-    if (options.start) query += " time > '" + new Date(options.start).toISOString() + "' AND ";
-    query += " time < '" + new Date(options.end).toISOString() + "'";
-
+    // query one timegroup-value more then requested originally at start and end
+    // to make sure to have no 0 values because of the way InfluxDB doies group by time
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
         if (!options.step) {
             // calculate "step" based on difference between start and end using count
             options.step = parseInt((options.end - options.start) / options.count, 10);
         }
+        if (options.start) options.start -= options.step;
+        options.end += options.step;
+        options.limit += 2;
+    }
+
+    query += " WHERE ";
+    if (options.start) query += " time > '" + new Date(options.start).toISOString() + "' AND ";
+    query += " time < '" + new Date(options.end).toISOString() + "'";
+
+    if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
         query += ' GROUP BY time(' + options.step + 'ms) fill(previous) LIMIT ' + options.limit;
     } else if (options.aggregate !== 'minmax') {
         query += ' LIMIT ' + options.count;
+    }
+
+    // select one datapoint more then wanted
+    if (options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none') {
+        var add_query = "";
+        if (options.start) {
+            add_query = 'SELECT value from "' + msg.message.id + '"' + " WHERE time <= '" + new Date(options.start).toISOString() + "' ORDER BY time DESC LIMIT 1;";
+            query = add_query + query;
+        }
+        add_query = ';SELECT value from "' + msg.message.id + '"' + " WHERE time >= '" + new Date(options.end).toISOString() + "' LIMIT 1";
+        query = query + add_query;
     }
 
     adapter.log.debug(query);
@@ -802,17 +844,19 @@ function getHistory(msg) {
 
         var result = [];
         if (rows && rows.length) {
-            for (var rr = rows[0].length - 1; rr >= 0; rr--) {
-                if ((rows[0][rr].val === undefined) && (rows[0][rr].value !== undefined)) {
-                    rows[0][rr].val = rows[0][rr].value;
-                    delete rows[0][rr].value;
+            for (var qr = 0; qr < rows.length; qr++) {
+                for (var rr = 0; rr < rows[qr].length; rr++) {
+                    if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
+                        rows[qr][rr].val = rows[qr][rr].value;
+                        delete rows[qr][rr].value;
+                    }
+                    rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
+                    rows[qr][rr].val = adapter.config.round ? Math.round(rows[qr][rr].val * adapter.config.round) / adapter.config.round : rows[0][rr].val;
+                    delete rows[qr][rr].time;
+                    if (options.addId) rows[qr][rr].id = msg.message.id;
+                    result.push(rows[qr][rr]);
                 }
-                rows[0][rr].ts  = new Date(rows[0][rr].time).getTime();
-                rows[0][rr].val = adapter.config.round ? Math.round(rows[0][rr].val * adapter.config.round) / adapter.config.round : rows[0][rr].val;
-                delete rows[0][rr].time;
-                if (options.addId) rows[0][rr].id = msg.message.id;
             }
-            result = rows[0];
         }
 
         if ((result.length > 0) && (options.aggregate === 'minmax')) {
