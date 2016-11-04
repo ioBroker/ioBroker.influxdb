@@ -60,7 +60,7 @@ adapter.on('objectChange', function (id, obj) {
         } else {
             influxDPs[id][adapter.namespace].changesRelogInterval = adapter.config.changesRelogInterval;
         }
-        if (influxDPs[id].relogTimeout) clearTimeout(nfluxDPs[id].relogTimeout);
+        if (influxDPs[id].relogTimeout) clearTimeout(influxDPs[id].relogTimeout);
         if (influxDPs[id][adapter.namespace].changesRelogInterval > 0) {
             influxDPs[id].relogTimeout = setTimeout(reLogHelper, (influxDPs[id][adapter.namespace].changesRelogInterval * 500 * Math.random()) + influxDPs[id][adapter.namespace].changesRelogInterval * 500, id);
         }
