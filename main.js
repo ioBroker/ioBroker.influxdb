@@ -73,6 +73,8 @@ adapter.on('objectChange', function (id, obj) {
     } else {
         if (influxDPs[id]) {
             adapter.log.info('disabled logging of ' + id);
+            if (influxDPs[id].relogTimeout) clearTimeout(influxDPs[id].relogTimeout);
+            if (influxDPs[id].timeout) clearTimeout(influxDPs[id].timeout);
             delete influxDPs[id];
         }
     }
