@@ -662,7 +662,7 @@ function writeOnePointForID(pointId, point, directWrite) {
                         point.value = 0;
                         retry = true;
                     }
-                } else if (err.message.indexOf('is type float, already exists as type bool') !== -1) {
+                } else if ((err.message.indexOf('is type float, already exists as type bool') !== -1) || (err.message.indexOf('is type float64, already exists as type bool') !== -1)) {
                     convertDirection = 'float -> bool';
                     if (point.value === 1) {
                         point.value = true;
