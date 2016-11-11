@@ -69,13 +69,13 @@ adapter.on('objectChange', function (id, obj) {
         if (influxDPs[id][adapter.namespace].retention <= 604800) {
             influxDPs[id][adapter.namespace].retention += 86400;
         }
-        adapter.log.info('enabled logging of ' + id);
+        adapter.log.info('enabled logging of ' + id + ', ' + Object.keys(influxDPs).length + ' points now activated');
     } else {
         if (influxDPs[id]) {
-            adapter.log.info('disabled logging of ' + id);
             if (influxDPs[id].relogTimeout) clearTimeout(influxDPs[id].relogTimeout);
             if (influxDPs[id].timeout) clearTimeout(influxDPs[id].timeout);
             delete influxDPs[id];
+            adapter.log.info('disabled logging of ' + id + ', ' + Object.keys(influxDPs).length + ' points now activated');
         }
     }
 });
@@ -339,7 +339,7 @@ function main() {
                             delete influxDPs[id];
                         } else {
                             count++;
-                            adapter.log.info('enabled logging of ' + id);
+                            adapter.log.info('enabled logging of ' + id + ', ' + Object.keys(influxDPs).length + ' points now activated');
                             if (influxDPs[id][adapter.namespace].retention !== undefined && influxDPs[id][adapter.namespace].retention !== null && influxDPs[id][adapter.namespace].retention !== '') {
                                 influxDPs[id][adapter.namespace].retention = parseInt(influxDPs[id][adapter.namespace].retention || adapter.config.retention, 10) || 0;
                             } else {
@@ -497,7 +497,8 @@ function pushValueIntoDB(id, state) {
         return;
     }
 
-    if ((state.val === null) || (state.val === undefined) || (isNaN(state.val))) return; // InfluxDB can not handle null/non-existing values
+    if ((state.val === null) || (state.val === undefined)) return; // InfluxDB can not handle null/non-existing values
+    if ((typeof state.val === 'number') && (isNaN(state.val))) return;
 
     state.ts = parseInt(state.ts, 10);
 
@@ -1025,14 +1026,17 @@ function storeState(msg) {
     }
 
     if (Array.isArray(msg.message)) {
+        adapter.log.debug('storeState: store ' + msg.message.length + ' states for multiple ids');
         for (var i = 0; i < msg.message.length; i++) {
             pushValueIntoDB(msg.message[i].id, msg.message[i].state);
         }
     } else if (Array.isArray(msg.message.state)) {
+        adapter.log.debug('storeState: store ' + msg.message.state.length + ' states for ' + msg.message.id);
         for (var j = 0; j < msg.message.state.length; j++) {
             pushValueIntoDB(msg.message.id, msg.message.state[j]);
         }
     } else {
+        adapter.log.debug('storeState: store 1 state for ' + msg.message.id);
         pushValueIntoDB(msg.message.id, msg.message.state);
     }
 
