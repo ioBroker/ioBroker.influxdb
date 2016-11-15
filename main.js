@@ -66,7 +66,7 @@ adapter.on('objectChange', function (id, obj) {
         }
 
         // add one day if retention is too small
-        if (influxDPs[id][adapter.namespace].retention <= 604800) {
+        if (influxDPs[id][adapter.namespace].retention && influxDPs[id][adapter.namespace].retention <= 604800) {
             influxDPs[id][adapter.namespace].retention += 86400;
         }
         adapter.log.info('enabled logging of ' + id + ', ' + Object.keys(influxDPs).length + ' points now activated');
@@ -364,7 +364,7 @@ function main() {
                             }
 
                             // add one day if retention is too small
-                            if (influxDPs[id][adapter.namespace].retention <= 604800) {
+                            if (influxDPs[id][adapter.namespace].retention && influxDPs[id][adapter.namespace].retention <= 604800) {
                                 influxDPs[id][adapter.namespace].retention += 86400;
                             }
                         }
