@@ -6,7 +6,7 @@ var path          = require('path');
 var child_process = require('child_process');
 var rootDir       = path.normalize(__dirname + '/../../');
 var pkg           = require(rootDir + 'package.json');
-var debug         = true; //typeof v8debug === 'object';
+var debug         = typeof v8debug === 'object';
 
 var adapterName = path.normalize(rootDir).replace(/\\/g, '/').split('/');
 adapterName = adapterName[adapterName.length - 2];
@@ -435,18 +435,17 @@ function startAdapter(objects, states, callback) {
         try {
             if (debug) {
                 // start controller
-                pid = child_process.exec('node node_modules/' + pkg.name + '/' + pkg.main + ' --console debug --logs', {
+                pid = child_process.exec('node node_modules/' + pkg.name + '/' + pkg.main + ' --console debug', {
                     cwd: rootDir + 'tmp',
                     stdio: [0, 1, 2]
                 });
             } else {
                 // start controller
-                pid = child_process.fork('node_modules/' + pkg.name + '/' + pkg.main, ['--console', 'debug', '--logs'], {
+                pid = child_process.fork('node_modules/' + pkg.name + '/' + pkg.main, ['--console', 'debug'], {
                     cwd:   rootDir + 'tmp',
                     stdio: [0, 1, 2, 'ipc']
                 });
             }
-            console.log('node_modules/' + pkg.name + '/' + pkg.main + ' --> PID=' + pid);
         } catch (error) {
             console.error(JSON.stringify(error));
         }
