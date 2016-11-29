@@ -149,7 +149,9 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                             if (err) {
                                 console.log(err);
                             }
-                            done();
+                            setTimeout(function () {
+                                done();
+                            }, 2000);
                         });
                     }, 100);
                 });
@@ -168,9 +170,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             }
             expect(found).to.be.equal(3);
 
-            setTimeout(function () {
-                done();
-            }, 3000);
+            done();
         });
     });
     it('Test ' + adapterShortName + ': Read values from DB using GetHistory', function (done) {
