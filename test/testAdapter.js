@@ -11,6 +11,8 @@ var sendToID = 1;
 
 var adapterShortName = setup.adapterName.substring(setup.adapterName.indexOf('.')+1);
 
+var now;
+
 function checkConnectionOfAdapter(cb, counter) {
     counter = counter || 0;
     console.log('Try check #' + counter);
@@ -133,7 +135,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
     });
     it('Test ' + adapterShortName + ': Write values into DB', function (done) {
         this.timeout(25000);
-        var now = new Date().getTime();
+        now = new Date().getTime();
 
         states.setState('system.adapter.influxdb.0.memRss', {val: 1, ts: now - 2000, from: 'test.0'}, function (err) {
             if (err) {
@@ -179,7 +181,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
         sendTo('influxdb.0', 'getHistory', {
             id: 'system.adapter.influxdb.0.memRss',
             options: {
-                end:       new Date().getTime(),
+                start:     now - 10000,
                 count:     50,
                 aggregate: 'onchange'
             }
@@ -195,7 +197,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             sendTo('influxdb.0', 'getHistory', {
                 id: 'system.adapter.influxdb.0.memRss',
                 options: {
-                    end:       new Date().getTime(),
+                    start:     now - 10000,
                     count:     2,
                     aggregate: 'onchange'
                 }
