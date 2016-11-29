@@ -149,46 +149,68 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                             if (err) {
                                 console.log(err);
                             }
-                            setTimeout(function () {
-                                sendTo('influxdb.0', 'getHistory', {
-                                    id: 'system.adapter.influxdb.0.memRss',
-                                    options: {
-                                        end:       now,
-                                        count:     50,
-                                        aggregate: 'onchange'
-                                    }
-                                }, function (result) {
-                                    console.log(JSON.stringify(result.result, null, 2));
-                                    expect(result.result.length).to.be.at.least(3);
-                                    var found = 0;
-                                    for (var i = 0; i < result.result.length; i++) {
-                                        if (result.result[i].val >= 1 && result.result[i].val <= 3) found ++;
-                                    }
-                                    expect(found).to.be.equal(3);
-
-                                    sendTo('influxdb.0', 'getHistory', {
-                                        id: 'system.adapter.influxdb.0.memRss',
-                                        options: {
-                                            end:       now,
-                                            count:     2,
-                                            aggregate: 'onchange'
-                                        }
-                                    }, function (result) {
-                                        console.log(JSON.stringify(result.result, null, 2));
-                                        expect(result.result.length).to.be.at.least(2);
-                                        var found = 0;
-                                        for (var i = 0; i < result.result.length; i++) {
-                                            if (result.result[i].val >= 1 && result.result[i].val <= 2) found ++;
-                                        }
-                                        expect(found).to.be.equal(2);
-                                        done();
-                                    });
-                                });
-                            }, 100);
+                            done();
                         });
                     }, 100);
                 });
             }, 100);
+        });
+    });
+    it('Test ' + adapterShortName + ': Read values from DB using query', function (done) {
+        this.timeout(10000);
+
+        sendTo('sql.0', 'query', 'SELECT id FROM datapoints WHERE name="system.adapter.sql.0.memRss"', function (result) {
+            sendTo('sql.0', 'query', 'SELECT * FROM ts_number WHERE id=' + result.result[0].id, function (result) {
+                console.log(JSON.stringify(result.result, null, 2));
+                expect(result.result.length).to.be.at.least(3);
+                var found = 0;
+                for (var i = 0; i < result.result.length; i++) {
+                    if (result.result[i].val >= 1 && result.result[i].val <= 3) found ++;
+                }
+                expect(found).to.be.equal(3);
+
+                setTimeout(function () {
+                    done();
+                }, 3000);
+            });
+        });
+    });
+    it('Test ' + adapterShortName + ': Read values from DB using GetHistory', function (done) {
+        this.timeout(10000);
+
+        sendTo('influxdb.0', 'getHistory', {
+            id: 'system.adapter.influxdb.0.memRss',
+            options: {
+                end:       new Date().getTime(),
+                count:     50,
+                aggregate: 'onchange'
+            }
+        }, function (result) {
+            console.log(JSON.stringify(result.result, null, 2));
+            expect(result.result.length).to.be.at.least(3);
+            var found = 0;
+            for (var i = 0; i < result.result.length; i++) {
+                if (result.result[i].val >= 1 && result.result[i].val <= 3) found ++;
+            }
+            expect(found).to.be.equal(3);
+
+            sendTo('influxdb.0', 'getHistory', {
+                id: 'system.adapter.influxdb.0.memRss',
+                options: {
+                    end:       new Date().getTime(),
+                    count:     2,
+                    aggregate: 'onchange'
+                }
+            }, function (result) {
+                console.log(JSON.stringify(result.result, null, 2));
+                expect(result.result.length).to.be.at.least(2);
+                var found = 0;
+                for (var i = 0; i < result.result.length; i++) {
+                    if (result.result[i].val >= 1 && result.result[i].val <= 2) found ++;
+                }
+                expect(found).to.be.equal(2);
+                done();
+            });
         });
     });
 
