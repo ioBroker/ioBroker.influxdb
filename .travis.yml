@@ -1,0 +1,24 @@
+language: node_js
+node_js:
+  - "0.10"
+  - "0.11"
+  - "0.12"
+  - "4"
+  - "6"
+sudo: required
+before_script:
+  - curl -sL https://repos.influxdata.com/influxdb.key | sudo apt-key add -
+  - source /etc/lsb-release
+  - echo "deb https://repos.influxdata.com/${DISTRIB_ID,,} ${DISTRIB_CODENAME} stable" | sudo tee /etc/apt/sources.list.d/influxdb.list
+  - sudo apt-get update && sudo apt-get install influxdb
+  - sudo service influxdb start
+  - npm install winston@2.3.0
+  - npm install https://github.com/ioBroker/ioBroker.js-controller/tarball/master --production
+env:
+  - CXX=g++-4.8
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - g++-4.8
