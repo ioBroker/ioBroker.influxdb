@@ -159,7 +159,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
     it('Test ' + adapterShortName + ': Read values from DB using query', function (done) {
         this.timeout(10000);
 
-        sendTo('influxdb.0', 'query', 'SELECT * FROM "' + result.result[0].id + '"', function (result) {
+        sendTo('influxdb.0', 'query', 'SELECT * FROM "system.adapter.influxdb.0.memRss"', function (result) {
             console.log(JSON.stringify(result.result, null, 2));
             expect(result.result.length).to.be.at.least(3);
             var found = 0;
