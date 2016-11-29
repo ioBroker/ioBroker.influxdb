@@ -123,7 +123,7 @@ sendTo('influxdb.0', 'query', 'SELECT * FROM iobroker.global."system.adapter.adm
     }
 });
 ```
-
+**NOTE:** The values are coming back in the result array in filename "value" (instead of "val" as normal in ioBroker)
 
 ## Get history
 Additional to custom queries, you can use build in system function **getHistory** to access the stored history for datapoints:
