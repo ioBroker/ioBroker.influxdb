@@ -114,7 +114,24 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                 },
                 function () {
                     states.subscribeMessage('system.adapter.test.0');
-                    objects.getObject('system.adapter.influxdb.0.memRss', function (err, obj) {
+                    sendTo('influxdb.0', 'enableHistory', {
+                        id: 'system.adapter.influxdb.0.memRss',
+                        options: {
+                            changesOnly:  true,
+                            debounce:     0,
+                            retention:    31536000,
+                            maxLength:    3,
+                            changesMinDelta: 0.5
+                        }
+                    }, function (result) {
+                        expect(result.error).to.be.undefined;
+                        expect(result.success).to.be.true;
+                        // wait till adapter receives the new settings
+                        setTimeout(function () {
+                            done();
+                        }, 2000);
+                    });
+/*                    objects.getObject('system.adapter.influxdb.0.memRss', function (err, obj) {
                         obj.common.custom = {
                             'influxdb.0': {
                                 enabled:      true,
@@ -129,31 +146,60 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                                 done();
                             }, 2000);
                         });
-                    });
+                    });*/
                 });
+        });
+    });
+    it('Test ' + adapterShortName + ': Check Enabled Points after Enable', function (done) {
+        this.timeout(5000);
+
+        sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
+            console.log(JSON.stringify(result));
+            expect(Object.keys(result).length).to.be.equal(1);
+            expect(result['system.adapter.influxdb.0.memRss'].enabled).to.be.true;
+            done();
         });
     });
     it('Test ' + adapterShortName + ': Write values into DB', function (done) {
         this.timeout(25000);
         now = new Date().getTime();
 
-        states.setState('system.adapter.influxdb.0.memRss', {val: 1, ts: now - 2000, from: 'test.0'}, function (err) {
+        states.setState('system.adapter.influxdb.0.memRss', {val: 1, ts: now - 20000}, function (err) {
             if (err) {
                 console.log(err);
             }
             setTimeout(function () {
-                states.setState('system.adapter.influxdb.0.memRss', {val: 2, ts: now - 1000, from: 'test.0'}, function (err) {
+                states.setState('system.adapter.influxdb.0.memRss', {val: 2, ts: now - 10000}, function (err) {
                     if (err) {
                         console.log(err);
                     }
                     setTimeout(function () {
-                        states.setState('system.adapter.influxdb.0.memRss', {val: 3, ts: now, from: 'test.0'}, function (err) {
+                        states.setState('system.adapter.influxdb.0.memRss', {val: 2, ts: now - 5000}, function (err) {
                             if (err) {
                                 console.log(err);
                             }
                             setTimeout(function () {
-                                done();
-                            }, 2000);
+                                states.setState('system.adapter.influxdb.0.memRss', {val: 2.2, ts: now - 4000}, function (err) {
+                                    if (err) {
+                                        console.log(err);
+                                    }
+                                    setTimeout(function () {
+                                        states.setState('system.adapter.influxdb.0.memRss', {val: 2.5, ts: now - 3000}, function (err) {
+                                            if (err) {
+                                                console.log(err);
+                                            }
+                                            setTimeout(function () {
+                                                states.setState('system.adapter.influxdb.0.memRss', {val: 3, ts: now - 1000}, function (err) {
+                                                    if (err) {
+                                                        console.log(err);
+                                                    }
+                                                    done();
+                                                });
+                                            }, 100);
+                                        });
+                                    }, 100);
+                                });
+                            }, 100);
                         });
                     }, 100);
                 });
@@ -165,12 +211,12 @@ describe('Test ' + adapterShortName + ' adapter', function() {
 
         sendTo('influxdb.0', 'query', 'SELECT * FROM "system.adapter.influxdb.0.memRss"', function (result) {
             console.log(JSON.stringify(result.result, null, 2));
-            expect(result.result[0].length).to.be.at.least(3);
+            expect(result.result[0].length).to.be.at.least(4);
             var found = 0;
             for (var i = 0; i < result.result[0].length; i++) {
                 if (result.result[0][i].value >= 1 && result.result[0][i].value <= 3) found ++;
             }
-            expect(found).to.be.equal(3);
+            expect(found).to.be.equal(4);
 
             done();
         });
@@ -181,36 +227,56 @@ describe('Test ' + adapterShortName + ' adapter', function() {
         sendTo('influxdb.0', 'getHistory', {
             id: 'system.adapter.influxdb.0.memRss',
             options: {
-                start:     now - 10000,
+                start:     now - 30000,
                 count:     50,
-                aggregate: 'onchange'
+                aggregate: 'none'
             }
         }, function (result) {
             console.log(JSON.stringify(result.result, null, 2));
-            expect(result.result.length).to.be.at.least(3);
+            expect(result.result.length).to.be.at.least(4);
             var found = 0;
             for (var i = 0; i < result.result.length; i++) {
                 if (result.result[i].val >= 1 && result.result[i].val <= 3) found ++;
             }
-            expect(found).to.be.equal(3);
+            expect(found).to.be.equal(4);
 
             sendTo('influxdb.0', 'getHistory', {
                 id: 'system.adapter.influxdb.0.memRss',
                 options: {
-                    start:     now - 10000,
+                    start:     now - 15000,
                     count:     2,
-                    aggregate: 'onchange'
+                    aggregate: 'none'
                 }
             }, function (result) {
                 console.log(JSON.stringify(result.result, null, 2));
                 expect(result.result.length).to.be.at.least(2);
                 var found = 0;
                 for (var i = 0; i < result.result.length; i++) {
-                    if (result.result[i].val >= 1 && result.result[i].val <= 2) found ++;
+                    if (result.result[i].val >= 2 && result.result[i].val <= 3) found ++;
                 }
                 expect(found).to.be.equal(2);
                 done();
             });
+        });
+    });
+    it('Test ' + adapterShortName + ': Disable Datapoint again', function (done) {
+        this.timeout(5000);
+
+        sendTo('influxdb.0', 'disableHistory', {
+            id: 'system.adapter.influxdb.0.memRss',
+        }, function (result) {
+            expect(result.error).to.be.undefined;
+            expect(result.success).to.be.true;
+            done();
+        });
+    });
+    it('Test ' + adapterShortName + ': Check Enabled Points after Disable', function (done) {
+        this.timeout(5000);
+
+        sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
+            console.log(JSON.stringify(result));
+            expect(Object.keys(result).length).to.be.equal(0);
+            done();
         });
     });
 

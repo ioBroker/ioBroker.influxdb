@@ -27,8 +27,9 @@ var adapter = utils.adapter('influxdb');
 adapter.on('objectChange', function (id, obj) {
     if (obj && obj.common && (
             // todo remove history sometime (2016.08) - Do not forget object selector in io-package.json
-        (obj.common.history && obj.common.history[adapter.namespace]) ||
-        (obj.common.custom  && obj.common.custom[adapter.namespace]))
+        (obj.common.history && obj.common.influxDPs[adapter.namespace]) ||
+        (obj.common.custom  && obj.common.custom[adapter.namespace])) &&
+        (obj.common.custom[adapter.namespace].enabled)
     ) {
 
         if (!influxDPs[id] && !subscribeAll) {
@@ -46,15 +47,12 @@ adapter.on('objectChange', function (id, obj) {
         } else {
             influxDPs[id][adapter.namespace].retention = adapter.config.retention;
         }
-
         if (influxDPs[id][adapter.namespace].debounce !== undefined && influxDPs[id][adapter.namespace].debounce !== null && influxDPs[id][adapter.namespace].debounce !== '') {
             influxDPs[id][adapter.namespace].debounce = parseInt(influxDPs[id][adapter.namespace].debounce, 10) || 0;
         } else {
             influxDPs[id][adapter.namespace].debounce = adapter.config.debounce;
         }
-
         influxDPs[id][adapter.namespace].changesOnly = influxDPs[id][adapter.namespace].changesOnly === 'true' || influxDPs[id][adapter.namespace].changesOnly === true;
-
         if (influxDPs[id][adapter.namespace].changesRelogInterval !== undefined && influxDPs[id][adapter.namespace].changesRelogInterval !== null && influxDPs[id][adapter.namespace].changesRelogInterval !== '') {
             influxDPs[id][adapter.namespace].changesRelogInterval = parseInt(influxDPs[id][adapter.namespace].changesRelogInterval, 10) || 0;
         } else {
@@ -63,6 +61,11 @@ adapter.on('objectChange', function (id, obj) {
         if (influxDPs[id].relogTimeout) clearTimeout(influxDPs[id].relogTimeout);
         if (influxDPs[id][adapter.namespace].changesRelogInterval > 0) {
             influxDPs[id].relogTimeout = setTimeout(reLogHelper, (influxDPs[id][adapter.namespace].changesRelogInterval * 500 * Math.random()) + influxDPs[id][adapter.namespace].changesRelogInterval * 500, id);
+        }
+        if (influxDPs[id][adapter.namespace].changesMinDelta !== undefined && influxDPs[id][adapter.namespace].changesMinDelta !== null && influxDPs[id][adapter.namespace].changesMinDelta !== '') {
+            influxDPs[id][adapter.namespace].changesMinDelta = parseFloat(influxDPs[id][adapter.namespace].changesMinDelta) || 0;
+        } else {
+            influxDPs[id][adapter.namespace].changesMinDelta = adapter.config.changesMinDelta;
         }
 
         // add one day if retention is too small
@@ -249,6 +252,12 @@ function processMessage(msg) {
         resetConflictingPoints(msg);
     } else if (msg.command === 'storeState') {
         storeState(msg);
+    } else if (msg.command === 'enableHistory') {
+        enableHistory(msg);
+    } else if (msg.command === 'disableHistory') {
+        disableHistory(msg);
+    } else if (msg.command === 'getEnabledDPs') {
+        getEnabledDPs(msg);
     }
 }
 
@@ -302,6 +311,12 @@ function main() {
     }
 
     adapter.config.seriesBufferFlushInterval = parseInt(adapter.config.seriesBufferFlushInterval, 10) || 600;
+
+    if (adapter.config.changesMinDelta !== null && adapter.config.changesMinDelta !== undefined) {
+        adapter.config.changesMinDelta = parseFloat(adapter.config.changesMinDelta);
+    } else {
+        adapter.config.changesMinDelta = 0;
+    }
 
     // analyse if by the last stop the values were cached into file
     try {
@@ -362,6 +377,11 @@ function main() {
                             if (influxDPs[id][adapter.namespace].changesRelogInterval > 0) {
                                 influxDPs[id].relogTimeout = setTimeout(reLogHelper, (influxDPs[id][adapter.namespace].changesRelogInterval * 500 * Math.random()) + influxDPs[id][adapter.namespace].changesRelogInterval * 500, id);
                             }
+                            if (influxDPs[id][adapter.namespace].changesMinDelta !== undefined && influxDPs[id][adapter.namespace].changesMinDelta !== null && influxDPs[id][adapter.namespace].changesMinDelta !== '') {
+                                influxDPs[id][adapter.namespace].changesMinDelta = parseFloat(influxDPs[id][adapter.namespace].changesMinDelta) || 0;
+                            } else {
+                                influxDPs[id][adapter.namespace].changesMinDelta = adapter.config.changesMinDelta;
+                            }
 
                             // add one day if retention is too small
                             if (influxDPs[id][adapter.namespace].retention && influxDPs[id][adapter.namespace].retention <= 604800) {
@@ -411,12 +431,28 @@ function pushHistory(id, state, timerRelog) {
 
         if (influxDPs[id].state && settings.changesOnly && !timerRelog) {
             if (settings.changesRelogInterval === 0) {
-                if (state.ts !== state.lc) return;
+                if (state.ts !== state.lc) {
+                    adapter.log.debug('value not changed ' + id + ', last-value=' + influxDPs[id].state.val.val + ', new-value=' + state.val + ', ts=' + state.ts);
+                    return;
+                }
             } else if (influxDPs[id].lastLogTime) {
-                if ((state.ts !== state.lc) && (Math.abs(influxDPs[id].lastLogTime - state.ts) < settings.changesRelogInterval * 1000)) return;
+                if ((state.ts !== state.lc) && (Math.abs(influxDPs[id].lastLogTime - state.ts) < settings.changesRelogInterval * 1000)) {
+                    adapter.log.debug('value not changed ' + id + ', last-value=' + influxDPs[id].state.val.val + ', new-value=' + state.val + ', ts=' + state.ts);
+                    return;
+                }
                 if (state.ts !== state.lc) {
                     adapter.log.debug('value-changed-relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
                 }
+            }
+            if ((settings.changesMinDelta !== 0) && (typeof state.val === 'number') && (Math.abs(influxDPs[id].state.val - state.val) < settings.changesMinDelta)) {
+                adapter.log.debug('Min-Delta not reached ' + id + ', last-value=' + influxDPs[id].state.val.val + ', new-value=' + state.val + ', ts=' + state.ts);
+                return;
+            }
+            else if (typeof state.val === 'number') {
+                adapter.log.debug('Min-Delta reached ' + id + ', last-value=' + influxDPs[id].state.val.val + ', new-value=' + state.val + ', ts=' + state.ts);
+            }
+            else {
+                adapter.log.debug('Min-Delta ignored because no number ' + id + ', last-value=' + influxDPs[id].state.val.val + ', new-value=' + state.val + ', ts=' + state.ts);
             }
         }
 
@@ -1046,4 +1082,75 @@ function storeState(msg) {
         seriesBufferCounter:      seriesBufferCounter,
         seriesBufferFlushPlanned: seriesBufferFlushPlanned
     }, msg.callback);
+}
+
+function enableHistory(msg) {
+    if (!msg.message || !msg.message.id) {
+        adapter.log.error('enableHistory called with invalid data');
+        adapter.sendTo(msg.from, msg.command, {
+            error:  'Invalid call'
+        }, msg.callback);
+        return;
+    }
+    var obj = {};
+    obj.common = {};
+    obj.common.custom = {};
+    if (msg.message.options) {
+        obj.common.custom[adapter.namespace] = msg.message.options;
+    }
+    else {
+        obj.common.custom[adapter.namespace] = {};
+    }
+    obj.common.custom[adapter.namespace].enabled = true;
+    adapter.extendForeignObject(msg.message.id, obj, function (err) {
+        if (err) {
+            adapter.log.error('enableHistory: ' + err);
+            adapter.sendTo(msg.from, msg.command, {
+                error:  err
+            }, msg.callback);
+        } else {
+            adapter.log.info(JSON.stringify(obj));
+            adapter.sendTo(msg.from, msg.command, {
+                success:                  true
+            }, msg.callback);
+        }
+    });
+}
+
+function disableHistory(msg) {
+    if (!msg.message || !msg.message.id) {
+        adapter.log.error('disableHistory called with invalid data');
+        adapter.sendTo(msg.from, msg.command, {
+            error:  'Invalid call'
+        }, msg.callback);
+        return;
+    }
+    var obj = {};
+    obj.common = {};
+    obj.common.custom = {};
+    obj.common.custom[adapter.namespace] = {};
+    obj.common.custom[adapter.namespace].enabled = false;
+    adapter.extendForeignObject(msg.message.id, obj, function (err) {
+        if (err) {
+            adapter.log.error('disableHistory: ' + err);
+            adapter.sendTo(msg.from, msg.command, {
+                error:  err
+            }, msg.callback);
+        } else {
+            adapter.log.info(JSON.stringify(obj));
+            adapter.sendTo(msg.from, msg.command, {
+                success:                  true
+            }, msg.callback);
+        }
+    });
+}
+
+function getEnabledDPs(msg) {
+    var data = {};
+    for (var id in influxDPs) {
+        if (!influxDPs.hasOwnProperty(id)) continue;
+        data[id] = influxDPs[id][adapter.namespace];
+    }
+
+    adapter.sendTo(msg.from, msg.command, data, msg.callback);
 }
