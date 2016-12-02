@@ -175,15 +175,82 @@ This function can also be used to convert data from other History adapters like 
 The given ids are not checked against the ioBroker database and do not need to be set up there, but can only be accessed directly.
 
 The Message can have one of the following three formats:
+* one ID and one state object
+* one ID and array of state objects
+* array of multiple IDs with state objects
 
-### one ID and one state object
+## History Logging Management via Javascript
+The adapter supports enabling and disabling of history logging via JavaScript and also retrieving the list of enabled datapoints with their settings.
 
-### one ID and array of state objects
+### enable
+The message requires to have the "id" of the datapoint.Additionally optional "options" to define the datapoint specific settings:
 
-### array of multiple IDs with state objects
+```
+sendTo('influxdb.0', 'enableHistory', {
+    id: 'system.adapter.influxdb.0.memRss',
+    options: {
+        changesOnly:  true,
+        debounce:     0,
+        retention:    31536000,
+        maxLength:    3,
+        changesMinDelta: 0.5
+    }
+}, function (result) {
+    if (result.error) {
+        console.log(result.error);
+    }
+    if (result.success) {
+        //successfull enabled
+    }
+});
+```
+
+### disable
+The message requires to have the "id" of the datapoint.
+
+```
+sendTo('influxdb.0', 'disableHistory', {
+    id: 'system.adapter.influxdb.0.memRss',
+}, function (result) {
+    if (result.error) {
+        console.log(result.error);
+    }
+    if (result.success) {
+        //successfull enabled
+    }
+});
+```
+
+### get List
+The message has no parameters.
+
+```
+sendTo('influxdb.0', 'getEnabledDPs', function (result) {
+    //result is object like:
+    {
+        "system.adapter.influxdb.0.memRss": {
+            "changesOnly":true,
+            "debounce":0,
+            "retention":31536000,
+            "maxLength":3,
+            "changesMinDelta":0.5,
+            "enabled":true,
+            "changesRelogInterval":0
+        }
+        ...
+    }
+});
+```
 
 
 ## Changelog
+### 1.3.0 (2016-12-02)
+* (Apollon77) Add messages enableHistory/disableHistory
+* (Apollon77) add support to log changes only if value differs a minimum value for numbers
+
+### 1.2.1 (2016-11)
+* (Apollon77) small enhancements and fixes
+
 ### 1.2.0 (2016-11-05)
 * (Apollon77) support re-logging also for states that are not updated often (timed relog using relog-Interval)
 * (Apollon77) try to solve easy type conflicts and convert float <--> boolean if needed
