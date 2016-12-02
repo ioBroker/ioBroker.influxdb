@@ -120,7 +120,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                             changesOnly:  true,
                             debounce:     0,
                             retention:    31536000,
-                            maxLength:    3,
+                            seriesBufferMax:    0,
                             changesMinDelta: 0.5
                         }
                     }, function (result) {
@@ -193,7 +193,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                                                     if (err) {
                                                         console.log(err);
                                                     }
-                                                    done();
+                                                    setTimeout(done, 1000);
                                                 });
                                             }, 100);
                                         });
