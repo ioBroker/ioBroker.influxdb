@@ -164,32 +164,32 @@ describe('Test ' + adapterShortName + ' adapter', function() {
         this.timeout(25000);
         now = new Date().getTime();
 
-        states.setState('system.adapter.influxdb.0.memRss', {val: 1, ts: now - 20000}, function (err) {
+        states.setState('system.adapter.influxdb.0.memRss', {val: 1, ts: now - 20000, from: 'test.0'}, function (err) {
             if (err) {
                 console.log(err);
             }
             setTimeout(function () {
-                states.setState('system.adapter.influxdb.0.memRss', {val: 2, ts: now - 10000}, function (err) {
+                states.setState('system.adapter.influxdb.0.memRss', {val: 2, ts: now - 10000, from: 'test.0'}, function (err) {
                     if (err) {
                         console.log(err);
                     }
                     setTimeout(function () {
-                        states.setState('system.adapter.influxdb.0.memRss', {val: 2, ts: now - 5000}, function (err) {
+                        states.setState('system.adapter.influxdb.0.memRss', {val: 2, ts: now - 5000, from: 'test.0'}, function (err) {
                             if (err) {
                                 console.log(err);
                             }
                             setTimeout(function () {
-                                states.setState('system.adapter.influxdb.0.memRss', {val: 2.2, ts: now - 4000}, function (err) {
+                                states.setState('system.adapter.influxdb.0.memRss', {val: 2.2, ts: now - 4000, from: 'test.0'}, function (err) {
                                     if (err) {
                                         console.log(err);
                                     }
                                     setTimeout(function () {
-                                        states.setState('system.adapter.influxdb.0.memRss', {val: 2.5, ts: now - 3000}, function (err) {
+                                        states.setState('system.adapter.influxdb.0.memRss', {val: 2.5, ts: now - 3000, from: 'test.0'}, function (err) {
                                             if (err) {
                                                 console.log(err);
                                             }
                                             setTimeout(function () {
-                                                states.setState('system.adapter.influxdb.0.memRss', {val: 3, ts: now - 1000}, function (err) {
+                                                states.setState('system.adapter.influxdb.0.memRss', {val: 3, ts: now - 1000, from: 'test.0'}, function (err) {
                                                     if (err) {
                                                         console.log(err);
                                                     }
