@@ -27,7 +27,6 @@ install:
 
       $shell = new-object -com shell.application;
 
-
       $zip = $shell.NameSpace("$pwd\influxdb-1.1.0_windows_amd64.zip");
 
       if (Test-Path $pwd\$destFolder )
@@ -38,11 +37,7 @@ install:
 
       md ".\influxdb-1.1.0";
 
-      foreach($item in $zip.items())
-
-      {
-          $shell.Namespace("$pwd\influxdb-1.1.0").copyhere($item);
-      }
+      7z e $pwd\influxdb-1.1.0_windows_amd64.zip -y -o $destFolder
 
       cd $destFolder
 
