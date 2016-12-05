@@ -25,19 +25,19 @@ install:
 
       $destFolder = "influxdb-1.1.0";
 
-      if (Test-Path $pwd\$destFolder )
+      if (Test-Path .\influxdb-exe )
 
       {
-          del $pwd\$destFolder -Force -Recurse
+          del .\influxdb-exe -Force -Recurse
       }
 
-      md "$destFolder";
+      md influxdb-exe;
 
-      7z e $pwd\influxdb-1.1.0_windows_amd64.zip -y -o$pwd\$destFolder -r
+      7z e .\influxdb-1.1.0_windows_amd64.zip -oinfluxdb-exe -r
 
-      Get-ChildItem -Path "$pwd" -Recurse;
+      Get-ChildItem -Path "./influxdb-exe" -Recurse;
 
-      cd "$pwd\$destFolder";
+      cd ".\influxdb-exe";
 
       $MyProcess = Start-Process influxd.exe;
 
