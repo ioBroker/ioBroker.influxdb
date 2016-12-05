@@ -1,0 +1,56 @@
+version: 'test-{build}'
+
+# Test against this version of Node.js
+environment:
+  matrix:
+    - nodejs_version: "0.10"
+    - nodejs_version: "0.12"
+    - nodejs_version: "4"
+    - nodejs_version: "6"
+
+platform:
+  - x64
+
+clone_folder: c:\projects\%APPVEYOR_PROJECT_NAME%
+# Install scripts. (runs after repo cloning)
+install:
+  # Get the latest stable version of Node.js or io.js
+  - ps: Install-Product node $env:nodejs_version $env:platform
+  # install modules
+  - npm install
+  - npm install winston@2.3.0
+  - npm install https://github.com/ioBroker/ioBroker.js-controller/tarball/master --production
+  - ps: >-
+      Invoke-WebRequest "https://dl.influxdata.com/influxdb/releases/influxdb-1.1.0_windows_amd64.zip" -OutFile .\influxdb-1.1.0_windows_amd64.zip;
+
+      if (Test-Path .\influxdb-exe )
+
+      {
+          del .\influxdb-exe -Force -Recurse
+      }
+
+      md influxdb-exe;
+
+      7z e .\influxdb-1.1.0_windows_amd64.zip -oinfluxdb-exe -r
+
+      cd ".\influxdb-exe";
+
+      $MyProcess = Start-Process influxd.exe -PassThru;
+
+      cd ..
+
+on_finish:
+  - ps: Stop-Process -Id $MyProcess.Id
+
+
+# Post-install test scripts.
+test_script:
+  # Output useful info for debugging.
+  - echo %cd%
+  - node --version
+  - npm --version
+  # run tests
+  - npm test
+
+# Don't actually build.
+build: off
