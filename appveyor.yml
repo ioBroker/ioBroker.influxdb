@@ -27,8 +27,6 @@ install:
 
       $shell = new-object -com shell.application;
 
-      $zip = $shell.NameSpace("$pwd\influxdb-1.1.0_windows_amd64.zip");
-
       if (Test-Path $pwd\$destFolder )
 
       {
@@ -37,11 +35,11 @@ install:
 
       md "$destFolder";
 
-      7z e $pwd\influxdb-1.1.0_windows_amd64.zip -y -o$destFolder
+      7z e $pwd\influxdb-1.1.0_windows_amd64.zip -y -o$pwd\$destFolder
 
-      cd $destFolder
+      cd "$pwd\$destFolder";
 
-      Get-ChildItem -Path .\
+      Get-ChildItem -Path "$pwd\$destFolder";
 
       $MyProcess = Start-Process influxd.exe
 
