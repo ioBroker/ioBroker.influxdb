@@ -25,8 +25,6 @@ install:
 
       $destFolder = "influxdb-1.1.0";
 
-      $shell = new-object -com shell.application;
-
       if (Test-Path $pwd\$destFolder )
 
       {
@@ -35,7 +33,7 @@ install:
 
       md "$destFolder";
 
-      7z e $pwd\influxdb-1.1.0_windows_amd64.zip -y -o$pwd\$destFolder
+      7z e $pwd\influxdb-1.1.0_windows_amd64.zip -y -o$pwd\$destFolder -r
 
       Get-ChildItem -Path "$pwd\$destFolder";
 
