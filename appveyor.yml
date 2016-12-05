@@ -39,7 +39,7 @@ install:
 
       cd ".\influxdb-exe";
 
-      $MyProcess = Start-Process influxd.exe;
+      $MyProcess = Start-Process influxd.exe -PassThru;
 
       cd ..
 
