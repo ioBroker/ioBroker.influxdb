@@ -23,8 +23,6 @@ install:
   - ps: >-
       Invoke-WebRequest "https://dl.influxdata.com/influxdb/releases/influxdb-1.1.0_windows_amd64.zip" -OutFile .\influxdb-1.1.0_windows_amd64.zip;
 
-      $destFolder = "influxdb-1.1.0";
-
       if (Test-Path .\influxdb-exe )
 
       {
@@ -34,8 +32,6 @@ install:
       md influxdb-exe;
 
       7z e .\influxdb-1.1.0_windows_amd64.zip -oinfluxdb-exe -r
-
-      Get-ChildItem -Path "./influxdb-exe" -Recurse;
 
       cd ".\influxdb-exe";
 
