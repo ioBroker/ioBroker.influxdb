@@ -35,7 +35,7 @@ install:
 
       7z e $pwd\influxdb-1.1.0_windows_amd64.zip -y -o$pwd\$destFolder -r
 
-      Get-ChildItem -Path "$pwd" -Recursive;
+      Get-ChildItem -Path "$pwd" -Recurse;
 
       cd "$pwd\$destFolder";
 
