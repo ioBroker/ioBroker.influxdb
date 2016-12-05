@@ -37,7 +37,7 @@ install:
 
       md ".\influxdb-1.1.0";
 
-      7z e $pwd\influxdb-1.1.0_windows_amd64.zip -y -o $destFolder
+      7z e $pwd\influxdb-1.1.0_windows_amd64.zip -y -o$destFolder
 
       cd $destFolder
 
