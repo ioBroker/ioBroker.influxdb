@@ -35,11 +35,11 @@ install:
 
       7z e $pwd\influxdb-1.1.0_windows_amd64.zip -y -o$pwd\$destFolder -r
 
-      Get-ChildItem -Path "$pwd\$destFolder";
+      Get-ChildItem -Path "$pwd" -Recursive;
 
       cd "$pwd\$destFolder";
 
-      $MyProcess = Start-Process influxd.exe
+      $MyProcess = Start-Process influxd.exe;
 
       cd ..
 
