@@ -35,11 +35,13 @@ install:
           del $pwd\$destFolder -Force -Recurse
       }
 
-      md ".\influxdb-1.1.0";
+      md ".\$destFolder";
 
-      7z e $pwd\influxdb-1.1.0_windows_amd64.zip -y -o$destFolder
+      7z e $pwd\influxdb-1.1.0_windows_amd64.zip -y -o.\$destFolder
 
       cd $destFolder
+
+      Get-ChildItem -Path .\
 
       $MyProcess = Start-Process influxd.exe
 
