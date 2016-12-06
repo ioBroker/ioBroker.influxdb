@@ -225,7 +225,7 @@ sendTo('influxdb.0', 'disableHistory', {
 The message has no parameters.
 
 ```
-sendTo('influxdb.0', 'getEnabledDPs', function (result) {
+sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
     //result is object like:
     {
         "system.adapter.influxdb.0.memRss": {
