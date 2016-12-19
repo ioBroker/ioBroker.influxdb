@@ -655,9 +655,20 @@ function writeSeriesPerID(seriesId, points) {
         client.writePoints(seriesId, points, function(err) {
             if (err) {
                 adapter.log.warn('Error on writePoints for ' + seriesId + ': ' + err);
-                adapter.log.warn('Try to write ' + points.length + ' Points separate to find the conflicting one');
-                // we found the conflicting id
-                writePointsForID(seriesId, points);
+                if (client.request.getHostsAvailable().length === 0) {
+                    setConnected(false);
+                    adapter.log.info('Host not available, move all points back in the Buffer');
+                    // error caused InfluxDB client to remove the host from available for now
+                    if (!seriesBuffer[seriesId]) seriesBuffer[seriesId] = [];
+                    for (var i = 0; i < points.length; i++) {
+                        seriesBuffer[seriesId].push(points[i]);
+                        seriesBufferCounter++;
+                    }
+                } else {
+                    adapter.log.warn('Try to write ' + points.length + ' Points separate to find the conflicting one');
+                    // we found the conflicting id
+                    writePointsForID(seriesId, points);
+                }
             }
         });
     }
