@@ -63,7 +63,7 @@ adapter.on('objectChange', function (id, obj) {
             influxDPs[id].relogTimeout = setTimeout(reLogHelper, (influxDPs[id][adapter.namespace].changesRelogInterval * 500 * Math.random()) + influxDPs[id][adapter.namespace].changesRelogInterval * 500, id);
         }
         if (influxDPs[id][adapter.namespace].changesMinDelta !== undefined && influxDPs[id][adapter.namespace].changesMinDelta !== null && influxDPs[id][adapter.namespace].changesMinDelta !== '') {
-            influxDPs[id][adapter.namespace].changesMinDelta = parseFloat(influxDPs[id][adapter.namespace].changesMinDelta) || 0;
+            influxDPs[id][adapter.namespace].changesMinDelta = parseFloat(influxDPs[id][adapter.namespace].changesMinDelta.toString().replace(/,/, '.')) || 0;
         } else {
             influxDPs[id][adapter.namespace].changesMinDelta = adapter.config.changesMinDelta;
         }
