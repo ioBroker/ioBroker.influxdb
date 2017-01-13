@@ -313,7 +313,7 @@ function main() {
     adapter.config.seriesBufferFlushInterval = parseInt(adapter.config.seriesBufferFlushInterval, 10) || 600;
 
     if (adapter.config.changesMinDelta !== null && adapter.config.changesMinDelta !== undefined) {
-        adapter.config.changesMinDelta = parseFloat(adapter.config.changesMinDelta.toString().replace(/,/g, '.');
+        adapter.config.changesMinDelta = parseFloat(adapter.config.changesMinDelta.toString().replace(/,/g, '.'));
     } else {
         adapter.config.changesMinDelta = 0;
     }
