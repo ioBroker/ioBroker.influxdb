@@ -97,6 +97,7 @@
         "Ok":                   {"en": "Ok",                    "de": "Ok",                             "ru": "Ok"}
     };
 
+    var convertComma = null;
     function setValue(id, value, onChange) {
         // example: select elements with id=key and class=value and insert value
         if ($('#' + id + '.value').attr('type') === 'checkbox') {
@@ -114,6 +115,8 @@
                         var newVal = '';
                         for (var i = 0; i < val.length; i++) {
                             if ((val[i] >= '0' && val[i] <= '9') || val[i] === '-' || val[i] === '+' || val[i] === '.' || val[i] === ',') {
+                                if (val[i] === '.' && convertComma === true)  val[i] === ',';
+                                if (val[i] === ',' && convertComma === false) val[i] === '.';
                                 newVal += val[i];
                             }
                         }
@@ -125,8 +128,13 @@
            });
         }
     }
-
+    
     function load(settings, onChange) {
+        // works only with newest admin adapter
+        if (typeof systemConfig !== 'undefined') {
+            convertComma = systemConfig.common.isFloatComma;
+        }
+        
         for (var key in settings) {
             setValue(key, settings[key], onChange);
         }
