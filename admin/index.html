@@ -113,7 +113,7 @@
                     if (val) {
                         var newVal = '';
                         for (var i = 0; i < val.length; i++) {
-                            if (val[i] >= '0' && val[i] <= '9') {
+                            if ((val[i] >= '0' && val[i] <= '9') || val[i] === '-' || val[i] === '+' || val[i] === '.' || val[i] === ',') {
                                 newVal += val[i];
                             }
                         }
