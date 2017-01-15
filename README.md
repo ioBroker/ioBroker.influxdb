@@ -244,6 +244,9 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 
 ## Changelog
+### 1.3.1 (2017-01-16)
+* (bluefox) Fix handling of float values in Adapter config and Datapoint config.
+
 ### 1.3.0 (2016-12-02)
 * (Apollon77) Add messages enableHistory/disableHistory
 * (Apollon77) add support to log changes only if value differs a minimum value for numbers
