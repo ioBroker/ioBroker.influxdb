@@ -6,9 +6,14 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.3.1",
+        "version": "1.3.2",
         "title":                    "History with InfluxDB",
         "news": {
+            "1.3.2": {
+                "en": "Enhance Min-Delta logic for datapoints from type mixed",
+                "de": "Min-Delta-Logik verbessert für Mixed-Datenpunkte",
+                "ru": "Enhance Min-Delta logic for datapoints from type mixed"
+            },
             "1.3.1": {
                 "en": "Fix handling of float values in Adapter config and Datapoint config.",
                 "de": "Fehlerbehebung bei der Eingabe von Zahlen mit Kommastellen in der Adapter- und Datenpunk-Konfiguration.",

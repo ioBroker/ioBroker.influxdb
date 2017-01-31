@@ -429,6 +429,12 @@ function pushHistory(id, state, timerRelog) {
             influxDPs[id].relogTimeout = setTimeout(reLogHelper, settings.changesRelogInterval * 1000, id);
         }
 
+        if (typeof state.val === 'string') {
+            var f = parseFloat(state.val);
+            if (f.toString() == state.val) {
+                state.val = f;
+            }
+        }
         if (influxDPs[id].state && settings.changesOnly && !timerRelog) {
             if (settings.changesRelogInterval === 0) {
                 if (state.ts !== state.lc) {
