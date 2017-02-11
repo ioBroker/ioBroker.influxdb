@@ -244,6 +244,13 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 
 ## Changelog
+### 1.3.3 (2017-02-08)
+* (Apollon77) Enhance handling of DB outages with mass writes afterwards
+* (Apollon77) Small fix for older configurations
+
+### 1.3.2
+* (Apollon77) Enhance Min-Delta logic for datapoints from type mixed
+
 ### 1.3.1 (2017-01-16)
 * (bluefox) Fix handling of float values in Adapter config and Datapoint config.
 

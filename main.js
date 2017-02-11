@@ -27,7 +27,7 @@ var adapter = utils.adapter('influxdb');
 adapter.on('objectChange', function (id, obj) {
     if (obj && obj.common && (
             // todo remove history sometime (2016.08) - Do not forget object selector in io-package.json
-        (obj.common.history && obj.common.influxDPs[adapter.namespace]) ||
+        (obj.common.history && obj.common.history[adapter.namespace]) ||
         (obj.common.custom  && obj.common.custom[adapter.namespace])) &&
         (obj.common.custom[adapter.namespace].enabled)
     ) {
@@ -661,7 +661,7 @@ function writeSeriesPerID(seriesId, points) {
         client.writePoints(seriesId, points, function(err) {
             if (err) {
                 adapter.log.warn('Error on writePoints for ' + seriesId + ': ' + err);
-                if (client.request.getHostsAvailable().length === 0) {
+                if ((client.request.getHostsAvailable().length === 0) || (err.message && err.message === 'timeout')) {
                     setConnected(false);
                     adapter.log.info('Host not available, move all points back in the Buffer');
                     // error caused InfluxDB client to remove the host from available for now
@@ -693,7 +693,7 @@ function writeOnePointForID(pointId, point, directWrite) {
     client.writePoint(pointId, point, null, function (err, result) {
         if (err) {
             adapter.log.warn('Error on writePoint("' + JSON.stringify(point) + '): ' + err + ' / ' + JSON.stringify(err.message));
-            if (client.request.getHostsAvailable().length === 0) {
+            if ((client.request.getHostsAvailable().length === 0) || (err.message && err.message === 'timeout')) {
                 setConnected(false);
                 addPointToSeriesBuffer(pointId, point);
             } else if (err.message && (typeof err.message === 'string') && (err.message.indexOf('field type conflict') !== -1)) {
