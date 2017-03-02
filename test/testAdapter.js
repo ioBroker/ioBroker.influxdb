@@ -278,6 +278,29 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             });
         });
     });
+    it('Test ' + adapterShortName + ': Check Datapoint Types', function (done) {
+        this.timeout(5000);
+
+        sendTo('influxdb.0', 'query', "SHOW FIELD KEYS", function (result) {
+            console.log('MSSQL: ' + JSON.stringify(result.result[0], null, 2));
+            /*expect(result.result[0].length).to.least(3);
+            for (var i = 0; i < result.result[0].length; i++) {
+                if (result.result[0][i].name === 'system.adapter.sql.0.memRss') {
+                    expect(result.result[0][i].type).to.be.equal(0);
+                }
+                else if (result.result[0][i].name === 'system.adapter.sql.0.memHeapTotal') {
+                    expect(result.result[0][i].type).to.be.equal(1);
+                }
+                else if (result.result[0][i].name === 'system.adapter.sql.0.uptime') {
+                    expect(result.result[0][i].type).to.be.equal(2);
+                }
+            }*/
+
+            setTimeout(function () {
+                done();
+            }, 3000);
+        });
+    });
     it('Test ' + adapterShortName + ': Disable Datapoint again', function (done) {
         this.timeout(5000);
 
