@@ -739,7 +739,9 @@ function writeOnePointForID(pointId, point, directWrite) {
                         point.value = 0;
                         retry = true;
                     }
-                } else if ((err.message.indexOf('is type float, already exists as type bool') !== -1) || (err.message.indexOf('is type float64, already exists as type bool') !== -1)) {
+                    influxDPs[pointId][adapter.namespace].storageType = 'Number';
+                }
+                else if ((err.message.indexOf('is type float, already exists as type bool') !== -1) || (err.message.indexOf('is type float64, already exists as type bool') !== -1)) {
                     convertDirection = 'float -> bool';
                     if (point.value === 1) {
                         point.value = true;
@@ -749,9 +751,15 @@ function writeOnePointForID(pointId, point, directWrite) {
                         point.value = false;
                         retry = true;
                     }
+                    influxDPs[pointId][adapter.namespace].storageType = 'Boolean';
+                }
+                else if (err.message.indexOf(', already exists as type string') !== -1) {
+                    point.value = point.value.toString();
+                    retry = true;
+                    influxDPs[pointId][adapter.namespace].storageType = 'String';
                 }
                 if (retry) {
-                    adapter.log.info('Try to convert ' + convertDirection + ' and re-write for ' + pointId);
+                    adapter.log.info('Try to convert ' + convertDirection + ' and re-write for ' + pointId + ' and set storageType to ' + influxDPs[pointId][adapter.namespace].storageType);
                     writeOnePointForID(pointId, point, true);
                 }
             } else {
