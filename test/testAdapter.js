@@ -1,5 +1,6 @@
 /* jshint -W097 */// jshint strict:false
 /*jslint node: true */
+/*jshint expr: true*/
 var expect = require('chai').expect;
 var setup  = require(__dirname + '/lib/setup');
 
@@ -127,27 +128,37 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                     }, function (result) {
                         expect(result.error).to.be.undefined;
                         expect(result.success).to.be.true;
-                        // wait till adapter receives the new settings
-                        setTimeout(function () {
-                            done();
-                        }, 2000);
-                    });
-/*                    objects.getObject('system.adapter.influxdb.0.memRss', function (err, obj) {
-                        obj.common.custom = {
-                            'influxdb.0': {
-                                enabled:      true,
-                                changesOnly:  false,
+                        sendTo('influxdb.0', 'enableHistory', {
+                            id: 'system.adapter.influxdb.0.memHeapTotal',
+                            options: {
+                                changesOnly:  true,
                                 debounce:     0,
-                                retention:    31536000
+                                retention:    31536000,
+                                changesMinDelta: 0.5,
+                                storageType: 'String'
                             }
-                        };
-                        objects.setObject('system.adapter.influxdb.0.memRss', obj, function (err) {
-                            // wait till adapter receives the new settings
-                            setTimeout(function () {
-                                done();
-                            }, 2000);
+                        }, function (result) {
+                            expect(result.error).to.be.undefined;
+                            expect(result.success).to.be.true;
+                            sendTo('influxdb.0', 'enableHistory', {
+                                id: 'system.adapter.influxdb.0.uptime',
+                                options: {
+                                    changesOnly:  true,
+                                    debounce:     0,
+                                    retention:    31536000,
+                                    changesMinDelta: 0.5,
+                                    storageType: 'Boolean'
+                                }
+                            }, function (result) {
+                                expect(result.error).to.be.undefined;
+                                expect(result.success).to.be.true;
+                                // wait till adapter receives the new settings
+                                setTimeout(function () {
+                                    done();
+                                }, 10000);
+                            });
                         });
-                    });*/
+                    });
                 });
         });
     });
