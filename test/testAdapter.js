@@ -281,24 +281,47 @@ describe('Test ' + adapterShortName + ' adapter', function() {
     it('Test ' + adapterShortName + ': Check Datapoint Types', function (done) {
         this.timeout(5000);
 
-        sendTo('influxdb.0', 'query', "SHOW FIELD KEYS", function (result) {
-            console.log('MSSQL: ' + JSON.stringify(result.result[0], null, 2));
-            /*expect(result.result[0].length).to.least(3);
+        sendTo('influxdb.0', 'query', 'SHOW FIELD KEYS FROM "system.adapter.influxdb.0.memRss"', function (result) {
+            console.log('result: ' + JSON.stringify(result.result[0], null, 2));
+            var found = true;
             for (var i = 0; i < result.result[0].length; i++) {
-                if (result.result[0][i].name === 'system.adapter.sql.0.memRss') {
-                    expect(result.result[0][i].type).to.be.equal(0);
+                if (result.result[0][i].fieldKey === 'value') {
+                    found = true;
+                    expect(result.result[0][i].fieldType).to.be.equal('float');
+                    break;
                 }
-                else if (result.result[0][i].name === 'system.adapter.sql.0.memHeapTotal') {
-                    expect(result.result[0][i].type).to.be.equal(1);
-                }
-                else if (result.result[0][i].name === 'system.adapter.sql.0.uptime') {
-                    expect(result.result[0][i].type).to.be.equal(2);
-                }
-            }*/
+            }
+            expect(found).to.be.true;
 
-            setTimeout(function () {
-                done();
-            }, 3000);
+            sendTo('influxdb.0', 'query', 'SHOW FIELD KEYS FROM "system.adapter.influxdb.0.memHeapTotal"', function (result) {
+                console.log('result: ' + JSON.stringify(result.result[0], null, 2));
+                var found = true;
+                for (var i = 0; i < result.result[0].length; i++) {
+                    if (result.result[0][i].fieldKey === 'value') {
+                        found = true;
+                        expect(result.result[0][i].fieldType).to.be.equal('string');
+                        break;
+                    }
+                }
+                expect(found).to.be.true;
+
+                sendTo('influxdb.0', 'query', 'SHOW FIELD KEYS FROM "system.adapter.influxdb.0.uptime"', function (result) {
+                    console.log('result: ' + JSON.stringify(result.result[0], null, 2));
+                    var found = true;
+                    for (var i = 0; i < result.result[0].length; i++) {
+                        if (result.result[0][i].fieldKey === 'value') {
+                            found = true;
+                            expect(result.result[0][i].fieldType).to.be.equal('boolean');
+                            break;
+                        }
+                    }
+                    expect(found).to.be.true;
+
+                    setTimeout(function () {
+                        done();
+                    }, 3000);
+                });
+            });
         });
     });
     it('Test ' + adapterShortName + ': Disable Datapoint again', function (done) {
