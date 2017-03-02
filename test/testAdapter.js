@@ -121,7 +121,8 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                             debounce:     0,
                             retention:    31536000,
                             seriesBufferMax:    0,
-                            changesMinDelta: 0.5
+                            changesMinDelta: 0.5,
+                            storageType: 'Number'
                         }
                     }, function (result) {
                         expect(result.error).to.be.undefined;
@@ -164,7 +165,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
         this.timeout(25000);
         now = new Date().getTime();
 
-        states.setState('system.adapter.influxdb.0.memRss', {val: 1, ts: now - 20000, from: 'test.0'}, function (err) {
+        states.setState('system.adapter.influxdb.0.memRss', {val: true, ts: now - 20000, from: 'test.0'}, function (err) {
             if (err) {
                 console.log(err);
             }
@@ -184,7 +185,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                                         console.log(err);
                                     }
                                     setTimeout(function () {
-                                        states.setState('system.adapter.influxdb.0.memRss', {val: 2.5, ts: now - 3000, from: 'test.0'}, function (err) {
+                                        states.setState('system.adapter.influxdb.0.memRss', {val: '2.5', ts: now - 3000, from: 'test.0'}, function (err) {
                                             if (err) {
                                                 console.log(err);
                                             }
@@ -193,7 +194,14 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                                                     if (err) {
                                                         console.log(err);
                                                     }
-                                                    setTimeout(done, 1000);
+                                                    setTimeout(function () {
+                                                        states.setState('system.adapter.influxdb.0.memRss', {val: 'Test', ts: now - 500, from: 'test.0'}, function (err) {
+                                                            if (err) {
+                                                                console.log(err);
+                                                            }
+                                                            setTimeout(done, 1000);
+                                                        });
+                                                    }, 100);
                                                 });
                                             }, 100);
                                         });

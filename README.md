@@ -244,6 +244,10 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 
 ## Changelog
+
+### 1.4.0 (2017-03-02)
+* (Apollon77) Add option to define storage datatype per datapoint inclusing converting the value if needed
+
 ### 1.3.4 (2017-02-22)
 * (Apollon77) Small fix for older configurations
 
@@ -334,7 +338,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 The MIT License (MIT)
 
-Copyright (c) 2015-2016 bluefox
+Copyright (c) 2015-2017 bluefox
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

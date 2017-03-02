@@ -68,6 +68,7 @@ adapter.on('objectChange', function (id, obj) {
         } else {
             influxDPs[id][adapter.namespace].changesMinDelta = adapter.config.changesMinDelta;
         }
+        if (!influxDPs[id][adapter.namespace].storageType) influxDPs[id][adapter.namespace].storageType = false;
 
         // add one day if retention is too small
         if (influxDPs[id][adapter.namespace].retention && influxDPs[id][adapter.namespace].retention <= 604800) {
@@ -383,6 +384,7 @@ function main() {
                             } else {
                                 influxDPs[id][adapter.namespace].changesMinDelta = adapter.config.changesMinDelta;
                             }
+                            if (!influxDPs[id][adapter.namespace].storageType) influxDPs[id][adapter.namespace].storageType = false;
 
                             // add one day if retention is too small
                             if (influxDPs[id][adapter.namespace].retention && influxDPs[id][adapter.namespace].retention <= 604800) {
@@ -430,7 +432,7 @@ function pushHistory(id, state, timerRelog) {
             influxDPs[id].relogTimeout = setTimeout(reLogHelper, settings.changesRelogInterval * 1000, id);
         }
 
-        if (typeof state.val === 'string') {
+        if (typeof state.val === 'string' && settings.storageType !== 'String') {
             var f = parseFloat(state.val);
             if (f.toString() == state.val) {
                 state.val = f;
@@ -520,7 +522,11 @@ function pushHelper(_id) {
 
         if (influxDPs[_id].state.val === null) return; // InfluxDB can not handle null values
 
-        if (typeof influxDPs[_id].state.val === 'string') {
+        if (typeof influxDPs[_id].state.val === 'object') influxDPs[_id].state.val = JSON.stringify(influxDPs[_id].state.val);
+
+        adapter.log.info('Datatype ' + _id + ': Currently: ' + typeof influxDPs[_id].state.val + ', StorageType: ' + _settings.storageType);
+        if (typeof influxDPs[_id].state.val === 'string' && _settings.storageType !== 'String') {
+            adapter.log.info('Do Automatic Datatype conversion for ' + _id);
             var f = parseFloat(influxDPs[_id].state.val);
             if (f.toString() == influxDPs[_id].state.val) {
                 influxDPs[_id].state.val = f;
@@ -529,6 +535,21 @@ function pushHelper(_id) {
             } else if (influxDPs[_id].state.val === 'false') {
                 influxDPs[_id].state.val = false;
             }
+        }
+        if (_settings.storageType === 'String' && typeof influxDPs[_id].state.val !== 'string') {
+            influxDPs[_id].state.val = influxDPs[_id].state.val.toString();
+        }
+        else if (_settings.storageType === 'Number' && typeof influxDPs[_id].state.val !== 'number') {
+            if (typeof influxDPs[_id].state.val === 'boolean') {
+                influxDPs[_id].state.val = influxDPs[_id].state.val?1:0;
+            }
+            else {
+                adapter.log.info('Do not store value "' + influxDPs[_id].state.val + '" for ' + _id + ' because no number');
+                return;
+            }
+        }
+        else if (_settings.storageType === 'Boolean' && typeof influxDPs[_id].state.val !== 'boolean') {
+            influxDPs[_id].state.val = !!influxDPs[_id].state.val;
         }
         pushValueIntoDB(_id, influxDPs[_id].state);
     }
@@ -550,6 +571,7 @@ function pushValueIntoDB(id, state) {
 
     if (typeof state.val === 'object') state.val = JSON.stringify(state.val);
 
+    /*
     if (state.val === 'true') {
         state.val = true;
     } else if (state.val === 'false') {
@@ -558,7 +580,7 @@ function pushValueIntoDB(id, state) {
         // try to convert to float
         var f = parseFloat(state.val);
         if (f == state.val) state.val = f;
-    }
+    }*/
 
     //adapter.log.debug('write value ' + state.val + ' for ' + id);
     var influxFields = {
