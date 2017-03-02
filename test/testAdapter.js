@@ -279,50 +279,52 @@ describe('Test ' + adapterShortName + ' adapter', function() {
         });
     });
     it('Test ' + adapterShortName + ': Check Datapoint Types', function (done) {
-        this.timeout(5000);
+        this.timeout(65000);
 
-        sendTo('influxdb.0', 'query', 'SHOW FIELD KEYS FROM "system.adapter.influxdb.0.memRss"', function (result) {
-            console.log('result: ' + JSON.stringify(result.result[0], null, 2));
-            var found = true;
-            for (var i = 0; i < result.result[0].length; i++) {
-                if (result.result[0][i].fieldKey === 'value') {
-                    found = true;
-                    expect(result.result[0][i].fieldType).to.be.equal('float');
-                    break;
-                }
-            }
-            expect(found).to.be.true;
-
-            sendTo('influxdb.0', 'query', 'SHOW FIELD KEYS FROM "system.adapter.influxdb.0.memHeapTotal"', function (result) {
-                console.log('result: ' + JSON.stringify(result.result[0], null, 2));
-                var found = true;
+        setTimeout(function() {
+            sendTo('influxdb.0', 'query', 'SHOW FIELD KEYS FROM "system.adapter.influxdb.0.memRss"', function (result) {
+                console.log('result: ' + JSON.stringify(result.result, null, 2));
+                var found = false;
                 for (var i = 0; i < result.result[0].length; i++) {
                     if (result.result[0][i].fieldKey === 'value') {
                         found = true;
-                        expect(result.result[0][i].fieldType).to.be.equal('string');
+                        expect(result.result[0][i].fieldType).to.be.equal('float');
                         break;
                     }
                 }
                 expect(found).to.be.true;
 
-                sendTo('influxdb.0', 'query', 'SHOW FIELD KEYS FROM "system.adapter.influxdb.0.uptime"', function (result) {
-                    console.log('result: ' + JSON.stringify(result.result[0], null, 2));
-                    var found = true;
-                    for (var i = 0; i < result.result[0].length; i++) {
-                        if (result.result[0][i].fieldKey === 'value') {
+                sendTo('influxdb.0', 'query', 'SHOW FIELD KEYS FROM "system.adapter.influxdb.0.memHeapTotal"', function (result2) {
+                    console.log('result2: ' + JSON.stringify(result2.result, null, 2));
+                    var found = false;
+                    for (var i = 0; i < result2.result[0].length; i++) {
+                        if (result2.result[0][i].fieldKey === 'value') {
                             found = true;
-                            expect(result.result[0][i].fieldType).to.be.equal('boolean');
+                            expect(result2.result[0][i].fieldType).to.be.equal('string');
                             break;
                         }
                     }
                     expect(found).to.be.true;
 
-                    setTimeout(function () {
-                        done();
-                    }, 3000);
+                    sendTo('influxdb.0', 'query', 'SHOW FIELD KEYS FROM "system.adapter.influxdb.0.uptime"', function (result3) {
+                        console.log('result3: ' + JSON.stringify(result3.result, null, 2));
+                        var found = false;
+                        for (var i = 0; i < result3.result[0].length; i++) {
+                            if (result3.result[0][i].fieldKey === 'value') {
+                                found = true;
+                                expect(result3.result[0][i].fieldType).to.be.equal('boolean');
+                                break;
+                            }
+                        }
+                        expect(found).to.be.true;
+
+                        setTimeout(function () {
+                            done();
+                        }, 3000);
+                    });
                 });
             });
-        });
+        }, 60000);
     });
     it('Test ' + adapterShortName + ': Disable Datapoint again', function (done) {
         this.timeout(5000);
