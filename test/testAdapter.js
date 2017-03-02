@@ -167,7 +167,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
 
         sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
             console.log(JSON.stringify(result));
-            expect(Object.keys(result).length).to.be.equal(1);
+            expect(Object.keys(result).length).to.be.equal(3);
             expect(result['system.adapter.influxdb.0.memRss'].enabled).to.be.true;
             done();
         });
@@ -294,7 +294,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
 
         sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
             console.log(JSON.stringify(result));
-            expect(Object.keys(result).length).to.be.equal(0);
+            expect(Object.keys(result).length).to.be.equal(2);
             done();
         });
     });
