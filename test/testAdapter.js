@@ -370,7 +370,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
         this.timeout(5000);
 
         objects.getObject('system.adapter.influxdb.0.memHeapUsed', function(err, obj) {
-            expect(obj.common.custom['influxdb.0'].storageType).to.be.equal('Number');
+            expect(obj.common.custom['influxdb.0'].storageType).to.be.equal('String');
             expect(err).to.be.null;
             done();
         });
