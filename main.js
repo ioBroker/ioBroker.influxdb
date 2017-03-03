@@ -524,9 +524,9 @@ function pushHelper(_id) {
 
         if (typeof influxDPs[_id].state.val === 'object') influxDPs[_id].state.val = JSON.stringify(influxDPs[_id].state.val);
 
-        adapter.log.info('Datatype ' + _id + ': Currently: ' + typeof influxDPs[_id].state.val + ', StorageType: ' + _settings.storageType);
+        adapter.log.debug('Datatype ' + _id + ': Currently: ' + typeof influxDPs[_id].state.val + ', StorageType: ' + _settings.storageType);
         if (typeof influxDPs[_id].state.val === 'string' && _settings.storageType !== 'String') {
-            adapter.log.info('Do Automatic Datatype conversion for ' + _id);
+            adapter.log.debug('Do Automatic Datatype conversion for ' + _id);
             var f = parseFloat(influxDPs[_id].state.val);
             if (f.toString() == influxDPs[_id].state.val) {
                 influxDPs[_id].state.val = f;
@@ -720,47 +720,60 @@ function writeOnePointForID(pointId, point, directWrite) {
                 setConnected(false);
                 addPointToSeriesBuffer(pointId, point);
             } else if (err.message && (typeof err.message === 'string') && (err.message.indexOf('field type conflict') !== -1)) {
-                if (! directWrite) {
+                // retry write after type correction for some easy cases
+                var retry = false;
+                if (!influxDPs[pointId][adapter.namespace].storageType) {
+                    var convertDirection = '';
+                    if (err.message.indexOf('is type bool, already exists as type float') !== -1) {
+                        convertDirection = 'bool -> float';
+                        if (point.value === true) {
+                            point.value = 1;
+                            retry = true;
+                        }
+                        else if (point.value === false) {
+                            point.value = 0;
+                            retry = true;
+                        }
+                        influxDPs[pointId][adapter.namespace].storageType = 'Number';
+                    }
+                    else if ((err.message.indexOf('is type float, already exists as type bool') !== -1) || (err.message.indexOf('is type float64, already exists as type bool') !== -1)) {
+                        convertDirection = 'float -> bool';
+                        if (point.value === 1) {
+                            point.value = true;
+                            retry = true;
+                        }
+                        else if (point.value === 0) {
+                            point.value = false;
+                            retry = true;
+                        }
+                        influxDPs[pointId][adapter.namespace].storageType = 'Boolean';
+                    }
+                    else if (err.message.indexOf(', already exists as type string') !== -1) {
+                        point.value = point.value.toString();
+                        retry = true;
+                        influxDPs[pointId][adapter.namespace].storageType = 'String';
+                    }
+                    if (retry) {
+                        adapter.log.info('Try to convert ' + convertDirection + ' and re-write for ' + pointId + ' and set storageType to ' + influxDPs[pointId][adapter.namespace].storageType);
+                        writeOnePointForID(pointId, point, true);
+                        var obj = {};
+                        obj.common = {};
+                        obj.common.custom = {};
+                        obj.common.custom[adapter.namespace] = {};
+                        obj.common.custom[adapter.namespace].storageType = influxDPs[pointId][adapter.namespace].storageType;
+                        adapter.extendForeignObject(pointId, obj, function (err) {
+                            if (err) {
+                                adapter.log.error('error updating history config for ' + pointId + ' to pin datatype: ' + err);
+                            } else {
+                                adapter.log.info('changed history configuration to pin detected datatype for ' + pointId);
+                            }
+                        });
+                    }
+                }
+                if (!directWrite || !retry) {
                     // remember this as a pot. conflicting point and write synchronous
                     conflictingPoints[pointId]=1;
                     adapter.log.warn('Add ' + pointId + ' to conflicting Points (' + Object.keys(conflictingPoints).length + ' now)');
-                }
-
-                // retry write after type correction for some easy cases
-                var retry = false;
-                var convertDirection = '';
-                if (err.message.indexOf('is type bool, already exists as type float') !== -1) {
-                    convertDirection = 'bool -> float';
-                    if (point.value === true) {
-                        point.value = 1;
-                        retry = true;
-                    }
-                    else if (point.value === false) {
-                        point.value = 0;
-                        retry = true;
-                    }
-                    influxDPs[pointId][adapter.namespace].storageType = 'Number';
-                }
-                else if ((err.message.indexOf('is type float, already exists as type bool') !== -1) || (err.message.indexOf('is type float64, already exists as type bool') !== -1)) {
-                    convertDirection = 'float -> bool';
-                    if (point.value === 1) {
-                        point.value = true;
-                        retry = true;
-                    }
-                    else if (point.value === 0) {
-                        point.value = false;
-                        retry = true;
-                    }
-                    influxDPs[pointId][adapter.namespace].storageType = 'Boolean';
-                }
-                else if (err.message.indexOf(', already exists as type string') !== -1) {
-                    point.value = point.value.toString();
-                    retry = true;
-                    influxDPs[pointId][adapter.namespace].storageType = 'String';
-                }
-                if (retry) {
-                    adapter.log.info('Try to convert ' + convertDirection + ' and re-write for ' + pointId + ' and set storageType to ' + influxDPs[pointId][adapter.namespace].storageType);
-                    writeOnePointForID(pointId, point, true);
                 }
             } else {
                 if (! errorPoints[pointId]) {

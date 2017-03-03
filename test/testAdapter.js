@@ -150,14 +150,36 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                             }, function (result) {
                                 expect(result.error).to.be.undefined;
                                 expect(result.success).to.be.true;
-                                // wait till adapter receives the new settings
-                                setTimeout(function () {
-                                    done();
-                                }, 10000);
+                                sendTo('influxdb.0', 'enableHistory', {
+                                    id: 'system.adapter.influxdb.0.memHeapUsed',
+                                    options: {
+                                        changesOnly:  false,
+                                        debounce:     0,
+                                        retention:    31536000,
+                                    }
+                                }, function (result) {
+                                    expect(result.error).to.be.undefined;
+                                    expect(result.success).to.be.true;
+                                    // wait till adapter receives the new settings
+                                    setTimeout(function () {
+                                        done();
+                                    }, 10000);
+                                });
                             });
                         });
                     });
                 });
+        });
+    });
+    it('Test ' + adapterShortName + ': Write string value for memHeapUsed into DB to force a type conflict', function (done) {
+        this.timeout(5000);
+        now = new Date().getTime();
+
+        states.setState('system.adapter.influxdb.0.memHeapUsed', {val: 'Blubb', ts: now - 20000, from: 'test.0'}, function (err) {
+            if (err) {
+                console.log(err);
+            }
+            done();
         });
     });
     it('Test ' + adapterShortName + ': Check Enabled Points after Enable', function (done) {
@@ -165,7 +187,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
 
         sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
             console.log(JSON.stringify(result));
-            expect(Object.keys(result).length).to.be.equal(3);
+            expect(Object.keys(result).length).to.be.equal(4);
             expect(result['system.adapter.influxdb.0.memRss'].enabled).to.be.true;
             done();
         });
@@ -340,7 +362,16 @@ describe('Test ' + adapterShortName + ' adapter', function() {
 
         sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
             console.log(JSON.stringify(result));
-            expect(Object.keys(result).length).to.be.equal(2);
+            expect(Object.keys(result).length).to.be.equal(3);
+            done();
+        });
+    });
+    it('Test ' + adapterShortName + ': Check that storageType is set now for memHeapUsed', function (done) {
+        this.timeout(5000);
+
+        objects.getObject('system.adapter.influxdb.0.memHeapUsed', function(err, obj) {
+            expect(obj.common.custom['influxdb.0'].storageType).to.be.equal('Number');
+            expect(err).to.be.null;
             done();
         });
     });
