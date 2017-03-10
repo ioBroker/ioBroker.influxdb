@@ -478,10 +478,11 @@ function pushHistory(id, state, timerRelog) {
         }
         influxDPs[id].lastLogTime = state.ts;
 
-        // Do not store values ofter than debounce time
-        if (!influxDPs[id].timeout && settings.debounce) {
+        if (settings.debounce) {
+            // Discard changes in debounce time to store last stable value
+            if (influxDPs[id].timeout) clearTimeout(influxDPs[id].timeout);
             influxDPs[id].timeout = setTimeout(pushHelper, settings.debounce, id);
-        } else if (!settings.debounce) {
+        } else {
             pushHelper(id);
         }
     }
