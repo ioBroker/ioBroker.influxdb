@@ -139,7 +139,7 @@
         }
     },
     "native": {
-        "debounce":                  10000,
+        "debounce":                  1000,
         "retention":                 31536000,
         "dbname":                    "iobroker",
         "host":                      "localhost",
