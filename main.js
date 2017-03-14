@@ -438,7 +438,7 @@ function pushHistory(id, state, timerRelog) {
 
         if (typeof state.val === 'string' && settings.storageType !== 'String') {
             var f = parseFloat(state.val);
-            if (f.toString() == state.val) {
+            if (f == state.val) {
                 state.val = f;
             }
         }
@@ -533,7 +533,7 @@ function pushHelper(_id) {
         if (typeof influxDPs[_id].state.val === 'string' && _settings.storageType !== 'String') {
             adapter.log.debug('Do Automatic Datatype conversion for ' + _id);
             var f = parseFloat(influxDPs[_id].state.val);
-            if (f.toString() == influxDPs[_id].state.val) {
+            if (f == influxDPs[_id].state.val) {
                 influxDPs[_id].state.val = f;
             } else if (influxDPs[_id].state.val === 'true') {
                 influxDPs[_id].state.val = true;
