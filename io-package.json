@@ -6,10 +6,10 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.4.1",
+        "version": "1.4.2",
         "title":                    "History with InfluxDB",
         "news": {
-            "1.4.1": {
+            "1.4.2": {
                 "en": "Changed Debounce-Feature to log the last stable value that did not changed for given time!! Add option to define storage datatype per datapoint inclusing converting the value if needed",
                 "de": "Debounce-Feature geändert, sodass der letzte Wert der in der angegeben Zeit stabil geblieben ist geloggt wird!! Hinzufügen der Option den Speicher-Datenyp eines Datenpunktes inklusive der nötigen Konvertierung definieren zu können",
                 "ru": "Changed Debounce-Feature to log the last stable value that did not changed for given time!! Add option to define storage datatype per datapoint inclusing converting the value if needed"

@@ -245,7 +245,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 ## Changelog
 
-### 1.4.0 (2017-03-02)
+### 1.4.2 (2017-03-02)
 * (Apollon77) Add option to define storage datatype per datapoint inclusing converting the value if needed
 
 ### 1.3.4 (2017-02-22)
