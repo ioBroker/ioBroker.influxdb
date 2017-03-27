@@ -136,6 +136,11 @@
             "width ":    435,
             "minHeight": 200,
             "height":    540
+        },
+        "docs": {
+            "de": [
+                "docs/de/influxdb.md"
+            ]
         }
     },
     "native": {
