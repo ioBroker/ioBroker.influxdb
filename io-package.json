@@ -6,7 +6,7 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.4.3",
+        "version": "1.4.4",
         "title":                    "History with InfluxDB",
         "news": {
             "1.4.3": {
