@@ -117,7 +117,7 @@ process.on('uncaughtException', function (err) {
 function setConnected(isConnected) {
     if (connected !== isConnected) {
         connected = isConnected;
-        adapter.setState('info.connected', connected, true, function (err) {
+        adapter.setState('info.connection', connected, true, function (err) {
             // analyse if the state could be set (because of permissions)
             if (err) adapter.log.error('Can not update connected state: ' + err);
               else adapter.log.debug('connected set to ' + connected);
