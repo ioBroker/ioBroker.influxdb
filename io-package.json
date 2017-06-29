@@ -9,6 +9,11 @@
         "version": "1.4.4",
         "title":                    "History with InfluxDB",
         "news": {
+            "1.4.4": {
+                "en": "fix connected datapoint",
+                "de": "Verbunden-Datenpunkt korrekt gesetzt",
+                "ru": "fix connected datapoint"
+            },
             "1.4.3": {
                 "en": "fix in datatype conversions",
                 "de": "Fehlerbehebung in Datentypkonvertierungen",

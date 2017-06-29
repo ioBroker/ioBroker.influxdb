@@ -245,6 +245,9 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 ## Changelog
 
+## 1.4.4 (2017-06-29)
+* fix connected datapoint
+
 ## 1.4.3 (2017-04-07)
 * fix in datatype conversions
 
