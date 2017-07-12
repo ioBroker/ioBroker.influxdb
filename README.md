@@ -10,7 +10,7 @@
 
 This adapter saves state history into InfluxDB.
 
-**Only influxDB >= v0.9 supported, v1.0 recommended**
+**Only InfluxDB >= v0.9 supported, v1.0 recommended**
 
 ## Direct writes or buffered writes?
 With the default configuration the adapter stores each single datapoint directly into the database and only use the internal buffer if the database is not available. If database was not available the buffer is flushed at the given interval, so it can take the defined interval till the missing points are written!
