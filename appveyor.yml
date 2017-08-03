@@ -5,14 +5,14 @@ environment:
     - nodejs_version: '0.12'
     - nodejs_version: '4'
     - nodejs_version: '6'
-    - nodejs_version: '7'
+    - nodejs_version: '8'
 platform:
   - x64
 clone_folder: 'c:\projects\%APPVEYOR_PROJECT_NAME%'
 install:
   - ps: 'Install-Product node $env:nodejs_version $env:platform'
   - npm install
-  - npm install winston@2.3.0
+  - npm install winston@2.3.1
   - 'npm install https://github.com/ioBroker/ioBroker.js-controller/tarball/master --production'
   - ps: |-
       Invoke-WebRequest "https://dl.influxdata.com/influxdb/releases/influxdb-1.1.0_windows_amd64.zip" -OutFile .\influxdb-1.1.0_windows_amd64.zip;
