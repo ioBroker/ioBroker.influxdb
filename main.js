@@ -428,14 +428,6 @@ function pushHistory(id, state, timerRelog) {
 
         if (!settings || !state) return;
 
-        if (influxDPs[id].relogTimeout) {
-            clearTimeout(influxDPs[id].relogTimeout);
-            influxDPs[id].relogTimeout = null;
-        }
-        if (settings.changesRelogInterval > 0) {
-            influxDPs[id].relogTimeout = setTimeout(reLogHelper, settings.changesRelogInterval * 1000, id);
-        }
-
         if (typeof state.val === 'string' && settings.storageType !== 'String') {
             var f = parseFloat(state.val);
             if (f == state.val) {
@@ -469,6 +461,14 @@ function pushHistory(id, state, timerRelog) {
             }
         }
 
+        if (influxDPs[id].relogTimeout) {
+            clearTimeout(influxDPs[id].relogTimeout);
+            influxDPs[id].relogTimeout = null;
+        }
+        if (settings.changesRelogInterval > 0) {
+            influxDPs[id].relogTimeout = setTimeout(reLogHelper, settings.changesRelogInterval * 1000, id);
+        }
+
         if (timerRelog) {
             state.ts = new Date().getTime();
             adapter.log.debug('timed-relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
@@ -494,28 +494,22 @@ function reLogHelper(_id) {
         return;
     }
     influxDPs[_id].relogTimeout = null;
-    if (!influxDPs[_id].state) {
-        //we have a not-that-often-updated state to log, so get the last state
-        adapter.getForeignState(_id, function (err, state) {
-            if (err) {
-                adapter.log.info('init timed Relog: can not get State for ' + _id + ' : ' + err);
+    adapter.getForeignState(_id, function (err, state) {
+        if (err) {
+            adapter.log.info('init timed Relog: can not get State for ' + _id + ' : ' + err);
+        }
+        else if (!state) {
+            adapter.log.info('init timed Relog: disable relog because state not set so far for ' + _id + ': ' + JSON.stringify(state));
+        }
+        else {
+            adapter.log.debug('init timed Relog: getState ' + _id + ':  Value=' + state.val + ', ack=' + state.ack + ', ts=' + state.ts  + ', lc=' + state.lc);
+            // only if state is still not set
+            if (!influxDPs[_id].state) {
+                influxDPs[_id].state = state;
+                pushHistory(_id, influxDPs[_id].state, true);
             }
-            else if (!state) {
-                adapter.log.info('init timed Relog: disable relog because state not set so far for ' + _id + ': ' + JSON.stringify(state));
-            }
-            else {
-                adapter.log.debug('init timed Relog: getState ' + _id + ':  Value=' + state.val + ', ack=' + state.ack + ', ts=' + state.ts  + ', lc=' + state.lc);
-                // only if state is still not set
-                if (!influxDPs[_id].state) {
-                    influxDPs[_id].state = state;
-                    pushHistory(_id, influxDPs[_id].state, true);
-                }
-            }
-        });
-    } else {
-        pushHistory(_id, influxDPs[_id].state, true);
-    }
-
+        }
+    });
 }
 
 function pushHelper(_id) {

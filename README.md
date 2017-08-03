@@ -245,6 +245,9 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 ## Changelog
 
+## 1.4.5 (2017-08-03)
+* (Apollon77) fix behaviour of log interval to always log the current value
+
 ## 1.4.4 (2017-06-29)
 * fix connected datapoint
 
