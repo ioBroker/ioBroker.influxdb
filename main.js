@@ -41,6 +41,8 @@ adapter.on('objectChange', function (id, obj) {
             subscribeAll = true;
             adapter.subscribeForeignStates('*');
         }
+        if (influxDPs[id] && influxDPs[id].relogTimeout) clearTimeout(influxDPs[id].relogTimeout);
+
         // todo remove history sometime (2016.08)
         influxDPs[id] = obj.common.custom || obj.common.history;
         if (influxDPs[id][adapter.namespace].retention !== undefined && influxDPs[id][adapter.namespace].retention !== null && influxDPs[id][adapter.namespace].retention !== '') {
@@ -59,7 +61,6 @@ adapter.on('objectChange', function (id, obj) {
         } else {
             influxDPs[id][adapter.namespace].changesRelogInterval = adapter.config.changesRelogInterval;
         }
-        if (influxDPs[id].relogTimeout) clearTimeout(influxDPs[id].relogTimeout);
         if (influxDPs[id][adapter.namespace].changesRelogInterval > 0) {
             influxDPs[id].relogTimeout = setTimeout(reLogHelper, (influxDPs[id][adapter.namespace].changesRelogInterval * 500 * Math.random()) + influxDPs[id][adapter.namespace].changesRelogInterval * 500, id);
         }
