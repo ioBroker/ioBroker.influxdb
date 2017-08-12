@@ -41,6 +41,7 @@ adapter.on('objectChange', function (id, obj) {
             subscribeAll = true;
             adapter.subscribeForeignStates('*');
         }
+        var writeNull = !influxDPs[id];
         if (influxDPs[id] && influxDPs[id].relogTimeout) clearTimeout(influxDPs[id].relogTimeout);
 
         // todo remove history sometime (2016.08)
@@ -75,6 +76,9 @@ adapter.on('objectChange', function (id, obj) {
         // add one day if retention is too small
         if (influxDPs[id][adapter.namespace].retention && influxDPs[id][adapter.namespace].retention <= 604800) {
             influxDPs[id][adapter.namespace].retention += 86400;
+        }
+        if (writeNull) {
+            writeNulls(id);
         }
         adapter.log.info('enabled logging of ' + id + ', ' + Object.keys(influxDPs).length + ' points now activated');
     } else {
@@ -302,6 +306,20 @@ function fixSelector(callback) {
     });
 }
 
+function writeNulls(id, now) {
+    if (!id) {
+        now = new Date().getTime();
+        for (var _id in influxDPs) {
+            if (influxDPs.hasOwnProperty(_id)) {
+                writeNulls(_id, now);
+            }
+        }
+    } else {
+        now = now || new Date().getTime();
+        pushHistory(id, {val: null, ts: now, ack: true});
+    }
+}
+
 function main() {
     adapter.config.port = parseInt(adapter.config.port, 10) || 0;
 
@@ -401,6 +419,8 @@ function main() {
                     }
                 }
             }
+            writeNulls();
+
             if (count < 20) {
                 for (var _id in influxDPs) {
                     adapter.subscribeForeignStates(_id);
