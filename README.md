@@ -245,6 +245,9 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 ## Changelog
 
+## 1.4.6 (2017-08-12)
+* (bluefox) add "save last value" option
+
 ## 1.4.5 (2017-08-03)
 * (Apollon77) fix behaviour of log interval to always log the current value
 

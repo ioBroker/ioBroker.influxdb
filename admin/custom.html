@@ -68,6 +68,17 @@
                 <td></td>
                 <td></td>
             </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td class="translate">Save last previous value</td>
+                <td>
+                    <input type="checkbox" data-field="saveLastValue" data-default="false">
+                </td>
+                <td></td>
+                <td></td>
+            </tr>
         </table>
     </div>
 </script>
@@ -98,6 +109,7 @@
             "de": "0 = Deaktivieren",
             "ru": "0 = не активно"
         },
+        "Save last previous value": {"en": "Save last previous value", "de": "Speichere letztes Wert bei Änderung", "ru": "Сохранять предыдущее значение"},
         "Store as":       {"en": "Store as",     "de": "Speichern als",         "ru": "Store as"},
         "Automatic":      {"en": "Automatic",    "de": "Automatisch",           "ru": "Automatic"},
         "String":         {"en": "String",       "de": "String",                "ru": "String"},
@@ -128,6 +140,7 @@
                     changesOnly: false,
                     debounce:    0,
                     retention:   instanceObj.native.retention,
+                    saveLastValue: instanceObj.native.saveLastValue,
                     changesRelogInterval: instanceObj.native.changesRelogInterval,
                     changesMinDelta: 0,
                     storageType: ""
@@ -138,6 +151,7 @@
                 changesOnly: true,
                 debounce:    instanceObj.native.debounce,
                 retention:   instanceObj.native.retention,
+                saveLastValue: instanceObj.native.saveLastValue,
                 changesRelogInterval: instanceObj.native.changesRelogInterval,
                 changesMinDelta: instanceObj.native.changesMinDelta,
                 storageType: ''

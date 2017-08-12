@@ -56,6 +56,7 @@ adapter.on('objectChange', function (id, obj) {
             influxDPs[id][adapter.namespace].debounce = adapter.config.debounce;
         }
         influxDPs[id][adapter.namespace].changesOnly = influxDPs[id][adapter.namespace].changesOnly === 'true' || influxDPs[id][adapter.namespace].changesOnly === true;
+        influxDPs[id][adapter.namespace].saveLastValue = influxDPs[id][adapter.namespace].saveLastValue === 'true' || influxDPs[id][adapter.namespace].saveLastValue === true;
         if (influxDPs[id][adapter.namespace].changesRelogInterval !== undefined && influxDPs[id][adapter.namespace].changesRelogInterval !== null && influxDPs[id][adapter.namespace].changesRelogInterval !== '') {
             influxDPs[id][adapter.namespace].changesRelogInterval = parseInt(influxDPs[id][adapter.namespace].changesRelogInterval, 10) || 0;
         } else {
@@ -374,7 +375,8 @@ function main() {
                                 influxDPs[id][adapter.namespace].debounce = adapter.config.debounce;
                             }
 
-                            influxDPs[id][adapter.namespace].changesOnly = influxDPs[id][adapter.namespace].changesOnly === 'true' || influxDPs[id][adapter.namespace].changesOnly === true;
+                            influxDPs[id][adapter.namespace].changesOnly   = influxDPs[id][adapter.namespace].changesOnly   === 'true' || influxDPs[id][adapter.namespace].changesOnly   === true;
+                            influxDPs[id][adapter.namespace].saveLastValue = influxDPs[id][adapter.namespace].saveLastValue === 'true' || influxDPs[id][adapter.namespace].saveLastValue === true;
 
                             if (influxDPs[id][adapter.namespace].changesRelogInterval !== undefined && influxDPs[id][adapter.namespace].changesRelogInterval !== null && influxDPs[id][adapter.namespace].changesRelogInterval !== '') {
                                 influxDPs[id][adapter.namespace].changesRelogInterval = parseInt(influxDPs[id][adapter.namespace].changesRelogInterval, 10) || 0;
@@ -438,12 +440,14 @@ function pushHistory(id, state, timerRelog) {
         if (influxDPs[id].state && settings.changesOnly && !timerRelog) {
             if (settings.changesRelogInterval === 0) {
                 if (state.ts !== state.lc) {
+                    influxDPs[id].skipped = true;
                     adapter.log.debug('value not changed ' + id + ', last-value=' + influxDPs[id].state.val + ', new-value=' + state.val + ', ts=' + state.ts);
                     return;
                 }
             } else if (influxDPs[id].lastLogTime) {
                 if ((state.ts !== state.lc) && (Math.abs(influxDPs[id].lastLogTime - state.ts) < settings.changesRelogInterval * 1000)) {
                     adapter.log.debug('value not changed ' + id + ', last-value=' + influxDPs[id].state.val + ', new-value=' + state.val + ', ts=' + state.ts);
+                    influxDPs[id].skipped = true;
                     return;
                 }
                 if (state.ts !== state.lc) {
@@ -452,6 +456,7 @@ function pushHistory(id, state, timerRelog) {
             }
             if ((settings.changesMinDelta !== 0) && (typeof state.val === 'number') && (Math.abs(influxDPs[id].state.val - state.val) < settings.changesMinDelta)) {
                 adapter.log.debug('Min-Delta not reached ' + id + ', last-value=' + influxDPs[id].state.val + ', new-value=' + state.val + ', ts=' + state.ts);
+                influxDPs[id].skipped = true;
                 return;
             }
             else if (typeof state.val === 'number') {
@@ -474,13 +479,16 @@ function pushHistory(id, state, timerRelog) {
             state.ts = new Date().getTime();
             adapter.log.debug('timed-relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
         } else {
+            if (settings.changesOnly && influxDPs[id].skipped && settings.saveLastValue) {
+                pushHelper(id);
+            }
             // only store state if really changed
             influxDPs[id].state = state;
         }
         influxDPs[id].lastLogTime = state.ts;
-
+        influxDPs[id].skipped = false;
         if (settings.debounce) {
-            // Discard changes in debounce time to store last stable value
+            // Discard changes in de-bounce time to store last stable value
             if (influxDPs[id].timeout) clearTimeout(influxDPs[id].timeout);
             influxDPs[id].timeout = setTimeout(pushHelper, settings.debounce, id);
         } else {

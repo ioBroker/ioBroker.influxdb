@@ -6,9 +6,14 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.4.5",
+        "version": "1.4.6",
         "title":                    "History with InfluxDB",
         "news": {
+            "1.4.6": {
+                "en": "add \"save last value\" option",
+                "de": "Die Option um vorheriges Wert zu speichern ist hinzugefügt",
+                "ru": "Возможность сохранять предыдущее значение при сохранении только изменений"
+            },
             "1.4.5": {
                 "en": "fix behaviour of log interval to always log the current value",
                 "de": "Verhalten vom Logging in bestimmten Zeitabständen geändert, sodass immer der aktuellste Wert geloggt wird",
