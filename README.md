@@ -1,5 +1,6 @@
 ![Logo](admin/influxdb.png)
 # ioBroker.influxdb
+
 ========================
 
 [![NPM version](http://img.shields.io/npm/v/iobroker.influxdb.svg)](https://www.npmjs.com/package/iobroker.influxdb)
