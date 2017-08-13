@@ -112,6 +112,11 @@ process.on('SIGINT', function () {
         finish();
     }
 });
+process.on('SIGTERM', function () {
+    if (adapter && adapter.setState) {
+        finish();
+    }
+});
 
 process.on('uncaughtException', function (err) {
     adapter.log.warn('Exception: ' + err);
@@ -198,7 +203,7 @@ function testConnection(msg) {
             database: msg.message.config.dbname || utils.appName
         });
 
-        lClient.getDatabaseNames(function (err, arrayDatabaseNames) {
+        lClient.getDatabaseNames(function (err /* , arrayDatabaseNames*/ ) {
             if (timeout) {
                 clearTimeout(timeout);
                 timeout = null;
@@ -257,7 +262,7 @@ function processMessage(msg) {
     else if (msg.command === 'destroy') {
         destroyDB(msg);
     }
-    else /* if (msg.command === 'generateDemo') {
+    /* else  if (msg.command === 'generateDemo') {
         generateDemo(msg);
     } */
     else if (msg.command === 'query') {
@@ -281,6 +286,16 @@ function processMessage(msg) {
     else if (msg.command === 'getEnabledDPs') {
         getEnabledDPs(msg);
     }
+    else if (msg.command === 'stopInstance') {
+        finish(function () {
+            if (msg.callback) {
+                adapter.sendTo(msg.from, msg.command, 'stopped', msg.callback);
+                setTimeout(function () {
+                    process.exit(0);
+                }, 200);
+            }
+        });
+    }
 }
 
 function getConflictingPoints(msg) {
@@ -292,7 +307,6 @@ function resetConflictingPoints(msg) {
     conflictingPoints = {};
     return adapter.sendTo(msg.from, msg.command, resultMsg, msg.callback);
 }
-
 
 function fixSelector(callback) {
     // fix _design/custom object
@@ -510,7 +524,7 @@ function pushHistory(id, state, timerRelog) {
             adapter.log.debug('timed-relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
         } else {
             if (settings.changesOnly && influxDPs[id].skipped && settings.saveLastValue) {
-                influxDPs[id].state = influxDPs[id].skipped
+                influxDPs[id].state = influxDPs[id].skipped;
                 pushHelper(id);
             }
             // only store state if really changed
@@ -594,21 +608,30 @@ function pushHelper(_id) {
     }
 }
 
-function pushValueIntoDB(id, state) {
+function pushValueIntoDB(id, state, cb) {
     if (!client) {
         adapter.log.warn('No connection to DB');
+        if (cb) cb('No connection to DB');
         return;
     }
 
-    if ((state.val === null) || (state.val === undefined)) return; // InfluxDB can not handle null/non-existing values
-    if ((typeof state.val === 'number') && (isNaN(state.val))) return;
+    if ((state.val === null) || (state.val === undefined)) {
+        if (cb) cb('InfluxDB can not handle null/non-existing values');
+        return;
+    } // InfluxDB can not handle null/non-existing values
+    if ((typeof state.val === 'number') && (isNaN(state.val))) {
+        if (cb) cb('InfluxDB can not handle null/non-existing values');
+        return;
+    }
 
     state.ts = parseInt(state.ts, 10);
 
     // if less 2000.01.01 00:00:00
     if (state.ts < 946681200000) state.ts *= 1000;
 
-    if (typeof state.val === 'object') state.val = JSON.stringify(state.val);
+    if (typeof state.val === 'object') {
+        state.val = JSON.stringify(state.val);
+    }
 
     /*
     if (state.val === 'true') {
@@ -634,33 +657,43 @@ function pushValueIntoDB(id, state) {
         if (adapter.config.seriesBufferMax !== 0) {
             adapter.log.debug('Direct writePoint("' + id + ' - ' + influxFields.value + ' / ' + influxFields.time + ')');
         }
-        writeOnePointForID(id, influxFields, true);
+        writeOnePointForID(id, influxFields, true, cb);
     } else {
-        addPointToSeriesBuffer(id, influxFields);
+        addPointToSeriesBuffer(id, influxFields, cb);
     }
 }
 
-function addPointToSeriesBuffer(id, stateObj) {
-    if (!seriesBuffer[id]) seriesBuffer[id] = [];
+function addPointToSeriesBuffer(id, stateObj, cb) {
+    if (!seriesBuffer[id]) {
+        seriesBuffer[id] = [];
+    }
     seriesBuffer[id].push([stateObj]);
     seriesBufferCounter++;
     if ((seriesBufferCounter > adapter.config.seriesBufferMax) && (client.request) && (client.request.getHostsAvailable().length > 0) && (!seriesBufferFlushPlanned)) {
-        //flush out
+        // flush out
         seriesBufferFlushPlanned = true;
-        setTimeout(storeBufferedSeries,0);
+        setTimeout(storeBufferedSeries, 0, cb);
+    } else {
+        if (cb) cb();
     }
 }
 
-function storeBufferedSeries() {
-    if (Object.keys(seriesBuffer).length === 0) return;
+function storeBufferedSeries(cb) {
+    if (Object.keys(seriesBuffer).length === 0) {
+        if (cb) cb();
+        return;
+    }
 
     if (client.request.getHostsAvailable().length === 0) {
         setConnected(false);
         adapter.log.info('No hosts available currently, try later');
         seriesBufferFlushPlanned = false;
+        if (cb) cb('No hosts available currently, try later');
         return;
     }
-    if (seriesBufferChecker) clearInterval(seriesBufferChecker);
+    if (seriesBufferChecker) {
+        clearInterval(seriesBufferChecker);
+    }
 
     adapter.log.info('Store ' + seriesBufferCounter + ' buffered influxDB history points');
 
@@ -668,17 +701,18 @@ function storeBufferedSeries() {
         // if we have too many datapoints in buffer; we better writer them per id
         adapter.log.info('Too many datapoints (' + seriesBufferCounter + ') to write at once; write per ID');
         writeAllSeriesPerID(seriesBuffer);
+        if (cb) cb();
     } else {
-        writeAllSeriesAtOnce(seriesBuffer);
+        writeAllSeriesAtOnce(seriesBuffer, cb);
     }
     seriesBuffer = {};
     seriesBufferCounter = 0;
     seriesBufferFlushPlanned = false;
-    seriesBufferChecker = setInterval(storeBufferedSeries, adapter.config.seriesBufferFlushInterval*1000);
+    seriesBufferChecker = setInterval(storeBufferedSeries, adapter.config.seriesBufferFlushInterval * 1000);
 }
 
-function writeAllSeriesAtOnce(series) {
-    client.writeSeries(series, function (err, result) {
+function writeAllSeriesAtOnce(series, cb) {
+    client.writeSeries(series, function (err /* , result */) {
         if (err) {
             adapter.log.warn('Error on writeSeries: ' + err);
             if (client.request.getHostsAvailable().length === 0) {
@@ -693,9 +727,11 @@ function writeAllSeriesAtOnce(series) {
                         seriesBufferCounter++;
                     }
                 }
-            } else if (err.message && (typeof err.message === 'string') && (err.message.indexOf('partial write') !== -1)) {
+            }
+            else if (err.message && (typeof err.message === 'string') && (err.message.indexOf('partial write') !== -1)) {
                 adapter.log.warn('All possible datapoints were written, others can not really be corrected');
-            } else {
+            }
+            else {
                 adapter.log.info('Try to write ' + Object.keys(series).length + ' Points separate to find the conflicting id');
                 // fallback and send data per id to find out problematic id!
                 writeAllSeriesPerID(series);
@@ -703,12 +739,15 @@ function writeAllSeriesAtOnce(series) {
         } else {
             setConnected(true);
         }
+        if (cb) cb();
     });
 }
 
 function writeAllSeriesPerID(series) {
     for (var id in series) {
-        writeSeriesPerID(id, series[id]);
+        if (series.hasOwnProperty(id)) {
+            writeSeriesPerID(id, series[id]);
+        }
     }
 }
 
@@ -750,9 +789,11 @@ function writePointsForID(seriesId, points) {
     }
 }
 
-function writeOnePointForID(pointId, point, directWrite) {
-    if (directWrite === undefined) directWrite = false;
-    client.writePoint(pointId, point, null, function (err, result) {
+function writeOnePointForID(pointId, point, directWrite, cb) {
+    if (directWrite === undefined) {
+        directWrite = false;
+    }
+    client.writePoint(pointId, point, null, function (err /* , result */) {
         if (err) {
             adapter.log.warn('Error on writePoint("' + JSON.stringify(point) + '): ' + err + ' / ' + JSON.stringify(err.message));
             if ((client.request.getHostsAvailable().length === 0) || (err.message && err.message === 'timeout')) {
@@ -794,7 +835,7 @@ function writeOnePointForID(pointId, point, directWrite) {
                     }
                     if (retry) {
                         adapter.log.info('Try to convert ' + convertDirection + ' and re-write for ' + pointId + ' and set storageType to ' + influxDPs[pointId][adapter.namespace].storageType);
-                        writeOnePointForID(pointId, point, true);
+                        writeOnePointForID(pointId, point, true, cb);
                         var obj = {};
                         obj.common = {};
                         obj.common.custom = {};
@@ -831,30 +872,53 @@ function writeOnePointForID(pointId, point, directWrite) {
         } else {
             setConnected(true);
         }
+        if (cb) cb();
     });
 }
 
 function finish(callback) {
-    if (seriesBufferChecker) clearInterval(seriesBufferChecker);
+    if (seriesBufferChecker) {
+        clearInterval(seriesBufferChecker);
+        seriesBufferChecker = null;
+    }
+    var count = 0;
     for (var id in influxDPs) {
         if (influxDPs[id].relogTimeout) {
             clearTimeout(influxDPs[id].relogTimeout);
+            influxDPs[id].relogTimeout = null;
         }
         if (influxDPs[id].timeout) {
             clearTimeout(influxDPs[id].timeout);
+            influxDPs[id].timeout = null;
+        }
+        if (influxDPs[id].skipped) {
+            count++;
+            pushValueIntoDB(id, influxDPs[id].skipped, function () {
+                if (!--count) {
+                    if (callback) {
+                        callback();
+                    } else {
+                        process.exit();
+                    }
+                }
+            });
+            influxDPs[id].skipped = null;
         }
     }
 
     // write buffered values into cache file to process it by next start
     var fileData = {};
-    fileData.seriesBufferCounter = seriesBufferCounter;
-    fileData.seriesBuffer        = seriesBuffer;
-    fileData.conflictingPoints   = conflictingPoints;
-    fs.writeFileSync(cacheFile, JSON.stringify(fileData));
-    adapter.log.warn('Store data for ' + fileData.seriesBufferCounter + ' points and ' + Object.keys(fileData.conflictingPoints).length + ' conflicts');
+    if (seriesBufferCounter) {
+        fileData.seriesBufferCounter = seriesBufferCounter;
+        fileData.seriesBuffer        = seriesBuffer;
+        fileData.conflictingPoints   = conflictingPoints;
+        fs.writeFileSync(cacheFile, JSON.stringify(fileData));
+        adapter.log.warn('Store data for ' + fileData.seriesBufferCounter + ' points and ' + Object.keys(fileData.conflictingPoints).length + ' conflicts');
+    }
+    seriesBufferCounter = null;
 
     if (callback) {
-        callback();
+        if (!count) callback();
     } else {
         process.exit();
     }
