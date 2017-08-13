@@ -250,25 +250,35 @@ function destroyDB(msg) {
 function processMessage(msg) {
     if (msg.command === 'getHistory') {
         getHistory(msg);
-    } else if (msg.command === 'test') {
+    }
+    else if (msg.command === 'test') {
         testConnection(msg);
-    } else if (msg.command === 'destroy') {
+    }
+    else if (msg.command === 'destroy') {
         destroyDB(msg);
-    } else if (msg.command === 'generateDemo') {
+    }
+    else /* if (msg.command === 'generateDemo') {
         generateDemo(msg);
-    } else if (msg.command === 'query') {
+    } */
+    else if (msg.command === 'query') {
         query(msg);
-    } else if (msg.command === 'getConflictingPoints') {
+    }
+    else if (msg.command === 'getConflictingPoints') {
         getConflictingPoints(msg);
-    } else if (msg.command === 'resetConflictingPoints') {
+    }
+    else if (msg.command === 'resetConflictingPoints') {
         resetConflictingPoints(msg);
-    } else if (msg.command === 'storeState') {
+    }
+    else if (msg.command === 'storeState') {
         storeState(msg);
-    } else if (msg.command === 'enableHistory') {
+    }
+    else if (msg.command === 'enableHistory') {
         enableHistory(msg);
-    } else if (msg.command === 'disableHistory') {
+    }
+    else if (msg.command === 'disableHistory') {
         disableHistory(msg);
-    } else if (msg.command === 'getEnabledDPs') {
+    }
+    else if (msg.command === 'getEnabledDPs') {
         getEnabledDPs(msg);
     }
 }
@@ -981,7 +991,9 @@ function getHistory(msg) {
                         delete rows[qr][rr].value;
                     }
                     rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
-                    rows[qr][rr].val = adapter.config.round ? Math.round(rows[qr][rr].val * adapter.config.round) / adapter.config.round : rows[0][rr].val;
+                    if (rows[qr][rr].val !== null) {
+                        rows[qr][rr].val = adapter.config.round ? (Math.round(rows[qr][rr].val * adapter.config.round) / adapter.config.round) : rows[qr][rr].val;
+                    }
                     delete rows[qr][rr].time;
                     if (options.addId) rows[qr][rr].id = msg.message.id;
                     result.push(rows[qr][rr]);
@@ -1004,6 +1016,7 @@ function getHistory(msg) {
     });
 }
 
+/*
 function generateDemo(msg) {
 
     var id    = adapter.name +'.' + adapter.instance + '.Demo.' + (msg.message.id || 'Demo_Data');
@@ -1086,7 +1099,7 @@ function generateDemo(msg) {
 
     generate();
 }
-
+*/
 function query(msg) {
     if (client) {
         var query = msg.message.query || msg.message;
