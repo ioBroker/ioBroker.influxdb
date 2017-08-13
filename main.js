@@ -21,6 +21,8 @@ var seriesBuffer        = {};
 var conflictingPoints   = {};
 var errorPoints         = {};
 var connected           = null;
+var tasksStart          = [];
+var finished            = false;
 
 var adapter = utils.adapter('influxdb');
 
@@ -172,12 +174,13 @@ function connect() {
                                 }
                             });
                         }
-
+                        processStartValues();
                         adapter.log.info('Connected!');
                     }
                 });
             }
             else {
+                processStartValues();
                 adapter.log.info('Connected!');
             }
         }
@@ -329,7 +332,40 @@ function fixSelector(callback) {
         }
     });
 }
+function processStartValues() {
+    if (tasksStart && tasksStart.length) {
+        var task = tasksStart.shift();
+        if (influxDPs[task.id][adapter.namespace].changesOnly) {
+            adapter.getForeignState(task.id, function (err, state) {
+                var now = task.now || new Date().getTime();
 
+                pushHistory(task.id, {
+                    val:  null,
+                    ts:   state ? now - 4 : now, // 4 is because of MS SQL
+                    ack:  true,
+                    q:    0x40,
+                    from: 'system.adapter.' + adapter.namespace
+                });
+
+                if (state) {
+                    state.ts   = now;
+                    state.from = 'system.adapter.' + adapter.namespace;
+                    pushHistory(task.id, state);
+                }
+                setTimeout(processStartValues, 0);
+            });
+        } else {
+            pushHistory(task.id, {
+                val:  null,
+                ts:   task.now || new Date().getTime(),
+                ack:  true,
+                q:    0x40,
+                from: 'system.adapter.' + adapter.namespace
+            });
+            setTimeout(processStartValues, 0);
+        }
+    }
+}
 function writeNulls(id, now) {
     if (!id) {
         now = new Date().getTime();
@@ -340,7 +376,10 @@ function writeNulls(id, now) {
         }
     } else {
         now = now || new Date().getTime();
-        pushHistory(id, {val: null, ts: now, ack: true});
+        tasksStart.push({id: id, now: now});
+        if (tasksStart.length === 1 && connected) {
+            processStartValues();
+        }
     }
 }
 
@@ -518,7 +557,7 @@ function pushHistory(id, state, timerRelog) {
         if (settings.changesRelogInterval > 0) {
             influxDPs[id].relogTimeout = setTimeout(reLogHelper, settings.changesRelogInterval * 1000, id);
         }
-
+        var ignoreDebonce = false;
         if (timerRelog) {
             state.ts = new Date().getTime();
             adapter.log.debug('timed-relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
@@ -527,12 +566,18 @@ function pushHistory(id, state, timerRelog) {
                 influxDPs[id].state = influxDPs[id].skipped;
                 pushHelper(id);
             }
+            if (influxDPs[id].state && ((influxDPs[id].state.val === null && state.val !== null) || (influxDPs[id].state.val !== null && state.val === null))) {
+                ignoreDebonce = true;
+            } else if (!influxDPs[id].state && state.val === null) {
+                ignoreDebonce = true;
+            }
+
             // only store state if really changed
             influxDPs[id].state = state;
         }
         influxDPs[id].lastLogTime = state.ts;
         influxDPs[id].skipped = null;
-        if (settings.debounce) {
+        if (settings.debounce && !ignoreDebonce) {
             // Discard changes in de-bounce time to store last stable value
             if (influxDPs[id].timeout) clearTimeout(influxDPs[id].timeout);
             influxDPs[id].timeout = setTimeout(pushHelper, settings.debounce, id);
@@ -877,12 +922,19 @@ function writeOnePointForID(pointId, point, directWrite, cb) {
 }
 
 function finish(callback) {
+    if (finished) {
+        if (callback) callback();
+        return;
+    }
+    finished = true;
     if (seriesBufferChecker) {
         clearInterval(seriesBufferChecker);
         seriesBufferChecker = null;
     }
     var count = 0;
     for (var id in influxDPs) {
+        if (!influxDPs.hasOwnProperty(id)) continue;
+
         if (influxDPs[id].relogTimeout) {
             clearTimeout(influxDPs[id].relogTimeout);
             influxDPs[id].relogTimeout = null;
@@ -891,18 +943,57 @@ function finish(callback) {
             clearTimeout(influxDPs[id].timeout);
             influxDPs[id].timeout = null;
         }
+
+        var state = influxDPs[id].state ? Object.assign({}, influxDPs[id].state) : null;
+
         if (influxDPs[id].skipped) {
             count++;
             pushValueIntoDB(id, influxDPs[id].skipped, function () {
                 if (!--count) {
                     if (callback) {
-                        callback();
+                        setTimeout(callback, 500);
                     } else {
-                        process.exit();
+                        setTimeout(function () {process.exit();}, 500);
                     }
                 }
             });
             influxDPs[id].skipped = null;
+        }
+
+        var nullValue = {val: 'null', ts: now, lc: now, q: 0x40, from: 'system.adapter.' + adapter.namespace};
+
+        if (influxDPs[id][adapter.namespace].changesOnly && state && state.val !== null) {
+            count++;
+            (function (_id, _state, _nullValue) {
+                _state.ts   = now;
+                _state.from = 'system.adapter.' + adapter.namespace;
+                nullValue.ts += 4;
+                nullValue.lc += 4; // because of MS SQL
+                pushValueIntoDB(_id, _state, function () {
+                    // terminate values with null to indicate adapter stop. timestamp + 1#
+                    pushValueIntoDB(_id, _nullValue, function () {
+                        if (!--count && callback) {
+                            if (callback) {
+                                setTimeout(callback, 500);
+                            } else {
+                                setTimeout(function () {process.exit();}, 500);
+                            }
+                        }
+                    });
+                });
+            })(id, state, nullValue);
+        } else {
+            // terminate values with null to indicate adapter stop. timestamp + 1
+            count++;
+            pushValueIntoDB(id, nullValue, function () {
+                if (!--count && callback) {
+                    if (callback) {
+                        setTimeout(callback, 500);
+                    } else {
+                        setTimeout(function () {process.exit();}, 500);
+                    }
+                }
+            });
         }
     }
 
@@ -917,10 +1008,12 @@ function finish(callback) {
     }
     seriesBufferCounter = null;
 
-    if (callback) {
-        if (!count) callback();
-    } else {
-        process.exit();
+    if (!count) {
+        if (callback) {
+            callback();
+        } else {
+            process.exit();
+        }
     }
 }
 
