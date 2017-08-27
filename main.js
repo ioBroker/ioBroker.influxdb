@@ -943,7 +943,14 @@ function finish(callback) {
             clearTimeout(influxDPs[id].timeout);
             influxDPs[id].timeout = null;
         }
-
+        
+        var tmpState;
+        if (Object.assign) {
+            tmpState = Object.assign({}, influxDPs[id].state);
+        }
+        else {
+            tmpState = JSON.parse(JSON.stringify(influxDPs[id].state));
+        }
         var state = influxDPs[id].state ? Object.assign({}, influxDPs[id].state) : null;
 
         if (influxDPs[id].skipped) {
@@ -960,6 +967,7 @@ function finish(callback) {
             influxDPs[id].skipped = null;
         }
 
+        var now = new Date().getTime();
         var nullValue = {val: 'null', ts: now, lc: now, q: 0x40, from: 'system.adapter.' + adapter.namespace};
 
         if (influxDPs[id][adapter.namespace].changesOnly && state && state.val !== null) {
