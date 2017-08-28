@@ -59,7 +59,11 @@ adapter.on('objectChange', function (id, obj) {
             influxDPs[id][adapter.namespace].debounce = adapter.config.debounce;
         }
         influxDPs[id][adapter.namespace].changesOnly = influxDPs[id][adapter.namespace].changesOnly === 'true' || influxDPs[id][adapter.namespace].changesOnly === true;
-        influxDPs[id][adapter.namespace].saveLastValue = influxDPs[id][adapter.namespace].saveLastValue === 'true' || influxDPs[id][adapter.namespace].saveLastValue === true;
+        if (influxDPs[id][adapter.namespace].saveLastValue !== undefined && influxDPs[id][adapter.namespace].saveLastValue !== null && influxDPs[id][adapter.namespace].saveLastValue !== '') {
+            influxDPs[id][adapter.namespace].saveLastValue = influxDPs[id][adapter.namespace].saveLastValue === 'true' || influxDPs[id][adapter.namespace].saveLastValue === true;
+        } else {
+            influxDPs[id][adapter.namespace].saveLastValue = adapter.config.saveLastValue;
+        }
         if (influxDPs[id][adapter.namespace].changesRelogInterval !== undefined && influxDPs[id][adapter.namespace].changesRelogInterval !== null && influxDPs[id][adapter.namespace].changesRelogInterval !== '') {
             influxDPs[id][adapter.namespace].changesRelogInterval = parseInt(influxDPs[id][adapter.namespace].changesRelogInterval, 10) || 0;
         } else {
@@ -398,6 +402,9 @@ function main() {
     } else {
         adapter.config.changesRelogInterval = 0;
     }
+    if (adapter.config.saveLastValue === null || adapter.config.saveLastValue === undefined) {
+        adapter.config.saveLastValue = false;
+    }
 
     adapter.config.seriesBufferFlushInterval = parseInt(adapter.config.seriesBufferFlushInterval, 10) || 600;
 
@@ -457,7 +464,11 @@ function main() {
                             }
 
                             influxDPs[id][adapter.namespace].changesOnly   = influxDPs[id][adapter.namespace].changesOnly   === 'true' || influxDPs[id][adapter.namespace].changesOnly   === true;
-                            influxDPs[id][adapter.namespace].saveLastValue = influxDPs[id][adapter.namespace].saveLastValue === 'true' || influxDPs[id][adapter.namespace].saveLastValue === true;
+                            if (influxDPs[id][adapter.namespace].saveLastValue !== undefined && influxDPs[id][adapter.namespace].saveLastValue !== null && influxDPs[id][adapter.namespace].saveLastValue !== '') {
+                                influxDPs[id][adapter.namespace].saveLastValue = influxDPs[id][adapter.namespace].saveLastValue === 'true' || influxDPs[id][adapter.namespace].saveLastValue === true;
+                            } else {
+                                influxDPs[id][adapter.namespace].saveLastValue = adapter.config.saveLastValue;
+                            }
 
                             if (influxDPs[id][adapter.namespace].changesRelogInterval !== undefined && influxDPs[id][adapter.namespace].changesRelogInterval !== null && influxDPs[id][adapter.namespace].changesRelogInterval !== '') {
                                 influxDPs[id][adapter.namespace].changesRelogInterval = parseInt(influxDPs[id][adapter.namespace].changesRelogInterval, 10) || 0;
@@ -952,7 +963,7 @@ function finish(callback) {
         else {
             tmpState = JSON.parse(JSON.stringify(influxDPs[id].state));
         }
-        var state = influxDPs[id].state ? Object.assign({}, influxDPs[id].state) : null;
+        var state = influxDPs[id].state ? tmpState : null;
 
         if (influxDPs[id].skipped) {
             count++;
