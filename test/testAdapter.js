@@ -217,21 +217,28 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                                         console.log(err);
                                     }
                                     setTimeout(function () {
-                                        states.setState('system.adapter.influxdb.0.memRss', {val: '2.5', ts: now - 3000, from: 'test.0'}, function (err) {
+                                        states.setState('system.adapter.influxdb.0.memRss', {val: 2.3, ts: now - 3500, from: 'test.0'}, function (err) {
                                             if (err) {
                                                 console.log(err);
                                             }
                                             setTimeout(function () {
-                                                states.setState('system.adapter.influxdb.0.memRss', {val: 3, ts: now - 1000, from: 'test.0'}, function (err) {
+                                                states.setState('system.adapter.influxdb.0.memRss', {val: '2.5', ts: now - 3000, from: 'test.0'}, function (err) {
                                                     if (err) {
                                                         console.log(err);
                                                     }
                                                     setTimeout(function () {
-                                                        states.setState('system.adapter.influxdb.0.memRss', {val: 'Test', ts: now - 500, from: 'test.0'}, function (err) {
+                                                        states.setState('system.adapter.influxdb.0.memRss', {val: 3, ts: now - 1000, from: 'test.0'}, function (err) {
                                                             if (err) {
                                                                 console.log(err);
                                                             }
-                                                            setTimeout(done, 1000);
+                                                            setTimeout(function () {
+                                                                states.setState('system.adapter.influxdb.0.memRss', {val: 'Test', ts: now - 500, from: 'test.0'}, function (err) {
+                                                                    if (err) {
+                                                                        console.log(err);
+                                                                    }
+                                                                    setTimeout(done, 1000);
+                                                                });
+                                                            }, 100);
                                                         });
                                                     }, 100);
                                                 });
@@ -275,10 +282,16 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             console.log(JSON.stringify(result.result, null, 2));
             expect(result.result.length).to.be.at.least(5);
             var found = 0;
+            var found22 = false;
+            var found23 = false;
             for (var i = 0; i < result.result.length; i++) {
                 if (result.result[i].val >= 1 && result.result[i].val <= 3) found ++;
+                if (result.result[i].val === 2.2) found22 = true;
+                if (result.result[i].val === 2.3) found23 = true;
             }
             expect(found).to.be.equal(5);
+            expect(found22).to.be.false;
+            expect(found23).to.be.true;
 
             sendTo('influxdb.0', 'getHistory', {
                 id: 'system.adapter.influxdb.0.memRss',
