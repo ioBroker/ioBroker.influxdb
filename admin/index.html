@@ -46,13 +46,12 @@
            });
         }
     }
-    
+
     function load(settings, onChange) {
         // works only with newest admin adapter
         if (typeof systemConfig !== 'undefined') {
             convertComma = systemConfig.common.isFloatComma;
         }
-        if (settings.saveLastValue === undefined) settings.saveLastValue = false;
 
         for (var key in settings) {
             setValue(key, settings[key], onChange);
@@ -322,11 +321,6 @@
                 <option value="86400"       class="translate">1 day</option>
             </select></td>
             <td class="translate"></td>
-        </tr>
-        <tr>
-            <td><label class="translate" for="saveLastValue">Save last previous value:</label></td>
-            <td><input id="saveLastValue" type="checkbox" class="value"/></td>
-            <td></td>
         </tr>
     </table>
     <br><button id="test" class="translate">Test connection</button>

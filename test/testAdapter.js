@@ -86,7 +86,6 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             // enable adapter
             config.common.enabled  = true;
             config.common.loglevel = 'debug';
-            config.native.saveLastValue = true;
 
             //config.native.dbtype   = 'sqlite';
 

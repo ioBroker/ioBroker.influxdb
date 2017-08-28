@@ -59,11 +59,6 @@ adapter.on('objectChange', function (id, obj) {
             influxDPs[id][adapter.namespace].debounce = adapter.config.debounce;
         }
         influxDPs[id][adapter.namespace].changesOnly = influxDPs[id][adapter.namespace].changesOnly === 'true' || influxDPs[id][adapter.namespace].changesOnly === true;
-        if (influxDPs[id][adapter.namespace].saveLastValue !== undefined && influxDPs[id][adapter.namespace].saveLastValue !== null && influxDPs[id][adapter.namespace].saveLastValue !== '') {
-            influxDPs[id][adapter.namespace].saveLastValue = influxDPs[id][adapter.namespace].saveLastValue === 'true' || influxDPs[id][adapter.namespace].saveLastValue === true;
-        } else {
-            influxDPs[id][adapter.namespace].saveLastValue = adapter.config.saveLastValue;
-        }
         if (influxDPs[id][adapter.namespace].changesRelogInterval !== undefined && influxDPs[id][adapter.namespace].changesRelogInterval !== null && influxDPs[id][adapter.namespace].changesRelogInterval !== '') {
             influxDPs[id][adapter.namespace].changesRelogInterval = parseInt(influxDPs[id][adapter.namespace].changesRelogInterval, 10) || 0;
         } else {
@@ -402,9 +397,6 @@ function main() {
     } else {
         adapter.config.changesRelogInterval = 0;
     }
-    if (adapter.config.saveLastValue === null || adapter.config.saveLastValue === undefined) {
-        adapter.config.saveLastValue = false;
-    }
 
     adapter.config.seriesBufferFlushInterval = parseInt(adapter.config.seriesBufferFlushInterval, 10) || 600;
 
@@ -464,11 +456,6 @@ function main() {
                             }
 
                             influxDPs[id][adapter.namespace].changesOnly   = influxDPs[id][adapter.namespace].changesOnly   === 'true' || influxDPs[id][adapter.namespace].changesOnly   === true;
-                            if (influxDPs[id][adapter.namespace].saveLastValue !== undefined && influxDPs[id][adapter.namespace].saveLastValue !== null && influxDPs[id][adapter.namespace].saveLastValue !== '') {
-                                influxDPs[id][adapter.namespace].saveLastValue = influxDPs[id][adapter.namespace].saveLastValue === 'true' || influxDPs[id][adapter.namespace].saveLastValue === true;
-                            } else {
-                                influxDPs[id][adapter.namespace].saveLastValue = adapter.config.saveLastValue;
-                            }
 
                             if (influxDPs[id][adapter.namespace].changesRelogInterval !== undefined && influxDPs[id][adapter.namespace].changesRelogInterval !== null && influxDPs[id][adapter.namespace].changesRelogInterval !== '') {
                                 influxDPs[id][adapter.namespace].changesRelogInterval = parseInt(influxDPs[id][adapter.namespace].changesRelogInterval, 10) || 0;
@@ -573,7 +560,7 @@ function pushHistory(id, state, timerRelog) {
             state.ts = new Date().getTime();
             adapter.log.debug('timed-relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
         } else {
-            if (settings.changesOnly && influxDPs[id].skipped && settings.saveLastValue) {
+            if (settings.changesOnly && influxDPs[id].skipped) {
                 influxDPs[id].state = influxDPs[id].skipped;
                 pushHelper(id);
             }
@@ -622,46 +609,47 @@ function reLogHelper(_id) {
     });
 }
 
-function pushHelper(_id) {
-    if (!influxDPs[_id] || !influxDPs[_id].state) return;
+function pushHelper(_id, cb) {
+    if (!influxDPs[_id] || !influxDPs[_id].state || !influxDPs[_id][adapter.namespace]) {
+        if (cb) cb('ID ' + _id + ' not activated for logging');
+        return;
+    }
     var _settings = influxDPs[_id][adapter.namespace];
     // if it was not deleted in this time
-    if (_settings) {
-        influxDPs[_id].timeout = null;
+    influxDPs[_id].timeout = null;
 
-        if (influxDPs[_id].state.val === null) return; // InfluxDB can not handle null values
+    if (influxDPs[_id].state.val === null) return; // InfluxDB can not handle null values
 
-        if (typeof influxDPs[_id].state.val === 'object') influxDPs[_id].state.val = JSON.stringify(influxDPs[_id].state.val);
+    if (typeof influxDPs[_id].state.val === 'object') influxDPs[_id].state.val = JSON.stringify(influxDPs[_id].state.val);
 
-        adapter.log.debug('Datatype ' + _id + ': Currently: ' + typeof influxDPs[_id].state.val + ', StorageType: ' + _settings.storageType);
-        if (typeof influxDPs[_id].state.val === 'string' && _settings.storageType !== 'String') {
-            adapter.log.debug('Do Automatic Datatype conversion for ' + _id);
-            var f = parseFloat(influxDPs[_id].state.val);
-            if (f == influxDPs[_id].state.val) {
-                influxDPs[_id].state.val = f;
-            } else if (influxDPs[_id].state.val === 'true') {
-                influxDPs[_id].state.val = true;
-            } else if (influxDPs[_id].state.val === 'false') {
-                influxDPs[_id].state.val = false;
-            }
+    adapter.log.debug('Datatype ' + _id + ': Currently: ' + typeof influxDPs[_id].state.val + ', StorageType: ' + _settings.storageType);
+    if (typeof influxDPs[_id].state.val === 'string' && _settings.storageType !== 'String') {
+        adapter.log.debug('Do Automatic Datatype conversion for ' + _id);
+        var f = parseFloat(influxDPs[_id].state.val);
+        if (f == influxDPs[_id].state.val) {
+            influxDPs[_id].state.val = f;
+        } else if (influxDPs[_id].state.val === 'true') {
+            influxDPs[_id].state.val = true;
+        } else if (influxDPs[_id].state.val === 'false') {
+            influxDPs[_id].state.val = false;
         }
-        if (_settings.storageType === 'String' && typeof influxDPs[_id].state.val !== 'string') {
-            influxDPs[_id].state.val = influxDPs[_id].state.val.toString();
-        }
-        else if (_settings.storageType === 'Number' && typeof influxDPs[_id].state.val !== 'number') {
-            if (typeof influxDPs[_id].state.val === 'boolean') {
-                influxDPs[_id].state.val = influxDPs[_id].state.val?1:0;
-            }
-            else {
-                adapter.log.info('Do not store value "' + influxDPs[_id].state.val + '" for ' + _id + ' because no number');
-                return;
-            }
-        }
-        else if (_settings.storageType === 'Boolean' && typeof influxDPs[_id].state.val !== 'boolean') {
-            influxDPs[_id].state.val = !!influxDPs[_id].state.val;
-        }
-        pushValueIntoDB(_id, influxDPs[_id].state);
     }
+    if (_settings.storageType === 'String' && typeof influxDPs[_id].state.val !== 'string') {
+        influxDPs[_id].state.val = influxDPs[_id].state.val.toString();
+    }
+    else if (_settings.storageType === 'Number' && typeof influxDPs[_id].state.val !== 'number') {
+        if (typeof influxDPs[_id].state.val === 'boolean') {
+            influxDPs[_id].state.val = influxDPs[_id].state.val?1:0;
+        }
+        else {
+            adapter.log.info('Do not store value "' + influxDPs[_id].state.val + '" for ' + _id + ' because no number');
+            return;
+        }
+    }
+    else if (_settings.storageType === 'Boolean' && typeof influxDPs[_id].state.val !== 'boolean') {
+        influxDPs[_id].state.val = !!influxDPs[_id].state.val;
+    }
+    pushValueIntoDB(_id, influxDPs[_id].state, cb);
 }
 
 function pushValueIntoDB(id, state, cb) {
@@ -967,7 +955,8 @@ function finish(callback) {
 
         if (influxDPs[id].skipped) {
             count++;
-            pushValueIntoDB(id, influxDPs[id].skipped, function () {
+            influxDPs[id].state = influxDPs[id].skipped;
+            pushHelper(id, function () {
                 if (!--count) {
                     if (callback) {
                         setTimeout(callback, 500);
@@ -977,42 +966,6 @@ function finish(callback) {
                 }
             });
             influxDPs[id].skipped = null;
-        }
-
-        var nullValue = {val: 'null', ts: now, lc: now, q: 0x40, from: 'system.adapter.' + adapter.namespace};
-
-        if (influxDPs[id][adapter.namespace].changesOnly && state && state.val !== null) {
-            count++;
-            (function (_id, _state, _nullValue) {
-                _state.ts   = now;
-                _state.from = 'system.adapter.' + adapter.namespace;
-                nullValue.ts += 4;
-                nullValue.lc += 4; // because of MS SQL
-                pushValueIntoDB(_id, _state, function () {
-                    // terminate values with null to indicate adapter stop. timestamp + 1#
-                    pushValueIntoDB(_id, _nullValue, function () {
-                        if (!--count && callback) {
-                            if (callback) {
-                                setTimeout(callback, 500);
-                            } else {
-                                setTimeout(function () {process.exit();}, 500);
-                            }
-                        }
-                    });
-                });
-            })(id, state, nullValue);
-        } else {
-            // terminate values with null to indicate adapter stop. timestamp + 1
-            count++;
-            pushValueIntoDB(id, nullValue, function () {
-                if (!--count && callback) {
-                    if (callback) {
-                        setTimeout(callback, 500);
-                    } else {
-                        setTimeout(function () {process.exit();}, 500);
-                    }
-                }
-            });
         }
     }
 
