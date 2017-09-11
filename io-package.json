@@ -6,13 +6,18 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.4.6",
+        "version": "1.4.7",
         "title":                    "History with InfluxDB",
         "news": {
+            "1.4.7": {
+                "en": "add better support when no start date is set for getHistory (used by Admin)",
+                "de": "Besseren Support hinzugefügt, wenn bei getHistory kein Start-Datum angegeben wurde (benutzt von Admin)",
+                "ru": "add better support when no start date is set for getHistory (used by Admin)"
+            },
             "1.4.6": {
-                "en": "add \"save last value\" option",
-                "de": "Die Option um vorheriges Wert zu speichern ist hinzugefügt",
-                "ru": "Возможность сохранять предыдущее значение при сохранении только изменений"
+                "en": "add \"save last value\"",
+                "de": "Das Speichern des vorherigen Wertes wurde hinzugefügt",
+                "ru": "add \"save last value\""
             },
             "1.4.5": {
                 "en": "fix behaviour of log interval to always log the current value",

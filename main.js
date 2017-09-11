@@ -1081,6 +1081,10 @@ function getHistory(msg) {
     if (options.start) query += " time > '" + new Date(options.start).toISOString() + "' AND ";
     query += " time < '" + new Date(options.end).toISOString() + "'";
 
+    if (!options.start && (options.count || options.limit)) {
+        query += " ORDER BY time DESC";
+    }
+
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
         query += ' GROUP BY time(' + options.step + 'ms) fill(previous) LIMIT ' + options.limit;
     } else if (options.aggregate !== 'minmax') {

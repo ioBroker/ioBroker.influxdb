@@ -246,8 +246,12 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 ## Changelog
 
+## 1.4.7 (2017-09-11)
+* (Apollon77) fixes to save last value
+* (Apollon77) add better support when no start date is set for getHistory (used by Admin)
+
 ## 1.4.6 (2017-08-12)
-* (bluefox) add "save last value" option
+* (bluefox) add "save last value"
 
 ## 1.4.5 (2017-08-03)
 * (Apollon77) fix behaviour of log interval to always log the current value
