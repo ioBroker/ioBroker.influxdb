@@ -1092,7 +1092,7 @@ function getHistory(msg) {
     }
 
     // select one datapoint more then wanted
-    if (options.aggregate === 'minmax' || options.aggregate === 'onchange') {
+    if (options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none') {
         var add_query = "";
         if (options.start) {
             add_query = 'SELECT value from "' + msg.message.id + '"' + " WHERE time <= '" + new Date(options.start).toISOString() + "' ORDER BY time DESC LIMIT 1;";
