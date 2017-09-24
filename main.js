@@ -1124,10 +1124,16 @@ function getHistory(msg) {
                         delete rows[qr][rr].value;
                     }
                     rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
-                    if (rows[qr][rr].val !== null) {
-                        rows[qr][rr].val = adapter.config.round ? (Math.round(rows[qr][rr].val * adapter.config.round) / adapter.config.round) : rows[qr][rr].val;
-                    }
                     delete rows[qr][rr].time;
+                    if (rows[qr][rr].val !== null) {
+                        var f = parseFloat(rows[qr][rr].val);
+                        if (f == rows[qr][rr].val) {
+                            rows[qr][rr].val = f;
+                            if (adapter.config.round) {
+                                rows[qr][rr].val = Math.round(rows[qr][rr].val * adapter.config.round) / adapter.config.round;
+                            }
+                        }
+                    }
                     if (options.addId) rows[qr][rr].id = msg.message.id;
                     result.push(rows[qr][rr]);
                 }
