@@ -559,6 +559,7 @@ function pushHistory(id, state, timerRelog) {
         if (timerRelog) {
             state.ts = new Date().getTime();
             adapter.log.debug('timed-relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
+            ignoreDebonce = true;
         } else {
             if (settings.changesOnly && influxDPs[id].skipped) {
                 influxDPs[id].state = influxDPs[id].skipped;
@@ -591,22 +592,25 @@ function reLogHelper(_id) {
         return;
     }
     influxDPs[_id].relogTimeout = null;
-    adapter.getForeignState(_id, function (err, state) {
-        if (err) {
-            adapter.log.info('init timed Relog: can not get State for ' + _id + ' : ' + err);
-        }
-        else if (!state) {
-            adapter.log.info('init timed Relog: disable relog because state not set so far for ' + _id + ': ' + JSON.stringify(state));
-        }
-        else {
-            adapter.log.debug('init timed Relog: getState ' + _id + ':  Value=' + state.val + ', ack=' + state.ack + ', ts=' + state.ts  + ', lc=' + state.lc);
-            // only if state is still not set
-            if (!influxDPs[_id].state) {
+    if (influxDPs[id].skipped) {
+        pushHistory(_id, influxDPs[id].skipped, true);
+        influxDPs[id].skipped = null;
+    }
+    else {
+        adapter.getForeignState(_id, function (err, state) {
+            if (err) {
+                adapter.log.info('init timed Relog: can not get State for ' + _id + ' : ' + err);
+            }
+            else if (!state) {
+                adapter.log.info('init timed Relog: disable relog because state not set so far for ' + _id + ': ' + JSON.stringify(state));
+            }
+            else {
+                adapter.log.debug('init timed Relog: getState ' + _id + ':  Value=' + state.val + ', ack=' + state.ack + ', ts=' + state.ts  + ', lc=' + state.lc);
                 influxDPs[_id].state = state;
                 pushHistory(_id, influxDPs[_id].state, true);
             }
-        }
-    });
+        });
+    }
 }
 
 function pushHelper(_id, cb) {
