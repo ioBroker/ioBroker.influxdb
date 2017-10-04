@@ -592,9 +592,9 @@ function reLogHelper(_id) {
         return;
     }
     influxDPs[_id].relogTimeout = null;
-    if (influxDPs[id].skipped) {
-        pushHistory(_id, influxDPs[id].skipped, true);
-        influxDPs[id].skipped = null;
+    if (influxDPs[_id].skipped) {
+        pushHistory(_id, influxDPs[_id].skipped, true);
+        influxDPs[_id].skipped = null;
     }
     else {
         adapter.getForeignState(_id, function (err, state) {

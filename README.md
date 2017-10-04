@@ -246,6 +246,9 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 ## Changelog
 
+## 1.4.8 (2017-10-04)
+* (Apollon77) fix relog value feature and enhance type conflict resolving
+
 ## 1.4.7 (2017-09-11)
 * (Apollon77) fixes to save last value
 * (Apollon77) add better support when no start date is set for getHistory (used by Admin)
