@@ -852,7 +852,8 @@ function writeOnePointForID(pointId, point, directWrite, cb) {
                 var retry = false;
                 if (!influxDPs[pointId][adapter.namespace].storageType) {
                     var convertDirection = '';
-                    if (err.message.indexOf('is type bool, already exists as type float') !== -1) {
+                    if (err.message.indexOf('is type bool, already exists as type float') !== -1 ||
+                        err.message.indexOf('is type boolean, already exists as type float') !== -1) {
                         convertDirection = 'bool -> float';
                         if (point.value === true) {
                             point.value = 1;
