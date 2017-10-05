@@ -21,7 +21,6 @@ var seriesBuffer        = {};
 var conflictingPoints   = {};
 var errorPoints         = {};
 var connected           = null;
-var tasksStart          = [];
 var finished            = false;
 
 var adapter = utils.adapter('influxdb');
@@ -43,7 +42,6 @@ adapter.on('objectChange', function (id, obj) {
             subscribeAll = true;
             adapter.subscribeForeignStates('*');
         }
-        var writeNull = !influxDPs[id];
         if (influxDPs[id] && influxDPs[id].relogTimeout) clearTimeout(influxDPs[id].relogTimeout);
 
         // todo remove history sometime (2016.08)
@@ -77,9 +75,6 @@ adapter.on('objectChange', function (id, obj) {
         // add one day if retention is too small
         if (influxDPs[id][adapter.namespace].retention && influxDPs[id][adapter.namespace].retention <= 604800) {
             influxDPs[id][adapter.namespace].retention += 86400;
-        }
-        if (writeNull) {
-            writeNulls(id);
         }
         adapter.log.info('enabled logging of ' + id + ', ' + Object.keys(influxDPs).length + ' points now activated');
     } else {
@@ -331,56 +326,6 @@ function fixSelector(callback) {
         }
     });
 }
-function processStartValues() {
-    if (tasksStart && tasksStart.length) {
-        var task = tasksStart.shift();
-        if (influxDPs[task.id][adapter.namespace].changesOnly) {
-            adapter.getForeignState(task.id, function (err, state) {
-                var now = task.now || new Date().getTime();
-
-                pushHistory(task.id, {
-                    val:  null,
-                    ts:   state ? now - 4 : now, // 4 is because of MS SQL
-                    ack:  true,
-                    q:    0x40,
-                    from: 'system.adapter.' + adapter.namespace
-                });
-
-                if (state) {
-                    state.ts   = now;
-                    state.from = 'system.adapter.' + adapter.namespace;
-                    pushHistory(task.id, state);
-                }
-                setTimeout(processStartValues, 0);
-            });
-        } else {
-            pushHistory(task.id, {
-                val:  null,
-                ts:   task.now || new Date().getTime(),
-                ack:  true,
-                q:    0x40,
-                from: 'system.adapter.' + adapter.namespace
-            });
-            setTimeout(processStartValues, 0);
-        }
-    }
-}
-function writeNulls(id, now) {
-    if (!id) {
-        now = new Date().getTime();
-        for (var _id in influxDPs) {
-            if (influxDPs.hasOwnProperty(_id)) {
-                writeNulls(_id, now);
-            }
-        }
-    } else {
-        now = now || new Date().getTime();
-        tasksStart.push({id: id, now: now});
-        if (tasksStart.length === 1 && connected) {
-            processStartValues();
-        }
-    }
-}
 
 function main() {
     adapter.config.port = parseInt(adapter.config.port, 10) || 0;
@@ -480,7 +425,6 @@ function main() {
                     }
                 }
             }
-            writeNulls();
 
             if (count < 20) {
                 for (var _id in influxDPs) {
@@ -520,13 +464,13 @@ function pushHistory(id, state, timerRelog) {
         }
         if (influxDPs[id].state && settings.changesOnly && !timerRelog) {
             if (settings.changesRelogInterval === 0) {
-                if ((influxDPs[id].state.val !== null || state.val === null) && state.ts !== state.lc) {
+                if (state.ts !== state.lc) {
                     influxDPs[id].skipped = state; // remember new timestamp
                     adapter.log.debug('value not changed ' + id + ', last-value=' + influxDPs[id].state.val + ', new-value=' + state.val + ', ts=' + state.ts);
                     return;
                 }
             } else if (influxDPs[id].lastLogTime) {
-                if ((influxDPs[id].state.val !== null || state.val === null) && (state.ts !== state.lc) && (Math.abs(influxDPs[id].lastLogTime - state.ts) < settings.changesRelogInterval * 1000)) {
+                if ((state.ts !== state.lc) && (Math.abs(influxDPs[id].lastLogTime - state.ts) < settings.changesRelogInterval * 1000)) {
                     adapter.log.debug('value not changed ' + id + ', last-value=' + influxDPs[id].state.val + ', new-value=' + state.val + ', ts=' + state.ts);
                     influxDPs[id].skipped = state; // remember new timestamp
                     return;
@@ -535,7 +479,7 @@ function pushHistory(id, state, timerRelog) {
                     adapter.log.debug('value-changed-relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
                 }
             }
-            if (influxDPs[id].state.val !== null && (settings.changesMinDelta !== 0) && (typeof state.val === 'number') && (Math.abs(influxDPs[id].state.val - state.val) < settings.changesMinDelta)) {
+            if ((settings.changesMinDelta !== 0) && (typeof state.val === 'number') && (Math.abs(influxDPs[id].state.val - state.val) < settings.changesMinDelta)) {
                 adapter.log.debug('Min-Delta not reached ' + id + ', last-value=' + influxDPs[id].state.val + ', new-value=' + state.val + ', ts=' + state.ts);
                 influxDPs[id].skipped = state; // remember new timestamp
                 return;
@@ -555,6 +499,7 @@ function pushHistory(id, state, timerRelog) {
         if (settings.changesRelogInterval > 0) {
             influxDPs[id].relogTimeout = setTimeout(reLogHelper, settings.changesRelogInterval * 1000, id);
         }
+
         var ignoreDebonce = false;
         if (timerRelog) {
             state.ts = new Date().getTime();
@@ -576,6 +521,7 @@ function pushHistory(id, state, timerRelog) {
         }
         influxDPs[id].lastLogTime = state.ts;
         influxDPs[id].skipped = null;
+
         if (settings.debounce && !ignoreDebonce) {
             // Discard changes in de-bounce time to store last stable value
             if (influxDPs[id].timeout) clearTimeout(influxDPs[id].timeout);
