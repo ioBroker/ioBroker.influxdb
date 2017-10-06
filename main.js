@@ -20,6 +20,7 @@ var seriesBufferFlushPlanned = false;
 var seriesBuffer        = {};
 var conflictingPoints   = {};
 var errorPoints         = {};
+var tasksStart          = [];
 var connected           = null;
 var finished            = false;
 
@@ -179,6 +180,16 @@ function connect() {
             }
         }
     });
+}
+
+function processStartValues() {
+    if (tasksStart && tasksStart.length) {
+        var taskId = tasksStart.shift();
+        if (influxDPs[taskId][adapter.namespace].changesOnly) {
+            pushHistory(taskId, influxDPs[taskId].state, true);
+            setTimeout(processStartValues, 0);
+        }
+    }
 }
 
 function testConnection(msg) {
@@ -449,9 +460,12 @@ function main() {
 function writeInitialValue(id) {
     adapter.getForeignState(id, function (err, state) {
         if (state) {
-            state.ts   = new Date().getTime();
             state.from = 'system.adapter.' + adapter.namespace;
-            pushHistory(id, state);
+            influxDPs[id].state = state;
+            tasksStart.push(id);
+            if (tasksStart.length === 1 && connected) {
+                processStartValues();
+            }
             if (influxDPs[id][adapter.namespace].changesRelogInterval > 0) {
                 influxDPs[id].relogTimeout = setTimeout(reLogHelper, (influxDPs[id][adapter.namespace].changesRelogInterval * 500 * Math.random()) + influxDPs[id][adapter.namespace].changesRelogInterval * 500, id);
             }
