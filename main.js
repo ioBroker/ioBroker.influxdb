@@ -62,9 +62,6 @@ adapter.on('objectChange', function (id, obj) {
         } else {
             influxDPs[id][adapter.namespace].changesRelogInterval = adapter.config.changesRelogInterval;
         }
-        if (influxDPs[id][adapter.namespace].changesRelogInterval > 0) {
-            influxDPs[id].relogTimeout = setTimeout(reLogHelper, (influxDPs[id][adapter.namespace].changesRelogInterval * 500 * Math.random()) + influxDPs[id][adapter.namespace].changesRelogInterval * 500, id);
-        }
         if (influxDPs[id][adapter.namespace].changesMinDelta !== undefined && influxDPs[id][adapter.namespace].changesMinDelta !== null && influxDPs[id][adapter.namespace].changesMinDelta !== '') {
             influxDPs[id][adapter.namespace].changesMinDelta = parseFloat(influxDPs[id][adapter.namespace].changesMinDelta.toString().replace(/,/g, '.')) || 0;
         } else {
@@ -76,6 +73,9 @@ adapter.on('objectChange', function (id, obj) {
         if (influxDPs[id][adapter.namespace].retention && influxDPs[id][adapter.namespace].retention <= 604800) {
             influxDPs[id][adapter.namespace].retention += 86400;
         }
+
+        writeInitialValue(id);
+
         adapter.log.info('enabled logging of ' + id + ', ' + Object.keys(influxDPs).length + ' points now activated');
     } else {
         if (influxDPs[id]) {
@@ -407,9 +407,6 @@ function main() {
                             } else {
                                 influxDPs[id][adapter.namespace].changesRelogInterval = adapter.config.changesRelogInterval;
                             }
-                            if (influxDPs[id][adapter.namespace].changesRelogInterval > 0) {
-                                influxDPs[id].relogTimeout = setTimeout(reLogHelper, (influxDPs[id][adapter.namespace].changesRelogInterval * 500 * Math.random()) + influxDPs[id][adapter.namespace].changesRelogInterval * 500, id);
-                            }
                             if (influxDPs[id][adapter.namespace].changesMinDelta !== undefined && influxDPs[id][adapter.namespace].changesMinDelta !== null && influxDPs[id][adapter.namespace].changesMinDelta !== '') {
                                 influxDPs[id][adapter.namespace].changesMinDelta = parseFloat(influxDPs[id][adapter.namespace].changesMinDelta) || 0;
                             } else {
@@ -421,6 +418,7 @@ function main() {
                             if (influxDPs[id][adapter.namespace].retention && influxDPs[id][adapter.namespace].retention <= 604800) {
                                 influxDPs[id][adapter.namespace].retention += 86400;
                             }
+                            writeInitialValue(id);
                         }
                     }
                 }
@@ -446,6 +444,19 @@ function main() {
     }, adapter.config.seriesBufferFlushInterval * 1000);
 
     connect();
+}
+
+function writeInitialValue(id) {
+    adapter.getForeignState(id, function (err, state) {
+        if (state) {
+            state.ts   = new Date().getTime();
+            state.from = 'system.adapter.' + adapter.namespace;
+            pushHistory(id, state);
+            if (influxDPs[id][adapter.namespace].changesRelogInterval > 0) {
+                influxDPs[id].relogTimeout = setTimeout(reLogHelper, (influxDPs[id][adapter.namespace].changesRelogInterval * 500 * Math.random()) + influxDPs[id][adapter.namespace].changesRelogInterval * 500, id);
+            }
+        }
+    });
 }
 
 function pushHistory(id, state, timerRelog) {
