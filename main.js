@@ -501,7 +501,7 @@ function pushHistory(id, state, timerRelog) {
                     return;
                 }
                 if (state.ts !== state.lc) {
-                    adapter.log.debug('value-changed-relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
+                    adapter.log.info('value-changed-relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
                 }
             }
             if ((settings.changesMinDelta !== 0) && (typeof state.val === 'number') && (Math.abs(influxDPs[id].state.val - state.val) < settings.changesMinDelta)) {
@@ -528,7 +528,7 @@ function pushHistory(id, state, timerRelog) {
         var ignoreDebonce = false;
         if (timerRelog) {
             state.ts = new Date().getTime();
-            adapter.log.debug('timed-relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
+            adapter.log.info('timed-relog ' + id + ', value=' + state.val + ', lastLogTime=' + influxDPs[id].lastLogTime + ', ts=' + state.ts);
             ignoreDebonce = true;
         } else {
             if (settings.changesOnly && influxDPs[id].skipped) {
