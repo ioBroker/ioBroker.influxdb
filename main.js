@@ -466,10 +466,6 @@ function writeInitialValue(id) {
             if (tasksStart.length === 1 && connected) {
                 processStartValues();
             }
-            if (influxDPs[id][adapter.namespace].changesRelogInterval > 0) {
-                if (influxDPs[id].relogTimeout) clearTimeout(influxDPs[id].relogTimeout);
-                influxDPs[id].relogTimeout = setTimeout(reLogHelper, (influxDPs[id][adapter.namespace].changesRelogInterval * 500 * Math.random()) + influxDPs[id][adapter.namespace].changesRelogInterval * 500, id);
-            }
         }
     });
 }
