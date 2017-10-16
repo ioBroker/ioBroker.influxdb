@@ -85,7 +85,8 @@
         "supportStopInstance":      2000,
         "restartAdapters":          ["influxdb"],
         "authors": [
-            "Bluefox <dogafox@gmail.com>"
+            "Bluefox <dogafox@gmail.com>",
+            "Apollon77 <ingo@fischer-ka.de>"
         ],
         "license":                  "MIT",
         "readme":                   "https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md",
