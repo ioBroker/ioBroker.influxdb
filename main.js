@@ -24,7 +24,7 @@ var tasksStart          = [];
 var connected           = null;
 var finished            = false;
 
-var adapter = utils.adapter('influxdb');
+var adapter = utils.Adapter('influxdb');
 
 adapter.on('objectChange', function (id, obj) {
     if (obj && obj.common &&
