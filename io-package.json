@@ -6,9 +6,31 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.4.8",
-        "title":                    "History with InfluxDB",
+        "version": "1.5.0",
+        "title": "Logging data with InfluxDB",
+        "titleLang": {
+            "en": "Logging data with InfluxDB",
+            "de": "Daten mit InfluxDB protokollieren",
+            "ru": "Запись данных с помощью InfluxDB",
+            "pt": "Registro de dados com InfluxDB",
+            "nl": "Loggen van gegevens met InfluxDB",
+            "fr": "Consignation des données avec InfluxDB",
+            "it": "Registrazione dei dati con InfluxDB",
+            "es": "Datos de registro con InfluxDB",
+            "pl": "Rejestrowanie danych za pomocą InfluxDB"
+        },
         "news": {
+            "1.5.0": {
+                "en": "Ready for Admin3",
+                "de": "Bereit für Admin3",
+                "ru": "Готово для Admin3",
+                "pt": "Pronto para Admin3",
+                "nl": "Klaar voor Admin3",
+                "fr": "Prêt pour Admin3",
+                "it": "Pronto per Admin3",
+                "es": "Listo para Admin3",
+                "pl": "Gotowy na Admin3"
+            },
             "1.4.8": {
                 "en": "fix relog value feature and enhance type conflict resolving",
                 "de": "Erneutes Logging korrigiert und Typ-Konflikt-Behandlung verbessert",
@@ -80,6 +102,7 @@
         "supportCustoms":           true,
         "getHistory":           	true,
         "enabled":                  true,
+        "materialize":              true,
 		"dependencies":             [{"js-controller": ">=0.12.0","admin": ">=1.6.10"}],
         "stopBeforeUpdate":         true,
         "supportStopInstance":      2000,

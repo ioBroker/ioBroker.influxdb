@@ -122,7 +122,7 @@
     //   as input function receives object with all information concerning it
     if (typeof defaults !== 'undefined') {
         defaults.influxdb = function (obj, instanceObj) {
-            if (obj && obj.common && obj.common.type != 'number') {
+            if (obj && obj.common && obj.common.type !== 'number') {
                 return {
                     enabled:     false,
                     changesOnly: false,
@@ -130,7 +130,7 @@
                     retention:   instanceObj.native.retention,
                     changesRelogInterval: instanceObj.native.changesRelogInterval,
                     changesMinDelta: 0,
-                    storageType: ""
+                    storageType: ''
                 };
             }
             return {

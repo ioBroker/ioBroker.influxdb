@@ -1,4 +1,4 @@
-Gruntfile.js
+gulpfile.js
 tasks
 exe
 .idea
@@ -8,3 +8,7 @@ test
 .travis.yml
 appveyor.yml
 docs
+admin/i18n/flat.txt
+admin/i18n/*/flat.txt
+iob_npm.done
+package-lock.json
