@@ -245,6 +245,9 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 
 ## Changelog
+## 1.5.1 (2018-01-28)
+* (Apollon77) Admin3 Fixes
+
 ## 1.5.0 (2018-01-14)
 * (bluefox) Ready for Admin3
 
