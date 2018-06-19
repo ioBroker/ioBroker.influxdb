@@ -194,7 +194,8 @@ sendTo('influxdb.0', 'enableHistory', {
         debounce:     0,
         retention:    31536000,
         maxLength:    3,
-        changesMinDelta: 0.5
+        changesMinDelta: 0.5,
+        aliasId: ''
     }
 }, function (result) {
     if (result.error) {
@@ -236,7 +237,8 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
             "maxLength":3,
             "changesMinDelta":0.5,
             "enabled":true,
-            "changesRelogInterval":0
+            "changesRelogInterval":0,
+            "aliasId":""
         }
         ...
     }
@@ -245,6 +247,9 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 
 ## Changelog
+## 1.6.0 (2018-06-19)
+* (Apollon77) Add option to log datapoints as other ID (alias) to easier migrate devices and such
+
 ## 1.5.2 (2018-01-31)
 * (Bluefox) Admin3 Fixes
 

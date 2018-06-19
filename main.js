@@ -23,6 +23,7 @@ var errorPoints         = {};
 var tasksStart          = [];
 var connected           = null;
 var finished            = false;
+var aliasMap   = {};
 
 var adapter = utils.Adapter('influxdb');
 
@@ -34,11 +35,17 @@ adapter.on('objectChange', function (id, obj) {
             (obj.common.custom  && obj.common.custom[adapter.namespace]  && obj.common.custom[adapter.namespace].enabled)
         )
     ) {
+        var realId = id;
+        if (obj.common.custom && obj.common.custom[adapter.namespace] && obj.common.custom[adapter.namespace].aliasId) {
+            aliasMap[id] = obj.common.custom[adapter.namespace].aliasId;
+            adapter.log.debug('Found Alias: ' + id + ' --> ' + aliasMap[id]);
+            id = aliasMap[id];
+        }
 
         if (!influxDPs[id] && !subscribeAll) {
             // unsubscribe
             for (var _id in influxDPs) {
-                adapter.unsubscribeForeignStates(_id);
+                adapter.unsubscribeForeignStates(influxDPs[_id].realId);
             }
             subscribeAll = true;
             adapter.subscribeForeignStates('*');
@@ -47,6 +54,7 @@ adapter.on('objectChange', function (id, obj) {
 
         // todo remove history sometime (2016.08)
         influxDPs[id] = obj.common.custom || obj.common.history;
+        influxDPs[id].realId  = realId;
         if (influxDPs[id][adapter.namespace].retention !== undefined && influxDPs[id][adapter.namespace].retention !== null && influxDPs[id][adapter.namespace].retention !== '') {
             influxDPs[id][adapter.namespace].retention = parseInt(influxDPs[id][adapter.namespace].retention || adapter.config.retention, 10) || 0;
         } else {
@@ -77,8 +85,9 @@ adapter.on('objectChange', function (id, obj) {
 
         writeInitialValue(id);
 
-        adapter.log.info('enabled logging of ' + id + ', ' + Object.keys(influxDPs).length + ' points now activated');
+        adapter.log.info('enabled logging of ' + id + ', Alias=' + (id !== realId) + ', ' + Object.keys(influxDPs).length + ' points now activated');
     } else {
+        id = aliasMap[id] ? aliasMap[id] : id;
         if (influxDPs[id]) {
             if (influxDPs[id].relogTimeout) clearTimeout(influxDPs[id].relogTimeout);
             if (influxDPs[id].timeout) clearTimeout(influxDPs[id].timeout);
@@ -89,6 +98,7 @@ adapter.on('objectChange', function (id, obj) {
 });
 
 adapter.on('stateChange', function (id, state) {
+    id = aliasMap[id] ? aliasMap[id] : id;
     pushHistory(id, state);
 });
 
@@ -270,9 +280,6 @@ function processMessage(msg) {
     else if (msg.command === 'destroy') {
         destroyDB(msg);
     }
-    /* else  if (msg.command === 'generateDemo') {
-        generateDemo(msg);
-    } */
     else if (msg.command === 'query') {
         query(msg);
     }
@@ -392,13 +399,19 @@ function main() {
                 for (var i = 0, l = doc.rows.length; i < l; i++) {
                     if (doc.rows[i].value) {
                         var id = doc.rows[i].id;
+                        var realId = id;
+                        if (doc.rows[i].value[adapter.namespace] && doc.rows[i].value[adapter.namespace].aliasId) {
+                            aliasMap[id] = doc.rows[i].value[adapter.namespace].aliasId;
+                            adapter.log.debug('Found Alias: ' + id + ' --> ' + aliasMap[id]);
+                            id = aliasMap[id];
+                        }
                         influxDPs[id] = doc.rows[i].value;
 
                         if (!influxDPs[id][adapter.namespace]) {
                             delete influxDPs[id];
                         } else {
                             count++;
-                            adapter.log.info('enabled logging of ' + id + ', ' + Object.keys(influxDPs).length + ' points now activated');
+                            adapter.log.info('enabled logging of ' + id + ', Alias=' + (id !== realId) + ', ' + count + ' points now activated');
                             if (influxDPs[id][adapter.namespace].retention !== undefined && influxDPs[id][adapter.namespace].retention !== null && influxDPs[id][adapter.namespace].retention !== '') {
                                 influxDPs[id][adapter.namespace].retention = parseInt(influxDPs[id][adapter.namespace].retention || adapter.config.retention, 10) || 0;
                             } else {
@@ -429,6 +442,8 @@ function main() {
                             if (influxDPs[id][adapter.namespace].retention && influxDPs[id][adapter.namespace].retention <= 604800) {
                                 influxDPs[id][adapter.namespace].retention += 86400;
                             }
+
+                            history[id].realId  = realId;
                             writeInitialValue(id);
                         }
                     }
@@ -437,7 +452,9 @@ function main() {
 
             if (count < 20) {
                 for (var _id in influxDPs) {
-                    adapter.subscribeForeignStates(_id);
+                    if (influxDPs.hasOwnProperty(_id)) {
+                        adapter.subscribeForeignStates(influxDPs[_id].realId);
+                    }
                 }
             } else {
                 subscribeAll = true;
@@ -567,7 +584,7 @@ function reLogHelper(_id) {
         pushHistory(_id, influxDPs[_id].state, true);
     }
     else {
-        adapter.getForeignState(_id, function (err, state) {
+        adapter.getForeignState(influxDPs[_id].realId, function (err, state) {
             if (err) {
                 adapter.log.info('init timed Relog: can not get State for ' + _id + ' : ' + err);
             }
@@ -978,6 +995,9 @@ function getHistory(msg) {
         ignoreNull: true,
         sessionId:  msg.message.options.sessionId
     };
+    if (options.id && aliasMap[options.id]) {
+        options.id = aliasMap[options.id];
+    }
     var query = 'SELECT';
     if (options.step) {
         switch (options.aggregate) {
@@ -1130,90 +1150,6 @@ function getHistory(msg) {
     });
 }
 
-/*
-function generateDemo(msg) {
-
-    var id    = adapter.name +'.' + adapter.instance + '.Demo.' + (msg.message.id || 'Demo_Data');
-    var start = new Date(msg.message.start).getTime();
-    var end   = new Date(msg.message.end).getTime();
-    var value = 1;
-    var sin   = 0.1;
-    var up    = true;
-    var curve = msg.message.curve;
-    var step  = (msg.message.step || 60) * 1000;
-
-    if (end < start) {
-        var tmp = end;
-        end     = start;
-        start   = tmp;
-    }
-
-    end = new Date(end).setHours(24);
-
-    function generate() {
-
-        if (curve === 'sin') {
-            if (sin === 6.2) {
-                sin = 0;
-            } else {
-                sin = Math.round((sin + 0.1) * 10) / 10;
-            }
-            value = Math.round(Math.sin(sin) * 10000) / 100;
-        } else if (curve === 'dec') {
-            value++;
-        } else if (curve === 'inc') {
-            value--;
-        } else {
-            if (up === true) {
-                value++;
-            } else {
-                value--;
-            }
-        }
-        start += step;
-
-        pushValueIntoDB(id, {
-            ts:     new Date(start).getTime(),
-            val:    value,
-            q:      0,
-            ack:    true
-        });
-
-
-        if (start <= end) {
-            setTimeout(function () {
-                generate();
-            }, 15);
-        } else {
-            adapter.sendTo(msg.from, msg.command, 'finished', msg.callback);
-        }
-    }
-
-    var obj = {
-        type: 'state',
-        common: {
-            name:    msg.message.id,
-            type:    'state',
-            enabled: false,
-            custom:  {}
-        }
-    };
-
-    obj.common.custom[adapter.namespace] = {
-        enabled:        true,
-        changesOnly:    false,
-        debounce:       1000,
-        retention:      31536000
-    };
-
-    adapter.setObject('demo.' + msg.message.id, obj);
-
-    influxDPs[id] = {};
-    influxDPs[id][adapter.namespace] = obj.common.custom[adapter.namespace];
-
-    generate();
-}
-*/
 function query(msg) {
     if (client) {
         var query = msg.message.query || msg.message;
@@ -1278,19 +1214,23 @@ function storeState(msg) {
         return;
     }
 
+    var id;
     if (Array.isArray(msg.message)) {
         adapter.log.debug('storeState: store ' + msg.message.length + ' states for multiple ids');
         for (var i = 0; i < msg.message.length; i++) {
-            pushValueIntoDB(msg.message[i].id, msg.message[i].state);
+            id = aliasMap[msg.message[i].id] ? aliasMap[msg.message[i].id] : msg.message[i].id;
+            pushValueIntoDB(id, msg.message[i].state);
         }
     } else if (Array.isArray(msg.message.state)) {
         adapter.log.debug('storeState: store ' + msg.message.state.length + ' states for ' + msg.message.id);
         for (var j = 0; j < msg.message.state.length; j++) {
-            pushValueIntoDB(msg.message.id, msg.message.state[j]);
+            id = aliasMap[msg.message.id] ? aliasMap[msg.message.id] : msg.message[i].id;
+            pushValueIntoDB(id, msg.message.state[j]);
         }
     } else {
         adapter.log.debug('storeState: store 1 state for ' + msg.message.id);
-        pushValueIntoDB(msg.message.id, msg.message.state);
+        id = aliasMap[msg.message.id] ? aliasMap[msg.message.id] : msg.message[i].id;
+        pushValueIntoDB(id, msg.message.state);
     }
 
     adapter.sendTo(msg.from, msg.command, {
@@ -1366,7 +1306,7 @@ function getEnabledDPs(msg) {
     var data = {};
     for (var id in influxDPs) {
         if (!influxDPs.hasOwnProperty(id)) continue;
-        data[id] = influxDPs[id][adapter.namespace];
+        data[influxDPs[id].realId] = influxDPs[id][adapter.namespace];
     }
 
     adapter.sendTo(msg.from, msg.command, data, msg.callback);
