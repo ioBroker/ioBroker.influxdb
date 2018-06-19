@@ -407,8 +407,8 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             console.log(JSON.stringify(result.result, null, 2));
             expect(result.result.length).to.be.equal(2);
 
-            sendTo('history.0', 'getHistory', {
-                id: 'history.0.testValue2-alias',
+            sendTo('influxdb.0', 'getHistory', {
+                id: 'influxdb.0.testValue2-alias',
                 options: {
                     start:     now - 5000,
                     end:       now,
