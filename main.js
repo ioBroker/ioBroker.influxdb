@@ -1036,7 +1036,7 @@ function getHistory(msg) {
         query += ' *';
     }
 
-    query += ' from "' + msg.message.id + '"';
+    query += ' from "' + options.id + '"';
 
     if (!influxDPs[options.id]) {
         adapter.sendTo(msg.from, msg.command, {
@@ -1090,10 +1090,10 @@ function getHistory(msg) {
     if (options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none') {
         var add_query = "";
         if (options.start) {
-            add_query = 'SELECT value from "' + msg.message.id + '"' + " WHERE time <= '" + new Date(options.start).toISOString() + "' ORDER BY time DESC LIMIT 1;";
+            add_query = 'SELECT value from "' + options.id + '"' + " WHERE time <= '" + new Date(options.start).toISOString() + "' ORDER BY time DESC LIMIT 1;";
             query = add_query + query;
         }
-        add_query = ';SELECT value from "' + msg.message.id + '"' + " WHERE time >= '" + new Date(options.end).toISOString() + "' LIMIT 1";
+        add_query = ';SELECT value from "' + options.id + '"' + " WHERE time >= '" + new Date(options.end).toISOString() + "' LIMIT 1";
         query = query + add_query;
     }
 

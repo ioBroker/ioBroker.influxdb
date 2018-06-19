@@ -264,7 +264,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                                                                                 console.log(err);
                                                                             }
                                                                             setTimeout(function () {
-                                                                                states.setState('influxdb.0.testValue2', {val: 3, ts: now - 3000, from: 'test.0'}, function (err) {
+                                                                                states.setState('influxdb.0.testValue2', {val: 3, ts: now - 1000, from: 'test.0'}, function (err) {
                                                                                     if (err) {
                                                                                         console.log(err);
                                                                                     }
