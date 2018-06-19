@@ -160,10 +160,33 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                                 }, function (result) {
                                     expect(result.error).to.be.undefined;
                                     expect(result.success).to.be.true;
-                                    // wait till adapter receives the new settings
-                                    setTimeout(function () {
-                                        done();
-                                    }, 10000);
+                                    objects.setObject('influxdb.0.testValue2', {
+                                        common: {
+                                            type: 'number',
+                                            role: 'state'
+                                        },
+                                        type: 'state'
+                                    },
+                                    function () {
+                                        sendTo('influxdb.0', 'enableHistory', {
+                                            id: 'influxdb.0.testValue2',
+                                            options: {
+                                                changesOnly:  true,
+                                                debounce:     0,
+                                                retention:    31536000,
+                                                maxLength:    3,
+                                                changesMinDelta: 0.5,
+                                                aliasId: 'influxdb.0.testValue2-alias'
+                                            }
+                                        }, function (result) {
+                                            expect(result.error).to.be.undefined;
+                                            expect(result.success).to.be.true;
+                                            // wait till adapter receives the new settings
+                                            setTimeout(function () {
+                                                done();
+                                            }, 2000);
+                                        });
+                                    });
                                 });
                             });
                         });
@@ -187,7 +210,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
 
         sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
             console.log(JSON.stringify(result));
-            expect(Object.keys(result).length).to.be.equal(4);
+            expect(Object.keys(result).length).to.be.equal(5);
             expect(result['system.adapter.influxdb.0.memRss'].enabled).to.be.true;
             done();
         });
@@ -235,7 +258,21 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                                                                     if (err) {
                                                                         console.log(err);
                                                                     }
-                                                                    setTimeout(done, 1000);
+                                                                    setTimeout(function () {
+                                                                        states.setState('influxdb.0.testValue2', {val: 1, ts: now - 2000}, function (err) {
+                                                                            if (err) {
+                                                                                console.log(err);
+                                                                            }
+                                                                            setTimeout(function () {
+                                                                                states.setState('influxdb.0.testValue2', {val: 3, ts: now - 3000}, function (err) {
+                                                                                    if (err) {
+                                                                                        console.log(err);
+                                                                                    }
+                                                                                    setTimeout(done, 1000);
+                                                                                });
+                                                                            }, 100);
+                                                                        });
+                                                                    }, 100);
                                                                 });
                                                             }, 100);
                                                         });
@@ -354,6 +391,42 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             });
         }, 60000);
     });
+
+    it('Test ' + adapterShortName + ': Read values from DB using GetHistory for aliased testValue2', function (done) {
+        this.timeout(25000);
+
+        sendTo('influxdb.0', 'getHistory', {
+            id: 'influxdb.0.testValue2',
+            options: {
+                start:     now - 5000,
+                end:       now,
+                count:     50,
+                aggregate: 'none'
+            }
+        }, function (result) {
+            console.log(JSON.stringify(result.result, null, 2));
+            expect(result.result.length).to.be.equal(2);
+
+            sendTo('history.0', 'getHistory', {
+                id: 'history.0.testValue2-alias',
+                options: {
+                    start:     now - 5000,
+                    end:       now,
+                    count:     50,
+                    aggregate: 'none'
+                }
+            }, function (result2) {
+                console.log(JSON.stringify(result2.result, null, 2));
+                expect(result2.result.length).to.be.equal(2);
+                for (var i = 0; i < result2.result.length; i++) {
+                    expect(result2.result[i].val).to.be.equal(result.result[i].val);
+                }
+
+                done();
+            });
+        });
+    });
+
     it('Test ' + adapterShortName + ': Disable Datapoint again', function (done) {
         this.timeout(5000);
 
@@ -370,7 +443,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
 
         sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
             console.log(JSON.stringify(result));
-            expect(Object.keys(result).length).to.be.equal(3);
+            expect(Object.keys(result).length).to.be.equal(4);
             done();
         });
     });
