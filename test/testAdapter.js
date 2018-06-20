@@ -116,13 +116,13 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                 function () {
                     states.subscribeMessage('system.adapter.test.0');
                     objects.setObject('influxdb.0.memRss', {
-                            common: {
-                                type: 'number',
-                                role: 'state'
-                            },
-                            type: 'state'
+                        common: {
+                            type: 'number',
+                            role: 'state'
                         },
-                        function () {
+                        type: 'state'
+                    },
+                    function () {
                         sendTo('influxdb.0', 'enableHistory', {
                             id: 'influxdb.0.memRss',
                             options: {
