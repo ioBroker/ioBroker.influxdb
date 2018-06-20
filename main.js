@@ -443,7 +443,7 @@ function main() {
                                 influxDPs[id][adapter.namespace].retention += 86400;
                             }
 
-                            history[id].realId  = realId;
+                            influxDPs[id].realId  = realId;
                             writeInitialValue(id);
                         }
                     }
