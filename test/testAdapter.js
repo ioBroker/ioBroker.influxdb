@@ -115,76 +115,85 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                 },
                 function () {
                     states.subscribeMessage('system.adapter.test.0');
-                    sendTo('influxdb.0', 'enableHistory', {
-                        id: 'system.adapter.influxdb.0.memRss',
-                        options: {
-                            changesOnly:  true,
-                            debounce:     0,
-                            retention:    31536000,
-                            seriesBufferMax:    0,
-                            changesMinDelta: 0.5,
-                            storageType: 'Number'
-                        }
-                    }, function (result) {
-                        expect(result.error).to.be.undefined;
-                        expect(result.success).to.be.true;
+                    objects.setObject('influxdb.0.memRss', {
+                            common: {
+                                type: 'number',
+                                role: 'state'
+                            },
+                            type: 'state'
+                        },
+                        function () {
                         sendTo('influxdb.0', 'enableHistory', {
-                            id: 'system.adapter.influxdb.0.memHeapTotal',
+                            id: 'influxdb.0.memRss',
                             options: {
                                 changesOnly:  true,
                                 debounce:     0,
                                 retention:    31536000,
-                                storageType: 'String'
+                                seriesBufferMax:    0,
+                                changesMinDelta: 0.5,
+                                storageType: 'Number'
                             }
                         }, function (result) {
                             expect(result.error).to.be.undefined;
                             expect(result.success).to.be.true;
                             sendTo('influxdb.0', 'enableHistory', {
-                                id: 'system.adapter.influxdb.0.uptime',
+                                id: 'system.adapter.influxdb.0.memHeapTotal',
                                 options: {
-                                    changesOnly:  false,
+                                    changesOnly:  true,
                                     debounce:     0,
                                     retention:    31536000,
-                                    storageType: 'Boolean'
+                                    storageType: 'String'
                                 }
                             }, function (result) {
                                 expect(result.error).to.be.undefined;
                                 expect(result.success).to.be.true;
                                 sendTo('influxdb.0', 'enableHistory', {
-                                    id: 'system.adapter.influxdb.0.memHeapUsed',
+                                    id: 'system.adapter.influxdb.0.uptime',
                                     options: {
                                         changesOnly:  false,
                                         debounce:     0,
                                         retention:    31536000,
+                                        storageType: 'Boolean'
                                     }
                                 }, function (result) {
                                     expect(result.error).to.be.undefined;
                                     expect(result.success).to.be.true;
-                                    objects.setObject('influxdb.0.testValue2', {
-                                        common: {
-                                            type: 'number',
-                                            role: 'state'
+                                    sendTo('influxdb.0', 'enableHistory', {
+                                        id: 'system.adapter.influxdb.0.memHeapUsed',
+                                        options: {
+                                            changesOnly:  false,
+                                            debounce:     0,
+                                            retention:    31536000,
+                                        }
+                                    }, function (result) {
+                                        expect(result.error).to.be.undefined;
+                                        expect(result.success).to.be.true;
+                                        objects.setObject('influxdb.0.testValue2', {
+                                            common: {
+                                                type: 'number',
+                                                role: 'state'
+                                            },
+                                            type: 'state'
                                         },
-                                        type: 'state'
-                                    },
-                                    function () {
-                                        sendTo('influxdb.0', 'enableHistory', {
-                                            id: 'influxdb.0.testValue2',
-                                            options: {
-                                                changesOnly:  true,
-                                                debounce:     0,
-                                                retention:    31536000,
-                                                maxLength:    3,
-                                                changesMinDelta: 0.5,
-                                                aliasId: 'influxdb.0.testValue2-alias'
-                                            }
-                                        }, function (result) {
-                                            expect(result.error).to.be.undefined;
-                                            expect(result.success).to.be.true;
-                                            // wait till adapter receives the new settings
-                                            setTimeout(function () {
-                                                done();
-                                            }, 2000);
+                                        function () {
+                                            sendTo('influxdb.0', 'enableHistory', {
+                                                id: 'influxdb.0.testValue2',
+                                                options: {
+                                                    changesOnly:  true,
+                                                    debounce:     0,
+                                                    retention:    31536000,
+                                                    maxLength:    3,
+                                                    changesMinDelta: 0.5,
+                                                    aliasId: 'influxdb.0.testValue2-alias'
+                                                }
+                                            }, function (result) {
+                                                expect(result.error).to.be.undefined;
+                                                expect(result.success).to.be.true;
+                                                // wait till adapter receives the new settings
+                                                setTimeout(function () {
+                                                    done();
+                                                }, 2000);
+                                            });
                                         });
                                     });
                                 });
@@ -211,7 +220,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
         sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
             console.log(JSON.stringify(result));
             expect(Object.keys(result).length).to.be.equal(5);
-            expect(result['system.adapter.influxdb.0.memRss'].enabled).to.be.true;
+            expect(result['influxdb.0.memRss'].enabled).to.be.true;
             done();
         });
     });
@@ -219,42 +228,42 @@ describe('Test ' + adapterShortName + ' adapter', function() {
         this.timeout(25000);
         now = new Date().getTime();
 
-        states.setState('system.adapter.influxdb.0.memRss', {val: true, ts: now - 20000, from: 'test.0'}, function (err) {
+        states.setState('influxdb.0.memRss', {val: true, ts: now - 20000, from: 'test.0'}, function (err) {
             if (err) {
                 console.log(err);
             }
             setTimeout(function () {
-                states.setState('system.adapter.influxdb.0.memRss', {val: 2, ts: now - 10000, from: 'test.0'}, function (err) {
+                states.setState('influxdb.0.memRss', {val: 2, ts: now - 10000, from: 'test.0'}, function (err) {
                     if (err) {
                         console.log(err);
                     }
                     setTimeout(function () {
-                        states.setState('system.adapter.influxdb.0.memRss', {val: 2, ts: now - 5000, from: 'test.0'}, function (err) {
+                        states.setState('influxdb.0.memRss', {val: 2, ts: now - 5000, from: 'test.0'}, function (err) {
                             if (err) {
                                 console.log(err);
                             }
                             setTimeout(function () {
-                                states.setState('system.adapter.influxdb.0.memRss', {val: 2.2, ts: now - 4000, from: 'test.0'}, function (err) {
+                                states.setState('influxdb.0.memRss', {val: 2.2, ts: now - 4000, from: 'test.0'}, function (err) {
                                     if (err) {
                                         console.log(err);
                                     }
                                     setTimeout(function () {
-                                        states.setState('system.adapter.influxdb.0.memRss', {val: 2.3, ts: now - 3500, from: 'test.0'}, function (err) {
+                                        states.setState('influxdb.0.memRss', {val: 2.3, ts: now - 3500, from: 'test.0'}, function (err) {
                                             if (err) {
                                                 console.log(err);
                                             }
                                             setTimeout(function () {
-                                                states.setState('system.adapter.influxdb.0.memRss', {val: '2.5', ts: now - 3000, from: 'test.0'}, function (err) {
+                                                states.setState('influxdb.0.memRss', {val: '2.5', ts: now - 3000, from: 'test.0'}, function (err) {
                                                     if (err) {
                                                         console.log(err);
                                                     }
                                                     setTimeout(function () {
-                                                        states.setState('system.adapter.influxdb.0.memRss', {val: 3, ts: now - 1000, from: 'test.0'}, function (err) {
+                                                        states.setState('influxdb.0.memRss', {val: 3, ts: now - 1000, from: 'test.0'}, function (err) {
                                                             if (err) {
                                                                 console.log(err);
                                                             }
                                                             setTimeout(function () {
-                                                                states.setState('system.adapter.influxdb.0.memRss', {val: 'Test', ts: now - 500, from: 'test.0'}, function (err) {
+                                                                states.setState('influxdb.0.memRss', {val: 'Test', ts: now - 500, from: 'test.0'}, function (err) {
                                                                     if (err) {
                                                                         console.log(err);
                                                                     }
@@ -292,7 +301,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
     it('Test ' + adapterShortName + ': Read values from DB using query', function (done) {
         this.timeout(10000);
 
-        sendTo('influxdb.0', 'query', 'SELECT * FROM "system.adapter.influxdb.0.memRss"', function (result) {
+        sendTo('influxdb.0', 'query', 'SELECT * FROM "influxdb.0.memRss"', function (result) {
             console.log(JSON.stringify(result.result, null, 2));
             expect(result.result[0].length).to.be.at.least(5);
             var found = 0;
@@ -308,7 +317,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
         this.timeout(10000);
 
         sendTo('influxdb.0', 'getHistory', {
-            id: 'system.adapter.influxdb.0.memRss',
+            id: 'influxdb.0.memRss',
             options: {
                 start:     now - 30000,
                 count:     50,
@@ -330,7 +339,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             expect(found23).to.be.true;
 
             sendTo('influxdb.0', 'getHistory', {
-                id: 'system.adapter.influxdb.0.memRss',
+                id: 'influxdb.0.memRss',
                 options: {
                     start:     now - 15000,
                     count:     2,
@@ -347,7 +356,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
         this.timeout(65000);
 
         setTimeout(function() {
-            sendTo('influxdb.0', 'query', 'SHOW FIELD KEYS FROM "system.adapter.influxdb.0.memRss"', function (result) {
+            sendTo('influxdb.0', 'query', 'SHOW FIELD KEYS FROM "influxdb.0.memRss"', function (result) {
                 console.log('result: ' + JSON.stringify(result.result, null, 2));
                 var found = false;
                 for (var i = 0; i < result.result[0].length; i++) {
@@ -431,7 +440,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
         this.timeout(5000);
 
         sendTo('influxdb.0', 'disableHistory', {
-            id: 'system.adapter.influxdb.0.memRss',
+            id: 'influxdb.0.memRss',
         }, function (result) {
             expect(result.error).to.be.undefined;
             expect(result.success).to.be.true;
