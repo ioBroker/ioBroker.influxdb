@@ -103,6 +103,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                             role: 'state',
                             custom: {
                                 "influxdb.0": {
+                                    enabled: true,
                                     changesOnly:  true,
                                     debounce:     0,
                                     retention:    31536000,
