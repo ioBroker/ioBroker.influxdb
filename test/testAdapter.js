@@ -108,99 +108,94 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             if (res) console.log(res);
             expect(res).not.to.be.equal('Cannot check connection');
             objects.setObject('system.adapter.test.0', {
-                    common: {
+                common: {
 
-                    },
-                    type: 'instance'
                 },
-                function () {
-                    states.subscribeMessage('system.adapter.test.0');
-                    objects.setObject('influxdb.0.memRss', {
-                        common: {
-                            type: 'number',
-                            role: 'state'
-                        },
-                        type: 'state'
-                    },
-                    function () {
-                        sendTo('influxdb.0', 'enableHistory', {
-                            id: 'influxdb.0.memRss',
-                            options: {
+                type: 'instance'
+            },
+            function () {
+                states.subscribeMessage('system.adapter.test.0');
+                objects.setObject('influxdb.0.memRss', {
+                    common: {
+                        type: 'number',
+                        role: 'state',
+                        custom: {
+                            "influxdb.0": {
                                 changesOnly:  true,
                                 debounce:     0,
                                 retention:    31536000,
-                                seriesBufferMax:    0,
-                                changesMinDelta: 0.5,
-                                storageType: 'Number'
+                                maxLength:    3,
+                                changesMinDelta: 0.5
+                            }
+                        }
+                    },
+                    type: 'state'
+                },
+                function () {
+                    sendTo('influxdb.0', 'enableHistory', {
+                        id: 'system.adapter.influxdb.0.memHeapTotal',
+                        options: {
+                            changesOnly:  true,
+                            debounce:     0,
+                            retention:    31536000,
+                            storageType: 'String'
+                        }
+                    }, function (result) {
+                        expect(result.error).to.be.undefined;
+                        expect(result.success).to.be.true;
+                        sendTo('influxdb.0', 'enableHistory', {
+                            id: 'system.adapter.influxdb.0.uptime',
+                            options: {
+                                changesOnly:  false,
+                                debounce:     0,
+                                retention:    31536000,
+                                storageType: 'Boolean'
                             }
                         }, function (result) {
                             expect(result.error).to.be.undefined;
                             expect(result.success).to.be.true;
                             sendTo('influxdb.0', 'enableHistory', {
-                                id: 'system.adapter.influxdb.0.memHeapTotal',
+                                id: 'system.adapter.influxdb.0.memHeapUsed',
                                 options: {
-                                    changesOnly:  true,
+                                    changesOnly:  false,
                                     debounce:     0,
                                     retention:    31536000,
-                                    storageType: 'String'
                                 }
                             }, function (result) {
                                 expect(result.error).to.be.undefined;
                                 expect(result.success).to.be.true;
-                                sendTo('influxdb.0', 'enableHistory', {
-                                    id: 'system.adapter.influxdb.0.uptime',
-                                    options: {
-                                        changesOnly:  false,
-                                        debounce:     0,
-                                        retention:    31536000,
-                                        storageType: 'Boolean'
-                                    }
-                                }, function (result) {
-                                    expect(result.error).to.be.undefined;
-                                    expect(result.success).to.be.true;
+                                objects.setObject('influxdb.0.testValue2', {
+                                    common: {
+                                        type: 'number',
+                                        role: 'state'
+                                    },
+                                    type: 'state'
+                                },
+                                function () {
                                     sendTo('influxdb.0', 'enableHistory', {
-                                        id: 'system.adapter.influxdb.0.memHeapUsed',
+                                        id: 'influxdb.0.testValue2',
                                         options: {
-                                            changesOnly:  false,
+                                            changesOnly:  true,
                                             debounce:     0,
                                             retention:    31536000,
+                                            maxLength:    3,
+                                            changesMinDelta: 0.5,
+                                            aliasId: 'influxdb.0.testValue2-alias'
                                         }
                                     }, function (result) {
                                         expect(result.error).to.be.undefined;
                                         expect(result.success).to.be.true;
-                                        objects.setObject('influxdb.0.testValue2', {
-                                            common: {
-                                                type: 'number',
-                                                role: 'state'
-                                            },
-                                            type: 'state'
-                                        },
-                                        function () {
-                                            sendTo('influxdb.0', 'enableHistory', {
-                                                id: 'influxdb.0.testValue2',
-                                                options: {
-                                                    changesOnly:  true,
-                                                    debounce:     0,
-                                                    retention:    31536000,
-                                                    maxLength:    3,
-                                                    changesMinDelta: 0.5,
-                                                    aliasId: 'influxdb.0.testValue2-alias'
-                                                }
-                                            }, function (result) {
-                                                expect(result.error).to.be.undefined;
-                                                expect(result.success).to.be.true;
-                                                // wait till adapter receives the new settings
-                                                setTimeout(function () {
-                                                    done();
-                                                }, 2000);
-                                            });
-                                        });
+                                        // wait till adapter receives the new settings
+                                        setTimeout(function () {
+                                            done();
+                                        }, 2000);
                                     });
                                 });
                             });
                         });
                     });
                 });
+            });
         });
     });
     it('Test ' + adapterShortName + ': Write string value for memHeapUsed into DB to force a type conflict', function (done) {
