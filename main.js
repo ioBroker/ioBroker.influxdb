@@ -98,7 +98,7 @@ adapter.on('objectChange', function (id, obj) {
 
         writeInitialValue(id);
 
-        adapter.log.info('enabled logging of ' + id + ', Alias=' + (id !== realId) + ', ' + Object.keys(influxDPs).length + ' points now activated');
+        adapter.log.info('enabled logging of ' + id + ', Alias=' + (id !== realId));
     } else {
         if (aliasMap[id]) {
             adapter.log.debug('Removed Alias: ' + id + ' !-> ' + aliasMap[id]);
@@ -109,7 +109,7 @@ adapter.on('objectChange', function (id, obj) {
             if (influxDPs[id].relogTimeout) clearTimeout(influxDPs[id].relogTimeout);
             if (influxDPs[id].timeout) clearTimeout(influxDPs[id].timeout);
             delete influxDPs[id];
-            adapter.log.info('disabled logging of ' + id + ', ' + Object.keys(influxDPs).length + ' points now activated');
+            adapter.log.info('disabled logging of ' + id);
         }
     }
 });
