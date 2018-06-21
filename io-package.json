@@ -6,7 +6,7 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.6.1",
+        "version": "1.6.2",
         "title": "Logging data with InfluxDB",
         "titleLang": {
             "en": "Logging data with InfluxDB",
@@ -20,7 +20,7 @@
             "pl": "Rejestrowanie danych za pomocą InfluxDB"
         },
         "news": {
-            "1.6.1": {
+            "1.6.2": {
                 "en": "Add option to write data to a different ID to make device changes easier. Retrieving data works for both IDs",
                 "de": "Option zum Schreiben von Daten in eine andere ID hinzufügen, um Geräteänderungen zu vereinfachen. Das Abrufen von Daten funktioniert für beide IDs",
                 "ru": "Добавьте параметр для записи данных на другой идентификатор, чтобы упростить внесение изменений. Получение данных для обоих ID",
