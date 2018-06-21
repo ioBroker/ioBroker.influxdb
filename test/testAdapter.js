@@ -301,7 +301,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             for (var i = 0; i < result.result[0].length; i++) {
                 if (result.result[0][i].value >= 1 && result.result[0][i].value <= 3) found ++;
             }
-            expect(found).to.be.equal(6);
+            expect(found).to.be.equal(7);
 
             done();
         });
@@ -327,7 +327,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                 if (result.result[i].val === 2.2) found22 = true;
                 if (result.result[i].val === 2.3) found23 = true;
             }
-            expect(found).to.be.equal(6);
+            expect(found).to.be.equal(7);
             expect(found22).to.be.false;
             expect(found23).to.be.true;
 
