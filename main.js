@@ -28,6 +28,7 @@ var aliasMap   = {};
 var adapter = utils.Adapter('influxdb');
 
 adapter.on('objectChange', function (id, obj) {
+    var formerAliasId = aliasMap[id] ? aliasMap[id] : id;
     if (obj && obj.common &&
         (
             // todo remove history sometime (2016.08) - Do not forget object selector in io-package.json
@@ -36,13 +37,25 @@ adapter.on('objectChange', function (id, obj) {
         )
     ) {
         var realId = id;
+        var checkForRemove = true;
         if (obj.common.custom && obj.common.custom[adapter.namespace] && obj.common.custom[adapter.namespace].aliasId) {
-            aliasMap[id] = obj.common.custom[adapter.namespace].aliasId;
-            adapter.log.debug('Found Alias: ' + id + ' --> ' + aliasMap[id]);
-            id = aliasMap[id];
+            if (obj.common.custom[adapter.namespace].aliasId !== id) {
+                aliasMap[id] = obj.common.custom[adapter.namespace].aliasId;
+                adapter.log.debug('Registered Alias: ' + id + ' --> ' + aliasMap[id]);
+                id = aliasMap[id];
+                checkForRemove = false;
+            }
+            else {
+                adapter.log.warn('Ignoring Alias-ID because identical to ID for ' + id);
+                obj.common.custom[adapter.namespace].aliasId = '';
+            }
+        }
+        if (checkForRemove && aliasMap[id]) {
+            adapter.log.debug('Removed Alias: ' + id + ' !-> ' + aliasMap[id]);
+            delete aliasMap[id];
         }
 
-        if (!influxDPs[id] && !subscribeAll) {
+        if (!influxDPs[formerAliasId] && !subscribeAll) {
             // unsubscribe
             for (var _id in influxDPs) {
                 adapter.unsubscribeForeignStates(influxDPs[_id].realId);
@@ -50,7 +63,7 @@ adapter.on('objectChange', function (id, obj) {
             subscribeAll = true;
             adapter.subscribeForeignStates('*');
         }
-        if (influxDPs[id] && influxDPs[id].relogTimeout) clearTimeout(influxDPs[id].relogTimeout);
+        if (influxDPs[formerAliasId] && influxDPs[formerAliasId].relogTimeout) clearTimeout(influxDPs[formerAliasId].relogTimeout);
 
         // todo remove history sometime (2016.08)
         influxDPs[id] = obj.common.custom || obj.common.history;
@@ -87,7 +100,11 @@ adapter.on('objectChange', function (id, obj) {
 
         adapter.log.info('enabled logging of ' + id + ', Alias=' + (id !== realId) + ', ' + Object.keys(influxDPs).length + ' points now activated');
     } else {
-        id = aliasMap[id] ? aliasMap[id] : id;
+        if (aliasMap[id]) {
+            adapter.log.debug('Removed Alias: ' + id + ' !-> ' + aliasMap[id]);
+            delete aliasMap[id];
+        }
+        id = formerAliasId;
         if (influxDPs[id]) {
             if (influxDPs[id].relogTimeout) clearTimeout(influxDPs[id].relogTimeout);
             if (influxDPs[id].timeout) clearTimeout(influxDPs[id].timeout);
