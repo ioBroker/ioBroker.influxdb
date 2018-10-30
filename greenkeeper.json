@@ -1,0 +1,12 @@
+{
+  "groups": {
+    "default": {
+      "packages": [
+        "io-package.json",
+        "lib/node-influx-3.5.0/package.json",
+        "lib/node-influx/package.json",
+        "package.json"
+      ]
+    }
+  }
+}
