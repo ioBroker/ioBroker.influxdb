@@ -25,7 +25,7 @@
   ],
   "optionalDependencies": {},
   "dependencies": {
-    "influx": "^5.0.7"
+    "influx": "^4.2.3"
   },
   "devDependencies": {
     "gulp": "^3.9.1",
