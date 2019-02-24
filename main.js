@@ -3,7 +3,7 @@
 'use strict';
 
 //noinspection JSUnresolvedFunction
-var utils     = require(__dirname + '/lib/utils'); // Get common adapter utils
+var utils    = require('@iobroker/adapter-core'); // Get common adapter utils
 var influx    = require('influx');
 var fs        = require('fs');
 var path      = require('path');
@@ -700,8 +700,8 @@ function pushValueIntoDB(id, state, cb) {
     var influxFields = {
         value: state.val,
         time:  new Date(state.ts),
-        from:  state.from,
-        q:     state.q,
+        from:  state.from || '',
+        q:     state.q || 0,
         ack:   !!state.ack
     };
 
