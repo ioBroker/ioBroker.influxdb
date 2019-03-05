@@ -25,6 +25,12 @@ var connected           = null;
 var finished            = false;
 var aliasMap   = {};
 
+function getAppName() {
+    const parts = __dirname.replace(/\\/g, '/').split('/');
+    return parts[parts.length - 1].split('.')[0];
+}
+utils.appName = getAppName();
+
 var adapter = utils.Adapter('influxdb');
 
 adapter.on('objectChange', function (id, obj) {
