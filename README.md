@@ -3,7 +3,7 @@
 
 ========================
 
-[![NPM version](http://img.shields.io/npm/v/iobroker.influxdb.svg)](https://www.npmjs.com/package/iobroker.influxdb)
+![Number of Installations](http://iobroker.live/badges/influxdb-installed.svg) ![Number of Installations](http://iobroker.live/badges/influxdb-stable.svg) [![NPM version](http://img.shields.io/npm/v/iobroker.influxdb.svg)](https://www.npmjs.com/package/iobroker.influxdb)
 [![Downloads](https://img.shields.io/npm/dm/iobroker.influxdb.svg)](https://www.npmjs.com/package/iobroker.influxdb)
 [![Tests](http://img.shields.io/travis/ioBroker/ioBroker.history/master.svg)](https://travis-ci.org/ioBroker/ioBroker.history)
 
