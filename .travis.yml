@@ -1,11 +1,13 @@
 os:
   - linux
   - osx
+  - windows
 language: node_js
 node_js:
   - '6'
   - '8'
   - '10'
+  - '12'
 sudo: required
 before_script:
   - export NPMVERSION=$(echo "$($(which npm) -v)"|cut -c1)
