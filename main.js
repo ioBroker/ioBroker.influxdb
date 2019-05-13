@@ -359,6 +359,11 @@ function processMessage(msg) {
                     }, 1500);
                 }
             }
+        } else {
+            /* no connection? */
+            if (msg.callback) {
+                adapter.sendTo(msg.from, msg.command, false, msg.callback);
+            }
         }
     }
 }
