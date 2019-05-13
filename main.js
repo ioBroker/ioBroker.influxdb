@@ -334,6 +334,33 @@ function processMessage(msg) {
             }
         });
     }
+    else if (msg.command === 'flushStoredBuffer') { /* BEWARE: callback only returns accurately if buffered points < 15000 and not already planned! */
+        if (!seriesBufferCounter) {
+            adapter.sendTo(msg.from, msg.command, true, msg.callback);
+            return;
+        }
+        if (client.request && (client.request.getHostsAvailable().length > 0)) {
+            let allAtOnce = (seriesBufferCounter > 15000 ? false : true);
+            if (!seriesBufferFlushPlanned) {
+                /* flush out */
+                seriesBufferFlushPlanned = true;
+                if (msg.callback) {
+                    setTimeout(storeBufferedSeries, 0, function() {
+                        adapter.sendTo(msg.from, msg.command, allAtOnce, msg.callback);
+                    });
+                } else {
+                    setTimeout(storeBufferedSeries, 0);
+                }
+            } else {
+                /* already planned - wait a bit and return? */
+                if (msg.callback) {
+                    setTimeout(function() {
+                        adapter.sendTo(msg.from, msg.command, false, msg.callback);
+                    }, 1500);
+                }
+            }
+        }
+    }
 }
 
 function getConflictingPoints(msg) {
