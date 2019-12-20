@@ -211,14 +211,14 @@ function connect(adapter) {
     adapter._client.getDatabaseNames((err, dbNames) => {
         if (err) {
             adapter.log.error(err);
-            setConnected(adapter, false);
+            reconnect(adapter);
         } else {
             setConnected(adapter, true);
             if (dbNames.indexOf(adapter.config.dbname) === -1) {
                 adapter._client.createDatabase(adapter.config.dbname, err => {
                     if (err) {
                         adapter.log.error(err);
-                        setConnected(adapter, false);
+                        reconnect(adapter);
                     } else {
                         if (!err && adapter.config.retention) {
                             adapter._client.query('CREATE RETENTION POLICY "global" ON ' + adapter.config.dbname + ' DURATION ' + adapter.config.retention + 's REPLICATION 1 DEFAULT', err =>
