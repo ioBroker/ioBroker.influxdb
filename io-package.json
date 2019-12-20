@@ -147,6 +147,7 @@
         "supportCustoms":           true,
         "getHistory":           	true,
         "enabled":                  true,
+        "compact":                  true,
         "materialize":              true,
 		"dependencies":             [{"js-controller": ">=0.12.0","admin": ">=1.6.10"}],
         "stopBeforeUpdate":         true,
@@ -186,7 +187,9 @@
         "seriesBufferMax":           0,
         "seriesBufferFlushInterval": 600,
         "changesRelogInterval":      0,
-        "changesMinDelta": 0
+        "changesMinDelta":           0,
+        "reconnectInterval":         10000,
+        "pingInterval":              15000
     },
     "instanceObjects": [
         {
