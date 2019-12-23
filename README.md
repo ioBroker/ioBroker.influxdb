@@ -245,6 +245,9 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 
 ## Changelog
+## 1.7.0 (2019-12-23)
+* (bluefox) Support of compact mode
+
 ## 1.6.0 (2018-06-19)
 * (Apollon77) Add option to log datapoints as other ID (alias) to easier migrate devices and such
 

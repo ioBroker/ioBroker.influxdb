@@ -6,7 +6,7 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.6.3",
+        "version": "1.7.0",
         "title": "Logging data with InfluxDB",
         "titleLang": {
             "en": "Logging data with InfluxDB",
@@ -20,6 +20,18 @@
             "pl": "Rejestrowanie danych za pomocą InfluxDB"
         },
         "news": {
+            "1.7.0": {
+                "en": "Support of compact mode",
+                "de": "Unterstützung des Kompaktmodus",
+                "ru": "Поддержка компактного режима",
+                "pt": "Suporte do modo compacto",
+                "nl": "Ondersteuning van compacte modus",
+                "fr": "Prise en charge du mode compact",
+                "it": "Supporto della modalità compatta",
+                "es": "Soporte de modo compacto.",
+                "pl": "Obsługa trybu kompaktowego",
+                "zh-cn": "支持紧凑模式"
+            },
             "1.6.3": {
                 "en": "Fix several smaller issues and optimized some texts ",
                 "de": "Behebt einige kleinere Probleme und optimiert einige Texte",
