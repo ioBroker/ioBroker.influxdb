@@ -637,6 +637,7 @@ function pushHistory(adapter, id, state, timerRelog) {
         let ignoreDebounce = false;
         if (timerRelog) {
             state.ts = Date.now();
+            state.from = 'system.adapter.' + adapter.namespace;
             adapter.log.debug('timed-relog ' + id + ', value=' + state.val + ', lastLogTime=' + adapter._influxDPs[id].lastLogTime + ', ts=' + state.ts);
             ignoreDebounce = true;
         } else {
