@@ -97,42 +97,42 @@ function startAdapter(options) {
                 adapter.subscribeForeignStates('*');
             }
 
-            adapter._influxDPs[formerAliasId] && adapter._influxDPs[formerAliasId].relogTimeout && clearTimeout(adapter._influxDPs[formerAliasId].relogTimeout);
-
-            adapter._influxDPs[id] = obj.common.custom;
-            adapter._influxDPs[id].realId = realId;
-            if (adapter._influxDPs[id][adapter.namespace].retention !== undefined && adapter._influxDPs[id][adapter.namespace].retention !== null && adapter._influxDPs[id][adapter.namespace].retention !== '') {
-                adapter._influxDPs[id][adapter.namespace].retention = parseInt(adapter._influxDPs[id][adapter.namespace].retention || adapter.config.retention, 10) || 0;
+            if (obj.common.custom[adapter.namespace].retention !== undefined && obj.common.custom[adapter.namespace].retention !== null && obj.common.custom[adapter.namespace].retention !== '') {
+                obj.common.custom[adapter.namespace].retention = parseInt(obj.common.custom[adapter.namespace].retention || adapter.config.retention, 10) || 0;
             } else {
-                adapter._influxDPs[id][adapter.namespace].retention = adapter.config.retention;
+                obj.common.custom[adapter.namespace].retention = adapter.config.retention;
             }
-            if (adapter._influxDPs[id][adapter.namespace].debounce !== undefined && adapter._influxDPs[id][adapter.namespace].debounce !== null && adapter._influxDPs[id][adapter.namespace].debounce !== '') {
-                adapter._influxDPs[id][adapter.namespace].debounce = parseInt(adapter._influxDPs[id][adapter.namespace].debounce, 10) || 0;
+            if (obj.common.custom[adapter.namespace].debounce !== undefined && obj.common.custom[adapter.namespace].debounce !== null && obj.common.custom[adapter.namespace].debounce !== '') {
+                obj.common.custom[adapter.namespace].debounce = parseInt(obj.common.custom[adapter.namespace].debounce, 10) || 0;
             } else {
-                adapter._influxDPs[id][adapter.namespace].debounce = adapter.config.debounce;
+                obj.common.custom[adapter.namespace].debounce = adapter.config.debounce;
             }
-            adapter._influxDPs[id][adapter.namespace].changesOnly = adapter._influxDPs[id][adapter.namespace].changesOnly === 'true' || adapter._influxDPs[id][adapter.namespace].changesOnly === true;
-            if (adapter._influxDPs[id][adapter.namespace].changesRelogInterval !== undefined && adapter._influxDPs[id][adapter.namespace].changesRelogInterval !== null && adapter._influxDPs[id][adapter.namespace].changesRelogInterval !== '') {
-                adapter._influxDPs[id][adapter.namespace].changesRelogInterval = parseInt(adapter._influxDPs[id][adapter.namespace].changesRelogInterval, 10) || 0;
+            obj.common.custom[adapter.namespace].changesOnly = obj.common.custom[adapter.namespace].changesOnly === 'true' || obj.common.custom[adapter.namespace].changesOnly === true;
+            if (obj.common.custom[adapter.namespace].changesRelogInterval !== undefined && obj.common.custom[adapter.namespace].changesRelogInterval !== null && obj.common.custom[adapter.namespace].changesRelogInterval !== '') {
+                obj.common.custom[adapter.namespace].changesRelogInterval = parseInt(obj.common.custom[adapter.namespace].changesRelogInterval, 10) || 0;
             } else {
-                adapter._influxDPs[id][adapter.namespace].changesRelogInterval = adapter.config.changesRelogInterval;
+                obj.common.custom[adapter.namespace].changesRelogInterval = adapter.config.changesRelogInterval;
             }
-            if (adapter._influxDPs[id][adapter.namespace].changesMinDelta !== undefined && adapter._influxDPs[id][adapter.namespace].changesMinDelta !== null && adapter._influxDPs[id][adapter.namespace].changesMinDelta !== '') {
-                adapter._influxDPs[id][adapter.namespace].changesMinDelta = parseFloat(adapter._influxDPs[id][adapter.namespace].changesMinDelta.toString().replace(/,/g, '.')) || 0;
+            if (obj.common.custom[adapter.namespace].changesMinDelta !== undefined && obj.common.custom[adapter.namespace].changesMinDelta !== null && obj.common.custom[adapter.namespace].changesMinDelta !== '') {
+                obj.common.custom[adapter.namespace].changesMinDelta = parseFloat(obj.common.custom[adapter.namespace].changesMinDelta.toString().replace(/,/g, '.')) || 0;
             } else {
-                adapter._influxDPs[id][adapter.namespace].changesMinDelta = adapter.config.changesMinDelta;
+                obj.common.custom[adapter.namespace].changesMinDelta = adapter.config.changesMinDelta;
             }
-            if (!adapter._influxDPs[id][adapter.namespace].storageType) adapter._influxDPs[id][adapter.namespace].storageType = false;
+            if (!obj.common.custom[adapter.namespace].storageType) obj.common.custom[adapter.namespace].storageType = false;
 
             // add one day if retention is too small
-            if (adapter._influxDPs[id][adapter.namespace].retention && adapter._influxDPs[id][adapter.namespace].retention <= 604800) {
-                adapter._influxDPs[id][adapter.namespace].retention += 86400;
+            if (obj.common.custom[adapter.namespace].retention && obj.common.custom[adapter.namespace].retention <= 604800) {
+                obj.common.custom[adapter.namespace].retention += 86400;
             }
 
             if (adapter._influxDPs[formerAliasId] && adapter._influxDPs[formerAliasId][adapter.namespace] && isEqual(obj.common.custom[adapter.namespace], adapter._influxDPs[formerAliasId][adapter.namespace])) {
                 adapter.log.debug('Object ' + id + ' unchanged. Ignore');
                 return;
             }
+
+            adapter._influxDPs[id] = obj.common.custom;
+            adapter._influxDPs[id].realId = realId;
+            adapter._influxDPs[formerAliasId] && adapter._influxDPs[formerAliasId].relogTimeout && clearTimeout(adapter._influxDPs[formerAliasId].relogTimeout);
 
             writeInitialValue(adapter, realId, id);
 
