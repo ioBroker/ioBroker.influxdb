@@ -70,11 +70,6 @@ function startAdapter(options) {
         if (obj && obj.common &&
             (obj.common.custom && obj.common.custom[adapter.namespace] && obj.common.custom[adapter.namespace].enabled)
         ) {
-            if (adapter._influxDPs[formerAliasId] && adapter._influxDPs[formerAliasId][adapter.namespace] && isEqual(obj.common.custom[adapter.namespace], adapter._influxDPs[formerAliasId][adapter.namespace])) {
-                adapter.log.debug('Object ' + id + ' unchanged. Ignore');
-                return;
-            }
-
             const realId = id;
             let checkForRemove = true;
             if (obj.common.custom && obj.common.custom[adapter.namespace] && obj.common.custom[adapter.namespace].aliasId) {
@@ -104,8 +99,7 @@ function startAdapter(options) {
 
             adapter._influxDPs[formerAliasId] && adapter._influxDPs[formerAliasId].relogTimeout && clearTimeout(adapter._influxDPs[formerAliasId].relogTimeout);
 
-            // todo remove history sometime (2016.08)
-            adapter._influxDPs[id] = obj.common.custom || obj.common.history;
+            adapter._influxDPs[id] = obj.common.custom;
             adapter._influxDPs[id].realId = realId;
             if (adapter._influxDPs[id][adapter.namespace].retention !== undefined && adapter._influxDPs[id][adapter.namespace].retention !== null && adapter._influxDPs[id][adapter.namespace].retention !== '') {
                 adapter._influxDPs[id][adapter.namespace].retention = parseInt(adapter._influxDPs[id][adapter.namespace].retention || adapter.config.retention, 10) || 0;
@@ -133,6 +127,11 @@ function startAdapter(options) {
             // add one day if retention is too small
             if (adapter._influxDPs[id][adapter.namespace].retention && adapter._influxDPs[id][adapter.namespace].retention <= 604800) {
                 adapter._influxDPs[id][adapter.namespace].retention += 86400;
+            }
+
+            if (adapter._influxDPs[formerAliasId] && adapter._influxDPs[formerAliasId][adapter.namespace] && isEqual(obj.common.custom[adapter.namespace], adapter._influxDPs[formerAliasId][adapter.namespace])) {
+                adapter.log.debug('Object ' + id + ' unchanged. Ignore');
+                return;
             }
 
             writeInitialValue(adapter, realId, id);
