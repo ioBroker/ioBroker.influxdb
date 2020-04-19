@@ -130,8 +130,8 @@ function startAdapter(options) {
                 return;
             }
 
-            const state = adapter._influxDPs[id].state;
-            const skipped = adapter._influxDPs[id].skipped;
+            const state = adapter._influxDPs[formerAliasId].state;
+            const skipped = adapter._influxDPs[formerAliasId].skipped;
 
             adapter._influxDPs[id] = obj.common.custom;
             adapter._influxDPs[id].realId = realId;
