@@ -125,13 +125,19 @@ function startAdapter(options) {
                 obj.common.custom[adapter.namespace].retention += 86400;
             }
 
-            if (adapter._influxDPs[formerAliasId] && adapter._influxDPs[formerAliasId][adapter.namespace] && isEqual(obj.common.custom[adapter.namespace], adapter._influxDPs[formerAliasId][adapter.namespace])) {
+            if (adapter._influxDPs[formerAliasId] && !adapter._influxDPs[formerAliasId].storageTypeAdjustedInternally && adapter._influxDPs[formerAliasId][adapter.namespace] && isEqual(obj.common.custom[adapter.namespace], adapter._influxDPs[formerAliasId][adapter.namespace])) {
                 adapter.log.debug('Object ' + id + ' unchanged. Ignore');
                 return;
             }
 
+            const state = adapter._influxDPs[id].state;
+            const skipped = adapter._influxDPs[id].skipped;
+
             adapter._influxDPs[id] = obj.common.custom;
             adapter._influxDPs[id].realId = realId;
+            adapter._influxDPs[id].state = state;
+            adapter._influxDPs[id].skipped = skipped;
+
             adapter._influxDPs[formerAliasId] && adapter._influxDPs[formerAliasId].relogTimeout && clearTimeout(adapter._influxDPs[formerAliasId].relogTimeout);
 
             writeInitialValue(adapter, realId, id);
@@ -925,6 +931,7 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
                             retry = true;
                         }
                         adapter._influxDPs[pointId][adapter.namespace].storageType = 'Number';
+                        adapter._influxDPs[pointId].storageTypeAdjustedInternally = true;
                     }
                     else if ((err.message.indexOf('is type float, already exists as type bool') !== -1) || (err.message.indexOf('is type float64, already exists as type bool') !== -1)) {
                         convertDirection = 'float -> bool';
@@ -937,11 +944,13 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
                             retry = true;
                         }
                         adapter._influxDPs[pointId][adapter.namespace].storageType = 'Boolean';
+                        adapter._influxDPs[pointId].storageTypeAdjustedInternally = true;
                     }
                     else if (err.message.indexOf(', already exists as type string') !== -1) {
                         point.value = point.value.toString();
                         retry = true;
                         adapter._influxDPs[pointId][adapter.namespace].storageType = 'String';
+                        adapter._influxDPs[pointId].storageTypeAdjustedInternally = true;
                     }
                     if (retry) {
                         adapter.log.info('Try to convert ' + convertDirection + ' and re-write for ' + pointId + ' and set storageType to ' + adapter._influxDPs[pointId][adapter.namespace].storageType);
