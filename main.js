@@ -15,6 +15,50 @@ const cacheFile   = dataDir + 'influxdata.json';
 
 let adapter;
 
+function isEqual(a, b) {
+    //console.log('Compare ' + JSON.stringify(a) + ' with ' +  JSON.stringify(b));
+    // Create arrays of property names
+    if (a === null || a === undefined || b === null || b === undefined) {
+        return (a === b);
+    }
+
+    const aProps = Object.getOwnPropertyNames(a);
+    const bProps = Object.getOwnPropertyNames(b);
+
+    // If number of properties is different,
+    // objects are not equivalent
+    if (aProps.length !== bProps.length) {
+        //console.log('num props different: ' + JSON.stringify(aProps) + ' / ' + JSON.stringify(bProps));
+        return false;
+    }
+
+    for (var i = 0; i < aProps.length; i++) {
+        const propName = aProps[i];
+
+        if (typeof a[propName] !== typeof b[propName]) {
+            //console.log('type props ' + propName + ' different');
+            return false;
+        }
+        if (typeof a[propName] === 'object') {
+            if (!isEqual(a[propName], b[propName])) {
+                return false;
+            }
+        }
+        else {
+            // If values of same property are not equal,
+            // objects are not equivalent
+            if (a[propName] !== b[propName]) {
+                //console.log('props ' + propName + ' different');
+                return false;
+            }
+        }
+    }
+
+    // If we made it this far, objects
+    // are considered equivalent
+    return true;
+}
+
 function startAdapter(options) {
     options = options || {};
     Object.assign(options, {name: adapterName});
@@ -24,12 +68,13 @@ function startAdapter(options) {
     adapter.on('objectChange', (id, obj) => {
         const formerAliasId = adapter._aliasMap[id] ? adapter._aliasMap[id] : id;
         if (obj && obj.common &&
-            (
-                // todo remove history sometime (2016.08) - Do not forget object selector in io-package.json
-                (obj.common.history && obj.common.history[adapter.namespace] && obj.common.history[adapter.namespace].enabled) ||
-                (obj.common.custom && obj.common.custom[adapter.namespace] && obj.common.custom[adapter.namespace].enabled)
-            )
+            (obj.common.custom && obj.common.custom[adapter.namespace] && obj.common.custom[adapter.namespace].enabled)
         ) {
+            if (adapter._influxDPs[formerAliasId] && adapter._influxDPs[formerAliasId][adapter.namespace] && isEqual(obj.common.custom[adapter.namespace], adapter._influxDPs[formerAliasId][adapter.namespace])) {
+                adapter.log.debug('Object ' + id + ' unchanged. Ignore');
+                return;
+            }
+
             const realId = id;
             let checkForRemove = true;
             if (obj.common.custom && obj.common.custom[adapter.namespace] && obj.common.custom[adapter.namespace].aliasId) {
@@ -90,7 +135,7 @@ function startAdapter(options) {
                 adapter._influxDPs[id][adapter.namespace].retention += 86400;
             }
 
-            writeInitialValue(adapter, id);
+            writeInitialValue(adapter, realId, id);
 
             adapter.log.info('enabled logging of ' + id + ', Alias=' + (id !== realId));
         } else {
@@ -243,7 +288,7 @@ function processStartValues(adapter) {
         const taskId = adapter._tasksStart.shift();
         if (adapter._influxDPs[taskId][adapter.namespace].changesOnly) {
             pushHistory(adapter, taskId, adapter._influxDPs[taskId].state, true);
-            setTimeout(() => processStartValues(adapter), 0);
+            setImmediate(() => processStartValues(adapter));
         }
     }
 }
@@ -370,21 +415,19 @@ function resetConflictingPoints(adapter, msg) {
 function fixSelector(adapter, callback) {
     // fix _design/custom object
     adapter.getForeignObject('_design/custom', (err, obj) => {
-        if (!obj || obj.views.state.map.indexOf('common.history') === -1 || obj.views.state.map.indexOf('common.custom') === -1) {
+        if (!obj || !obj.views.state.map.includes('common.custom')) {
             obj = {
                 _id: '_design/custom',
                 language: 'javascript',
                 views: {
                     state: {
-                        map: 'function(doc) { if (doc.type === \'state\' && (doc.common.custom || doc.common.history)) emit(doc._id, doc.common.custom || doc.common.history) }'
+                        map: 'function(doc) { doc.type === \'state\' && doc.common.custom && emit(doc._id, doc.common.custom) }'
                     }
                 }
             };
-            adapter.setForeignObject('_design/custom', obj, err => {
-                if (callback) callback(err);
-            });
+            adapter.setForeignObject('_design/custom', obj, err => callback && callback(err));
         } else {
-            if (callback) callback(err);
+            callback && callback(err);
         }
     });
 }
@@ -435,7 +478,7 @@ function main(adapter) {
 
     fixSelector(adapter, () =>
         // read all custom settings
-        adapter.objects.getObjectView('custom', 'state', {}, (err, doc) => {
+        adapter.getObjectView('custom', 'state', {}, (err, doc) => {
             if (err) adapter.log.error('main/getObjectView: ' + err);
             let count = 0;
             if (doc && doc.rows) {
@@ -487,7 +530,7 @@ function main(adapter) {
                             }
 
                             adapter._influxDPs[id].realId  = realId;
-                            writeInitialValue(adapter, id);
+                            writeInitialValue(adapter, realId, id);
                         }
                     }
                 }
@@ -516,8 +559,8 @@ function main(adapter) {
     connect(adapter);
 }
 
-function writeInitialValue(adapter, id) {
-    adapter.getForeignState(id, (err, state) => {
+function writeInitialValue(adapter, realId, id) {
+    adapter.getForeignState(realId, (err, state) => {
         if (state) {
             state.from = 'system.adapter.' + adapter.namespace;
             adapter._influxDPs[id].state = state;
@@ -536,6 +579,11 @@ function pushHistory(adapter, id, state, timerRelog) {
         const settings = adapter._influxDPs[id][adapter.namespace];
 
         if (!settings || !state) return;
+
+        if (state && state.val === undefined) {
+            adapter.log.warn(`state value undefined received for ${id} which is not allowed. Ignoring.`);
+            return;
+        }
 
         if (typeof state.val === 'string' && settings.storageType !== 'String') {
             const f = parseFloat(state.val);
@@ -746,7 +794,7 @@ function addPointToSeriesBuffer(adapter, id, stateObj, cb) {
     if ((adapter._seriesBufferCounter > adapter.config.seriesBufferMax) && (adapter._client.request) && (adapter._client.request.getHostsAvailable().length > 0) && (!adapter._seriesBufferFlushPlanned)) {
         // flush out
         adapter._seriesBufferFlushPlanned = true;
-        setTimeout(() => storeBufferedSeries(adapter, cb), 0);
+        setImmediate(() => storeBufferedSeries(adapter, cb));
     } else {
         cb && cb();
     }

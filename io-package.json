@@ -6,7 +6,7 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.7.0",
+        "version": "1.8.0",
         "title": "Logging data with InfluxDB",
         "titleLang": {
             "en": "Logging data with InfluxDB",
@@ -149,63 +149,77 @@
                 "ru": "Add messages enableHistory/disableHistory/getEnabledDPs, add support to log changes only if value differs a minimum value for numbers."
             }
         },
-        "mode":                     "daemon",
-        "platform":                 "Javascript/Node.js",
-        "loglevel":                 "info",
-        "messagebox":               true,
-        "subscribe":                "messagebox",
-        "keywords":                 ["charts", "logging", "influxdb"],
-        "preserveSettings":         "custom",
-        "supportCustoms":           true,
-        "getHistory":           	true,
-        "enabled":                  true,
-        "compact":                  true,
-        "materialize":              true,
-		"dependencies":             [{"js-controller": ">=0.12.0","admin": ">=1.6.10"}],
-        "stopBeforeUpdate":         true,
-        "supportStopInstance":      2000,
-        "restartAdapters":          ["influxdb"],
+        "mode": "daemon",
+        "platform": "Javascript/Node.js",
+        "loglevel": "info",
+        "messagebox": true,
+        "subscribe": "messagebox",
+        "keywords": [
+            "charts",
+            "logging",
+            "influxdb"
+        ],
+        "preserveSettings": "custom",
+        "supportCustoms": true,
+        "getHistory": true,
+        "enabled": true,
+        "compact": true,
+        "materialize": true,
+        "dependencies": [
+            {
+                "js-controller": ">=2.0.0"
+            },
+            {
+                "admin": ">=1.6.10"
+            }
+        ],
+        "supportStopInstance": 2000,
         "authors": [
             "Bluefox <dogafox@gmail.com>",
             "Apollon77 <ingo@fischer-ka.de>"
         ],
-        "license":                  "MIT",
-        "readme":                   "https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md",
-        "icon":                     "influxdb.png",
-        "extIcon":                  "https://raw.githubusercontent.com/ioBroker/ioBroker.influxdb/master/admin/influxdb.png",
-		"type":                     "storage",
-        "config":{
-            "minWidth":  570,
-            "width ":    435,
+        "license": "MIT",
+        "readme": "https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md",
+        "icon": "influxdb.png",
+        "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.influxdb/master/admin/influxdb.png",
+        "type": "storage",
+        "config": {
+            "minWidth": 570,
+            "width ": 435,
             "minHeight": 200,
-            "height":    540
+            "height": 540
         },
         "docs": {
             "de": [
                 "docs/de/influxdb.md"
             ]
+        },
+        "plugins": {
+            "sentry": {
+                "dsn": "https://29eecf4e8c954f2ea78110d47a9b122d@sentry.iobroker.net/54"
+            }
         }
     },
     "native": {
-        "debounce":                  1000,
-        "retention":                 31536000,
-        "dbname":                    "iobroker",
-        "host":                      "localhost",
-        "protocol":                  "http",
-        "port":                      8086,
-        "user":                      "",
-        "password":                  "",
-        "round":                     4,
-        "seriesBufferMax":           0,
+        "debounce": 1000,
+        "retention": 31536000,
+        "dbname": "iobroker",
+        "host": "localhost",
+        "protocol": "http",
+        "port": 8086,
+        "user": "",
+        "password": "",
+        "round": 4,
+        "seriesBufferMax": 0,
         "seriesBufferFlushInterval": 600,
-        "changesRelogInterval":      0,
-        "changesMinDelta":           0,
-        "reconnectInterval":         10000,
-        "pingInterval":              15000
+        "changesRelogInterval": 0,
+        "changesMinDelta": 0,
+        "reconnectInterval": 10000,
+        "pingInterval": 15000
     },
     "instanceObjects": [
         {
-            "_id":  "info",
+            "_id": "info",
             "type": "channel",
             "common": {
                 "name": "Information"
@@ -213,15 +227,15 @@
             "native": {}
         },
         {
-            "_id":  "info.connection",
+            "_id": "info.connection",
             "type": "state",
             "common": {
-                "role":  "indicator.connected",
-                "name":  "If connected to InfluxDB",
-                "type":  "boolean",
-                "read":  true,
+                "role": "indicator.connected",
+                "name": "If connected to InfluxDB",
+                "type": "boolean",
+                "read": true,
                 "write": false,
-                "def":   false
+                "def": false
             },
             "native": {}
         }
