@@ -245,7 +245,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 
 ## Changelog
-### 1.8.1 (2020-04-19)
+### 1.8.2 (2020-04-19)
 * __Requires js-controller >= 2.0.0__
 * (Apollon77) removed usage of adapter.objects
 * (Apollon77) check if objects have changed and ignore unchanged

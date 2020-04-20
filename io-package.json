@@ -6,7 +6,7 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.8.1",
+        "version": "1.8.2",
         "title": "Logging data with InfluxDB",
         "titleLang": {
             "en": "Logging data with InfluxDB",
@@ -20,6 +20,18 @@
             "pl": "Rejestrowanie danych za pomocą InfluxDB"
         },
         "news": {
+            "1.8.2": {
+                "en": "REQUIRES at least js-controller 2.0, fixes and optimizations, ready for js-controller 3.0, Sentry added for Error reporting",
+                "de": "ERFORDERT mindestens js-controller 2.0, Korrekturen und Optimierungen, bereit für js-controller 3.0, Sentry für Fehlerberichterstattung hinzugefügt",
+                "ru": "ТРЕБУЕТ как минимум js-controller 2.0, исправления и оптимизации, готов для js-controller 3.0, добавлен Sentry для отчетов об ошибках",
+                "pt": "EXIGE pelo menos o js-controller 2.0, correções e otimizações, pronto para o controller 3.0, acrescentou o Sentry para o relatório de erros",
+                "nl": "VEREIST minimaal js-controller 2.0, fixes en optimalisaties, klaar voor js-controller 3.0, Sentry toegevoegd voor foutrapportage",
+                "fr": "NÉCESSITE au moins js-controller 2.0, des corrections et des optimisations, prêt pour js-controller 3.0, Sentry ajouté pour le rapport d'erreurs",
+                "it": "RICHIEDE almeno js-controller 2.0, correzioni e ottimizzazioni, pronto per js-controller 3.0, aggiunta Sentry per la segnalazione degli errori",
+                "es": "REQUIERE al menos js-controller 2.0, correcciones y optimizaciones, listo para js-controller 3.0, Sentry agregado para informes de errores",
+                "pl": "WYMAGA co najmniej js-kontrolera 2.0, poprawek i optymalizacji, gotowy do js-kontrolera 3.0, dodano Sentry do raportowania błędów",
+                "zh-cn": "至少需要js-controller 2.0，修复和优化，为js-controller 3.0做好准备，并添加了Sentry以进行错误报告"
+            },
             "1.7.0": {
                 "en": "Support of compact mode",
                 "de": "Unterstützung des Kompaktmodus",
