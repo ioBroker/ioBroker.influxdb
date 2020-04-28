@@ -6,7 +6,7 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.8.2",
+        "version": "1.8.3",
         "title": "Logging data with InfluxDB",
         "titleLang": {
             "en": "Logging data with InfluxDB",
@@ -20,6 +20,18 @@
             "pl": "Rejestrowanie danych za pomocą InfluxDB"
         },
         "news": {
+            "1.8.3": {
+                "en": "Fix pot crash case when deleting objects while saving values (Sentry)",
+                "de": "Behebung eines Pot-Crash-Falls beim Löschen von Objekten beim Speichern von Werten (Sentry)",
+                "ru": "Исправлен случай сбоя банка при удалении объектов при сохранении значений (Sentry)",
+                "pt": "Corrigir caso de falha de maconha ao excluir objetos e salvar valores (Sentry)",
+                "nl": "Pot-crashcase repareren bij het verwijderen van objecten tijdens het opslaan van waarden (Sentry)",
+                "fr": "Correction d'un cas de crash de pot lors de la suppression d'objets lors de l'enregistrement des valeurs (Sentry)",
+                "it": "Risolto il caso di crash del piatto durante l'eliminazione di oggetti durante il salvataggio dei valori (Sentry)",
+                "es": "Se corrigió el caso de bloqueo del bote al eliminar objetos al guardar valores (Sentry)",
+                "pl": "Napraw przypadek awarii puli podczas usuwania obiektów podczas zapisywania wartości (Sentry)",
+                "zh-cn": "修复在保存值的同时删除对象时发生锅底的情况（Sentry）"
+            },
             "1.8.2": {
                 "en": "REQUIRES at least js-controller 2.0, fixes and optimizations, ready for js-controller 3.0, Sentry added for Error reporting",
                 "de": "ERFORDERT mindestens js-controller 2.0, Korrekturen und Optimierungen, bereit für js-controller 3.0, Sentry für Fehlerberichterstattung hinzugefügt",
