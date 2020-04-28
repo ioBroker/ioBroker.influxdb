@@ -918,7 +918,7 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
             } else if (err.message && (typeof err.message === 'string') && (err.message.indexOf('field type conflict') !== -1)) {
                 // retry write after type correction for some easy cases
                 let retry = false;
-                if (!adapter._influxDPs[pointId][adapter.namespace].storageType) {
+                if (adapter._influxDPs[pointId] && adapter._influxDPs[pointId][adapter.namespace] && !adapter._influxDPs[pointId][adapter.namespace].storageType) {
                     let convertDirection = '';
                     if (err.message.indexOf('is type bool, already exists as type float') !== -1 ||
                         err.message.indexOf('is type boolean, already exists as type float') !== -1) {
