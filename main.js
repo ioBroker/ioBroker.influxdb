@@ -566,7 +566,7 @@ function main(adapter) {
 
 function writeInitialValue(adapter, realId, id) {
     adapter.getForeignState(realId, (err, state) => {
-        if (state) {
+        if (state && adapter._influxDPs[id]) {
             state.from = 'system.adapter.' + adapter.namespace;
             adapter._influxDPs[id].state = state;
             adapter._tasksStart.push(id);
