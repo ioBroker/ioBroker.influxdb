@@ -6,7 +6,7 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.8.3",
+        "version": "1.8.4",
         "title": "Logging data with InfluxDB",
         "titleLang": {
             "en": "Logging data with InfluxDB",
@@ -20,6 +20,18 @@
             "pl": "Rejestrowanie danych za pomocą InfluxDB"
         },
         "news": {
+            "1.8.4": {
+                "en": "make sure disabling of datapoints do not crash adapter (Sentry IOBROKER-INFLUXDB-4)",
+                "de": "Stellen Sie sicher, dass das Deaktivieren von Datenpunkten den Adapter nicht zum Absturz bringt (Sentry IOBROKER-INFLUXDB-4).",
+                "ru": "убедитесь, что отключение точек данных не приводит к сбою адаптера (Sentry IOBROKER-INFLUXDB-4)",
+                "pt": "verifique se a desativação dos pontos de dados não trava o adaptador (Sentry IOBROKER-INFLUXDB-4)",
+                "nl": "zorg ervoor dat het uitschakelen van datapunten de adapter niet crasht (Sentry IOBROKER-INFLUXDB-4)",
+                "fr": "assurez-vous que la désactivation des points de données ne plante pas l'adaptateur (Sentry IOBROKER-INFLUXDB-4)",
+                "it": "assicurarsi che la disabilitazione dei punti dati non causi l'arresto anomalo dell'adattatore (Sentry IOBROKER-INFLUXDB-4)",
+                "es": "asegúrese de que la desactivación de los puntos de datos no bloquee el adaptador (Sentry IOBROKER-INFLUXDB-4)",
+                "pl": "upewnij się, że wyłączenie punktów danych nie powoduje awarii adaptera (Sentry IOBROKER-INFLUXDB-4)",
+                "zh-cn": "确保禁用数据点不会使适配器崩溃（Sentry IOBROKER-INFLUXDB-4）"
+            },
             "1.8.3": {
                 "en": "Fix pot crash case when deleting objects while saving values (Sentry)",
                 "de": "Behebung eines Pot-Crash-Falls beim Löschen von Objekten beim Speichern von Werten (Sentry)",
@@ -166,11 +178,6 @@
                 "en": "Fix handling of float values in Adapter config and Datapoint config.",
                 "de": "Fehlerbehebung bei der Eingabe von Zahlen mit Kommastellen in der Adapter- und Datenpunk-Konfiguration.",
                 "ru": "Fix handling of float values in Adapter config and Datapoint config."
-            },
-            "1.3.0": {
-                "en": "Add messages enableHistory/disableHistory/getEnabledDPs, add support to log changes only if value differs a minimum value for numbers.",
-                "de": "Messages enableHistory/disableHistory/getEnabledDPs hinzugefügt, Unterstützung zum Loggen wenn der Zahlenwert um einen Mindestwert abweicht.",
-                "ru": "Add messages enableHistory/disableHistory/getEnabledDPs, add support to log changes only if value differs a minimum value for numbers."
             }
         },
         "mode": "daemon",
