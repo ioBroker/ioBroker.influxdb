@@ -440,6 +440,20 @@ function fixSelector(adapter, callback) {
 function main(adapter) {
     adapter.config.port = parseInt(adapter.config.port, 10) || 0;
 
+    // set default history if not yet set
+    adapter.getForeignObject('system.config', (err, obj) => {
+        if (obj && obj.common && !obj.common.defaultHistory) {
+            obj.common.defaultHistory = adapter.namespace;
+            adapter.setForeignObject('system.config', obj, err => {
+                if (err) {
+                    adapter.log.error('Cannot set default history instance: ' + err);
+                } else {
+                    adapter.log.info('Set default history instance to "' + adapter.namespace + '"');
+                }
+            });
+        }
+    });
+
     setConnected(adapter, false);
 
     adapter.config.reconnectInterval = parseInt(adapter.config.reconnectInterval, 10) || 10000;

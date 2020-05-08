@@ -1,7 +1,7 @@
 {
   "name": "iobroker.influxdb",
   "description": "Log states in InfluxDB",
-  "version": "1.8.4",
+  "version": "1.8.5",
   "author": "bluefox <dogafox@gmail.com>",
   "contributors": [
     "bluefox <dogafox@gmail.com>",
@@ -26,7 +26,7 @@
   "optionalDependencies": {},
   "dependencies": {
     "influx": "^4.2.3",
-    "@iobroker/adapter-core": "^2.3.1"
+    "@iobroker/adapter-core": "^2.4.0"
   },
   "devDependencies": {
     "gulp": "^4.0.2",

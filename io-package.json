@@ -6,7 +6,7 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.8.4",
+        "version": "1.8.5",
         "title": "Logging data with InfluxDB",
         "titleLang": {
             "en": "Logging data with InfluxDB",
@@ -20,6 +20,18 @@
             "pl": "Rejestrowanie danych za pomocą InfluxDB"
         },
         "news": {
+            "1.8.5": {
+                "en": "set default history if not yet set",
+                "de": "Standardverlauf festlegen, falls noch nicht festgelegt",
+                "ru": "установить историю по умолчанию, если еще не установлено",
+                "pt": "definir histórico padrão se ainda não estiver definido",
+                "nl": "stel de standaardgeschiedenis in als deze nog niet is ingesteld",
+                "fr": "définir l'historique par défaut s'il n'est pas encore défini",
+                "it": "imposta la cronologia predefinita se non ancora impostata",
+                "es": "establecer el historial predeterminado si aún no está configurado",
+                "pl": "ustaw domyślną historię, jeśli jeszcze nie została ustawiona",
+                "zh-cn": "设置默认历史记录（如果尚未设置）"
+            },
             "1.8.4": {
                 "en": "make sure disabling of datapoints do not crash adapter (Sentry IOBROKER-INFLUXDB-4)",
                 "de": "Stellen Sie sicher, dass das Deaktivieren von Datenpunkten den Adapter nicht zum Absturz bringt (Sentry IOBROKER-INFLUXDB-4).",
@@ -101,83 +113,6 @@
                 "it": "Correzioni di Admin3",
                 "es": "Correcciones de Admin3",
                 "pl": "Poprawki Admin3"
-            },
-            "1.5.1": {
-                "en": "Admin3 Fixes",
-                "de": "Admin3-Korrekturen",
-                "ru": "Исправления Admin3",
-                "pt": "Admin3 Fixes",
-                "nl": "Admin3 Fixes",
-                "fr": "Corrections Admin3",
-                "it": "Correzioni di Admin3",
-                "es": "Correcciones de Admin3",
-                "pl": "Poprawki Admin3"
-            },
-            "1.5.0": {
-                "en": "Ready for Admin3",
-                "de": "Bereit für Admin3",
-                "ru": "Готово для Admin3",
-                "pt": "Pronto para Admin3",
-                "nl": "Klaar voor Admin3",
-                "fr": "Prêt pour Admin3",
-                "it": "Pronto per Admin3",
-                "es": "Listo para Admin3",
-                "pl": "Gotowy na Admin3"
-            },
-            "1.4.8": {
-                "en": "fix relog value feature and enhance type conflict resolving",
-                "de": "Erneutes Logging korrigiert und Typ-Konflikt-Behandlung verbessert",
-                "ru": "fix relog value feature and enhance type conflict resolving"
-            },
-            "1.4.7": {
-                "en": "add better support when no start date is set for getHistory (used by Admin)",
-                "de": "Besseren Support hinzugefügt, wenn bei getHistory kein Start-Datum angegeben wurde (benutzt von Admin)",
-                "ru": "add better support when no start date is set for getHistory (used by Admin)"
-            },
-            "1.4.6": {
-                "en": "add \"save last value\"",
-                "de": "Das Speichern des vorherigen Wertes wurde hinzugefügt",
-                "ru": "add \"save last value\""
-            },
-            "1.4.5": {
-                "en": "fix behaviour of log interval to always log the current value",
-                "de": "Verhalten vom Logging in bestimmten Zeitabständen geändert, sodass immer der aktuellste Wert geloggt wird",
-                "ru": "fix behaviour of log interval to always log the current value"
-            },
-            "1.4.4": {
-                "en": "fix connected datapoint",
-                "de": "Verbunden-Datenpunkt korrekt gesetzt",
-                "ru": "fix connected datapoint"
-            },
-            "1.4.3": {
-                "en": "fix in datatype conversions",
-                "de": "Fehlerbehebung in Datentypkonvertierungen",
-                "ru": "fix in datatype conversions"
-            },
-            "1.4.2": {
-                "en": "Changed Debounce-Feature to log the last stable value that did not changed for given time!! Add option to define storage datatype per datapoint inclusing converting the value if needed",
-                "de": "Debounce-Feature geändert, sodass der letzte Wert der in der angegeben Zeit stabil geblieben ist geloggt wird!! Hinzufügen der Option den Speicher-Datenyp eines Datenpunktes inklusive der nötigen Konvertierung definieren zu können",
-                "ru": "Changed Debounce-Feature to log the last stable value that did not changed for given time!! Add option to define storage datatype per datapoint inclusing converting the value if needed"
-            },
-            "1.3.4": {
-                "en": "Small fix for older configurations",
-                "de": "Kleine Fehlerbehebung für ältere Konfigurationen",
-                "ru": "Small fix for older configurations"
-            },
-            "1.3.3": {
-                "en": "Enhance handling of DB outages with mass writes afterwards",
-                "de": "Behandlung von DB-Ausfällen und folgenden Massen-Schreibaktionen verbessert",
-                "ru": "Enhance handling of DB outages with mass writes afterwards"
-            },
-            "1.3.2": {
-                "en": "Enhance Min-Delta logic for datapoints from type mixed",
-                "de": "Min-Delta-Logik verbessert für Mixed-Datenpunkte",
-                "ru": "Enhance Min-Delta logic for datapoints from type mixed"
-            },
-            "1.3.1": {
-                "en": "Fix handling of float values in Adapter config and Datapoint config.",
-                "de": "Fehlerbehebung bei der Eingabe von Zahlen mit Kommastellen in der Adapter- und Datenpunk-Konfiguration.",
-                "ru": "Fix handling of float values in Adapter config and Datapoint config."
             }
         },
         "mode": "daemon",
