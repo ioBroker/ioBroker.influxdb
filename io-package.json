@@ -6,7 +6,7 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.8.5",
+        "version": "1.8.6",
         "title": "Logging data with InfluxDB",
         "titleLang": {
             "en": "Logging data with InfluxDB",
@@ -20,6 +20,18 @@
             "pl": "Rejestrowanie danych za pomocą InfluxDB"
         },
         "news": {
+            "1.8.6": {
+                "en": "make sure disabling of datapoints while starting adapter do not crash adapter (Sentry IOBROKER-INFLUXDB-7)\nMake sure all start values are processed correctly\nMore checks to make sure to not crash when states are disabled while data are processed (Sentry IOBROKER-INFLUXDB-8)",
+                "de": "Stellen Sie sicher, dass das Deaktivieren von Datenpunkten beim Starten des Adapters den Adapter nicht zum Absturz bringt (Sentry IOBROKER-INFLUXDB-7).\nStellen Sie sicher, dass alle Startwerte korrekt verarbeitet werden\nWeitere Überprüfungen, um sicherzustellen, dass nicht abgestürzt wird, wenn Status deaktiviert werden, während Daten verarbeitet werden (Sentry IOBROKER-INFLUXDB-8)",
+                "ru": "убедитесь, что отключение точек данных при запуске адаптера не приводит к сбою адаптера (Sentry IOBROKER-INFLUXDB-7)\nУбедитесь, что все начальные значения обработаны правильно\nДополнительные проверки, чтобы убедиться, что не происходит сбой при отключении состояний во время обработки данных (Sentry IOBROKER-INFLUXDB-8)",
+                "pt": "verifique se a desativação dos pontos de dados ao iniciar o adaptador não trava o adaptador (Sentry IOBROKER-INFLUXDB-7)\nVerifique se todos os valores iniciais foram processados corretamente\nMais verificações para garantir que não travam quando os estados são desativados enquanto os dados são processados (Sentry IOBROKER-INFLUXDB-8)",
+                "nl": "zorg ervoor dat het uitschakelen van datapunten tijdens het starten van de adapter de adapter niet crasht (Sentry IOBROKER-INFLUXDB-7)\nZorg ervoor dat alle startwaarden correct worden verwerkt\nMeer controles om ervoor te zorgen dat ze niet crashen wanneer staten zijn uitgeschakeld terwijl gegevens worden verwerkt (Sentry IOBROKER-INFLUXDB-8)",
+                "fr": "assurez-vous que la désactivation des points de données lors du démarrage de l'adaptateur ne plante pas l'adaptateur (Sentry IOBROKER-INFLUXDB-7)\nAssurez-vous que toutes les valeurs de départ sont traitées correctement\nPlus de contrôles pour vous assurer de ne pas planter lorsque les états sont désactivés pendant le traitement des données (Sentry IOBROKER-INFLUXDB-8)",
+                "it": "assicurarsi che la disabilitazione dei punti dati durante l'avvio dell'adattatore non causi l'arresto anomalo dell'adattatore (Sentry IOBROKER-INFLUXDB-7)\nAssicurarsi che tutti i valori iniziali siano elaborati correttamente\nAltri controlli per assicurarsi di non arrestarsi in modo anomalo quando gli stati sono disabilitati durante l'elaborazione dei dati (Sentry IOBROKER-INFLUXDB-8)",
+                "es": "asegúrese de que la desactivación de los puntos de datos al iniciar el adaptador no bloquee el adaptador (Sentry IOBROKER-INFLUXDB-7)\nAsegúrese de que todos los valores iniciales se procesen correctamente\nMás comprobaciones para asegurarse de no bloquearse cuando los estados están deshabilitados mientras se procesan los datos (Sentry IOBROKER-INFLUXDB-8)",
+                "pl": "upewnij się, że wyłączenie punktów danych podczas uruchamiania adaptera nie powoduje awarii adaptera (Sentry IOBROKER-INFLUXDB-7)\nUpewnij się, że wszystkie wartości początkowe są poprawnie przetwarzane\nWięcej kontroli, aby upewnić się, że nie ulegnie awarii, gdy stany są wyłączone podczas przetwarzania danych (Sentry IOBROKER-INFLUXDB-8)",
+                "zh-cn": "确保在启动适配器时禁用数据点不要使适配器崩溃（Sentry IOBROKER-INFLUXDB-7）\n确保正确处理了所有起始值\n更多检查以确保在处理数据时禁用状态时不会崩溃（Sentry IOBROKER-INFLUXDB-8）"
+            },
             "1.8.5": {
                 "en": "set default history if not yet set",
                 "de": "Standardverlauf festlegen, falls noch nicht festgelegt",
