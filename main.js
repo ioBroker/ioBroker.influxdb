@@ -291,10 +291,10 @@ function connect(adapter) {
 function processStartValues(adapter) {
     if (adapter._tasksStart && adapter._tasksStart.length) {
         const taskId = adapter._tasksStart.shift();
-        if (adapter._influxDPs[taskId][adapter.namespace].changesOnly) {
+        if (adapter._influxDPs[taskId] && adapter._influxDPs[taskId][adapter.namespace].changesOnly) {
             pushHistory(adapter, taskId, adapter._influxDPs[taskId].state, true);
-            setImmediate(() => processStartValues(adapter));
         }
+        setImmediate(() => processStartValues(adapter));
     }
 }
 
@@ -699,7 +699,7 @@ function reLogHelper(adapter, _id) {
                 adapter.log.info('init timed Relog: can not get State for ' + _id + ' : ' + err);
             } else if (!state) {
                 adapter.log.info('init timed Relog: disable relog because state not set so far for ' + _id + ': ' + JSON.stringify(state));
-            } else {
+            } else if (adapter._influxDPs[_id]) {
                 adapter.log.debug('init timed Relog: getState ' + _id + ':  Value=' + state.val + ', ack=' + state.ack + ', ts=' + state.ts  + ', lc=' + state.lc);
                 adapter._influxDPs[_id].state = state;
                 pushHistory(adapter, _id, adapter._influxDPs[_id].state, true);
