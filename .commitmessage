@@ -1,5 +1,0 @@
-chore: release v1.8.6
-
-make sure disabling of datapoints while starting adapter do not crash adapter (Sentry IOBROKER-INFLUXDB-7)
-Make sure all start values are processed correctly
-More checks to make sure to not crash when states are disabled while data are processed (Sentry IOBROKER-INFLUXDB-8)
