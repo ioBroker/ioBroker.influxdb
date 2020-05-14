@@ -367,6 +367,9 @@ function destroyDB(adapter, msg) {
 }
 
 function processMessage(adapter, msg) {
+    if (msg.command === 'features') {
+        adapter.sendTo(msg.from, msg.command, {supportedFeatures: []}, msg.callback);
+    } else
     if (msg.command === 'getHistory') {
         getHistory(adapter, msg);
     }

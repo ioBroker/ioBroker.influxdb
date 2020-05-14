@@ -6,7 +6,7 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.8.6",
+        "version": "1.8.7",
         "title": "Logging data with InfluxDB",
         "titleLang": {
             "en": "Logging data with InfluxDB",
@@ -20,6 +20,18 @@
             "pl": "Rejestrowanie danych za pomocą InfluxDB"
         },
         "news": {
+            "1.8.7": {
+                "en": "added command to read supported features",
+                "de": "Befehl zum Lesen der unterstützten Funktionen hinzugefügt",
+                "ru": "добавлена команда для чтения поддерживаемых функций",
+                "pt": "comando adicionado para ler os recursos suportados",
+                "nl": "opdracht toegevoegd om ondersteunde functies te lezen",
+                "fr": "commande ajoutée pour lire les fonctionnalités prises en charge",
+                "it": "aggiunto comando per leggere le funzionalità supportate",
+                "es": "comando agregado para leer las funciones compatibles",
+                "pl": "dodano polecenie odczytu obsługiwanych funkcji",
+                "zh-cn": "添加了命令以读取支持的功能"
+            },
             "1.8.6": {
                 "en": "make sure disabling of datapoints while starting adapter do not crash adapter (Sentry IOBROKER-INFLUXDB-7)\nMake sure all start values are processed correctly\nMore checks to make sure to not crash when states are disabled while data are processed (Sentry IOBROKER-INFLUXDB-8)",
                 "de": "Stellen Sie sicher, dass das Deaktivieren von Datenpunkten beim Starten des Adapters den Adapter nicht zum Absturz bringt (Sentry IOBROKER-INFLUXDB-7).\nStellen Sie sicher, dass alle Startwerte korrekt verarbeitet werden\nWeitere Überprüfungen, um sicherzustellen, dass nicht abgestürzt wird, wenn Status deaktiviert werden, während Daten verarbeitet werden (Sentry IOBROKER-INFLUXDB-8)",
