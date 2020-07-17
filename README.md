@@ -247,6 +247,11 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 
 ## Changelog
+
+### __WORK IN PROGRESS__
+* (Apollon77) Some errors prevented
+* (Apollon77) Set timeouts for influxdb connections to make sure connectioens do not run forever
+
 ### 1.8.7 (2020-05-14)
 * (bluefox) added command to read supported features
 

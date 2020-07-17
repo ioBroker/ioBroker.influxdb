@@ -68,7 +68,7 @@ function startAdapter(options) {
     adapter.on('objectChange', (id, obj) => {
         const formerAliasId = adapter._aliasMap[id] ? adapter._aliasMap[id] : id;
         if (obj && obj.common &&
-            (obj.common.custom && obj.common.custom[adapter.namespace] && obj.common.custom[adapter.namespace].enabled)
+            (obj.common.custom && obj.common.custom[adapter.namespace] && typeof obj.common.custom[adapter.namespace] === 'object' && obj.common.custom[adapter.namespace].enabled)
         ) {
             const realId = id;
             let checkForRemove = true;
@@ -255,7 +255,8 @@ function connect(adapter) {
         username: adapter.config.user,
         password: adapter.config.password,
         database: adapter.config.dbname,
-        timePrecision: 'ms'
+        timePrecision: 'ms',
+        requestTimeout: 30000
     });
 
     adapter._client.getDatabaseNames((err, dbNames) => {
@@ -515,7 +516,7 @@ function main(adapter) {
                         }
                         adapter._influxDPs[id] = doc.rows[i].value;
 
-                        if (!adapter._influxDPs[id][adapter.namespace]) {
+                        if (!adapter._influxDPs[id][adapter.namespace] || typeof _influxDPs[id][adapter.namespace] !== 'object' || _influxDPs[id][adapter.namespace].enabled === false) {
                             delete adapter._influxDPs[id];
                         } else {
                             count++;
