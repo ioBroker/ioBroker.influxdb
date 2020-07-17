@@ -6,7 +6,7 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.8.7",
+        "version": "1.8.8",
         "title": "Logging data with InfluxDB",
         "titleLang": {
             "en": "Logging data with InfluxDB",
@@ -20,6 +20,18 @@
             "pl": "Rejestrowanie danych za pomocą InfluxDB"
         },
         "news": {
+            "1.8.8": {
+                "en": "Some errors prevented\nSet timeouts for influxdb connections to make sure connectioens do not run forever",
+                "de": "Einige Fehler wurden verhindert\nLegen Sie Zeitüberschreitungen für Influxdb-Verbindungen fest, um sicherzustellen, dass die Verbindungen nicht für immer ausgeführt werden",
+                "ru": "Предотвращены некоторые ошибки\nУстановите тайм-ауты для подключений на притоке, чтобы убедиться, что соединения не будут работать вечно",
+                "pt": "Alguns erros impedidos\nDefina tempos limite para conexões influxdb para garantir que os conectores não sejam executados para sempre",
+                "nl": "Sommige fouten zijn voorkomen\nStel time-outs in voor influxdb-verbindingen om ervoor te zorgen dat connectioens niet voor altijd worden uitgevoerd",
+                "fr": "Certaines erreurs évitées\nDéfinissez des délais d'expiration pour les connexions influxdb pour vous assurer que les connexions ne s'exécutent pas indéfiniment",
+                "it": "Alcuni errori sono stati prevenuti\nImpostare i timeout per le connessioni influxdb per assicurarsi che i collegamenti non funzionino per sempre",
+                "es": "Algunos errores prevenidos\nEstablezca tiempos de espera para las conexiones influxdb para asegurarse de que las conexiones no se ejecuten para siempre",
+                "pl": "Zapobiegnięto niektórym błędom\nUstaw limity czasu dla połączeń napływających db, aby upewnić się, że connectioens nie będą działać wiecznie",
+                "zh-cn": "防止某些错误\n设置influxdb连接超时，以确保connectioens不会永远运行"
+            },
             "1.8.7": {
                 "en": "added command to read supported features",
                 "de": "Befehl zum Lesen der unterstützten Funktionen hinzugefügt",
