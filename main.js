@@ -516,7 +516,7 @@ function main(adapter) {
                         }
                         adapter._influxDPs[id] = doc.rows[i].value;
 
-                        if (!adapter._influxDPs[id][adapter.namespace] || typeof _influxDPs[id][adapter.namespace] !== 'object' || _influxDPs[id][adapter.namespace].enabled === false) {
+                        if (!adapter._influxDPs[id][adapter.namespace] || typeof adapter._influxDPs[id][adapter.namespace] !== 'object' || adapter._influxDPs[id][adapter.namespace].enabled === false) {
                             delete adapter._influxDPs[id];
                         } else {
                             count++;
