@@ -69,8 +69,8 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Run local tests
-        run: npm test
+#      - name: Run local tests
+#        run: npm test
 #      - name: Run unit tests
 #        run: npm run test:unit
 #      - name: Run integration tests # (linux/osx)
