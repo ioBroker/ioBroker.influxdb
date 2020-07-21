@@ -248,6 +248,9 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 ## Changelog
 
+### __WORK IN PROGRESS__
+* (Apollon77) Optimize handling in case of write errors and host unavailabilities
+
 ### 1.8.8 (2020-07-18)
 * (Apollon77) Some errors prevented
 * (Apollon77) Set timeouts for influxdb connections to make sure connectioens do not run forever

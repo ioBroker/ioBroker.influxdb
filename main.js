@@ -831,9 +831,14 @@ function storeBufferedSeries(adapter, cb) {
 
     if (adapter._client.request.getHostsAvailable().length === 0) {
         setConnected(adapter, false);
-        adapter.log.info('No hosts available currently, try later');
+        adapter.log.info('Currently no hosts available, try later');
         adapter._seriesBufferFlushPlanned = false;
-        return cb && cb('No hosts available currently, try later');
+        return cb && cb('Currently no hosts available, try later');
+    }
+    if (!adapter._connected) {
+        adapter.log.info('Not connected to InfluxDB, try later');
+        adapter._seriesBufferFlushPlanned = false;
+        return cb && cb('Not connected to InfluxDB, try later');
     }
     adapter._seriesBufferChecker && clearInterval(adapter._seriesBufferChecker);
 
@@ -842,8 +847,7 @@ function storeBufferedSeries(adapter, cb) {
     if (adapter._seriesBufferCounter > 15000) {
         // if we have too many datapoints in buffer; we better writer them per id
         adapter.log.info('Too many datapoints (' + adapter._seriesBufferCounter + ') to write at once; write per ID');
-        writeAllSeriesPerID(adapter, adapter._seriesBuffer);
-        cb && cb();
+        writeAllSeriesPerID(adapter, adapter._seriesBuffer, cb);
     } else {
         writeAllSeriesAtOnce(adapter, adapter._seriesBuffer, cb);
     }
@@ -868,12 +872,13 @@ function writeAllSeriesAtOnce(adapter, series, cb) {
                         series[id].forEach(s => adapter._seriesBuffer[id].push(s));
                     }
                 });
+                reconnect(adapter);
             } else if (err.message && (typeof err.message === 'string') && (err.message.indexOf('partial write') !== -1)) {
                 adapter.log.warn('All possible datapoints were written, others can not really be corrected');
             } else {
                 adapter.log.info('Try to write ' + Object.keys(series).length + ' Points separate to find the conflicting id');
                 // fallback and send data per id to find out problematic id!
-                writeAllSeriesPerID(adapter, series);
+                return writeAllSeriesPerID(adapter, series, cb);
             }
         } else {
             setConnected(adapter, true);
@@ -882,56 +887,80 @@ function writeAllSeriesAtOnce(adapter, series, cb) {
     });
 }
 
-function writeAllSeriesPerID(adapter, series) {
-    Object.keys(series).forEach(id => writeSeriesPerID(adapter, id, series[id]));
+function writeAllSeriesPerID(adapter, series, cb, idList) {
+    if (!idList) {
+        idList = Object.keys(series);
+    }
+    if (!idList.length) {
+        return cb && cb();
+    }
+    const id = idList.shift();
+    writeSeriesPerID(adapter, id, series[id], () => writeAllSeriesPerID(adapter, series, cb, idList));
 }
 
-function writeSeriesPerID(adapter, seriesId, points) {
+function writeSeriesPerID(adapter, seriesId, points, cb) {
+    if (!points.length) {
+        return cb && cb();
+    }
     adapter.log.debug('writePoints ' + points.length + ' for ' + seriesId + ' at once');
 
-    if (points.length > 15000) {
-        adapter.log.info('Too many dataPoints (' + points.length + ') for "' + seriesId + '" to write at once; write each single one');
-        writeSeriesPerID(adapter, seriesId, points.slice(0, 15000));
-        writeSeriesPerID(adapter, seriesId, points.slice(15000));
-    } else {
-        adapter._client.writePoints(seriesId, points, err => {
-            if (err) {
-                adapter.log.warn('Error on writePoints for ' + seriesId + ': ' + err);
-                if ((adapter._client.request.getHostsAvailable().length === 0) || (err.message && err.message === 'timeout')) {
-                    adapter.log.info('Host not available, move all points back in the Buffer');
-                    // error caused InfluxDB adapter._client to remove the host from available for now
-                    adapter._seriesBuffer[seriesId] = adapter._seriesBuffer[seriesId] || [];
-
-                    for (let i = 0; i < points.length; i++) {
-                        adapter._seriesBuffer[seriesId].push(points[i]);
-                        adapter._seriesBufferCounter++;
-                    }
-
-                    reconnect(adapter);
-                } else {
-                    adapter.log.warn('Try to write ' + points.length + ' Points separate to find the conflicting one');
-                    // we found the conflicting id
-                    writePointsForID(adapter, seriesId, points);
-                }
-            }
-        });
+    const pointsToSend = points.splice(0, 15000);
+    if (points.length) { // We still have some left
+        adapter.log.info('Too many dataPoints (' + (pointsToSend.length + points.length) + ') for "' + seriesId + '" to write at once; split in 15.000 batches');
     }
+    adapter._client.writePoints(seriesId, pointsToSend, err => {
+        if (err) {
+            adapter.log.warn('Error on writePoints for ' + seriesId + ': ' + err);
+            if ((adapter._client.request.getHostsAvailable().length === 0) || (err.message && err.message === 'timeout')) {
+                adapter.log.info('Host not available, move all points back in the Buffer');
+                // error caused InfluxDB adapter._client to remove the host from available for now
+                adapter._seriesBuffer[seriesId] = adapter._seriesBuffer[seriesId] || [];
+
+                for (let i = 0; i < pointsToSend.length; i++) {
+                    adapter._seriesBuffer[seriesId].push(pointsToSend[i]);
+                    adapter._seriesBufferCounter++;
+                }
+                for (let i = 0; i < points.length; i++) {
+                    adapter._seriesBuffer[seriesId].push(points[i]);
+                    adapter._seriesBufferCounter++;
+                }
+                reconnect(adapter);
+                return cb && cb();
+            } else {
+                adapter.log.warn('Try to write ' + pointsToSend.length + ' Points separate to find the conflicting one');
+                // we found the conflicting id
+                return writePointsForID(adapter, seriesId, pointsToSend, () => writeSeriesPerID(adapter, seriesId, points, cb));
+            }
+        } else {
+            setConnected(adapter, true);
+        }
+        writeSeriesPerID(adapter, seriesId, points, cb);
+    });
 }
 
-function writePointsForID(adapter, seriesId, points) {
+function writePointsForID(adapter, seriesId, points, cb) {
+    if (!points.length) {
+        return cb && cb();
+    }
     adapter.log.debug('writePoint ' + points.length + ' for ' + seriesId + ' separate');
 
-    points.forEach(point => writeOnePointForID(adapter, seriesId, point[0]));
+    const point = points.shift();
+    writeOnePointForID(adapter, seriesId, point[0], false, () => writePointsForID(adapter, seriesId, points, cb));
 }
 
 function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
     directWrite = directWrite || false;
 
+    if (!adapter._connected) {
+        addPointToSeriesBuffer(adapter, pointId, point);
+        return cb && cb();
+    }
+
     adapter._client.writePoint(pointId, point, null, (err /* , result */) => {
         if (err) {
             adapter.log.warn('Error on writePoint("' + JSON.stringify(point) + '): ' + err + ' / ' + JSON.stringify(err.message));
             if ((adapter._client.request.getHostsAvailable().length === 0) || (err.message && err.message === 'timeout')) {
-                setConnected(adapter, false);
+                reconnect(adapter);
                 addPointToSeriesBuffer(adapter, pointId, point);
             } else if (err.message && (typeof err.message === 'string') && (err.message.indexOf('field type conflict') !== -1)) {
                 // retry write after type correction for some easy cases
@@ -1004,6 +1033,7 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
                     adapter.log.info('Add point that had error for ' + pointId + ' to buffer again, error-count=' + adapter._errorPoints[pointId]);
                     addPointToSeriesBuffer(adapter, pointId, point);
                 } else {
+                    adapter.log.info('Discard point that had error for ' + pointId + ', error-count=' + adapter._errorPoints[pointId]);
                     adapter._errorPoints[pointId] = 0;
                 }
             }
