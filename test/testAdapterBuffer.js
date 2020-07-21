@@ -87,7 +87,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             config.common.enabled  = true;
             config.common.loglevel = 'debug';
             config.common.seriesBufferMax = 3;
-            config.common.dbname = 'iobroker2';
+            config.common.dbname = 'otheriobroker';
 
             //config.native.dbtype   = 'sqlite';
 
