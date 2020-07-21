@@ -77,7 +77,7 @@ function sendTo(target, command, message, callback) {
     });
 }
 
-describe('Test ' + adapterShortName + ' adapter', function() {
+describe('Test ' + adapterShortName + ' adapter with Buffered write', function() {
     before('Test ' + adapterShortName + ' adapter: Start js-controller', function (_done) {
         this.timeout(600000); // because of first install from npm
 
@@ -86,8 +86,9 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             // enable adapter
             config.common.enabled  = true;
             config.common.loglevel = 'debug';
-            config.common.seriesBufferMax = 3;
-            config.common.dbname = 'otheriobroker';
+
+            config.native.seriesBufferMax = 3;
+            config.native.dbname = 'otheriobroker';
 
             //config.native.dbtype   = 'sqlite';
 
