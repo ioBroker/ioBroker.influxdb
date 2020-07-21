@@ -272,12 +272,13 @@ function connect(adapter) {
                         reconnect(adapter);
                     } else {
                         if (!err && adapter.config.retention) {
-                            adapter._client.query('CREATE RETENTION POLICY "global" ON ' + adapter.config.dbname + ' DURATION ' + adapter.config.retention + 's REPLICATION 1 DEFAULT', err =>
-                                err && err.toString().indexOf('already exists') === -1 && adapter.log.error(err));
+                            return void adapter._client.query('CREATE RETENTION POLICY "global" ON ' + adapter.config.dbname + ' DURATION ' + adapter.config.retention + 's REPLICATION 1 DEFAULT', err => {
+                                    err && err.toString().indexOf('already exists') === -1 && adapter.log.error(err);
+                                    connect(adapter);
+                            });
+                        } else {
+                            return void connect(adapter);
                         }
-                        processStartValues(adapter);
-                        adapter.log.info('Connected!');
-                        startPing(adapter);
                     }
                 });
             } else {
