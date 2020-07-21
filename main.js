@@ -881,7 +881,7 @@ function writeAllSeriesAtOnce(adapter, series, cb) {
                     }
                 });
                 reconnect(adapter);
-            } else if (err.message && (typeof err.message === 'string') && (err.message.indexOf('partial write') !== -1) && err.message.indexOf('field type conflict' === -1)) {
+            } else if (err.message && typeof err.message === 'string' && err.message.indexOf('partial write') !== -1 && err.message.indexOf('field type conflict') === -1) {
                 adapter.log.warn('All possible datapoints were written, others can not really be corrected');
             } else {
                 adapter.log.info('Try to write ' + Object.keys(series).length + ' Points separate to find the conflicting id');
