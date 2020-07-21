@@ -800,7 +800,7 @@ function pushValueIntoDB(adapter, id, state, cb) {
         ack:   !!state.ack
     };
 
-    if ((adapter._conflictingPoints[id] || (adapter.config.seriesBufferMax === 0)) && (adapter._client.request) && (adapter._client.request.getHostsAvailable().length > 0)) {
+    if ((adapter._conflictingPoints[id] || (adapter.config.seriesBufferMax === 0)) && (adapter._connected && adapter._client.request && adapter._client.request.getHostsAvailable().length > 0)) {
         if (adapter.config.seriesBufferMax !== 0) {
             adapter.log.debug('Direct writePoint("' + id + ' - ' + influxFields.value + ' / ' + influxFields.time + ')');
         }
@@ -811,6 +811,13 @@ function pushValueIntoDB(adapter, id, state, cb) {
 }
 
 function addPointToSeriesBuffer(adapter, id, stateObj, cb) {
+    if ((adapter._conflictingPoints[id] || (adapter.config.seriesBufferMax === 0)) && (adapter._connected && adapter._client.request && adapter._client.request.getHostsAvailable().length > 0)) {
+        if (adapter.config.seriesBufferMax !== 0) {
+            adapter.log.debug('Direct writePoint("' + id + ' - ' + influxFields.value + ' / ' + influxFields.time + ')');
+        }
+        return void writeOnePointForID(adapter, id, influxFields, true, cb);
+    }
+
     if (!adapter._seriesBuffer[id]) {
         adapter._seriesBuffer[id] = [];
     }
@@ -874,7 +881,7 @@ function writeAllSeriesAtOnce(adapter, series, cb) {
                     }
                 });
                 reconnect(adapter);
-            } else if (err.message && (typeof err.message === 'string') && (err.message.indexOf('partial write') !== -1)) {
+            } else if (err.message && (typeof err.message === 'string') && (err.message.indexOf('partial write') !== -1) && err.message.indexOf('field type conflict' === -1)) {
                 adapter.log.warn('All possible datapoints were written, others can not really be corrected');
             } else {
                 adapter.log.info('Try to write ' + Object.keys(series).length + ' Points separate to find the conflicting id');
