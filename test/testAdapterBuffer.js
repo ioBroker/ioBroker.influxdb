@@ -116,7 +116,8 @@ describe('Test ' + adapterShortName + ' adapter with Buffered write', function()
                             }
                         },
                         type: 'state'
-                    }, _done);
+                    }, () =>
+                        states.setState('influxdb.0.memRss', {val: 0, from: 'test.0'}, _done));
                 });
         });
     });
