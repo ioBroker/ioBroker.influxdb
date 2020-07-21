@@ -6,7 +6,7 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.8.8",
+        "version": "1.9.0",
         "title": "Logging data with InfluxDB",
         "titleLang": {
             "en": "Logging data with InfluxDB",
@@ -20,6 +20,18 @@
             "pl": "Rejestrowanie danych za pomocą InfluxDB"
         },
         "news": {
+            "1.9.0": {
+                "en": "Optimize handling in case of write errors and host unavailabilities",
+                "de": "Optimieren Sie die Behandlung bei Schreibfehlern und Nichtverfügbarkeiten des Hosts",
+                "ru": "Оптимизировать обработку в случае ошибок записи и недоступности хоста",
+                "pt": "Otimize a manipulação em caso de erros de gravação e indisponibilidade de host",
+                "nl": "Optimaliseer de afhandeling in het geval van schrijffouten en het niet beschikbaar zijn van de host",
+                "fr": "Optimiser la gestion en cas d'erreurs d'écriture et d'indisponibilité de l'hôte",
+                "it": "Ottimizza la gestione in caso di errori di scrittura e indisponibilità dell'host",
+                "es": "Optimice el manejo en caso de errores de escritura y falta de disponibilidad del host",
+                "pl": "Zoptymalizuj obsługę w przypadku błędów zapisu i niedostępności hosta",
+                "zh-cn": "在写入错误和主机不可用的情况下优化处理"
+            },
             "1.8.8": {
                 "en": "Some errors prevented\nSet timeouts for influxdb connections to make sure connectioens do not run forever",
                 "de": "Einige Fehler wurden verhindert\nLegen Sie Zeitüberschreitungen für Influxdb-Verbindungen fest, um sicherzustellen, dass die Verbindungen nicht für immer ausgeführt werden",
