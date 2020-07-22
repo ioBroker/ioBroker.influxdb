@@ -815,7 +815,7 @@ function addPointToSeriesBuffer(adapter, id, stateObj, cb) {
         if (adapter.config.seriesBufferMax !== 0) {
             adapter.log.debug('Direct writePoint("' + id + ' - ' + influxFields.value + ' / ' + influxFields.time + ')');
         }
-        return void writeOnePointForID(adapter, id, influxFields, true, cb);
+        return void writeOnePointForID(adapter, id, stateObj, true, cb);
     }
 
     if (!adapter._seriesBuffer[id]) {
