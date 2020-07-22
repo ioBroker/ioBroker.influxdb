@@ -6,7 +6,7 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.9.0",
+        "version": "1.9.1",
         "title": "Logging data with InfluxDB",
         "titleLang": {
             "en": "Logging data with InfluxDB",
@@ -20,6 +20,18 @@
             "pl": "Rejestrowanie danych za pomocą InfluxDB"
         },
         "news": {
+            "1.9.1": {
+                "en": "crash prevented (Sentry IOBROKER-INFLUXDB-E)",
+                "de": "Absturz verhindert (Sentry IOBROKER-INFLUXDB-E)",
+                "ru": "предотвращено падение (Sentry IOBROKER-INFLUXDB-E)",
+                "pt": "falha impedida (Sentry IOBROKER-INFLUXDB-E)",
+                "nl": "crash voorkomen (Sentry IOBROKER-INFLUXDB-E)",
+                "fr": "crash évité (Sentry IOBROKER-INFLUXDB-E)",
+                "it": "arresto anomalo impedito (Sentry IOBROKER-INFLUXDB-E)",
+                "es": "accidente evitado (Sentry IOBROKER-INFLUXDB-E)",
+                "pl": "zapobieganie awariom (Sentry IOBROKER-INFLUXDB-E)",
+                "zh-cn": "防止崩溃（Sentry IOBROKER-INFLUXDB-E）"
+            },
             "1.9.0": {
                 "en": "Optimize handling in case of write errors and host unavailabilities",
                 "de": "Optimieren Sie die Behandlung bei Schreibfehlern und Nichtverfügbarkeiten des Hosts",
