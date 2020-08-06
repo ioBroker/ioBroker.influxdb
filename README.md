@@ -248,6 +248,9 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 ## Changelog
 
+### __WORK IN PROGRESS__
+* (Apollon77) crash prevented (Sentry IOBROKER-INFLUXDB-G)
+
 ### 1.9.1 (2020-07-22)
 * (Apollon77) crash prevented (Sentry IOBROKER-INFLUXDB-E)
 

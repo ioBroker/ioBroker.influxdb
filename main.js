@@ -813,7 +813,7 @@ function pushValueIntoDB(adapter, id, state, cb) {
 function addPointToSeriesBuffer(adapter, id, stateObj, cb) {
     if ((adapter._conflictingPoints[id] || (adapter.config.seriesBufferMax === 0)) && (adapter._connected && adapter._client.request && adapter._client.request.getHostsAvailable().length > 0)) {
         if (adapter.config.seriesBufferMax !== 0) {
-            adapter.log.debug('Direct writePoint("' + id + ' - ' + influxFields.value + ' / ' + influxFields.time + ')');
+            adapter.log.debug('Direct writePoint("' + id + ' - ' + stateObj.value + ' / ' + stateObj.time + ')');
         }
         return void writeOnePointForID(adapter, id, stateObj, true, cb);
     }
