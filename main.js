@@ -823,7 +823,7 @@ function addPointToSeriesBuffer(adapter, id, stateObj, cb) {
     }
     adapter._seriesBuffer[id].push([stateObj]);
     adapter._seriesBufferCounter++;
-    if ((adapter._seriesBufferCounter > adapter.config.seriesBufferMax) && (adapter._client.request) && (adapter._client.request.getHostsAvailable().length > 0) && (!adapter._seriesBufferFlushPlanned)) {
+    if ((adapter._seriesBufferCounter > adapter.config.seriesBufferMax) && adapter._connected && adapter._client.request && (adapter._client.request.getHostsAvailable().length > 0) && (!adapter._seriesBufferFlushPlanned)) {
         // flush out
         adapter._seriesBufferFlushPlanned = true;
         setImmediate(() => storeBufferedSeries(adapter, cb));
@@ -852,12 +852,13 @@ function storeBufferedSeries(adapter, cb) {
 
     adapter.log.info('Store ' + adapter._seriesBufferCounter + ' buffered influxDB history points');
 
+    const currentBuffer = adapter._seriesBuffer;
     if (adapter._seriesBufferCounter > 15000) {
         // if we have too many datapoints in buffer; we better writer them per id
         adapter.log.info('Too many datapoints (' + adapter._seriesBufferCounter + ') to write at once; write per ID');
-        writeAllSeriesPerID(adapter, adapter._seriesBuffer, cb);
+        writeAllSeriesPerID(adapter, currentBuffer, cb);
     } else {
-        writeAllSeriesAtOnce(adapter, adapter._seriesBuffer, cb);
+        writeAllSeriesAtOnce(adapter, currentBuffer, cb);
     }
     adapter._seriesBuffer = {};
     adapter._seriesBufferCounter = 0;
@@ -953,7 +954,7 @@ function writePointsForID(adapter, seriesId, points, cb) {
     adapter.log.debug('writePoint ' + points.length + ' for ' + seriesId + ' separate');
 
     const point = points.shift();
-    writeOnePointForID(adapter, seriesId, point[0], false, () => writePointsForID(adapter, seriesId, points, cb));
+    writeOnePointForID(adapter, seriesId, point[0], false, () => setImmediate (() => writePointsForID(adapter, seriesId, points, cb)));
 }
 
 function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
@@ -1115,8 +1116,13 @@ function finish(adapter, callback) {
         fileData.seriesBufferCounter = adapter._seriesBufferCounter;
         fileData.seriesBuffer        = adapter._seriesBuffer;
         fileData.conflictingPoints   = adapter._conflictingPoints;
-        fs.writeFileSync(cacheFile, JSON.stringify(fileData));
-        adapter.log.warn('Store data for ' + fileData.seriesBufferCounter + ' points and ' + Object.keys(fileData.conflictingPoints).length + ' conflicts');
+        try {
+            fs.writeFileSync(cacheFile, JSON.stringify(fileData));
+            adapter.log.warn('Store data for ' + fileData.seriesBufferCounter + ' points and ' + Object.keys(fileData.conflictingPoints).length + ' conflicts');
+        }
+        catch (err) {
+            adapter.log.warn('Could not save unstored data to file: ' + err);
+        }
     }
     adapter._seriesBufferCounter = null;
 
