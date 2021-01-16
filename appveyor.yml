@@ -13,8 +13,6 @@ install:
   - ps: 'if($NpmVersion -eq 5) { npm install -g npm@5 }'
   - ps: npm --version
   - npm install
-  - npm install winston@3.2.1
-  - 'npm install https://github.com/ioBroker/ioBroker.js-controller/tarball/master --production'
   - ps: |-
       Invoke-WebRequest "https://dl.influxdata.com/influxdb/releases/influxdb-1.1.0_windows_amd64.zip" -OutFile .\influxdb-1.1.0_windows_amd64.zip;
       if (Test-Path .\influxdb-exe )

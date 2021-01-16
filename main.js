@@ -1080,8 +1080,8 @@ function finish(adapter, callback) {
         for (const _id in adapter._influxDPs) {
             adapter.unsubscribeForeignStates(adapter._influxDPs[_id].realId);
         }
-        adapter._subscribeAll = false;
     } else {
+        adapter._subscribeAll = false;
         adapter.unsubscribeForeignStates('*');
     }
 
