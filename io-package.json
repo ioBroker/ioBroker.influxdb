@@ -6,7 +6,7 @@
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
             "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
         },
-        "version": "1.9.3",
+        "version": "1.9.4",
         "title": "Logging data with InfluxDB",
         "titleLang": {
             "en": "Logging data with InfluxDB",
@@ -20,6 +20,18 @@
             "pl": "Rejestrowanie danych za pomocą InfluxDB"
         },
         "news": {
+            "1.9.4": {
+                "en": "Optimize stop handling",
+                "de": "Optimieren Sie das Stop-Handling",
+                "ru": "Оптимизировать обработку остановок",
+                "pt": "Otimize o manuseio de parada",
+                "nl": "Optimaliseer het afhandelen van stops",
+                "fr": "Optimiser la gestion des arrêts",
+                "it": "Ottimizza la gestione delle fermate",
+                "es": "Optimizar el manejo de paradas",
+                "pl": "Zoptymalizuj obsługę zatrzymania",
+                "zh-cn": "优化停止处理"
+            },
             "1.9.3": {
                 "en": "Crash case prevented (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
                 "de": "Absturz verhindert (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",

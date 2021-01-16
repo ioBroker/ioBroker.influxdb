@@ -248,7 +248,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 ## Changelog
 
-### __WORK IN PROGRESS__
+### 1.9.4 (2021-01-17)
 * (Apollon77) Optimize stop handling
 
 ### 1.9.3 (2020-11-07)
