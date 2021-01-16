@@ -369,6 +369,7 @@ function destroyDB(adapter, msg) {
 }
 
 function processMessage(adapter, msg) {
+    adapter.log.debug('Incoming message ' + msg.command + ' from ' + msg.from);
     if (msg.command === 'features') {
         adapter.sendTo(msg.from, msg.command, {supportedFeatures: []}, msg.callback);
     } else
@@ -721,7 +722,9 @@ function pushHelper(adapter, _id, cb) {
     // if it was not deleted in this time
     adapter._influxDPs[_id].timeout = null;
 
-    if (adapter._influxDPs[_id].state.val === null) return; // InfluxDB can not handle null values
+    if (adapter._influxDPs[_id].state.val === null) { // InfluxDB can not handle null values
+        return cb && cb('null value for ' + _id + ' can not be handled');
+    }
 
     if (typeof adapter._influxDPs[_id].state.val === 'object') adapter._influxDPs[_id].state.val = JSON.stringify(adapter._influxDPs[_id].state.val);
 
@@ -1053,7 +1056,35 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
     });
 }
 
+function writeFileBufferToDisk() {
+    // write buffered values into cache file to process it by next start
+    const fileData = {};
+    if (adapter._seriesBufferCounter) {
+        fileData.seriesBufferCounter = adapter._seriesBufferCounter;
+        fileData.seriesBuffer        = adapter._seriesBuffer;
+        fileData.conflictingPoints   = adapter._conflictingPoints;
+        try {
+            fs.writeFileSync(cacheFile, JSON.stringify(fileData));
+            adapter.log.warn('Store data for ' + fileData.seriesBufferCounter + ' points and ' + Object.keys(fileData.conflictingPoints).length + ' conflicts');
+        }
+        catch (err) {
+            adapter.log.warn('Could not save unstored data to file: ' + err);
+        }
+    }
+    adapter._seriesBufferCounter = null;
+}
+
 function finish(adapter, callback) {
+    if (!adapter._subscribeAll) {
+        // unsubscribe
+        for (const _id in adapter._influxDPs) {
+            adapter.unsubscribeForeignStates(adapter._influxDPs[_id].realId);
+        }
+        adapter._subscribeAll = false;
+    } else {
+        adapter.unsubscribeForeignStates('*');
+    }
+
     if (adapter._reconnectTimeout) {
         clearTimeout(adapter._reconnectTimeout);
         adapter._reconnectTimeout = null;
@@ -1072,7 +1103,6 @@ function finish(adapter, callback) {
         adapter._seriesBufferChecker = null;
     }
     let count = 0;
-    const now = Date.now();
     for (const id in adapter._influxDPs) {
         if (!adapter._influxDPs.hasOwnProperty(id)) continue;
 
@@ -1085,7 +1115,7 @@ function finish(adapter, callback) {
             adapter._influxDPs[id].timeout = null;
         }
 
-        let tmpState;
+/*        let tmpState;
         if (Object.assign) {
             tmpState = Object.assign({}, adapter._influxDPs[id].state);
         }
@@ -1093,16 +1123,18 @@ function finish(adapter, callback) {
             tmpState = JSON.parse(JSON.stringify(adapter._influxDPs[id].state));
         }
         const state = adapter._influxDPs[id].state ? tmpState : null;
-
+*/
         if (adapter._influxDPs[id].skipped) {
             count++;
             adapter._influxDPs[id].state = adapter._influxDPs[id].skipped;
             pushHelper(adapter, id, () => {
                 if (!--count) {
+                    writeFileBufferToDisk();
                     if (callback) {
-                        setTimeout(callback, 500);
+                        callback();
+                        callback = null;
                     } else {
-                        setTimeout(() => adapter.terminate ? adapter.terminate() : process.exit(), 500);
+                        adapter.terminate ? adapter.terminate() : process.exit();
                     }
                 }
             });
@@ -1110,23 +1142,8 @@ function finish(adapter, callback) {
         }
     }
 
-    // write buffered values into cache file to process it by next start
-    const fileData = {};
-    if (adapter._seriesBufferCounter) {
-        fileData.seriesBufferCounter = adapter._seriesBufferCounter;
-        fileData.seriesBuffer        = adapter._seriesBuffer;
-        fileData.conflictingPoints   = adapter._conflictingPoints;
-        try {
-            fs.writeFileSync(cacheFile, JSON.stringify(fileData));
-            adapter.log.warn('Store data for ' + fileData.seriesBufferCounter + ' points and ' + Object.keys(fileData.conflictingPoints).length + ' conflicts');
-        }
-        catch (err) {
-            adapter.log.warn('Could not save unstored data to file: ' + err);
-        }
-    }
-    adapter._seriesBufferCounter = null;
-
     if (!count) {
+        writeFileBufferToDisk();
         if (callback) {
             callback();
         } else {

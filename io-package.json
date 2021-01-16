@@ -223,7 +223,8 @@
                 "admin": ">=1.6.10"
             }
         ],
-        "supportStopInstance": 2000,
+        "supportStopInstance": true,
+        "stopTimeout": 3000,
         "authors": [
             "Bluefox <dogafox@gmail.com>",
             "Apollon77 <ingo@fischer-ka.de>"
