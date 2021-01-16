@@ -519,7 +519,7 @@ describe('Test ' + adapterShortName + ' adapter with Buffered write', function()
 
         setup.stopController(function (normalTerminated) {
             console.log('Adapter normal terminated: ' + normalTerminated);
-            done();
+            setTimeout(done, 2000);
         });
     });
 });
