@@ -716,14 +716,14 @@ function reLogHelper(adapter, _id) {
 
 function pushHelper(adapter, _id, cb) {
     if (!adapter._influxDPs[_id] || !adapter._influxDPs[_id].state || !adapter._influxDPs[_id][adapter.namespace]) {
-        return cb && cb('ID ' + _id + ' not activated for logging');
+        return cb && setImmediate(cb, 'ID ' + _id + ' not activated for logging');
     }
     const _settings = adapter._influxDPs[_id][adapter.namespace];
     // if it was not deleted in this time
     adapter._influxDPs[_id].timeout = null;
 
     if (adapter._influxDPs[_id].state.val === null) { // InfluxDB can not handle null values
-        return cb && cb('null value for ' + _id + ' can not be handled');
+        return cb && setImmediate(cb, 'null value for ' + _id + ' can not be handled');
     }
 
     if (typeof adapter._influxDPs[_id].state.val === 'object') adapter._influxDPs[_id].state.val = JSON.stringify(adapter._influxDPs[_id].state.val);
@@ -749,13 +749,13 @@ function pushHelper(adapter, _id, cb) {
         }
         else {
             adapter.log.info('Do not store value "' + adapter._influxDPs[_id].state.val + '" for ' + _id + ' because no number');
-            return;
+            return cb && setImmediate(cb, 'do not store value for ' + _id + ' because no number');
         }
     }
     else if (_settings.storageType === 'Boolean' && typeof adapter._influxDPs[_id].state.val !== 'boolean') {
         adapter._influxDPs[_id].state.val = !!adapter._influxDPs[_id].state.val;
     }
-    pushValueIntoDB(adapter, _id, adapter._influxDPs[_id].state, cb);
+    pushValueIntoDB(adapter, _id, adapter._influxDPs[_id].state, () => setImmediate(cb));
 }
 
 function pushValueIntoDB(adapter, id, state, cb) {
