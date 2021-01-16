@@ -755,7 +755,7 @@ function pushHelper(adapter, _id, cb) {
     else if (_settings.storageType === 'Boolean' && typeof adapter._influxDPs[_id].state.val !== 'boolean') {
         adapter._influxDPs[_id].state.val = !!adapter._influxDPs[_id].state.val;
     }
-    pushValueIntoDB(adapter, _id, adapter._influxDPs[_id].state, () => setImmediate(cb));
+    pushValueIntoDB(adapter, _id, adapter._influxDPs[_id].state, () => cb && setImmediate(cb));
 }
 
 function pushValueIntoDB(adapter, id, state, cb) {
