@@ -25,7 +25,7 @@
   ],
   "optionalDependencies": {},
   "dependencies": {
-    "influx": "^4.2.3",
+    "influx": "^5.7.0",
     "@iobroker/adapter-core": "^2.4.0"
   },
   "devDependencies": {
