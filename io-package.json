@@ -4,7 +4,14 @@
         "desc": {
             "en": "Logging of states into InfluxDB",
             "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
-            "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB"
+            "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB",
+            "pt": "Registro de estados no InfluxDB",
+            "nl": "Loggen van staten in InfluxDB",
+            "fr": "Journalisation des états dans InfluxDB",
+            "it": "Registrazione degli stati in InfluxDB",
+            "es": "Registro de estados en InfluxDB",
+            "pl": "Logowanie stanów do InfluxDB",
+            "zh-cn": "将状态记录到InfluxDB中"
         },
         "version": "1.9.4",
         "title": "Logging data with InfluxDB",
@@ -17,7 +24,8 @@
             "fr": "Consignation des données avec InfluxDB",
             "it": "Registrazione dei dati con InfluxDB",
             "es": "Datos de registro con InfluxDB",
-            "pl": "Rejestrowanie danych za pomocą InfluxDB"
+            "pl": "Rejestrowanie danych za pomocą InfluxDB",
+            "zh-cn": "使用InfluxDB记录数据"
         },
         "news": {
             "1.9.4": {
