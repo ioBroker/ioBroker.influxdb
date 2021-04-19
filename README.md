@@ -250,7 +250,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 	### __WORK IN PROGRESS__
 -->
 ## Changelog
-### __WORK IN PROGRESS__
+### 1.9.5 (2021-04-19)
 * (bluefox) Added the support of Admin5
 
 ### 1.9.4 (2021-01-17)

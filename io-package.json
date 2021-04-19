@@ -13,7 +13,7 @@
             "pl": "Logowanie stanów do InfluxDB",
             "zh-cn": "将状态记录到InfluxDB中"
         },
-        "version": "1.9.4",
+        "version": "1.9.5",
         "titleLang": {
             "en": "Logging data with InfluxDB",
             "de": "Daten mit InfluxDB protokollieren",
@@ -27,6 +27,18 @@
             "zh-cn": "使用InfluxDB记录数据"
         },
         "news": {
+            "1.9.5": {
+                "en": "Added the support of Admin5",
+                "de": "Unterstützung von Admin5 hinzugefügt",
+                "ru": "Добавлена поддержка Admin5",
+                "pt": "Adicionado o suporte de Admin5",
+                "nl": "Ondersteuning toegevoegd van Admin5",
+                "fr": "Ajout du support d'Admin5",
+                "it": "Aggiunto il supporto di Admin5",
+                "es": "Se agregó el soporte de Admin5.",
+                "pl": "Dodano obsługę Admin5",
+                "zh-cn": "添加了对Admin5的支持"
+            },
             "1.9.4": {
                 "en": "Optimize stop handling",
                 "de": "Optimieren Sie das Stop-Handling",
