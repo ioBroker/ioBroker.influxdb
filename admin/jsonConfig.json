@@ -6,6 +6,16 @@
       "type": "panel",
       "label": "DB settings",
       "items": {
+        "dbversion": {
+            "type": "select",
+            "label": "DB-Version",
+            "options": [
+                {"label": "1.8",      "value": "1.8"},
+                {"label": "2.0", "value": "2.0"}
+            ],
+            "sm": 12,
+            "md": 8
+        },
         "host": {
           "type": "text",
           "label": "Host",

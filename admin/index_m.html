@@ -120,6 +120,16 @@
                 }
             }).trigger('change');
 
+            $('#dbversion').on('change', function () {
+                if ($(this).val() === '1.8') {
+                    $('.influx18').show();
+                    $('.influx20').hide();
+                } else if ($(this).val() === '2.0') {
+                    $('.influx18').hide();
+                    $('.influx20').show();
+                }
+            }).trigger('change');
+
             onChange(false);
         }
 
@@ -173,6 +183,13 @@
             </div>
             <div class="row">
                 <div class="col s12 m8">
+                    <select id="dbversion" class="value">
+                        <option value="1.8">1.8</option>
+                        <option value="2.0">2.0</option>
+                    </select>
+                    <label for="dbversion" class="transalte">DB-Version</label>
+                </div>
+                <div class="col s12 m8">
                     <input id="host" class="value"/>
                     <label for="host" class="translate">Host</label>
                 </div>
@@ -189,17 +206,25 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col s12 m4">
+                <div class="col s12 m4 influx18">
                     <input id="user" class="value"/>
                     <label for="user" class="translate">User</label>
                 </div>
-                <div class="col s12 m4">
+                <div class="col s12 m4 influx18">
                     <input id="password" type="password" class="value"/>
                     <label for="password" class="translate">Password</label>
                 </div>
-                <div class="col s12 m4">
+                <div class="col s12 m4 influx18">
                     <input id="passwordConfirm" type="password"/>
                     <label for="passwordConfirm" class="translate">Password confirm</label>
+                </div>
+                <div class="col s12 m4 influx20">
+                    <input id="organization" class="value"/>
+                    <label for="organization" class="translate">Organization</label>
+                </div>
+                <div class="col s12 m4 influx20">
+                    <input id="token" type="password" class="value"/>
+                    <label for="token" class="translate">Token</label>
                 </div>
             </div>
             <div class="row">

@@ -293,13 +293,16 @@
         "port": 8086,
         "user": "",
         "password": "",
+        "token": "",
+        "organization": "",
         "round": 4,
         "seriesBufferMax": 0,
         "seriesBufferFlushInterval": 600,
         "changesRelogInterval": 0,
         "changesMinDelta": 0,
         "reconnectInterval": 10000,
-        "pingInterval": 15000
+        "pingInterval": 15000,
+        "dbversion": 1.8
     },
     "instanceObjects": [
         {

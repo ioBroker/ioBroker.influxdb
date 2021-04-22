@@ -5,7 +5,9 @@
 
 //noinspection JSUnresolvedFunction
 const utils       = require('@iobroker/adapter-core'); // Get common adapter utils
-const influx      = require('influx');
+//const influx      = require('influx');
+const DatabaseInfluxDB18 = require ('./lib/DatabaseInfluxDB18.js').DatabaseInfluxDB18; // TODO if else
+const DatabaseInfluxDB20 = require ('./lib/DatabaseInfluxDB20.js').DatabaseInfluxDB20;
 const fs          = require('fs');
 const path        = require('path');
 const [appName, adapterName] = require('./package.json').name.split('.');
@@ -248,7 +250,7 @@ function connect(adapter) {
 
     adapter.config.seriesBufferMax = parseInt(adapter.config.seriesBufferMax, 10) || 0;
 
-    adapter._client = influx({
+    /*adapter._client = influx({
         host:     adapter.config.host,
         port:     adapter.config.port, // optional, default 8086
         protocol: adapter.config.protocol, // optional, default 'http'
@@ -257,7 +259,37 @@ function connect(adapter) {
         database: adapter.config.dbname,
         timePrecision: 'ms',
         requestTimeout: 30000
-    });
+    });*/
+
+    adapter.log.info("Influx DB Version used: " + adapter.config.dbversion);
+    switch (adapter.config.dbversion) {
+        case "2.0":
+            adapter.log.info("Connecting to InfluxDB 2");
+            adapter._client = new DatabaseInfluxDB20(
+                adapter.log,
+                adapter.config.host,
+                adapter.config.port, // optional, default 8086
+                adapter.config.protocol, // optional, default 'http'
+                adapter.config.token,
+                adapter.config.organization,
+                adapter.config.dbname
+            )
+            break;
+        default:
+        case "1.8":
+            adapter._client = new DatabaseInfluxDB18(
+                adapter.config.host,
+                adapter.config.port, // optional, default 8086
+                adapter.config.protocol, // optional, default 'http'
+                adapter.config.user,
+                adapter.config.password,
+                adapter.config.dbname,
+                'ms',
+                30000
+            );
+            break;
+    }
+    
 
     adapter._client.getDatabaseNames((err, dbNames) => {
         if (err) {
@@ -265,6 +297,7 @@ function connect(adapter) {
             reconnect(adapter);
         } else {
             setConnected(adapter, true);
+            adapter.log.info("DBNames: " + dbNames);
             if (dbNames.indexOf(adapter.config.dbname) === -1) {
                 adapter._client.createDatabase(adapter.config.dbname, err => {
                     if (err) {
@@ -272,6 +305,7 @@ function connect(adapter) {
                         reconnect(adapter);
                     } else {
                         if (!err && adapter.config.retention) {
+                            //TODO return void adapter._client.createRetentionPolicyForDB(adapter.config.dbname, adapter.config.retention, err => {
                             return void adapter._client.query('CREATE RETENTION POLICY "global" ON ' + adapter.config.dbname + ' DURATION ' + adapter.config.retention + 's REPLICATION 1 DEFAULT', err => {
                                     err && err.toString().indexOf('already exists') === -1 && adapter.log.error(err);
                                     connect(adapter);
