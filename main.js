@@ -297,7 +297,6 @@ function connect(adapter) {
             reconnect(adapter);
         } else {
             setConnected(adapter, true);
-            adapter.log.info("DBNames: " + dbNames);
             if (dbNames.indexOf(adapter.config.dbname) === -1) {
                 adapter._client.createDatabase(adapter.config.dbname, err => {
                     if (err) {
@@ -305,10 +304,9 @@ function connect(adapter) {
                         reconnect(adapter);
                     } else {
                         if (!err && adapter.config.retention) {
-                            //TODO return void adapter._client.createRetentionPolicyForDB(adapter.config.dbname, adapter.config.retention, err => {
-                            return void adapter._client.query('CREATE RETENTION POLICY "global" ON ' + adapter.config.dbname + ' DURATION ' + adapter.config.retention + 's REPLICATION 1 DEFAULT', err => {
-                                    err && err.toString().indexOf('already exists') === -1 && adapter.log.error(err);
-                                    connect(adapter);
+                            return void adapter._client.createRetentionPolicyForDB(adapter.config.dbname, adapter.config.retention, err => {
+                                err && err.toString().indexOf('already exists') === -1 && adapter.log.error(err);
+                                connect(adapter);
                             });
                         } else {
                             return void connect(adapter);
@@ -344,14 +342,41 @@ function testConnection(adapter, msg) {
             adapter.sendTo(msg.from, msg.command, {error: 'connect timeout'}, msg.callback);
         }, 5000);
 
-        const lClient = influx({
+        let lClient;
+        adapter.log.info("TEST DB Version: " + msg.message.config.dbversion);
+        switch (msg.message.config.dbversion) {
+            case "2.0":
+                adapter.log.info("Connecting to InfluxDB 2");
+                lClient = new DatabaseInfluxDB20(
+                    adapter.log,
+                    msg.message.config.host,
+                    msg.message.config.port,
+                    msg.message.config.protocol,  // optional, default 'http'
+                    msg.message.config.token,
+                    msg.message.config.organization,
+                    msg.message.config.dbname || appName
+                )
+                break;
+            default:
+            case "1.8":
+                lCient = new DatabaseInfluxDB18(
+                    msg.message.config.host,
+                    msg.message.config.port,
+                    msg.message.config.protocol,  // optional, default 'http'
+                    msg.message.config.user,
+                    msg.message.config.password,
+                    msg.message.config.dbname || appName
+                );
+                break;
+        }
+        /*const lClient = influx({
             host:     msg.message.config.host,
             port:     msg.message.config.port,
             protocol: msg.message.config.protocol,  // optional, default 'http'
             username: msg.message.config.user,
             password: msg.message.config.password,
             database: msg.message.config.dbname || appName
-        });
+        });*/
 
         lClient.getDatabaseNames(function (err /* , arrayDatabaseNames*/ ) {
             if (timeout) {
@@ -1187,6 +1212,178 @@ function finish(adapter, callback) {
 }
 
 function getHistory(adapter, msg) {
+
+    const options = {
+        id:         msg.message.id === '*' ? null : msg.message.id,
+        start:      msg.message.options.start,
+        end:        msg.message.options.end || ((new Date()).getTime() + 5000000),
+        step:       parseInt(msg.message.options.step,  10) || null,
+        count:      parseInt(msg.message.options.count, 10) || 500,
+        aggregate:  msg.message.options.aggregate || 'average', // One of: max, min, average, total
+        limit:      parseInt(msg.message.options.limit || adapter.config.limit || 2000),
+        addId:      msg.message.options.addId || false,
+        ignoreNull: true,
+        sessionId:  msg.message.options.sessionId
+    };
+    if (options.id && adapter._aliasMap[options.id]) {
+        options.id = adapter._aliasMap[options.id];
+    }
+    let query = 'SELECT';
+    if (options.step) {
+        switch (options.aggregate) {
+            case 'average':
+                query += ' mean(value) as val';
+                break;
+
+            case 'max':
+                query += ' max(value) as val';
+                break;
+
+            case 'min':
+                query += ' min(value) as val';
+                break;
+
+            case 'total':
+                query += ' sum(value) as val';
+                break;
+
+            case 'count':
+                query += ' count(value) as val';
+                break;
+
+            case 'none':
+            case 'onchange':
+            case 'minmax':
+                query += ' value';
+                break;
+
+            default:
+                query += ' mean(value) as val';
+                break;
+        }
+
+    } else {
+        query += ' *';
+    }
+
+    query += ' from "' + options.id + '"';
+
+    if (!adapter._influxDPs[options.id]) {
+        adapter.sendTo(msg.from, msg.command, {
+            result: [],
+            step:   0,
+            error:  'No connection'
+        }, msg.callback);
+        return;
+    }
+
+    if (options.start > options.end) {
+        const _end = options.end;
+        options.end   = options.start;
+        options.start = _end;
+    }
+    // if less 2000.01.01 00:00:00
+    if (options.end   && options.end   < 946681200000) options.end   *= 1000;
+    if (options.start && options.start < 946681200000) options.start *= 1000;
+
+    if (!options.start && !options.count) {
+        options.start = options.end - 86400000; // - 1 day
+    }
+
+    // query one timegroup-value more then requested originally at start and end
+    // to make sure to have no 0 values because of the way InfluxDB doies group by time
+    if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
+        if (!options.step) {
+            // calculate "step" based on difference between start and end using count
+            options.step = parseInt((options.end - options.start) / options.count, 10);
+        }
+        if (options.start) options.start -= options.step;
+        options.end += options.step;
+        options.limit += 2;
+    }
+
+    query += " WHERE ";
+    if (options.start) {
+        query += " time > '" + new Date(options.start).toISOString() + "' AND ";
+    }
+    query += " time < '" + new Date(options.end).toISOString() + "'";
+
+    if (!options.start && (options.count || options.limit)) {
+        query += " ORDER BY time DESC";
+    }
+
+    if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
+        query += ' GROUP BY time(' + options.step + 'ms) fill(previous) LIMIT ' + options.limit;
+    } else if (options.aggregate !== 'minmax') {
+        query += ' LIMIT ' + options.count;
+    }
+
+    // select one datapoint more then wanted
+    if (options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none') {
+        let addQuery = "";
+        if (options.start) {
+            addQuery = 'SELECT value from "' + options.id + '"' + " WHERE time <= '" + new Date(options.start).toISOString() + "' ORDER BY time DESC LIMIT 1;";
+            query = addQuery + query;
+        }
+        addQuery = ';SELECT value from "' + options.id + '"' + " WHERE time >= '" + new Date(options.end).toISOString() + "' LIMIT 1";
+        query = query + addQuery;
+    }
+
+    adapter.log.debug(query);
+
+    // if specific id requested
+    adapter._client.query(query, (err, rows) => {
+        if (err) {
+            if (adapter._client.request.getHostsAvailable().length === 0) {
+                setConnected(adapter, false);
+            }
+            adapter.log.error('getHistory: ' + err);
+        } else {
+            setConnected(adapter, true);
+        }
+
+        let result = [];
+        if (rows && rows.length) {
+            for (let qr = 0; qr < rows.length; qr++) {
+                for (let rr = 0; rr < rows[qr].length; rr++) {
+                    if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
+                        rows[qr][rr].val = rows[qr][rr].value;
+                        delete rows[qr][rr].value;
+                    }
+                    rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
+                    delete rows[qr][rr].time;
+                    if (rows[qr][rr].val !== null) {
+                        const f = parseFloat(rows[qr][rr].val);
+                        if (f == rows[qr][rr].val) {
+                            rows[qr][rr].val = f;
+                            if (adapter.config.round) {
+                                rows[qr][rr].val = Math.round(rows[qr][rr].val * adapter.config.round) / adapter.config.round;
+                            }
+                        }
+                    }
+                    if (options.addId) rows[qr][rr].id = msg.message.id;
+                    result.push(rows[qr][rr]);
+                }
+            }
+        }
+
+        if ((result.length > 0) && (options.aggregate === 'minmax')) {
+            Aggregate.initAggregate(options);
+            Aggregate.aggregation(options, result);
+            Aggregate.finishAggregation(options);
+            result = options.result;
+        }
+
+        adapter.sendTo(msg.from, msg.command, {
+            result:     result,
+            error:      err,
+            sessionId:  options.sessionId
+        }, msg.callback);
+    });
+}
+
+// TODO
+function getHistoryIflx2(adapter, msg) {
 
     const options = {
         id:         msg.message.id === '*' ? null : msg.message.id,

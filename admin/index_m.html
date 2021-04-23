@@ -67,11 +67,14 @@
                         $('#test').button('option', 'disabled', true);
                         sendTo(null, 'test', {
                             config: {
+                                dbversion: $('#dbversion').val(),
                                 port: $('#port').val(),
                                 host: $('#host').val(),
                                 user: $('#user').val(),
                                 protocol: $('#protocol').val(),
                                 password: $('#password').val(),
+                                organization: $('organization').val(),
+                                token: $('token').val(),
                                 dbname: $('#dbname').val()
                             }
                         }, function (response) {
