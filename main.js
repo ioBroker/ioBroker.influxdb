@@ -433,7 +433,8 @@ function processMessage(adapter, msg) {
         adapter.sendTo(msg.from, msg.command, {supportedFeatures: []}, msg.callback);
     } else
     if (msg.command === 'getHistory') {
-        getHistory(adapter, msg);
+        adapter.log.info("DBV: " + adapter.config.dbversion);
+        (adapter.config.dbversion === "1.8") ? getHistory(adapter, msg) : getHistoryIflx2(adapter, msg);
     }
     else if (msg.command === 'test') {
         testConnection(adapter, msg);
@@ -1400,43 +1401,10 @@ function getHistoryIflx2(adapter, msg) {
     if (options.id && adapter._aliasMap[options.id]) {
         options.id = adapter._aliasMap[options.id];
     }
+    let fluxQuery = 'from(bucket: "' + adapter.config.dbname + '") ';
+
     let query = 'SELECT';
-    if (options.step) {
-        switch (options.aggregate) {
-            case 'average':
-                query += ' mean(value) as val';
-                break;
-
-            case 'max':
-                query += ' max(value) as val';
-                break;
-
-            case 'min':
-                query += ' min(value) as val';
-                break;
-
-            case 'total':
-                query += ' sum(value) as val';
-                break;
-
-            case 'count':
-                query += ' count(value) as val';
-                break;
-
-            case 'none':
-            case 'onchange':
-            case 'minmax':
-                query += ' value';
-                break;
-
-            default:
-                query += ' mean(value) as val';
-                break;
-        }
-
-    } else {
-        query += ' *';
-    }
+    
 
     query += ' from "' + options.id + '"';
 
@@ -1480,31 +1448,88 @@ function getHistoryIflx2(adapter, msg) {
     }
     query += " time < '" + new Date(options.end).toISOString() + "'";
 
+    fluxQuery += " |> range(" + ((options.start) ? "start: " + new Date(options.start).toISOString() + ", " : "start: -" + adapter.config.retention +"ms, ") + "stop: " + new Date(options.end).toISOString() + ")";
+    fluxQuery += ' |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") ';
+
     if (!options.start && (options.count || options.limit)) {
         query += " ORDER BY time DESC";
+        fluxQuery += " |> sort(columns:[\"_time\"], desc: true)";
     }
 
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
         query += ' GROUP BY time(' + options.step + 'ms) fill(previous) LIMIT ' + options.limit;
+        fluxQuery += ' \
+            |> window(every: ' + options.step + 'ms) \
+            |> fill(column: "_value", usePrevious: true))    ';
     } else if (options.aggregate !== 'minmax') {
         query += ' LIMIT ' + options.count;
+        fluxQuery += ' |> limit(n: ' + options.count + ')';
     }
 
+    //###2nd
     // select one datapoint more then wanted
     if (options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none') {
         let addQuery = "";
+        let addFluxQuery = "";
         if (options.start) {
             addQuery = 'SELECT value from "' + options.id + '"' + " WHERE time <= '" + new Date(options.start).toISOString() + "' ORDER BY time DESC LIMIT 1;";
+            addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
+            |> range(start: ' + new Date(options.start).toISOString() + ' \
+            |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
+            |> sort(columns: [time], desc: true) \
+            |> limit(n: 1)';
             query = addQuery + query;
+            fluxQuery = addFluxQuery + fluxQuery;
         }
         addQuery = ';SELECT value from "' + options.id + '"' + " WHERE time >= '" + new Date(options.end).toISOString() + "' LIMIT 1";
+        addFluxQuery = '';
         query = query + addQuery;
+        fluxQuery = fluxQuery + addFluxQuery;
     }
 
-    adapter.log.debug(query);
+    adapter.log.debug(fluxQuery);
 
+    ///////
+    if (options.step) {
+        switch (options.aggregate) {
+            case 'average':
+                query += ' mean(value) as val';
+                break;
+
+            case 'max':
+                query += ' max(value) as val';
+                break;
+
+            case 'min':
+                query += ' min(value) as val';
+                break;
+
+            case 'total':
+                query += ' sum(value) as val';
+                break;
+
+            case 'count':
+                query += ' count(value) as val';
+                break;
+
+            case 'none':
+            case 'onchange':
+            case 'minmax':
+                query += ' value';
+                break;
+
+            default:
+                query += ' mean(value) as val';
+                break;
+        }
+
+    } else {
+        query += ' *';
+    }
+
+    //####################################
     // if specific id requested
-    adapter._client.query(query, (err, rows) => {
+    adapter._client.query(fluxQuery, (err, rows) => {
         if (err) {
             if (adapter._client.request.getHostsAvailable().length === 0) {
                 setConnected(adapter, false);
