@@ -80,6 +80,8 @@ Enable authentication, by editing /etc/influxdb/influxdb.conf:
 ```
 - Restart service: ``` service influxdb restart ```
 
+*Influx DB V2.x relies on organization/token login, instead of username/password!*
+
 ## Installation of Grafana
 There is additional charting tool for InfluxDB - Grafana.
 It must be installed additionally.
