@@ -250,17 +250,6 @@ function connect(adapter) {
 
     adapter.config.seriesBufferMax = parseInt(adapter.config.seriesBufferMax, 10) || 0;
 
-    /*adapter._client = influx({
-        host:     adapter.config.host,
-        port:     adapter.config.port, // optional, default 8086
-        protocol: adapter.config.protocol, // optional, default 'http'
-        username: adapter.config.user,
-        password: adapter.config.password,
-        database: adapter.config.dbname,
-        timePrecision: 'ms',
-        requestTimeout: 30000
-    });*/
-
     adapter.log.info("Influx DB Version used: " + adapter.config.dbversion);
     switch (adapter.config.dbversion) {
         case "2.0":
@@ -344,7 +333,7 @@ function testConnection(adapter, msg) {
         }, 5000);
 
         let lClient;
-        adapter.log.info("TEST DB Version: " + msg.message.config.dbversion);
+        adapter.log.debug("TEST DB Version: " + msg.message.config.dbversion);
         switch (msg.message.config.dbversion) {
             case "2.0":
                 adapter.log.info("Connecting to InfluxDB 2");
@@ -360,7 +349,7 @@ function testConnection(adapter, msg) {
                 break;
             default:
             case "1.8":
-                lCient = new DatabaseInfluxDB18(
+                lClient = new DatabaseInfluxDB18(
                     adapter.log,
                     msg.message.config.host,
                     msg.message.config.port,
@@ -371,14 +360,6 @@ function testConnection(adapter, msg) {
                 );
                 break;
         }
-        /*const lClient = influx({
-            host:     msg.message.config.host,
-            port:     msg.message.config.port,
-            protocol: msg.message.config.protocol,  // optional, default 'http'
-            username: msg.message.config.user,
-            password: msg.message.config.password,
-            database: msg.message.config.dbname || appName
-        });*/
 
         lClient.getDatabaseNames(function (err /* , arrayDatabaseNames*/ ) {
             if (timeout) {
@@ -444,7 +425,17 @@ function processMessage(adapter, msg) {
         destroyDB(adapter, msg);
     }
     else if (msg.command === 'query') {
-        query(adapter, msg);
+        
+        switch (adapter.config.dbversion) {
+            case "2.0":
+                // Influx 2.0 uses Flux instead of InfluxQL, so for multiple statements there is no delimiter by default, so we introduce ;
+                multiQuery(adapter, msg);
+                break;
+            case "1.8":
+            default:
+                query(adapter, msg);
+                break;
+        }
     }
     else if (msg.command === 'getConflictingPoints') {
         getConflictingPoints(adapter, msg);
@@ -1447,9 +1438,9 @@ function getHistoryIflx2(adapter, msg) {
     }
 
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
-        fluxQuery += ' \
-            |> window(every: ' + options.step + 'ms) \
-            |> fill(column: "_value", usePrevious: true))    ';
+        if ((options.step !== null) && (options.step > 0))
+            fluxQuery += ' |> window(every: ' + options.step + 'ms)';
+        fluxQuery += '|> fill(column: "_value", usePrevious: true)';
     } else if (options.aggregate !== 'minmax') {
         fluxQuery += ' |> limit(n: ' + options.count + ')';
     }
@@ -1457,7 +1448,6 @@ function getHistoryIflx2(adapter, msg) {
     if (options.step) {
         switch (options.aggregate) {
             case 'average':
-                //fluxQuery += ' |> mean(column: "_value") |> filter(fn: (r) => r["_field"] == "value")';
                 fluxQuery += ' |> mean(column: "_value")';
                 break;
 
@@ -1579,6 +1569,76 @@ function query(adapter, msg) {
                     setConnected(adapter, false);
                 }
                 adapter.log.error('query: ' + err);
+                return adapter.sendTo(msg.from, msg.command, {
+                        result: [],
+                        error:  'Invalid call'
+                    }, msg.callback);
+            } else {
+                setConnected(adapter, true);
+            }
+
+            adapter.log.debug('result: ' + JSON.stringify(rows));
+
+            for (let r = 0, l = rows.length; r < l; r++) {
+                for (let rr = 0, ll = rows[r].length; rr < ll; rr++) {
+                    if (rows[r][rr].time) {
+                        rows[r][rr].ts = new Date(rows[r][rr].time).getTime();
+                        delete rows[r][rr].time;
+                    }
+                }
+            }
+
+            adapter.sendTo(msg.from, msg.command, {
+                result: rows,
+                ts:     Date.now(),
+                error:  err
+            }, msg.callback);
+        });
+    } else {
+        adapter.sendTo(msg.from, msg.command, {
+            result: [],
+            error:  'No connection'
+        }, msg.callback);
+    }
+}
+
+function multiQuery(adapter, msg) {
+    if (adapter._client) {
+        const queriesString = msg.message.query || msg.message;
+        
+        let queries;
+        try {
+            //parse queries to array
+            queries = queriesString.split(';');
+
+            let c = 1;
+            for (const query of queries) {
+                if (!query || typeof query !== 'string')  {
+                    throw {
+                        name: "Exception",
+                        message: "Array element #"+ c +": Query messing",
+                        toString: function() { return this.name + ": " + this.message; }
+                    }
+                }
+                c++;
+            }
+        } catch (error) {
+            adapter.log.warn("Error in recevied multiQuery: " + error);
+            adapter.sendTo(msg.from, msg.command, {
+                result: [],
+                error:  error
+            }, msg.callback);
+            return;
+        }
+
+        adapter.log.debug('queries: ' + query);
+
+        adapter._client.queries(queries, (err, rows) => {
+            if (err) {
+                if (adapter._client.request.getHostsAvailable().length === 0) {
+                    setConnected(adapter, false);
+                }
+                adapter.log.error('queries: ' + err);
                 return adapter.sendTo(msg.from, msg.command, {
                         result: [],
                         error:  'Invalid call'

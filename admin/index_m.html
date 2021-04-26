@@ -5,6 +5,7 @@
     <link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css">
 
     <script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="../../lib/js/jquery-ui.min.js"></script>
     <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
 
     <script type="text/javascript" src="../../js/translate.js"></script>
@@ -59,7 +60,7 @@
             }
             $('#passwordConfirm').val(settings.password);
 
-            $('#test').on('click', function () {
+            $('#test').button().on('click', function () {
                 getIsAdapterAlive(function (isAlive) {
                     if (!isAlive) {
                         showToast(null, _('Start or enable adapter first'));
@@ -73,8 +74,8 @@
                                 user: $('#user').val(),
                                 protocol: $('#protocol').val(),
                                 password: $('#password').val(),
-                                organization: $('organization').val(),
-                                token: $('token').val(),
+                                organization: $('#organization').val(),
+                                token: $('#token').val(),
                                 dbname: $('#dbname').val()
                             }
                         }, function (response) {
@@ -190,7 +191,7 @@
                         <option value="1.8">1.8</option>
                         <option value="2.0">2.0</option>
                     </select>
-                    <label for="dbversion" class="transalte">DB-Version</label>
+                    <label for="dbversion" class="transalte">DB Version</label>
                 </div>
                 <div class="col s12 m8">
                     <input id="host" class="value"/>
