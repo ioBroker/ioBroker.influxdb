@@ -10,8 +10,8 @@
             "type": "select",
             "label": "DB-Version",
             "options": [
-                {"label": "1.8", "value": "1.8"},
-                {"label": "2.0", "value": "2.0"}
+                {"label": "1.x", "value": "1.x"},
+                {"label": "2.x", "value": "2.x"}
             ],
             "sm": 12,
             "md": 8
@@ -46,14 +46,14 @@
           "newLine": true,
           "type": "text",
           "label": "User",
-          "hidden": "data.dbversion === '2.0'",
+          "hidden": "data.dbversion === '2.x'",
           "sm": 12,
           "md": 4
         },
         "password": {
           "type": "password",
           "label": "Password",
-          "hidden": "data.dbversion === '2.0'",
+          "hidden": "data.dbversion === '2.x'",
           "repeat": true,
           "sm": 12,
           "md": 8
@@ -63,14 +63,14 @@
             "newLine": true,
             "type": "text",
             "label": "Organization",
-            "hidden": "data.dbversion === '1.8'",
+            "hidden": "data.dbversion === '1.x'",
             "sm": 12,
             "md": 4
           },
-          "password": {
+          "token": {
             "type": "text",
             "label": "Token",
-            "hidden": "data.dbversion === '1.8'",
+            "hidden": "data.dbversion === '1.x'",
             "repeat": false,
             "sm": 12,
             "md": 8

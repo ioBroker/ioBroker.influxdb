@@ -302,7 +302,7 @@
         "changesMinDelta": 0,
         "reconnectInterval": 10000,
         "pingInterval": 15000,
-        "dbversion": 1.8
+        "dbversion": "1.x"
     },
     "instanceObjects": [
         {

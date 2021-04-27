@@ -5,9 +5,8 @@
 
 //noinspection JSUnresolvedFunction
 const utils       = require('@iobroker/adapter-core'); // Get common adapter utils
-//const influx      = require('influx');
-const DatabaseInfluxDB18 = require ('./lib/DatabaseInfluxDB18.js').DatabaseInfluxDB18; // TODO if else
-const DatabaseInfluxDB20 = require ('./lib/DatabaseInfluxDB20.js').DatabaseInfluxDB20;
+const DatabaseInfluxDB1x = require ('./lib/DatabaseInfluxDB1x.js').DatabaseInfluxDB1x; // TODO if else
+const DatabaseInfluxDB2x = require ('./lib/DatabaseInfluxDB2x.js').DatabaseInfluxDB2x;
 const fs          = require('fs');
 const path        = require('path');
 const [appName, adapterName] = require('./package.json').name.split('.');
@@ -252,9 +251,9 @@ function connect(adapter) {
 
     adapter.log.info("Influx DB Version used: " + adapter.config.dbversion);
     switch (adapter.config.dbversion) {
-        case "2.0":
+        case "2.x":
             adapter.log.info("Connecting to InfluxDB 2");
-            adapter._client = new DatabaseInfluxDB20(
+            adapter._client = new DatabaseInfluxDB2x(
                 adapter.log,
                 adapter.config.host,
                 adapter.config.port, // optional, default 8086
@@ -265,8 +264,8 @@ function connect(adapter) {
             )
             break;
         default:
-        case "1.8":
-            adapter._client = new DatabaseInfluxDB18(
+        case "1.x":
+            adapter._client = new DatabaseInfluxDB1x(
                 adapter.log,
                 adapter.config.host,
                 adapter.config.port, // optional, default 8086
@@ -335,9 +334,9 @@ function testConnection(adapter, msg) {
         let lClient;
         adapter.log.debug("TEST DB Version: " + msg.message.config.dbversion);
         switch (msg.message.config.dbversion) {
-            case "2.0":
+            case "2.x":
                 adapter.log.info("Connecting to InfluxDB 2");
-                lClient = new DatabaseInfluxDB20(
+                lClient = new DatabaseInfluxDB2x(
                     adapter.log,
                     msg.message.config.host,
                     msg.message.config.port,
@@ -348,8 +347,8 @@ function testConnection(adapter, msg) {
                 )
                 break;
             default:
-            case "1.8":
-                lClient = new DatabaseInfluxDB18(
+            case "1.x":
+                lClient = new DatabaseInfluxDB1x(
                     adapter.log,
                     msg.message.config.host,
                     msg.message.config.port,
@@ -416,7 +415,7 @@ function processMessage(adapter, msg) {
         adapter.sendTo(msg.from, msg.command, {supportedFeatures: []}, msg.callback);
     } else
     if (msg.command === 'getHistory') {
-        (adapter.config.dbversion === "1.8") ? getHistory(adapter, msg) : getHistoryIflx2(adapter, msg);
+        (adapter.config.dbversion === "1.x") ? getHistory(adapter, msg) : getHistoryIflx2(adapter, msg);
     }
     else if (msg.command === 'test') {
         testConnection(adapter, msg);
@@ -427,11 +426,11 @@ function processMessage(adapter, msg) {
     else if (msg.command === 'query') {
         
         switch (adapter.config.dbversion) {
-            case "2.0":
-                // Influx 2.0 uses Flux instead of InfluxQL, so for multiple statements there is no delimiter by default, so we introduce ;
+            case "2.x":
+                // Influx 2.x uses Flux instead of InfluxQL, so for multiple statements there is no delimiter by default, so we introduce ;
                 multiQuery(adapter, msg);
                 break;
-            case "1.8":
+            case "1.x":
             default:
                 query(adapter, msg);
                 break;
@@ -1375,7 +1374,6 @@ function getHistory(adapter, msg) {
     });
 }
 
-// TODO
 function getHistoryIflx2(adapter, msg) {
 
     const options = {

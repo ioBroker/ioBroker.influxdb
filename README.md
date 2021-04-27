@@ -104,7 +104,7 @@ The multi-query feature is also supported. You can send multiple queries separat
 
 That's why the result is always an array with one numbered index for each query.
 
-### Influx <= 1.8
+### Influx 1.x
 Example with one query:
 
 ```
@@ -132,7 +132,7 @@ sendTo('influxdb.0', 'query', 'SELECT * FROM iobroker.global."system.adapter.adm
 ```
 **NOTE:** The values are coming back in the result array in filename "value" (instead of "val" as normal in ioBroker)
 
-###Influx >= 2.0
+### Influx 2.x
 In InfluxDB v2.0 onwards the SQL-based query language *InfluxQL* is deprecated in favour of *Flux*. For more information please refer to [the offical InfluxDB 2.0 documentation](https://docs.influxdata.com/influxdb/v2.0/reference/flux/).
 
 Example with one query:
@@ -287,7 +287,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 ## Changelog
 ### __WORK IN PROGRESS__
-* (Excodibur) Fixed bugged "Test Connection" button
+* (Excodibur) Fixed bugged "Test Connection" button (Admin 4)
 * (Excodibur) Added InfluxDB 2.0 support
 
 ### 1.9.5 (2021-04-19)
