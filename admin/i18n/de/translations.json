@@ -32,7 +32,7 @@
     "Seconds": "Sekunden",
     "Start or enable adapter first": "Adapter muss zuerst aktiviert werden",
     "Test connection": "Verbindung testen",
-    "User": "Login",
+    "User": "Benutzer",
     "debounce": "Änderungen ignorieren, bis der Wert für X Millisekunden unverändert bleibt",
     "keep forever": "keine automatische Löschung",
     "log changes interval(s)": "trotzdem gleiche Werte aufzeichnen (Sekunden)",
