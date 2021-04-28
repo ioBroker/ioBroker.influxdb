@@ -1482,7 +1482,7 @@ function getHistoryIflx2(adapter, msg) {
             |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
             |> sort(columns: ["_time"], desc: true) \
             |> limit(n: 1)';
-            fluxQuery = addFluxQuery + fluxQuery;
+            fluxQueries.push(addFluxQuery);
         }
         addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
             |> range(start: -' + adapter.config.retention + 'ms, stop: ' + new Date(options.end).toISOString() + ') \
