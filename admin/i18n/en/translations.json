@@ -22,6 +22,8 @@
   "History adapter settings": "History adapter settings",
   "Host": "Host",
   "Ok": "Ok",
+  "Organization": "Organization",
+  "Token": "Token",
   "Password": "Password",
   "Password confirm": "Password confirm",
   "Port": "Port",
