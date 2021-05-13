@@ -37,7 +37,7 @@
     "keep forever": "keine automatische Löschung",
     "log changes interval(s)": "trotzdem gleiche Werte aufzeichnen (Sekunden)",
     "log changes minimal delta": "Minimale Differenz zum letzten Wert",
-    "note": "History Einstellungen mussen für jeden State einzeln gemacht werden auf der Lasche \"States\" und nur wenn adapter aktiv ist",
+    "note": "History Einstellungen müssen für jeden State einzeln gemacht werden, im Tab \"States\" und nur wenn die Adapter Instanz aktiv ist",
     "retention": "Storage Vorhaltezeit",
     "use 0 to not buffer at all": "Wert 0 schreibt Werte direkt",
     "De-bounce time": "Entprellzeit"
