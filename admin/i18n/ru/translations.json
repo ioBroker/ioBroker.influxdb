@@ -11,7 +11,7 @@
     "3 months": "3 месяца",
     "5 days": "5 дней",
     "6 months": "3 месяца",
-    "Are you sure? All data will be dropped.": "Вы уверенны? Все данные в базе будут удалены. ",
+    "Are you sure? All data will be dropped.": "Вы уверены? Все данные в базе будут удалены. ",
     "Buffer Datapoints": "Собирать значения для записи",
     "Buffer Flush Interval": "Интервал записи значений",
     "DB Name": "Имя базы",
