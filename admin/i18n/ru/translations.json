@@ -13,7 +13,7 @@
     "6 months": "6 месяцев",
     "Are you sure? All data will be dropped.": "Вы уверены? Все данные в базе будут удалены. ",
     "Buffer Datapoints": "Собирать значения для записи",
-    "Buffer Flush Interval": "Интервал записи значений",
+    "Buffer Flush Interval": "Интервал записи значений  в базу из RAM",
     "DB Name": "Имя базы",
     "DB Type": "Тип базы",
     "DB settings:": "Настройки базы:",
