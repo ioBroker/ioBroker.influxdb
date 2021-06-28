@@ -69,13 +69,15 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Install Influxdb 1.x
+      - name: Install Influxdb 1.x (Linux)
+        if: startsWith(runner.OS, 'linux')
         run: |
           wget https://dl.influxdata.com/influxdb/releases/influxdb_1.8.6_amd64.deb
           sudo dpkg -i influxdb_1.8.6_amd64.deb
           sudo systemctl start influxd
 
-      - name: Run local tests
+      - name: Run local tests (Linux)
+        if: startsWith(runner.OS, 'linux')
         run: npm test
 #      - name: Run unit tests
 #        run: npm run test:unit
