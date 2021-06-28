@@ -117,7 +117,7 @@ jobs:
           sudo dpkg -i influxdb2-2.0.7-amd64.deb
           sudo systemctl start influxd
           sleep 10
-          influx setup --org test-org --bucket test-bucket --username test-user --password test-password --force
+          influx setup --org test-org --bucket test-bucket --username test-user --password test-password --force --host "http://localhost:8086"
           influx config list
 
       - name: Run local tests (Linux)
