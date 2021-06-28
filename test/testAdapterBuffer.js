@@ -87,6 +87,12 @@ describe('Test ' + adapterShortName + ' adapter with Buffered write', function()
             config.common.enabled  = true;
             config.common.loglevel = 'debug';
 
+            if (process.env.INFLUXDB2) {
+                config.native.dbversion = '2.x';
+                config.native.token = '';
+                confog.native.organization = '';
+            }
+
             config.native.seriesBufferMax = 3;
             config.native.dbname = 'otheriobroker';
 

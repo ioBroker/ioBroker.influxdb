@@ -88,6 +88,11 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             config.common.loglevel = 'debug';
 
             //config.native.dbtype   = 'sqlite';
+            if (process.env.INFLUXDB2) {
+                config.native.dbversion = '2.x';
+                config.native.token = '';
+                confog.native.organization = '';
+            }
 
             setup.setAdapterConfig(config.common, config.native);
 
