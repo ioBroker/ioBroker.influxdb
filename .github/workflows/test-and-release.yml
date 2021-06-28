@@ -118,8 +118,8 @@ jobs:
           sudo systemctl start influxd
           sleep 10
           sudo journalctl -u influxd
-          influx setup --org test-org --bucket test-bucket --username test-user --password test-password --force --host "http://localhost:8086"
-          influx config list
+          sudo influx setup --org test-org --bucket test-bucket --username test-user --password test-password --force --host "http://localhost:8086"
+          sudo influx config list
 
       - name: Run local tests (Linux)
         if: startsWith(runner.OS, 'linux')
