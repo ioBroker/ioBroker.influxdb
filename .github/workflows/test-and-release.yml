@@ -116,9 +116,9 @@ jobs:
           wget https://dl.influxdata.com/influxdb/releases/influxdb2-2.0.7-amd64.deb
           sudo dpkg -i influxdb2-2.0.7-amd64.deb
           sudo systemctl start influxdb
-          sleep 10
+          sleep 20
           sudo journalctl -u influxdb
-          sudo influx setup --org test-org --bucket test-bucket --username test-user --password test-password --force --host "http://localhost:8086"
+          sudo influx setup --org test-org --bucket test-bucket --username test-user --password test-password --force
           sudo influx config list
 
       - name: Run local tests (Linux)
