@@ -1,11 +1,14 @@
 ![Logo](admin/influxdb.png)
 # ioBroker.influxdb
 
-![Number of Installations](http://iobroker.live/badges/influxdb-installed.svg) ![Number of Installations](http://iobroker.live/badges/influxdb-stable.svg) [![NPM version](http://img.shields.io/npm/v/iobroker.influxdb.svg)](https://www.npmjs.com/package/iobroker.influxdb)
-[![Downloads](https://img.shields.io/npm/dm/iobroker.influxdb.svg)](https://www.npmjs.com/package/iobroker.influxdb)
-[![Tests](http://img.shields.io/travis/ioBroker/ioBroker.history/master.svg)](https://travis-ci.org/ioBroker/ioBroker.history)
+![Number of Installations](http://iobroker.live/badges/influxdb-installed.svg)
+![Number of Installations](http://iobroker.live/badges/influxdb-stable.svg)
+[![NPM version](http://img.shields.io/npm/v/iobroker.influxdb.svg)](https://www.npmjs.com/package/iobroker.influxdb)
 
-[![NPM](https://nodei.co/npm/iobroker.influxdb.png?downloads=true)](https://nodei.co/npm/iobroker.influxdb/)
+![Test and Release](https://github.com/ioBroker/iobroker.influxdb/workflows/Test%20and%20Release/badge.svg)
+[![Tests](http://img.shields.io/travis/ioBroker/ioBroker.influxdb/master.svg)](https://travis-ci.org/ioBroker/ioBroker.influxdb)
+[![Translation status](https://weblate.iobroker.net/widgets/adapters/-/influxdb/svg-badge.svg)](https://weblate.iobroker.net/engage/adapters/?utm_source=widget)
+[![Downloads](https://img.shields.io/npm/dm/iobroker.influxdb.svg)](https://www.npmjs.com/package/iobroker.influxdb)
 
 This adapter saves state history into InfluxDB.
 

@@ -13,7 +13,7 @@
             "pl": "Logowanie stanów do InfluxDB",
             "zh-cn": "将状态记录到InfluxDB中"
         },
-        "version": "1.9.5",
+        "version": "2.0.0",
         "titleLang": {
             "en": "Logging data with InfluxDB",
             "de": "Daten mit InfluxDB protokollieren",
@@ -281,8 +281,13 @@
                 "dsn": "https://29eecf4e8c954f2ea78110d47a9b122d@sentry.iobroker.net/54"
             }
         },
-        "jsonCustom": true,
-        "jsonConfig": true
+        "adminUI": {
+            "config": "json",
+            "custom": "json"
+        },
+        "connectionType": "local",
+        "dataSource": "none",
+        "tier": 1
     },
     "native": {
         "debounce": 1000,
