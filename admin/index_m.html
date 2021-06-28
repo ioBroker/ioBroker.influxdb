@@ -5,6 +5,7 @@
     <link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css">
 
     <script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="../../lib/js/jquery-ui.min.js"></script>
     <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
 
     <script type="text/javascript" src="../../js/translate.js"></script>
@@ -59,7 +60,7 @@
             }
             $('#passwordConfirm').val(settings.password);
 
-            $('#test').on('click', function () {
+            $('#test').button().on('click', function () {
                 getIsAdapterAlive(function (isAlive) {
                     if (!isAlive) {
                         showToast(null, _('Start or enable adapter first'));
@@ -67,11 +68,14 @@
                         $('#test').button('option', 'disabled', true);
                         sendTo(null, 'test', {
                             config: {
+                                dbversion: $('#dbversion').val(),
                                 port: $('#port').val(),
                                 host: $('#host').val(),
                                 user: $('#user').val(),
                                 protocol: $('#protocol').val(),
                                 password: $('#password').val(),
+                                organization: $('#organization').val(),
+                                token: $('#token').val(),
                                 dbname: $('#dbname').val()
                             }
                         }, function (response) {
@@ -117,6 +121,16 @@
                     $('.real-sql').show();
                     $('.baby-sql').hide();
                     $('.ms-sql').hide();
+                }
+            }).trigger('change');
+
+            $('#dbversion').on('change', function () {
+                if ($(this).val() === '1.x') {
+                    $('.influx1').show();
+                    $('.influx2').hide();
+                } else if ($(this).val() === '2.x') {
+                    $('.influx1').hide();
+                    $('.influx2').show();
                 }
             }).trigger('change');
 
@@ -173,6 +187,13 @@
             </div>
             <div class="row">
                 <div class="col s12 m8">
+                    <select id="dbversion" class="value">
+                        <option value="1.x">1.x</option>
+                        <option value="2.x">2.x</option>
+                    </select>
+                    <label for="dbversion" class="translate">DB version</label>
+                </div>
+                <div class="col s12 m8">
                     <input id="host" class="value"/>
                     <label for="host" class="translate">Host</label>
                 </div>
@@ -189,17 +210,25 @@
                 </div>
             </div>
             <div class="row">
-                <div class="col s12 m4">
+                <div class="col s12 m4 influx1">
                     <input id="user" class="value"/>
                     <label for="user" class="translate">User</label>
                 </div>
-                <div class="col s12 m4">
+                <div class="col s12 m4 influx1">
                     <input id="password" type="password" class="value"/>
                     <label for="password" class="translate">Password</label>
                 </div>
-                <div class="col s12 m4">
+                <div class="col s12 m4 influx1">
                     <input id="passwordConfirm" type="password"/>
                     <label for="passwordConfirm" class="translate">Password confirm</label>
+                </div>
+                <div class="col s12 m4 influx2">
+                    <input id="organization" class="value"/>
+                    <label for="organization" class="translate">Organization</label>
+                </div>
+                <div class="col s12 m4 influx2">
+                    <input id="token" class="value"/>
+                    <label for="token" class="translate">Token</label>
                 </div>
             </div>
             <div class="row">
