@@ -90,7 +90,7 @@ describe('Test ' + adapterShortName + ' adapter with Buffered write', function()
             if (process.env.INFLUXDB2) {
                 config.native.dbversion = '2.x';
                 config.native.token = '';
-                confog.native.organization = '';
+                confog.native.organization = 'test-org';
             }
 
             config.native.seriesBufferMax = 3;

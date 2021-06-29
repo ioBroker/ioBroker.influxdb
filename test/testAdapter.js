@@ -91,7 +91,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             if (process.env.INFLUXDB2) {
                 config.native.dbversion = '2.x';
                 config.native.token = '';
-                confog.native.organization = '';
+                config.native.organization = 'test-org';
             }
 
             setup.setAdapterConfig(config.common, config.native);

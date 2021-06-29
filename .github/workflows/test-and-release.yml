@@ -72,9 +72,9 @@ jobs:
       - name: Install Influxdb 1.x (Linux)
         if: startsWith(runner.OS, 'linux')
         run: |
-          wget https://dl.influxdata.com/influxdb/releases/influxdb_1.8.6_amd64.deb
+          wget -nv https://dl.influxdata.com/influxdb/releases/influxdb_1.8.6_amd64.deb
           sudo dpkg -i influxdb_1.8.6_amd64.deb
-          sudo systemctl start influxd
+          sudo systemctl start influxdb
 
       - name: Run local tests (Linux)
         if: startsWith(runner.OS, 'linux')
@@ -113,13 +113,14 @@ jobs:
       - name: Install Influxdb 2.x (Linux)
         if: startsWith(runner.OS, 'linux')
         run: |
-          wget https://dl.influxdata.com/influxdb/releases/influxdb2-2.0.7-amd64.deb
+          wget -nv https://dl.influxdata.com/influxdb/releases/influxdb2-2.0.7-amd64.deb
           sudo dpkg -i influxdb2-2.0.7-amd64.deb
           sudo systemctl start influxdb
           sleep 20
           sudo journalctl -u influxdb
           sudo influx setup --org test-org --bucket test-bucket --username test-user --password test-password --force
           sudo influx config list
+          influx auth create --read-buckets --read-checks --read-dashboards --read-dbrps --read-notificationEndpoints --read-notificationRules --read-orgs --read-tasks --read-telegrafs --read-user --write-buckets --write-checks --write-dashboards --write-dbrps --write-notificationEndpoints --write-notificationRules --write-orgs --write-tasks --write-telegrafs --write-user
 
       - name: Run local tests (Linux)
         if: startsWith(runner.OS, 'linux')
