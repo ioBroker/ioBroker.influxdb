@@ -364,7 +364,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             let query = 'SHOW FIELD KEYS FROM "influxdb.0.memRss"';
             if (process.env.INFLUXDB2) {
                 //from(db:"foo")
-                query = 'from(bucket: "iobroker") |> range(start:-1h) |> filter(fn:(r) => r._measurement == "influxdb.0.memRss") |> group(columns:["_field"]) |> distinct(column:"_field") |> group(none:true)';
+                query = 'from(bucket: "iobroker") |> range(start:-1h) |> filter(fn:(r) => r._measurement == "influxdb.0.memRss") |> group(columns:["_field"], mode:"by") |> distinct(column:"_field") |> group()';
             }
             sendTo('influxdb.0', 'query', query, function (result) {
                 console.log('result: ' + JSON.stringify(result.result, null, 2));
