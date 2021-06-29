@@ -1497,7 +1497,7 @@ function getHistoryIflx2(adapter, msg) {
 
     // if specific id requested
     adapter._client.queries(fluxQueries, (err, rows) => {
-        if (err) {
+        if (err && !rows) {
             if (adapter._client.request.getHostsAvailable().length === 0) {
                 setConnected(adapter, false);
             }
