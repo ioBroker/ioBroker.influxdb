@@ -89,7 +89,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
 
             //config.native.dbtype   = 'sqlite';
             if (process.env.INFLUXDB2) {
-                console.log(process.env.AUTHTOKEN);
+                console.log('AUTHTOKEN=' + process.env.AUTHTOKEN);
                 config.native.dbversion = '2.x';
                 config.native.token = '';
                 config.native.organization = 'test-org';

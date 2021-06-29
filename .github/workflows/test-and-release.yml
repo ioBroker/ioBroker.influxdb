@@ -111,6 +111,7 @@ jobs:
         run: npm install
 
       - name: Install Influxdb 2.x (Linux)
+        id: influxdb2
         if: startsWith(runner.OS, 'linux')
         run: |
           wget -nv https://dl.influxdata.com/influxdb/releases/influxdb2-2.0.7-amd64.deb
@@ -120,13 +121,14 @@ jobs:
           sudo journalctl -u influxdb
           sudo influx setup --org test-org --bucket test-bucket --username test-user --password test-password --token test-token --force
           sudo influx config list
-          sudo influx auth create --read-buckets --read-checks --read-dashboards --read-dbrps --read-notificationEndpoints --read-notificationRules --read-orgs --read-tasks --read-telegrafs --read-user --write-buckets --write-checks --write-dashboards --write-dbrps --write-notificationEndpoints --write-notificationRules --write-orgs --write-tasks --write-telegrafs --write-user --org test-org --token test-token --json > authtoken.json
-          sudo pwd
+          AUTHTOKEN=$(sudo influx auth create --read-buckets --read-checks --read-dashboards --read-dbrps --read-notificationEndpoints --read-notificationRules --read-orgs --read-tasks --read-telegrafs --read-user --write-buckets --write-checks --write-dashboards --write-dbrps --write-notificationEndpoints --write-notificationRules --write-orgs --write-tasks --write-telegrafs --write-user --org test-org --token test-token --json)
+          echo "::set-output name=AUTHTOKEN::$AUTHTOKEN"
 
       - name: Run local tests (Linux)
         if: startsWith(runner.OS, 'linux')
         env:
           INFLUXDB2: true
+          AUTHTOKEN: ${{ steps.influxdb2.outputs.AUTHTOKEN }}
         run: npm test
   #      - name: Run unit tests
   #        run: npm run test:unit
