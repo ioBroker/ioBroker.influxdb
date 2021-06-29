@@ -126,6 +126,7 @@ jobs:
           AUTHTOKEN="${AUTHTOKEN//$'\n'/'%0A'}"
           AUTHTOKEN="${AUTHTOKEN//$'\r'/'%0D'}"
           echo "::set-output name=AUTHTOKEN::$AUTHTOKEN"
+          sudo influx org list --token test-token
           sudo influx bucket list --token test-token
           sudo influx auth list --user test-user --token test-token --org test-org
 

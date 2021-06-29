@@ -302,7 +302,11 @@ describe('Test ' + adapterShortName + ' adapter', function() {
     it('Test ' + adapterShortName + ': Read values from DB using query', function (done) {
         this.timeout(10000);
 
-        sendTo('influxdb.0', 'query', 'SELECT * FROM "influxdb.0.memRss"', function (result) {
+        let query = 'SELECT * FROM "influxdb.0.memRss"';
+        if (process.env.INFLUXDB2) {
+            query = 'filter(fn: (r) => r._measurement == "influxdb.0.memRss")';
+        }
+        sendTo('influxdb.0', 'query', query, function (result) {
             console.log(JSON.stringify(result.result, null, 2));
             expect(result.result[0].length).to.be.at.least(5);
             var found = 0;
@@ -357,7 +361,12 @@ describe('Test ' + adapterShortName + ' adapter', function() {
         this.timeout(65000);
 
         setTimeout(function() {
-            sendTo('influxdb.0', 'query', 'SHOW FIELD KEYS FROM "influxdb.0.memRss"', function (result) {
+            let query = 'SHOW FIELD KEYS FROM "influxdb.0.memRss"';
+            if (process.env.INFLUXDB2) {
+                //from(db:"foo")
+                query = 'range(start:-1h) filter(fn:(r) => r._measurement == "influxdb.0.memRss") group(by:["_field"]) distinct(column:"_field") group(none:true)';
+            }
+            sendTo('influxdb.0', 'query', query, function (result) {
                 console.log('result: ' + JSON.stringify(result.result, null, 2));
                 var found = false;
                 for (var i = 0; i < result.result[0].length; i++) {
