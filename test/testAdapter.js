@@ -304,7 +304,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
 
         let query = 'SELECT * FROM "influxdb.0.memRss"';
         if (process.env.INFLUXDB2) {
-            query = 'from(bucket: "iobroker") filter(fn: (r) => r._measurement == "influxdb.0.memRss")';
+            query = 'from(bucket: "iobroker") |> filter(fn: (r) => r._measurement == "influxdb.0.memRss")';
         }
         sendTo('influxdb.0', 'query', query, function (result) {
             console.log(JSON.stringify(result.result, null, 2));
@@ -364,7 +364,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
             let query = 'SHOW FIELD KEYS FROM "influxdb.0.memRss"';
             if (process.env.INFLUXDB2) {
                 //from(db:"foo")
-                query = 'from(bucket: "iobroker") range(start:-1h) filter(fn:(r) => r._measurement == "influxdb.0.memRss") group(by:["_field"]) distinct(column:"_field") group(none:true)';
+                query = 'from(bucket: "iobroker") |> range(start:-1h) |> filter(fn:(r) => r._measurement == "influxdb.0.memRss") |> group(by:["_field"]) |> distinct(column:"_field") |> group(none:true)';
             }
             sendTo('influxdb.0', 'query', query, function (result) {
                 console.log('result: ' + JSON.stringify(result.result, null, 2));
