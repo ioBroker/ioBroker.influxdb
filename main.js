@@ -1478,7 +1478,7 @@ function getHistoryIflx2(adapter, msg) {
         let addFluxQuery = "";
         if (options.start) {
             addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
-            |> range(start: ' + new Date(options.start - adapter.config.retention).toISOString() + ', stop: ' + new Date(options.start).toISOString() + ') \
+            |> range(start: ' + new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString() + ', stop: ' + new Date(options.start).toISOString() + ') \
             |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
             |> sort(columns: ["_time"], desc: true) \
             |> limit(n: 1)';
