@@ -127,7 +127,7 @@ jobs:
           AUTHTOKEN="${AUTHTOKEN//$'\r'/'%0D'}"
           echo "::set-output name=AUTHTOKEN::$AUTHTOKEN"
           sudo influx bucket list --token test-token
-          sudo influx auth list --user username --token test-token --org test-org
+          sudo influx auth list --user test-user --token test-token --org test-org
 
       - name: Run local tests (Linux)
         if: startsWith(runner.OS, 'linux')
