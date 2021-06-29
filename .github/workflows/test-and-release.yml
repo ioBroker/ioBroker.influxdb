@@ -48,7 +48,7 @@ jobs:
 #        run: npm run test:package
 
   # Runs adapter tests on all supported node versions and OSes
-  adapter-tests1:
+  adapter-tests-influxdb1:
     if: contains(github.event.head_commit.message, '[skip ci]') == false
 
     needs: [check-and-lint]
@@ -89,7 +89,7 @@ jobs:
 #        run: set DEBUG=testing:* & npm run test:integration
 
   # Runs adapter tests on all supported node versions and OSes
-  adapter-tests2:
+  adapter-tests-influxdb2:
     if: contains(github.event.head_commit.message, '[skip ci]') == false
 
     needs: [check-and-lint]
@@ -153,7 +153,7 @@ jobs:
 
   # Deploys the final package to NPM
   deploy:
-    needs: [adapter-tests1,adapter-tests2]
+    needs: [adapter-tests-influxdb1,adapter-tests-influxdb2]
 
     # Trigger this step only when a commit on master is tagged with a version number
     if: |
