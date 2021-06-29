@@ -126,6 +126,8 @@ jobs:
           AUTHTOKEN="${AUTHTOKEN//$'\n'/'%0A'}"
           AUTHTOKEN="${AUTHTOKEN//$'\r'/'%0D'}"
           echo "::set-output name=AUTHTOKEN::$AUTHTOKEN"
+          sudo influx bucket list --token test-token
+          sudo influx auth list --user username --token test-token --org test-org
 
       - name: Run local tests (Linux)
         if: startsWith(runner.OS, 'linux')
@@ -146,6 +148,7 @@ jobs:
         if: startsWith(runner.OS, 'linux')
         run: |
           sudo influx bucket list --token test-token
+          sudo influx auth list --user username --token test-token --org test-org
 
   # Deploys the final package to NPM
   deploy:
