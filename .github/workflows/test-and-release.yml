@@ -49,7 +49,7 @@ jobs:
 
   # Runs adapter tests on all supported node versions and OSes
   adapter-tests1:
-    if: contains(github.event.head_commit.message, '[skip ci]') == false
+    if: contains(github.event.head_commit.message, '[skip ci]') == true
 
     needs: [check-and-lint]
 
@@ -118,9 +118,9 @@ jobs:
           sudo systemctl start influxdb
           sleep 20
           sudo journalctl -u influxdb
-          sudo influx setup --org test-org --bucket test-bucket --username test-user --password test-password --force
+          sudo influx setup --org test-org --bucket test-bucket --username test-user --password test-password --token test-token --force
           sudo influx config list
-          influx auth create --read-buckets --read-checks --read-dashboards --read-dbrps --read-notificationEndpoints --read-notificationRules --read-orgs --read-tasks --read-telegrafs --read-user --write-buckets --write-checks --write-dashboards --write-dbrps --write-notificationEndpoints --write-notificationRules --write-orgs --write-tasks --write-telegrafs --write-user --org test-org
+          influx auth create --read-buckets --read-checks --read-dashboards --read-dbrps --read-notificationEndpoints --read-notificationRules --read-orgs --read-tasks --read-telegrafs --read-user --write-buckets --write-checks --write-dashboards --write-dbrps --write-notificationEndpoints --write-notificationRules --write-orgs --write-tasks --write-telegrafs --write-user --org test-org --token test-token
 
       - name: Run local tests (Linux)
         if: startsWith(runner.OS, 'linux')
