@@ -1430,7 +1430,6 @@ function getHistoryIflx2(adapter, msg) {
 
     fluxQuery += " |> range(" + ((options.start) ? "start: " + new Date(options.start).toISOString() + ", " : "start: -" + adapter.config.retention +"ms, ") + "stop: " + new Date(options.end).toISOString() + ")";
     fluxQuery += ' |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") ';
-    fluxQuery += ' |> yield() ';
 
     if (!options.start && (options.count || options.limit)) {
         fluxQuery += " |> sort(columns:[\"_time\"], desc: true)";
@@ -1481,7 +1480,6 @@ function getHistoryIflx2(adapter, msg) {
             addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
             |> range(start: ' + new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString() + ', stop: ' + new Date(options.start).toISOString() + ') \
             |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
-            |> yield() \
             |> sort(columns: ["_time"], desc: true) \
             |> tail(n: 1)';
             fluxQueries.push(addFluxQuery);
@@ -1490,7 +1488,6 @@ function getHistoryIflx2(adapter, msg) {
         addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
             |> range(start: ' + new Date(options.end).toISOString() + ') \
             |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
-            |> yield() \
             |> sort(columns: ["_time"], desc: false) \
             |> limit(n: 1)';
         //fluxQuery = fluxQuery + addFluxQuery;
