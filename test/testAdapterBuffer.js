@@ -88,9 +88,10 @@ describe('Test ' + adapterShortName + ' adapter with Buffered write', function()
             config.common.loglevel = 'debug';
 
             if (process.env.INFLUXDB2) {
+                console.log(process.env.AUTHTOKEN);
                 config.native.dbversion = '2.x';
                 config.native.token = '';
-                confog.native.organization = 'test-org';
+                config.native.organization = 'test-org';
             }
 
             config.native.seriesBufferMax = 3;
