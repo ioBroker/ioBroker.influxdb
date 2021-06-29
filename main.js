@@ -1478,14 +1478,14 @@ function getHistoryIflx2(adapter, msg) {
         let addFluxQuery = "";
         if (options.start) {
             addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
-            |> range(start: ' + new Date(options.start).toISOString() + ') \
+            |> range(stop: ' + new Date(options.start).toISOString() + ') \
             |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
             |> sort(columns: ["_time"], desc: true) \
             |> limit(n: 1)';
             fluxQueries.push(addFluxQuery);
         }
         addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
-            |> range(start: -' + adapter.config.retention + 'ms, stop: ' + new Date(options.end).toISOString() + ') \
+            |> range(start: ' + new Date(options.end).toISOString() + ') \
             |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
             |> sort(columns: ["_time"], desc: false) \
             |> limit(n: 1)';
