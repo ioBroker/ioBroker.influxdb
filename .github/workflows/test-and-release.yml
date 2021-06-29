@@ -121,7 +121,7 @@ jobs:
           sudo journalctl -u influxdb
           sudo influx setup --org test-org --bucket test-bucket --username test-user --password test-password --token test-token --force
           sudo influx config list
-          AUTHTOKEN=$(sudo influx auth create --read-buckets --read-checks --read-dashboards --read-dbrps --read-notificationEndpoints --read-notificationRules --read-orgs --read-tasks --read-telegrafs --read-user --write-buckets --write-checks --write-dashboards --write-dbrps --write-notificationEndpoints --write-notificationRules --write-orgs --write-tasks --write-telegrafs --write-user --org test-org --token test-token --json)
+          AUTHTOKEN=`sudo influx auth create --read-buckets --read-checks --read-dashboards --read-dbrps --read-notificationEndpoints --read-notificationRules --read-orgs --read-tasks --read-telegrafs --read-user --write-buckets --write-checks --write-dashboards --write-dbrps --write-notificationEndpoints --write-notificationRules --write-orgs --write-tasks --write-telegrafs --write-user --org test-org --token test-token --json --hide-headers`
           echo "::set-output name=AUTHTOKEN::$AUTHTOKEN"
 
       - name: Run local tests (Linux)
