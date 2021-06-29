@@ -93,7 +93,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                 console.log('AUTHTOKEN=' + process.env.AUTHTOKEN);
                 console.log('extracted token =' + authToken);
                 config.native.dbversion = '2.x';
-                config.native.token = authToken;
+                config.native.token = 'test-token'; //authToken;
                 config.native.organization = 'test-org';
             }
 
