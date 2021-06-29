@@ -527,8 +527,12 @@ describe('Test ' + adapterShortName + ' adapter with Buffered write', function()
         this.timeout(5000);
 
         objects.getObject('system.adapter.influxdb.0.memHeapUsed', function(err, obj) {
-            // Seems that InfluxDB 2 on mass writes reacts differently on type mismatch of single entries :-(
-            expect(obj.common.custom['influxdb.0'].storageType).to.be.undefined;
+            if (process.env.INFLUXDB2) {
+                // Seems that InfluxDB 2 on mass writes reacts differently on type mismatch of single entries :-(
+                expect(obj.common.custom['influxdb.0'].storageType).to.be.undefined;
+            } else {
+                expect(obj.common.custom['influxdb.0'].storageType).to.be.equal('String');
+            }
             expect(err).to.be.null;
             done();
         });
