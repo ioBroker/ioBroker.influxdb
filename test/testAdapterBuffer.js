@@ -87,6 +87,15 @@ describe('Test ' + adapterShortName + ' adapter with Buffered write', function()
             config.common.enabled  = true;
             config.common.loglevel = 'debug';
 
+            if (process.env.INFLUXDB2) {
+                const authToken = JSON.parse(process.env.AUTHTOKEN).token;
+                console.log('AUTHTOKEN=' + process.env.AUTHTOKEN);
+                console.log('extracted token =' + authToken);
+                config.native.dbversion = '2.x';
+                config.native.token = 'test-token'; //authToken;
+                config.native.organization = 'test-org';
+            }
+
             config.native.seriesBufferMax = 3;
             config.native.dbname = 'otheriobroker';
 
@@ -298,7 +307,12 @@ describe('Test ' + adapterShortName + ' adapter with Buffered write', function()
     it('Test ' + adapterShortName + ': Read values from DB using query', function (done) {
         this.timeout(10000);
 
-        sendTo('influxdb.0', 'query', 'SELECT * FROM "influxdb.0.memRss"', function (result) {
+        let query = 'SELECT * FROM "influxdb.0.memRss"';
+        if (process.env.INFLUXDB2) {
+            query = 'from(bucket: "iobroker") |> range(start:-1h) |> filter(fn: (r) => r._measurement == "influxdb.0.memRss")';
+        }
+
+        sendTo('influxdb.0', 'query', query, function (result) {
             console.log(JSON.stringify(result.result, null, 2));
             expect(result.result[0].length).to.be.at.least(5);
             var found = 0;
@@ -351,6 +365,11 @@ describe('Test ' + adapterShortName + ' adapter with Buffered write', function()
     });
     it('Test ' + adapterShortName + ': Check Datapoint Types', function (done) {
         this.timeout(65000);
+
+        if (process.env.INFLUXDB2) {
+            // TODO: FIndFlux equivalent!
+            return done();
+        }
 
         setTimeout(function() {
             sendTo('influxdb.0', 'query', 'SHOW FIELD KEYS FROM "influxdb.0.memRss"', function (result) {

@@ -14,6 +14,7 @@
             "zh-cn": "将状态记录到InfluxDB中"
         },
         "version": "2.0.0",
+        "title": "Logging data with InfluxDB",
         "titleLang": {
             "en": "Logging data with InfluxDB",
             "de": "Daten mit InfluxDB protokollieren",

@@ -278,7 +278,7 @@ function connect(adapter) {
             );
             break;
     }
-    
+
 
     adapter._client.getDatabaseNames((err, dbNames) => {
         if (err) {
@@ -424,7 +424,7 @@ function processMessage(adapter, msg) {
         destroyDB(adapter, msg);
     }
     else if (msg.command === 'query') {
-        
+
         switch (adapter.config.dbversion) {
             case "2.x":
                 // Influx 2.x uses Flux instead of InfluxQL, so for multiple statements there is no delimiter by default, so we introduce ;
@@ -1392,7 +1392,7 @@ function getHistoryIflx2(adapter, msg) {
         options.id = adapter._aliasMap[options.id];
     }
     const fluxQueries = [];
-    let fluxQuery = 'from(bucket: "' + adapter.config.dbname + '") ';  
+    let fluxQuery = 'from(bucket: "' + adapter.config.dbname + '") ';
 
     if (!adapter._influxDPs[options.id]) {
         adapter.sendTo(msg.from, msg.command, {
@@ -1603,7 +1603,7 @@ function query(adapter, msg) {
 function multiQuery(adapter, msg) {
     if (adapter._client) {
         const queriesString = msg.message.query || msg.message;
-        
+
         let queries;
         try {
             //parse queries to array
@@ -1628,8 +1628,7 @@ function multiQuery(adapter, msg) {
             }, msg.callback);
             return;
         }
-
-        adapter.log.debug('queries: ' + query);
+        adapter.log.debug('queries: ' + queries);
 
         adapter._client.queries(queries, (err, rows) => {
             if (err) {
