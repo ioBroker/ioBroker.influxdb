@@ -1440,7 +1440,7 @@ function getHistoryIflx2(adapter, msg) {
             fluxQuery += ' |> window(every: ' + options.step + 'ms)';
         fluxQuery += '|> fill(column: "_value", usePrevious: true)';
     } else if (options.aggregate !== 'minmax') {
-        fluxQuery += ' |> limit(n: ' + options.count + ')';
+        fluxQuery += ' |> group() |> limit(n: ' + options.count + ')';
     }
 
     if (options.step) {
@@ -1470,6 +1470,7 @@ function getHistoryIflx2(adapter, msg) {
                 break;
         }
     }
+
     fluxQueries.push(fluxQuery);
 
     // select one datapoint more then wanted
@@ -1481,14 +1482,19 @@ function getHistoryIflx2(adapter, msg) {
             |> range(start: ' + new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString() + ', stop: ' + new Date(options.start).toISOString() + ') \
             |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
             |> sort(columns: ["_time"], desc: true) \
-            |> tail(n: 1)';
+            |> group() \
+            |> limit(n: 1)';
+            
+            const mainQuery = fluxQueries.pop();
             fluxQueries.push(addFluxQuery);
+            fluxQueries.push(mainQuery);
         }
         // get one entry "after" the defined timeframe for displaying purposes
         addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
             |> range(start: ' + new Date(options.end).toISOString() + ') \
             |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
             |> sort(columns: ["_time"], desc: false) \
+            |> group() \
             |> limit(n: 1)';
         //fluxQuery = fluxQuery + addFluxQuery;
         fluxQueries.push(addFluxQuery);
