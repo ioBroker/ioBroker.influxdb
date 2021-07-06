@@ -145,12 +145,6 @@ jobs:
   #        if: startsWith(runner.OS, 'windows')
   #        run: set DEBUG=testing:* & npm run test:integration
 
-      - name: Echo Influxdb 2.x (Linux) infos
-        if: startsWith(runner.OS, 'linux')
-        run: |
-          sudo influx bucket list --token test-token
-          sudo influx auth list --user username --token test-token --org test-org
-
   # Deploys the final package to NPM
   deploy:
     needs: [adapter-tests-influxdb1,adapter-tests-influxdb2]
