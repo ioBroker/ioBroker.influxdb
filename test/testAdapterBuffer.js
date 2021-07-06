@@ -309,7 +309,7 @@ describe('Test ' + adapterShortName + ' adapter with Buffered write', function()
 
         let query = 'SELECT * FROM "influxdb.0.memRss"';
         if (process.env.INFLUXDB2) {
-            query = 'from(bucket: "iobroker") |> range(start:-1h) |> filter(fn: (r) => r._measurement == "influxdb.0.memRss")';
+            query = 'from(bucket: "otheriobroker") |> range(start:-1h) |> filter(fn: (r) => r._measurement == "influxdb.0.memRss")';
         }
 
         sendTo('influxdb.0', 'query', query, function (result) {
@@ -528,9 +528,6 @@ describe('Test ' + adapterShortName + ' adapter with Buffered write', function()
 
         objects.getObject('system.adapter.influxdb.0.memHeapUsed', function(err, obj) {
             if (process.env.INFLUXDB2) {
-                // Seems that InfluxDB 2 on mass writes reacts differently on type mismatch of single entries :-(
-                expect(obj.common.custom['influxdb.0'].storageType).to.be.undefined;
-            } else {
                 expect(obj.common.custom['influxdb.0'].storageType).to.be.equal('String');
             }
             expect(err).to.be.null;

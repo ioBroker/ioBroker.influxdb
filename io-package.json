@@ -259,7 +259,8 @@
         "stopTimeout": 3000,
         "authors": [
             "Bluefox <dogafox@gmail.com>",
-            "Apollon77 <ingo@fischer-ka.de>"
+            "Apollon77 <ingo@fischer-ka.de>",
+            "Excodibur"
         ],
         "license": "MIT",
         "readme": "https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md",
