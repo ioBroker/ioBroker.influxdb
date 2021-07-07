@@ -291,22 +291,20 @@ function connect(adapter) {
                     if (err) {
                         adapter.log.error(err);
                         reconnect(adapter);
-                    } else {
-                        if (!err && adapter.config.retention) {
-                            return void adapter._client.createRetentionPolicyForDB(adapter.config.dbname, adapter.config.retention, err => {
-                                err && err.toString().indexOf('already exists') === -1 && adapter.log.error(err);
-                                connect(adapter);
-                            });
-                        } else {
-                            return void connect(adapter);
-                        }
                     }
                 });
             } else {
+                //Check and potentially update retention policy
+                adapter._client.applyRetentionPolicyToDB(adapter.config.dbname, adapter.config.retention, err => {
+                    err && err.toString().indexOf('already exists') === -1 && adapter.log.error(err);
+                });
+
                 processStartValues(adapter);
                 adapter.log.info('Connected!');
                 startPing(adapter);
             }
+
+            
         }
     });
 }
@@ -318,6 +316,20 @@ function processStartValues(adapter) {
             pushHistory(adapter, taskId, adapter._influxDPs[taskId].state, true);
         }
         setImmediate(() => processStartValues(adapter));
+    }
+}
+
+function getRetention(adapter, msg) {
+    adapter.log.debug("getRetention invoked, checking DB");
+    try {
+        adapter._client.getRetentionPolicyForDB(adapter.config.dbname, result => {            
+            adapter.sendTo(msg.from, msg.command, {
+                result:     result,
+                error:      null
+            }, msg.callback);
+        });
+    } catch (ex) {
+        adapter.sendTo(msg.from, msg.command, {error: ex.toString()}, msg.callback);
     }
 }
 
@@ -461,6 +473,9 @@ function processMessage(adapter, msg) {
                 setTimeout(() => adapter.terminate ? adapter.terminate() : process.exit(), 200);
             }
         });
+    }
+    else if (msg.command === 'getRetention') {
+        getRetention(adapter, msg);
     }
 }
 

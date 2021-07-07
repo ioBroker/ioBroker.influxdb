@@ -153,7 +153,7 @@
                 }
             });
 
-            if ($('#passwordConfirm').val() !== $('#password').val()) {
+            if (($('#dbversion').val() === '1.x') && ($('#passwordConfirm').val() !== $('#password').val())) {
                 showMessage(_('Password confirmation is not equal with password!'));
                 return;
             }
