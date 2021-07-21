@@ -98,11 +98,6 @@ function startAdapter(options) {
                 adapter.subscribeForeignStates('*');
             }
 
-            if (obj.common.custom[adapter.namespace].retention !== undefined && obj.common.custom[adapter.namespace].retention !== null && obj.common.custom[adapter.namespace].retention !== '') {
-                obj.common.custom[adapter.namespace].retention = parseInt(obj.common.custom[adapter.namespace].retention || adapter.config.retention, 10) || 0;
-            } else {
-                obj.common.custom[adapter.namespace].retention = adapter.config.retention;
-            }
             if (obj.common.custom[adapter.namespace].debounce !== undefined && obj.common.custom[adapter.namespace].debounce !== null && obj.common.custom[adapter.namespace].debounce !== '') {
                 obj.common.custom[adapter.namespace].debounce = parseInt(obj.common.custom[adapter.namespace].debounce, 10) || 0;
             } else {
@@ -120,11 +115,6 @@ function startAdapter(options) {
                 obj.common.custom[adapter.namespace].changesMinDelta = adapter.config.changesMinDelta;
             }
             if (!obj.common.custom[adapter.namespace].storageType) obj.common.custom[adapter.namespace].storageType = false;
-
-            // add one day if retention is too small
-            if (obj.common.custom[adapter.namespace].retention && obj.common.custom[adapter.namespace].retention <= 604800) {
-                obj.common.custom[adapter.namespace].retention += 86400;
-            }
 
             if (adapter._influxDPs[formerAliasId] && !adapter._influxDPs[formerAliasId].storageTypeAdjustedInternally && adapter._influxDPs[formerAliasId][adapter.namespace] && isEqual(obj.common.custom[adapter.namespace], adapter._influxDPs[formerAliasId][adapter.namespace])) {
                 adapter.log.debug('Object ' + id + ' unchanged. Ignore');
@@ -291,22 +281,25 @@ function connect(adapter) {
                     if (err) {
                         adapter.log.error(err);
                         reconnect(adapter);
-                    } else {
-                        if (!err && adapter.config.retention) {
-                            return void adapter._client.createRetentionPolicyForDB(adapter.config.dbname, adapter.config.retention, err => {
-                                err && err.toString().indexOf('already exists') === -1 && adapter.log.error(err);
-                                connect(adapter);
-                            });
-                        } else {
-                            return void connect(adapter);
-                        }
                     }
+
+                    //Check and potentially update retention policy
+                    adapter._client.applyRetentionPolicyToDB(adapter.config.dbname, adapter.config.retention, err => {
+                        err && err.toString().indexOf('already exists') === -1 && adapter.log.error(err);
+                    });
                 });
             } else {
+                //Check and potentially update retention policy
+                adapter._client.applyRetentionPolicyToDB(adapter.config.dbname, adapter.config.retention, err => {
+                    err && err.toString().indexOf('already exists') === -1 && adapter.log.error(err);
+                });
+
                 processStartValues(adapter);
                 adapter.log.info('Connected!');
                 startPing(adapter);
             }
+
+            
         }
     });
 }
@@ -318,6 +311,20 @@ function processStartValues(adapter) {
             pushHistory(adapter, taskId, adapter._influxDPs[taskId].state, true);
         }
         setImmediate(() => processStartValues(adapter));
+    }
+}
+
+function getRetention(adapter, msg) {
+    adapter.log.debug("getRetention invoked, checking DB");
+    try {
+        adapter._client.getRetentionPolicyForDB(adapter.config.dbname, result => {            
+            adapter.sendTo(msg.from, msg.command, {
+                result:     result,
+                error:      null
+            }, msg.callback);
+        });
+    } catch (ex) {
+        adapter.sendTo(msg.from, msg.command, {error: ex.toString()}, msg.callback);
     }
 }
 
@@ -462,6 +469,9 @@ function processMessage(adapter, msg) {
             }
         });
     }
+    else if (msg.command === 'getRetention') {
+        getRetention(adapter, msg);
+    }
 }
 
 function getConflictingPoints(adapter, msg) {
@@ -574,11 +584,6 @@ function main(adapter) {
                         } else {
                             count++;
                             adapter.log.info('enabled logging of ' + id + ', Alias=' + (id !== realId) + ', ' + count + ' points now activated');
-                            if (adapter._influxDPs[id][adapter.namespace].retention !== undefined && adapter._influxDPs[id][adapter.namespace].retention !== null && adapter._influxDPs[id][adapter.namespace].retention !== '') {
-                                adapter._influxDPs[id][adapter.namespace].retention = parseInt(adapter._influxDPs[id][adapter.namespace].retention || adapter.config.retention, 10) || 0;
-                            } else {
-                                adapter._influxDPs[id][adapter.namespace].retention = adapter.config.retention;
-                            }
 
                             if (adapter._influxDPs[id][adapter.namespace].debounce !== undefined && adapter._influxDPs[id][adapter.namespace].debounce !== null && adapter._influxDPs[id][adapter.namespace].debounce !== '') {
                                 adapter._influxDPs[id][adapter.namespace].debounce = parseInt(adapter._influxDPs[id][adapter.namespace].debounce, 10) || 0;
@@ -599,11 +604,6 @@ function main(adapter) {
                                 adapter._influxDPs[id][adapter.namespace].changesMinDelta = adapter.config.changesMinDelta;
                             }
                             if (!adapter._influxDPs[id][adapter.namespace].storageType) adapter._influxDPs[id][adapter.namespace].storageType = false;
-
-                            // add one day if retention is too small
-                            if (adapter._influxDPs[id][adapter.namespace].retention && adapter._influxDPs[id][adapter.namespace].retention <= 604800) {
-                                adapter._influxDPs[id][adapter.namespace].retention += 86400;
-                            }
 
                             adapter._influxDPs[id].realId  = realId;
                             writeInitialValue(adapter, realId, id);
@@ -1333,7 +1333,7 @@ function getHistory(adapter, msg) {
         } else {
             setConnected(adapter, true);
         }
-        adapter.log.info("ROWS:" + JSON.stringify(rows));
+        adapter.log.debug("ROWS:" + JSON.stringify(rows));
         let result = [];
         if (rows && rows.length) {
             for (let qr = 0; qr < rows.length; qr++) {
