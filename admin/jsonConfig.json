@@ -223,7 +223,20 @@
           ],
           "sm": 12,
           "md": 6
-        }
+        },
+        "retentionConfirm": {
+            "type": "checkbox",
+            "label": "Lower retention",
+            "hidden": "data.retention >= originalData.retention",
+            "disabled": "data.retention >= originalData.retention",
+            "confirm": {
+              "text": "Are your sure about lowering the retention? Past data exceeding the retention period will be lost.",
+              "condition": "data.retentionConfirm && data.retentionConfirm != originalData.retentionConfirm",
+              "title": "Please confirm",
+              "type": "warning"
+            },
+            "validator": "false"
+          }
       }
     }
   }

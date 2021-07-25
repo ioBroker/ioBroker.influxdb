@@ -1443,113 +1443,141 @@ function getHistoryIflx2(adapter, msg) {
         fluxQuery += ' |> group() |> limit(n: ' + options.count + ')';
     }
 
-    if (options.step) {
-        switch (options.aggregate) {
-            case 'average':
-                fluxQuery += ' |> mean(column: "_value")';
-                break;
+    //Workaround to detect if measurement is of type bool (to skip non-sensical aggregation options)
+    //There seems to be no officially supported way to detect this, so we check it by forcing a type-conflict
+    const booleanTypeCheckQuery = '\
+        from(bucket: "' + adapter.config.dbname + '")\
+        |> range(' + ((options.start) ? 'start: ' + new Date(options.start).toISOString() + ', ' : 'start: -' + adapter.config.retention +'ms, ') + 'stop: ' + new Date(options.end).toISOString() + ')\
+        |> filter(fn: (r) => r["_measurement"] == "' + options.id + '" and contains(value: r._value, set: [true, false]))\
+    ';
 
-            case 'max':
-                fluxQuery += ' |> max(column: "_value")';
-                break;
-
-            case 'min':
-                fluxQuery += ' |> min(column: "_value")';
-                break;
-
-            case 'total':
-                fluxQuery += ' |> sum(column: "_value")';
-                break;
-
-            case 'count':
-                fluxQuery += ' |> count(column: "_value")';
-                break;
-
-            default:
-                fluxQuery += ' |> mean(column: "_value")';
-                break;
-        }
-    }
-
-    fluxQueries.push(fluxQuery);
-
-    // select one datapoint more then wanted
-    if (options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none') {
-        let addFluxQuery = "";
-        if (options.start) {
-            // get one entry "before" the defined timeframe for displaying purposes
-            addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
-            |> range(start: ' + new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString() + ', stop: ' + new Date(options.start).toISOString() + ') \
-            |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
-            |> sort(columns: ["_time"], desc: true) \
-            |> group() \
-            |> limit(n: 1)';
-            
-            const mainQuery = fluxQueries.pop();
-            fluxQueries.push(addFluxQuery);
-            fluxQueries.push(mainQuery);
-        }
-        // get one entry "after" the defined timeframe for displaying purposes
-        addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
-            |> range(start: ' + new Date(options.end).toISOString() + ') \
-            |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
-            |> sort(columns: ["_time"], desc: false) \
-            |> group() \
-            |> limit(n: 1)';
-        //fluxQuery = fluxQuery + addFluxQuery;
-        fluxQueries.push(addFluxQuery);
-    }
-
-    adapter.log.debug(fluxQueries);
-
-    // if specific id requested
-    adapter._client.queries(fluxQueries, (err, rows) => {
-        if (err && !rows) {
-            if (adapter._client.request.getHostsAvailable().length === 0) {
-                setConnected(adapter, false);
-            }
-            adapter.log.error('getHistory: ' + err);
+    adapter._client.query(booleanTypeCheckQuery, (error, rslt) => {
+        let isBoolean;
+        if (error) {
+            if (error.message.match(".*type conflict: bool.*"))
+                isBoolean = false;
+            else {
+                adapter.sendTo(msg.from, msg.command, {
+                    result:     [],
+                    error:      error,
+                    sessionId:  options.sessionId
+                }, msg.callback);
+                return;
+            }  
         } else {
-            setConnected(adapter, true);
+            isBoolean = true;
+            adapter.log.debug("Measurement " + options.id + " is of type Boolean - skipping aggregation options");
         }
-        adapter.log.debug("Parsing retrieved rows:" + JSON.stringify(rows));
-        let result = [];
-        if (rows && rows.length) {
-            for (let qr = 0; qr < rows.length; qr++) {
-                for (let rr = 0; rr < rows[qr].length; rr++) {
-                    if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
-                        rows[qr][rr].val = rows[qr][rr].value;
-                        delete rows[qr][rr].value;
-                    }
-                    rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
-                    delete rows[qr][rr].time;
-                    if (rows[qr][rr].val !== null) {
-                        const f = parseFloat(rows[qr][rr].val);
-                        if (f == rows[qr][rr].val) {
-                            rows[qr][rr].val = f;
-                            if (adapter.config.round) {
-                                rows[qr][rr].val = Math.round(rows[qr][rr].val * adapter.config.round) / adapter.config.round;
+    
+
+        if (options.step && !isBoolean) {
+            switch (options.aggregate) {
+                case 'average':
+                    fluxQuery += ' |> mean(column: "_value")';
+                    break;
+
+                case 'max':
+                    fluxQuery += ' |> max(column: "_value")';
+                    break;
+
+                case 'min':
+                    fluxQuery += ' |> min(column: "_value")';
+                    break;
+
+                case 'total':
+                    fluxQuery += ' |> sum(column: "_value")';
+                    break;
+
+                case 'count':
+                    fluxQuery += ' |> count(column: "_value")';
+                    break;
+
+                default:
+                    fluxQuery += ' |> mean(column: "_value")';
+                    break;
+            }
+        }
+
+        fluxQueries.push(fluxQuery);
+
+        // select one datapoint more then wanted
+        if (options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none') {
+            let addFluxQuery = "";
+            if (options.start) {
+                // get one entry "before" the defined timeframe for displaying purposes
+                addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
+                |> range(start: ' + new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString() + ', stop: ' + new Date(options.start).toISOString() + ') \
+                |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
+                |> sort(columns: ["_time"], desc: true) \
+                |> group() \
+                |> limit(n: 1)';
+                
+                const mainQuery = fluxQueries.pop();
+                fluxQueries.push(addFluxQuery);
+                fluxQueries.push(mainQuery);
+            }
+            // get one entry "after" the defined timeframe for displaying purposes
+            addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
+                |> range(start: ' + new Date(options.end).toISOString() + ') \
+                |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
+                |> sort(columns: ["_time"], desc: false) \
+                |> group() \
+                |> limit(n: 1)';
+            //fluxQuery = fluxQuery + addFluxQuery;
+            fluxQueries.push(addFluxQuery);
+        }
+
+        adapter.log.debug("History-queries to execute: " + fluxQueries);
+
+        // if specific id requested
+        adapter._client.queries(fluxQueries, (err, rows) => {
+            if (err && !rows) {
+                if (adapter._client.request.getHostsAvailable().length === 0) {
+                    setConnected(adapter, false);
+                }
+                adapter.log.error('getHistory: ' + err);
+            } else {
+                setConnected(adapter, true);
+            }
+            adapter.log.debug("Parsing retrieved rows:" + JSON.stringify(rows));
+            let result = [];
+            if (rows && rows.length) {
+                for (let qr = 0; qr < rows.length; qr++) {
+                    for (let rr = 0; rr < rows[qr].length; rr++) {
+                        if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
+                            rows[qr][rr].val = rows[qr][rr].value;
+                            delete rows[qr][rr].value;
+                        }
+                        rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
+                        delete rows[qr][rr].time;
+                        if (rows[qr][rr].val !== null) {
+                            const f = parseFloat(rows[qr][rr].val);
+                            if (f == rows[qr][rr].val) {
+                                rows[qr][rr].val = f;
+                                if (adapter.config.round) {
+                                    rows[qr][rr].val = Math.round(rows[qr][rr].val * adapter.config.round) / adapter.config.round;
+                                }
                             }
                         }
+                        if (options.addId) rows[qr][rr].id = msg.message.id;
+                        result.push(rows[qr][rr]);
                     }
-                    if (options.addId) rows[qr][rr].id = msg.message.id;
-                    result.push(rows[qr][rr]);
                 }
             }
-        }
 
-        if ((result.length > 0) && (options.aggregate === 'minmax')) {
-            Aggregate.initAggregate(options);
-            Aggregate.aggregation(options, result);
-            Aggregate.finishAggregation(options);
-            result = options.result;
-        }
+            if ((result.length > 0) && (options.aggregate === 'minmax')) {
+                Aggregate.initAggregate(options);
+                Aggregate.aggregation(options, result);
+                Aggregate.finishAggregation(options);
+                result = options.result;
+            }
 
-        adapter.sendTo(msg.from, msg.command, {
-            result:     result,
-            error:      err,
-            sessionId:  options.sessionId
-        }, msg.callback);
+            adapter.sendTo(msg.from, msg.command, {
+                result:     result,
+                error:      err,
+                sessionId:  options.sessionId
+            }, msg.callback);
+        });
     });
 }
 
