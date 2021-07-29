@@ -249,10 +249,12 @@
         "materialize": true,
         "dependencies": [
             {
-                "js-controller": ">=2.0.0"
-            },
+                "js-controller": ">=3.3.0"
+            }
+        ],
+        "globalDependencies": [
             {
-                "admin": ">=1.6.10"
+                "admin": ">=5.1.15"
             }
         ],
         "supportStopInstance": 3000,
