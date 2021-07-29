@@ -274,6 +274,8 @@
                     <input id="changesMinDelta" size="5" class="value" type="number"/>
                     <label for="changesMinDelta"><span class="translate">log changes minimal delta</span> (<span class="translate">0 = disable delta check</span>)</label>
                 </div>
+            </div>
+            <div class="row">
                 <div class="col s12 m6">
                     <select id="retention" class="value">
                         <option value="0" class="translate">keep forever</option>
@@ -290,7 +292,9 @@
                     </select>
                     <label for="retention" class="translate">retention</label>
                 </div>
-
+                <div class="row">
+                    <div class="col"><span class="translate" style="color: red">Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.</span></div>
+                </div>
             </div>
         </div>
     </div>
