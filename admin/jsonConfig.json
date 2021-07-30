@@ -227,8 +227,8 @@
         "retentionConfirm": {
           "type": "checkbox",
           "label": "Apply lower retention",
-          "hidden": "data.retention >= originalData.retention || data.retention == 0",
-          "disabled": "data.retention >= originalData.retention || data.retention == 0",
+          "hidden": "(data.retention >= originalData.retention && originalData.retention != 0) || data.retention == 0",
+          "disabled": "(data.retention >= originalData.retention && originalData.retention != 0) || data.retention == 0",
           "confirm": {
             "text": "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.",
             "condition": "data.retentionConfirm && data.retentionConfirm != originalData.retentionConfirm",
