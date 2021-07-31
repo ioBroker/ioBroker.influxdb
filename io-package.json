@@ -254,7 +254,7 @@
         ],
         "globalDependencies": [
             {
-                "admin": ">=5.1.15"
+                "admin": ">=5.1.19"
             }
         ],
         "supportStopInstance": 3000,
