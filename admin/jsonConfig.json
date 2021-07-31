@@ -237,7 +237,8 @@
           }, 
           "validator": "data.retentionConfirm",
           "validatorErrorText": "Confirmation required.",
-          "validatorNoSaveOnError" : true
+          "validatorNoSaveOnError" : true,
+          "doNotSave": true
         }
       }
     }
