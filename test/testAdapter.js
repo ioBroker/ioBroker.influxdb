@@ -93,7 +93,13 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                 console.log('AUTHTOKEN=' + process.env.AUTHTOKEN);
                 console.log('extracted token =' + authToken);
                 config.native.dbversion = '2.x';
-                config.native.token = 'test-token'; //authToken;
+
+                let secret = setup.getSecret();
+                if (secret === null)
+                    secret = 'Zgfr56gFe87jJOM';
+
+                console.log("############SECRET: " + secret);
+                config.native.token = setup.encrypt(secret, 'test-token'); //authToken;
                 config.native.organization = 'test-org';
             }
 
@@ -304,7 +310,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
 
         let query = 'SELECT * FROM "influxdb.0.memRss"';
         if (process.env.INFLUXDB2) {
-            query = 'from(bucket: "iobroker") |> range(start:-1h) |> filter(fn: (r) => r._measurement == "influxdb.0.memRss")';
+            query = 'from(bucket: "iobroker") |> range(start:-1h) |> filter(fn: (r) => r._measurement == "influxdb.0.memRss") |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
         }
         sendTo('influxdb.0', 'query', query, function (result) {
             console.log(JSON.stringify(result.result, null, 2));
