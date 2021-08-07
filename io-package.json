@@ -313,6 +313,14 @@
         "pingInterval": 15000,
         "dbversion": "1.x"
     },
+    "protectedNative": [
+        "password",
+        "token"
+    ],
+    "encryptedNative": [
+        "password",
+        "token"
+    ],
     "instanceObjects": [
         {
             "_id": "info",

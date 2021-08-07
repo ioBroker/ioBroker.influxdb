@@ -1429,7 +1429,7 @@ function getHistoryIflx2(adapter, msg) {
     }
 
     fluxQuery += " |> range(" + ((options.start) ? "start: " + new Date(options.start).toISOString() + ", " : "start: -" + adapter.config.retention +"ms, ") + "stop: " + new Date(options.end).toISOString() + ")";
-    fluxQuery += ' |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") ';
+    fluxQuery += ' |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
 
     if (!options.start && (options.count || options.limit)) {
         fluxQuery += " |> sort(columns:[\"_time\"], desc: true)";
@@ -1438,7 +1438,7 @@ function getHistoryIflx2(adapter, msg) {
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
         if ((options.step !== null) && (options.step > 0))
             fluxQuery += ' |> window(every: ' + options.step + 'ms)';
-        fluxQuery += '|> fill(column: "_value", usePrevious: true)';
+        fluxQuery += '|> fill(column: "value", usePrevious: true)';
     } else if (options.aggregate !== 'minmax') {
         fluxQuery += ' |> group() |> limit(n: ' + options.count + ')';
     }
@@ -1473,27 +1473,27 @@ function getHistoryIflx2(adapter, msg) {
         if (options.step && !isBoolean) {
             switch (options.aggregate) {
                 case 'average':
-                    fluxQuery += ' |> mean(column: "_value")';
+                    fluxQuery += ' |> mean(column: "value")';
                     break;
 
                 case 'max':
-                    fluxQuery += ' |> max(column: "_value")';
+                    fluxQuery += ' |> max(column: "value")';
                     break;
 
                 case 'min':
-                    fluxQuery += ' |> min(column: "_value")';
+                    fluxQuery += ' |> min(column: "value")';
                     break;
 
                 case 'total':
-                    fluxQuery += ' |> sum(column: "_value")';
+                    fluxQuery += ' |> sum(column: "value")';
                     break;
 
                 case 'count':
-                    fluxQuery += ' |> count(column: "_value")';
+                    fluxQuery += ' |> count(column: "value")';
                     break;
 
                 default:
-                    fluxQuery += ' |> mean(column: "_value")';
+                    fluxQuery += ' |> mean(column: "value")';
                     break;
             }
         }
@@ -1508,6 +1508,7 @@ function getHistoryIflx2(adapter, msg) {
                 addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
                 |> range(start: ' + new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString() + ', stop: ' + new Date(options.start).toISOString() + ') \
                 |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
+                |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value") \
                 |> sort(columns: ["_time"], desc: true) \
                 |> group() \
                 |> limit(n: 1)';
@@ -1520,6 +1521,7 @@ function getHistoryIflx2(adapter, msg) {
             addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
                 |> range(start: ' + new Date(options.end).toISOString() + ') \
                 |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
+                |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value") \
                 |> sort(columns: ["_time"], desc: false) \
                 |> group() \
                 |> limit(n: 1)';
