@@ -13,7 +13,7 @@
             "pl": "Logowanie stanów do InfluxDB",
             "zh-cn": "将状态记录到InfluxDB中"
         },
-        "version": "2.0.0",
+        "version": "2.1.0",
         "title": "Logging data with InfluxDB",
         "titleLang": {
             "en": "Logging data with InfluxDB",
