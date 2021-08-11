@@ -223,13 +223,18 @@ function stopPing(adapter) {
 
 function ping(adapter) {
     adapter._client.ping && adapter._client.ping(adapter.config.pingInterval - 1000 < 0 ? 1000 : adapter.config.pingInterval - 1000)
-        .then(hosts => {
-            if (!hosts.some(host => host.online)) {
+        .then(
+            hosts => {
+                if (!hosts.some(host => host.online)) {
+                    reconnect(adapter);
+                } else {
+                    adapter.log.debug('PING OK');
+                }
+            }, 
+            error => {
+                adapter.log.error("Error during ping: " + error + ". Attempting reconnect.");
                 reconnect(adapter);
-            } else {
-                adapter.log.debug('PING OK');
-            }
-        });
+            });
 }
 
 function connect(adapter) {
@@ -974,7 +979,7 @@ function writeSeriesPerID(adapter, seriesId, points, cb) {
     adapter._client.writePoints(seriesId, pointsToSend, err => {
         if (err) {
             adapter.log.warn('Error on writePoints for ' + seriesId + ': ' + err);
-            if ((adapter._client.request.getHostsAvailable().length === 0) || (err.message && err.message === 'timeout')) {
+            if ((adapter._client.request.getHostsAvailable().length === 0) || (err.message && (err.message === 'timeout' || err.message.includes('timed out') ))) {
                 adapter.log.info('Host not available, move all points back in the Buffer');
                 // error caused InfluxDB adapter._client to remove the host from available for now
                 adapter._seriesBuffer[seriesId] = adapter._seriesBuffer[seriesId] || [];
