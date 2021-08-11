@@ -230,7 +230,7 @@ function ping(adapter) {
                 } else {
                     adapter.log.debug('PING OK');
                 }
-            }, 
+            },
             error => {
                 adapter.log.error("Error during ping: " + error + ". Attempting reconnect.");
                 reconnect(adapter);
@@ -247,7 +247,10 @@ function connect(adapter) {
     adapter.log.info("Influx DB Version used: " + adapter.config.dbversion);
     switch (adapter.config.dbversion) {
         case "2.x":
-            adapter.log.info("Connecting to InfluxDB 2");
+            if (/[\x00-\x08\x0E-\x1F\x80-\xFF]/.test(adapter.config.token)) {
+                adapter.log.error('Token error: Please re-enter the token in Admin. Stopping');
+                return;
+            }
             adapter._client = new DatabaseInfluxDB2x(
                 adapter.log,
                 adapter.config.host,
@@ -258,8 +261,12 @@ function connect(adapter) {
                 adapter.config.dbname
             )
             break;
-        default:
         case "1.x":
+        default:
+            if (/[\x00-\x08\x0E-\x1F\x80-\xFF]/.test(adapter.config.password)) {
+                adapter.log.error('Password error: Please re-enter the password in Admin. Stopping');
+                return;
+            }
             adapter._client = new DatabaseInfluxDB1x(
                 adapter.log,
                 adapter.config.host,
@@ -304,7 +311,7 @@ function connect(adapter) {
                 startPing(adapter);
             }
 
-            
+
         }
     });
 }
@@ -322,7 +329,7 @@ function processStartValues(adapter) {
 function getRetention(adapter, msg) {
     adapter.log.debug("getRetention invoked, checking DB");
     try {
-        adapter._client.getRetentionPolicyForDB(adapter.config.dbname, result => {            
+        adapter._client.getRetentionPolicyForDB(adapter.config.dbname, result => {
             adapter.sendTo(msg.from, msg.command, {
                 result:     result,
                 error:      null
@@ -1468,12 +1475,12 @@ function getHistoryIflx2(adapter, msg) {
                     sessionId:  options.sessionId
                 }, msg.callback);
                 return;
-            }  
+            }
         } else {
             isBoolean = true;
             adapter.log.debug("Measurement " + options.id + " is of type Boolean - skipping aggregation options");
         }
-    
+
 
         if (options.step && !isBoolean) {
             switch (options.aggregate) {
@@ -1517,7 +1524,7 @@ function getHistoryIflx2(adapter, msg) {
                 |> sort(columns: ["_time"], desc: true) \
                 |> group() \
                 |> limit(n: 1)';
-                
+
                 const mainQuery = fluxQueries.pop();
                 fluxQueries.push(addFluxQuery);
                 fluxQueries.push(mainQuery);
@@ -1663,7 +1670,7 @@ function multiQuery(adapter, msg) {
                 c++;
             }
         } catch (error) {
-            adapter.log.warn("Error in recevied multiQuery: " + error);
+            adapter.log.warn("Error in received multiQuery: " + error);
             adapter.sendTo(msg.from, msg.command, {
                 result: [],
                 error:  error
