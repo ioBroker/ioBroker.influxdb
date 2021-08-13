@@ -297,13 +297,19 @@ function connect(adapter) {
 
                     //Check and potentially update retention policy
                     adapter._client.applyRetentionPolicyToDB(adapter.config.dbname, adapter.config.retention, err => {
-                        err && err.toString().indexOf('already exists') === -1 && adapter.log.error(err);
+                        if (err) {
+                            adapter.log.error(err);
+                            reconnect(adapter);
+                        } 
                     });
                 });
             } else {
                 //Check and potentially update retention policy
                 adapter._client.applyRetentionPolicyToDB(adapter.config.dbname, adapter.config.retention, err => {
-                    err && err.toString().indexOf('already exists') === -1 && adapter.log.error(err);
+                    if (err) {
+                        adapter.log.error(err);
+                        reconnect(adapter);
+                    } 
                 });
 
                 processStartValues(adapter);
