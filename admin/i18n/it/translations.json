@@ -23,6 +23,7 @@
     "De-bounce time": "Tempo di rimbalzo",
     "Default settings": "Impostazioni predefinite",
     "Encrypt:": "Encrypt:",
+    "Expert Settings": "Impostazioni avanzate",
     "History adapter settings": "Impostazioni della scheda Cronologia",
     "Host": "Ospite",
     "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.": "La riduzione del periodo di conservazione deve essere considerata con cautela: i dati passati che superano il periodo di conservazione andranno persi.",
@@ -39,7 +40,9 @@
     "Seconds": "secondi",
     "Start or enable adapter first": "Inizia o abilita prima l'adattatore",
     "Test connection": "Connessione di prova",
+    "This feature can only be used on databases that are empty, or already were setup with this feature enabled. Otherwise it will cause errors (see logs).": "Questa funzione può essere utilizzata solo su database vuoti o già configurati con questa funzione abilitata. Altrimenti causerà errori (vedi log).",
     "Token": "Gettone",
+    "Use tags to store metadata information, instead of fields": "Usa i tag per memorizzare le informazioni sui metadati, invece dei campi",
     "User": "Utente",
     "debounce": "Ignora le modifiche fino a quando il valore rimane invariato per X Milliseconds",
     "keep forever": "tienilo per sempre",
@@ -47,5 +50,6 @@
     "log changes minimal delta": "Differenza minima dall'ultimo valore",
     "note": "Le impostazioni della cronologia devono essere eseguite singolarmente per ogni stato nella scheda \"Stati\" e solo se l'adattatore è attivo",
     "retention": "Conservazione di memoria",
-    "use 0 to not buffer at all": "Utilizzare 0 per non bufferizzare affatto"
+    "use 0 to not buffer at all": "Utilizzare 0 per non bufferizzare affatto",
+    "usetags help": "Per ulteriori informazioni, fare riferimento alla documentazione: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields"
 }

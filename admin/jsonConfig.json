@@ -241,6 +241,28 @@
           "doNotSave": true
         }
       }
+    },
+    "advancedTab": {
+      "type": "panel",
+      "label": "Expert Settings",
+      "items": {
+        "usetags": {
+          "type": "checkbox",
+          "sm": 12,
+          "md": 6,
+          "min": 0,
+          "label": "Use tags to store metadata information, instead of fields",
+          "help": "usetags help",
+          "hidden": "data.dbversion === '1.x'",
+          "disabled": "data.dbversion === '1.x'",
+          "confirm": {
+            "text": "This feature can only be used on databases that are empty, or already were setup with this feature enabled. Otherwise it will cause errors (see logs).",
+            "condition": "data.usetags && data.usetags != originalData.usetags",
+            "title": "Please confirm!",
+            "type": "warning"
+          }
+        }
+      }
     }
   }
 }
