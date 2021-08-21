@@ -258,7 +258,8 @@ function connect(adapter) {
                 adapter.config.protocol, // optional, default 'http'
                 adapter.config.token,
                 adapter.config.organization,
-                adapter.config.dbname
+                adapter.config.dbname,
+                adapter.config.usetags
             )
             break;
         case "1.x":
@@ -287,7 +288,7 @@ function connect(adapter) {
             adapter.log.error(err);
             reconnect(adapter);
         } else {
-            setConnected(adapter, true);
+            setConnected(adapter, true); //??? to early, move down?
             if (dbNames.indexOf(adapter.config.dbname) === -1) {
                 adapter._client.createDatabase(adapter.config.dbname, err => {
                     if (err) {
@@ -298,26 +299,50 @@ function connect(adapter) {
                     //Check and potentially update retention policy
                     adapter._client.applyRetentionPolicyToDB(adapter.config.dbname, adapter.config.retention, err => {
                         if (err) {
-                            adapter.log.error(err);
-                            reconnect(adapter);
+                            //Ignore issues with creating/altering retention policy, as it might be due to insufficient permissions
+                            adapter.log.warn(err);
                         } 
                     });
+
+                    if (adapter.config.dbversion === "2.x") {
+                        checkMetaDataStorageType(adapter);
+                    }
                 });
             } else {
                 //Check and potentially update retention policy
                 adapter._client.applyRetentionPolicyToDB(adapter.config.dbname, adapter.config.retention, err => {
                     if (err) {
-                        adapter.log.error(err);
-                        reconnect(adapter);
+                        //Ignore issues with creating/altering retention policy, as it might be due to insufficient permissions
+                        adapter.log.warn(err);
                     } 
                 });
 
+                if (adapter.config.dbversion === "2.x") {
+                    checkMetaDataStorageType(adapter);
+                }
+            }
+        }
+    });
+}
+
+function checkMetaDataStorageType(adapter) {
+    adapter._client.getMetaDataStorageType((error,storageType) => {
+        if (error)
+            adapter.log.error("Error checking for metadata storage type: " + error);
+        else {
+            adapter.log.debug("Storage type for metadata found in DB: " + storageType);
+            if (((storageType === "tags") && (!adapter.config.usetags))||((storageType === "fields")&&( adapter.config.usetags))) {
+                adapter.log.error("Cannot use " + ((adapter.config.usetags) ? "tags" : "fields") +" for metadata (q, ack, from) since \
+                    the selected DB already uses " + storageType + " instead. Please change your adapter configuration, or choose a DB \
+                    that already uses " + ((adapter.config.usetags) ? "tags" : "fields") + ", or is empty.");
+                setConnected(adapter, false);
+                finish(adapter, null);
+            } else {
+                setConnected(adapter, true);
                 processStartValues(adapter);
                 adapter.log.info('Connected!');
                 startPing(adapter);
-            }
-
-
+            }                         
         }
     });
 }
@@ -1412,6 +1437,8 @@ function getHistoryIflx2(adapter, msg) {
     const fluxQueries = [];
     let fluxQuery = 'from(bucket: "' + adapter.config.dbname + '") ';
 
+    const valueColumn = (adapter.config.usetags) ? "_value" : value;
+    
     if (!adapter._influxDPs[options.id]) {
         adapter.sendTo(msg.from, msg.command, {
             result: [],
@@ -1447,7 +1474,10 @@ function getHistoryIflx2(adapter, msg) {
     }
 
     fluxQuery += " |> range(" + ((options.start) ? "start: " + new Date(options.start).toISOString() + ", " : "start: -" + adapter.config.retention +"ms, ") + "stop: " + new Date(options.end).toISOString() + ")";
-    fluxQuery += ' |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
+    fluxQuery += ' |> filter(fn: (r) => r["_measurement"] == "' + options.id + '")';
+    
+    if (!adapter.config.usetags)
+        fluxQuery += ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
 
     if (!options.start && (options.count || options.limit)) {
         fluxQuery += " |> sort(columns:[\"_time\"], desc: true)";
@@ -1456,7 +1486,7 @@ function getHistoryIflx2(adapter, msg) {
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
         if ((options.step !== null) && (options.step > 0))
             fluxQuery += ' |> window(every: ' + options.step + 'ms)';
-        fluxQuery += '|> fill(column: "value", usePrevious: true)';
+        fluxQuery += '|> fill(column: "' + valueColumn +'", usePrevious: true)';
     } else if (options.aggregate !== 'minmax') {
         fluxQuery += ' |> group() |> limit(n: ' + options.count + ')';
     }
@@ -1489,29 +1519,30 @@ function getHistoryIflx2(adapter, msg) {
 
 
         if (options.step && !isBoolean) {
+            
             switch (options.aggregate) {
                 case 'average':
-                    fluxQuery += ' |> mean(column: "value")';
+                    fluxQuery += ' |> mean(column: "'+ valueColumn +'")';
                     break;
 
                 case 'max':
-                    fluxQuery += ' |> max(column: "value")';
+                    fluxQuery += ' |> max(column: "'+ valueColumn +'")';
                     break;
 
                 case 'min':
-                    fluxQuery += ' |> min(column: "value")';
+                    fluxQuery += ' |> min(column: "'+ valueColumn +'")';
                     break;
 
                 case 'total':
-                    fluxQuery += ' |> sum(column: "value")';
+                    fluxQuery += ' |> sum(column: "'+ valueColumn +'")';
                     break;
 
                 case 'count':
-                    fluxQuery += ' |> count(column: "value")';
+                    fluxQuery += ' |> count(column: "'+ valueColumn +'")';
                     break;
 
                 default:
-                    fluxQuery += ' |> mean(column: "value")';
+                    fluxQuery += ' |> mean(column: "'+ valueColumn +'")';
                     break;
             }
         }
@@ -1526,7 +1557,7 @@ function getHistoryIflx2(adapter, msg) {
                 addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
                 |> range(start: ' + new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString() + ', stop: ' + new Date(options.start).toISOString() + ') \
                 |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
-                |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value") \
+                ' + ((!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : '') + '\
                 |> sort(columns: ["_time"], desc: true) \
                 |> group() \
                 |> limit(n: 1)';
@@ -1539,7 +1570,7 @@ function getHistoryIflx2(adapter, msg) {
             addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
                 |> range(start: ' + new Date(options.end).toISOString() + ') \
                 |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
-                |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value") \
+                ' + ((!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : '') + '\
                 |> sort(columns: ["_time"], desc: false) \
                 |> group() \
                 |> limit(n: 1)';

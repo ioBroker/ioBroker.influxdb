@@ -23,6 +23,7 @@
     "De-bounce time": "De-bounce tijd",
     "Default settings": "Standaard instellingen",
     "Encrypt:": "versleutelen:",
+    "Expert Settings": "Expertinstellingen",
     "History adapter settings": "Geschiedenis adapter instellingen",
     "Host": "gastheer",
     "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.": "Het verlagen van de bewaarperiode moet met de nodige voorzichtigheid worden overwogen: gegevens uit het verleden die de bewaarperiode overschrijden, gaan verloren.",
@@ -39,7 +40,9 @@
     "Seconds": "seconden",
     "Start or enable adapter first": "Start of schakel eerst de adapter in",
     "Test connection": "Test verbinding",
+    "This feature can only be used on databases that are empty, or already were setup with this feature enabled. Otherwise it will cause errors (see logs).": "Deze functie kan alleen worden gebruikt op databases die leeg zijn of al zijn ingesteld met deze functie ingeschakeld. Anders veroorzaakt het fouten (zie logs).",
     "Token": "Teken",
+    "Use tags to store metadata information, instead of fields": "Gebruik tags om metadata-informatie op te slaan in plaats van velden",
     "User": "Gebruiker",
     "debounce": "Wijzigingen negeren totdat waarde ongewijzigd blijft voor X Milliseconds",
     "keep forever": "blijf voor altijd",
@@ -47,5 +50,6 @@
     "log changes minimal delta": "Minimaal verschil met laatste waarde",
     "note": "Geschiedenisinstellingen moeten voor elke afzonderlijke status worden uitgevoerd op het tabblad \"Staten\" en alleen als de adapter actief is",
     "retention": "Opslag retentie",
-    "use 0 to not buffer at all": "Gebruik 0 om helemaal niet te bufferen"
+    "use 0 to not buffer at all": "Gebruik 0 om helemaal niet te bufferen",
+    "usetags help": "Raadpleeg de documentatie voor meer informatie: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields"
 }

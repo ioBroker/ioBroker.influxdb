@@ -23,6 +23,7 @@
     "De-bounce time": "去抖时间",
     "Default settings": "默认设置",
     "Encrypt:": "加密：",
+    "Expert Settings": "专家设置",
     "History adapter settings": "历史记录适配器设置",
     "Host": "主持人",
     "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.": "应谨慎考虑降低保留期限：超过保留期限的过去数据将丢失。",
@@ -39,7 +40,9 @@
     "Seconds": "秒",
     "Start or enable adapter first": "首先启动或启用适配器",
     "Test connection": "测试连接",
+    "This feature can only be used on databases that are empty, or already were setup with this feature enabled. Otherwise it will cause errors (see logs).": "此功能只能用于空数据库或已启用此功能设置的数据库。否则会导致错误（见日志）。",
     "Token": "代币",
+    "Use tags to store metadata information, instead of fields": "使用标签来存储元数据信息，而不是字段",
     "User": "用户",
     "debounce": "忽略更改，直到值保持不变为X毫秒",
     "keep forever": "永远保持",
@@ -47,5 +50,6 @@
     "log changes minimal delta": "与上一个值的最小差异",
     "note": "仅在适配器处于活动状态时，才必须在“状态”选项卡上分别为每个状态进行历史记录设置",
     "retention": "储存保留",
-    "use 0 to not buffer at all": "使用0根本不缓冲"
+    "use 0 to not buffer at all": "使用0根本不缓冲",
+    "usetags help": "有关更多信息，请参阅文档："
 }

@@ -23,6 +23,7 @@
     "De-bounce time": "Tempo de recuperação",
     "Default settings": "Configurações padrão",
     "Encrypt:": "Criptografar:",
+    "Expert Settings": "Configurações para especialistas",
     "History adapter settings": "Configurações do adaptador de histórico",
     "Host": "Hospedeiro",
     "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.": "A redução do período de retenção deve ser considerada com cautela: os dados anteriores que excederem o período de retenção serão perdidos.",
@@ -39,7 +40,9 @@
     "Seconds": "Segundos",
     "Start or enable adapter first": "Inicie ou ative o adaptador primeiro",
     "Test connection": "Conexão de teste",
+    "This feature can only be used on databases that are empty, or already were setup with this feature enabled. Otherwise it will cause errors (see logs).": "Este recurso só pode ser usado em bancos de dados que estão vazios ou já foram configurados com este recurso habilitado. Caso contrário, causará erros (consulte os logs).",
     "Token": "Símbolo",
+    "Use tags to store metadata information, instead of fields": "Use tags para armazenar informações de metadados, em vez de campos",
     "User": "Do utilizador",
     "debounce": "Ignorar alterações até que o valor permaneça inalterado por X Milissegundos",
     "keep forever": "mantenha para sempre",
@@ -47,5 +50,6 @@
     "log changes minimal delta": "Diferença mínima do último valor",
     "note": "As configurações de histórico devem ser feitas para cada estado individual na guia \"Estados\" e somente se o adaptador estiver ativo",
     "retention": "Retenção de armazenamento",
-    "use 0 to not buffer at all": "Use 0 para não buffer no total"
+    "use 0 to not buffer at all": "Use 0 para não buffer no total",
+    "usetags help": "Para obter mais informações, consulte a documentação: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields"
 }

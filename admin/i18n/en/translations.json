@@ -23,6 +23,7 @@
     "De-bounce time": "De-bounce time",
     "Default settings": "Default settings",
     "Encrypt:": "Encrypt:",
+    "Expert Settings": "Expert Settings",
     "History adapter settings": "History adapter settings",
     "Host": "Host",
     "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.": "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.",
@@ -39,7 +40,9 @@
     "Seconds": "Seconds",
     "Start or enable adapter first": "Start or enable adapter first",
     "Test connection": "Test connection",
+    "This feature can only be used on databases that are empty, or already were setup with this feature enabled. Otherwise it will cause errors (see logs).": "This feature can only be used on databases that are empty, or already were setup with this feature enabled. Otherwise it will cause errors (see logs).",
     "Token": "Token",
+    "Use tags to store metadata information, instead of fields": "Use tags to store metadata information, instead of fields",
     "User": "User",
     "debounce": "Ignore changes till value stays unchanged for X Milliseconds",
     "keep forever": "keep forever",
@@ -47,5 +50,6 @@
     "log changes minimal delta": "Minimum difference from last value",
     "note": "History settings must be done for every state individually on the tab \"States\" and only if adapter is active",
     "retention": "Storage retention",
-    "use 0 to not buffer at all": "Use 0 to not buffer at all"
+    "use 0 to not buffer at all": "Use 0 to not buffer at all",
+    "usetags help": "For more information, please refer to the documentation: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields"
 }

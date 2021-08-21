@@ -23,6 +23,7 @@
     "De-bounce time": "Temps de rebond",
     "Default settings": "Default settings",
     "Encrypt:": "Encrypt:",
+    "Expert Settings": "Paramètres experts",
     "History adapter settings": "History adapter settings",
     "Host": "Host",
     "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.": "La réduction de la période de conservation doit être envisagée avec prudence : les données antérieures dépassant la période de conservation seront perdues.",
@@ -39,7 +40,9 @@
     "Seconds": "Seconds",
     "Start or enable adapter first": "Start or enable adapter first",
     "Test connection": "Test connection",
+    "This feature can only be used on databases that are empty, or already were setup with this feature enabled. Otherwise it will cause errors (see logs).": "Cette fonctionnalité ne peut être utilisée que sur des bases de données vides ou déjà configurées avec cette fonctionnalité activée. Sinon, cela provoquera des erreurs (voir les journaux).",
     "Token": "Jeton",
+    "Use tags to store metadata information, instead of fields": "Utilisez des balises pour stocker les informations de métadonnées, au lieu de champs",
     "User": "User",
     "debounce": "Ignorer les modifications jusqu'à ce que la valeur reste inchangée pour X millisecondes",
     "keep forever": "keep forever",
@@ -47,5 +50,6 @@
     "log changes minimal delta": "Différence minimale par rapport à la dernière valeur",
     "note": "History settings must be done for every state individually on the tab \"States\" and only if adapter is active",
     "retention": "Storage retention",
-    "use 0 to not buffer at all": "Use 0 to not buffer at all"
+    "use 0 to not buffer at all": "Use 0 to not buffer at all",
+    "usetags help": "Pour plus d'informations, veuillez vous référer à la documentation : https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields"
 }
