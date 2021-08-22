@@ -42,7 +42,7 @@
     "Test connection": "Verbindung testen",
     "This feature can only be used on databases that are empty, or already were setup with this feature enabled. Otherwise it will cause errors (see logs).": "Diese Funktion kann nur für Datenbanken verwendet werden, die leer sind oder bereits mit aktivierter Funktion eingerichtet wurden. Andernfalls kommt es zu Fehlern (siehe Protokolle).",
     "Token": "Token",
-    "Use tags to store metadata information, instead of fields": "Verwenden Sie Tags, anstelle von Feldern, um Metadateninformationen zu speichern",
+    "Use tags to store metadata information, instead of fields": "Verwende Tags, anstelle von Feldern, um Metadateninformationen zu speichern",
     "User": "Benutzer",
     "debounce": "Änderungen ignorieren, bis der Wert für X Millisekunden unverändert bleibt",
     "keep forever": "keine automatische Löschung",
