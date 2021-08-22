@@ -372,6 +372,7 @@ function getRetention(adapter, msg) {
 }
 
 function testConnection(adapter, msg) {
+    adapter.log.debug("testConnection msg-object: " + JSON.stringify(msg));
     msg.message.config.port = parseInt(msg.message.config.port, 10) || 0;
 
     let timeout;
@@ -1437,7 +1438,7 @@ function getHistoryIflx2(adapter, msg) {
     const fluxQueries = [];
     let fluxQuery = 'from(bucket: "' + adapter.config.dbname + '") ';
 
-    const valueColumn = (adapter.config.usetags) ? "_value" : value;
+    const valueColumn = (adapter.config.usetags) ? "_value" : "value";
     
     if (!adapter._influxDPs[options.id]) {
         adapter.sendTo(msg.from, msg.command, {
@@ -1476,7 +1477,9 @@ function getHistoryIflx2(adapter, msg) {
     fluxQuery += " |> range(" + ((options.start) ? "start: " + new Date(options.start).toISOString() + ", " : "start: -" + adapter.config.retention +"ms, ") + "stop: " + new Date(options.end).toISOString() + ")";
     fluxQuery += ' |> filter(fn: (r) => r["_measurement"] == "' + options.id + '")';
     
-    if (!adapter.config.usetags)
+    if (adapter.config.usetags)
+        fluxQuery += ' |> duplicate(column: "_value", as: "value")';
+    else
         fluxQuery += ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
 
     if (!options.start && (options.count || options.limit)) {
