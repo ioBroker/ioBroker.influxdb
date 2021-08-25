@@ -36,7 +36,7 @@ jobs:
 
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
 #      - name: Perform a type check
 #        run: npm run check:ts
@@ -67,7 +67,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
       - name: Install Influxdb 1.x (Linux)
         if: startsWith(runner.OS, 'linux')
@@ -108,7 +108,7 @@ jobs:
           node-version: ${{ matrix.node-version }}
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
       - name: Install Influxdb 2.x (Linux)
         id: influxdb2
@@ -183,7 +183,7 @@ jobs:
           echo "::set-output name=BODY::$BODY"
 
       - name: Install Dependencies
-        run: npm install
+        run: npm ci
 
 #      - name: Create a clean build
 #        run: npm run build
