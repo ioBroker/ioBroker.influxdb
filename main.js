@@ -33,7 +33,7 @@ function isEqual(a, b) {
         return false;
     }
 
-    for (var i = 0; i < aProps.length; i++) {
+    for (let i = 0; i < aProps.length; i++) {
         const propName = aProps[i];
 
         if (typeof a[propName] !== typeof b[propName]) {
@@ -592,7 +592,7 @@ function main(adapter) {
     // analyse if by the last stop the values were cached into file
     try {
         if (fs.statSync(cacheFile).isFile()) {
-            const fileContent = fs.readFileSync(cacheFile);
+            const fileContent = fs.readFileSync(cacheFile, 'utf-8');
             const tempData = JSON.parse(fileContent, (key, value) =>
                 key === 'time' ? new Date(value) : value);
 
@@ -1161,7 +1161,7 @@ function writeFileBufferToDisk() {
         fileData.seriesBuffer        = adapter._seriesBuffer;
         fileData.conflictingPoints   = adapter._conflictingPoints;
         try {
-            fs.writeFileSync(cacheFile, JSON.stringify(fileData));
+            fs.writeFileSync(cacheFile, JSON.stringify(fileData), 'utf-8');
             adapter.log.warn('Store data for ' + fileData.seriesBufferCounter + ' points and ' + Object.keys(fileData.conflictingPoints).length + ' conflicts');
         }
         catch (err) {
@@ -1504,7 +1504,7 @@ function getHistoryIflx2(adapter, msg) {
         |> filter(fn: (r) => r["_measurement"] == "' + options.id + '" and contains(value: r._value, set: [true, false]))\
     ';
 
-    adapter._client.query(booleanTypeCheckQuery, (error, rslt) => {
+    adapter._client.query(booleanTypeCheckQuery, (error, _rslt) => {
         let isBoolean;
         if (error) {
             if (error.message.match(".*type conflict: bool.*"))
