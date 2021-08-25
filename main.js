@@ -301,7 +301,7 @@ function connect(adapter) {
                         if (err) {
                             //Ignore issues with creating/altering retention policy, as it might be due to insufficient permissions
                             adapter.log.warn(err);
-                        } 
+                        }
                     });
 
                     if (adapter.config.dbversion === "2.x") {
@@ -314,7 +314,7 @@ function connect(adapter) {
                     if (err) {
                         //Ignore issues with creating/altering retention policy, as it might be due to insufficient permissions
                         adapter.log.warn(err);
-                    } 
+                    }
                 });
 
                 if (adapter.config.dbversion === "2.x") {
@@ -342,7 +342,7 @@ function checkMetaDataStorageType(adapter) {
                 processStartValues(adapter);
                 adapter.log.info('Connected!');
                 startPing(adapter);
-            }                         
+            }
         }
     });
 }
@@ -670,13 +670,15 @@ function main(adapter) {
 
     adapter.subscribeForeignObjects('*');
 
-    // store all buffered data every x seconds to not lost the data
-    adapter._seriesBufferChecker = setInterval(() => {
-        adapter._seriesBufferFlushPlanned = true;
-        storeBufferedSeries(adapter);
-    }, adapter.config.seriesBufferFlushInterval * 1000);
-
     connect(adapter);
+
+    if (adapter._client) {
+        // store all buffered data every x seconds to not lost the data
+        adapter._seriesBufferChecker = setInterval(() => {
+            adapter._seriesBufferFlushPlanned = true;
+            storeBufferedSeries(adapter);
+        }, adapter.config.seriesBufferFlushInterval * 1000);
+    }
 }
 
 function writeInitialValue(adapter, realId, id) {
@@ -1439,7 +1441,7 @@ function getHistoryIflx2(adapter, msg) {
     let fluxQuery = 'from(bucket: "' + adapter.config.dbname + '") ';
 
     const valueColumn = (adapter.config.usetags) ? "_value" : "value";
-    
+
     if (!adapter._influxDPs[options.id]) {
         adapter.sendTo(msg.from, msg.command, {
             result: [],
@@ -1476,7 +1478,7 @@ function getHistoryIflx2(adapter, msg) {
 
     fluxQuery += " |> range(" + ((options.start) ? "start: " + new Date(options.start).toISOString() + ", " : "start: -" + adapter.config.retention +"ms, ") + "stop: " + new Date(options.end).toISOString() + ")";
     fluxQuery += ' |> filter(fn: (r) => r["_measurement"] == "' + options.id + '")';
-    
+
     if (adapter.config.usetags)
         fluxQuery += ' |> duplicate(column: "_value", as: "value")';
     else
@@ -1522,7 +1524,7 @@ function getHistoryIflx2(adapter, msg) {
 
 
         if (options.step && !isBoolean) {
-            
+
             switch (options.aggregate) {
                 case 'average':
                     fluxQuery += ' |> mean(column: "'+ valueColumn +'")';
