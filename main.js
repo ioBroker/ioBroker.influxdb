@@ -935,7 +935,7 @@ function storeBufferedSeries(adapter, cb) {
         return cb && cb();
     }
 
-    if (adapter._client.request.getHostsAvailable().length === 0) {
+    if ((!adapter._client) || (adapter._client.request.getHostsAvailable().length === 0)) {
         setConnected(adapter, false);
         adapter.log.info('Currently no hosts available, try later');
         adapter._seriesBufferFlushPlanned = false;
