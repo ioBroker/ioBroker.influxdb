@@ -336,7 +336,8 @@
         "reconnectInterval": 10000,
         "pingInterval": 15000,
         "dbversion": "1.x",
-        "usetags": false
+        "usetags": false,
+        "pingserver": true
     },
     "protectedNative": [
         "password",

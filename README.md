@@ -305,6 +305,9 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 	### __WORK IN PROGRESS__
 -->
 ## Changelog
+### __WORK IN PROGRESS__
+* (Excodibur) Added expert settings to deactivate health checks for Influx 2 db (There are no health checks for Influx 1)
+
 ### 2.2.0 (2021-08-25)
 * (Excodibur) Added option to store metadata (q, ack, from) as tags instead of fields for Influx 2.x - see README!
 * (Excodibur) Failure to update/set retention policy will now cause warning instead of error/restart, to support more restrictive DB setups
