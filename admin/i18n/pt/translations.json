@@ -27,7 +27,7 @@
     "History adapter settings": "Configurações do adaptador de histórico",
     "Host": "Hospedeiro",
     "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.": "A redução do período de retenção deve ser considerada com cautela: os dados anteriores que excederem o período de retenção serão perdidos.",
-    "Ok": "Está bem",
+    "Ok": "Ok",
     "Organization": "Organização",
     "Password": "Senha",
     "Password confirm": "Confirmação de senha",
