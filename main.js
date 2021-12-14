@@ -222,7 +222,7 @@ function stopPing(adapter) {
 }
 
 function ping(adapter) {
-    adapter._client.ping && (adapter.config.pingserver !== false) && adapter._client.ping(adapter.config.pingInterval - 1000 < 0 ? 1000 : adapter.config.pingInterval - 1000)
+    adapter._client.ping && adapter.config.pingserver !== false && adapter._client.ping(adapter.config.pingInterval - 1000 < 0 ? 1000 : adapter.config.pingInterval - 1000)
         .then(
             hosts => {
                 if (!hosts.some(host => host.online)) {
@@ -282,8 +282,9 @@ function connect(adapter) {
             break;
     }
 
-    if (adapter.config.pingserver === false)
-        adapter.log.info("Deactivated DB health checks (ping) via configuration");
+    if (adapter.config.pingserver === false) {
+        adapter.log.info('Deactivated DB health checks (ping) via configuration');
+    }
 
     adapter._client.getDatabaseNames((err, dbNames) => {
         if (err) {
