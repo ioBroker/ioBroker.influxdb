@@ -1,373 +1,231 @@
 {
-    "common": {
-        "name": "influxdb",
-        "desc": {
-            "en": "Logging of states into InfluxDB",
-            "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
-            "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB",
-            "pt": "Registro de estados no InfluxDB",
-            "nl": "Loggen van staten in InfluxDB",
-            "fr": "Journalisation des états dans InfluxDB",
-            "it": "Registrazione degli stati in InfluxDB",
-            "es": "Registro de estados en InfluxDB",
-            "pl": "Logowanie stanów do InfluxDB",
-            "zh-cn": "将状态记录到InfluxDB中"
-        },
-        "version": "2.2.0",
-        "title": "Logging data with InfluxDB",
-        "titleLang": {
-            "en": "Logging data with InfluxDB",
-            "de": "Daten mit InfluxDB protokollieren",
-            "ru": "Запись данных с помощью InfluxDB",
-            "pt": "Registro de dados com InfluxDB",
-            "nl": "Loggen van gegevens met InfluxDB",
-            "fr": "Consignation des données avec InfluxDB",
-            "it": "Registrazione dei dati con InfluxDB",
-            "es": "Datos de registro con InfluxDB",
-            "pl": "Rejestrowanie danych za pomocą InfluxDB",
-            "zh-cn": "使用InfluxDB记录数据"
-        },
-        "news": {
-            "2.2.0": {
-                "en": "Added option to store metadata (q, ack, from) as tags instead of fields for Influx 2.x - see README!\nFailure to update/set retention policy will now cause warning instead of error/restart, to support more restrictive DB setups\n(Excodibur/Apollon77) Bug fixes and adjustments",
-                "de": "Option zum Speichern von Metadaten (q, ack, from) als Tags anstelle von Feldern für Influx 2.x hinzugefügt - siehe README!\nWenn die Aufbewahrungsrichtlinie nicht aktualisiert/festgelegt wird, führt dies jetzt zu einer Warnung anstelle eines Fehlers/Neustarts, um restriktivere DB-Setups zu unterstützen\n(Excodibur/Apollon77) Fehlerbehebungen und Anpassungen",
-                "ru": "Добавлена возможность хранить метаданные (q, ack, from) в виде тегов вместо полей для Influx 2.x - см. README!\nНевозможность обновить / установить политику хранения теперь будет вызывать предупреждение вместо ошибки / перезапуска для поддержки более строгих настроек БД.\n(Excodibur / Apollon77) Исправления и корректировки.",
-                "pt": "Adicionada opção para armazenar metadados (q, ack, from) como tags em vez de campos para o Influx 2.x - veja README!\nA falha em atualizar / definir a política de retenção agora causará um aviso em vez de erro / reinicialização, para oferecer suporte a configurações de banco de dados mais restritivas\n(Excodibur / Apollon77) Correções e ajustes de bugs",
-                "nl": "Optie toegevoegd om metadata (q, ack, from) op te slaan als tags in plaats van velden voor Influx 2.x - zie README!\nAls het bewaarbeleid niet wordt bijgewerkt/ingesteld, wordt er nu een waarschuwing gegeven in plaats van een fout/herstart, om restrictievere DB-instellingen te ondersteunen\n(Excodibur/Apollon77) Bugfixes en aanpassingen",
-                "fr": "Ajout d'une option pour stocker les métadonnées (q, ack, from) sous forme de balises au lieu de champs pour Influx 2.x - voir README !\nL'échec de la mise à jour/définition de la politique de rétention entraînera désormais un avertissement au lieu d'une erreur/redémarrage, pour prendre en charge des configurations de base de données plus restrictives\n(Excodibur/Apollon77) Corrections de bugs et ajustements",
-                "it": "Aggiunta l'opzione per memorizzare i metadati (q, ack, from) come tag invece dei campi per Influx 2.x - vedi README!\nIl mancato aggiornamento/impostazione della politica di conservazione ora causerà un avviso anziché un errore/riavvio, per supportare configurazioni DB più restrittive\n(Excodibur/Apollon77) Correzioni di bug e aggiustamenti",
-                "es": "Opción agregada para almacenar metadatos (q, ack, from) como etiquetas en lugar de campos para Influx 2.x - ¡vea README!\nSi no se actualiza / establece la política de retención, ahora se generará una advertencia en lugar de un error / reinicio, para admitir configuraciones de base de datos más restrictivas\n(Excodibur / Apollon77) Corrección de errores y ajustes",
-                "pl": "Dodano opcję przechowywania metadanych (q, ack, from) jako tagów zamiast pól dla Influx 2.x - zobacz README!\nNiepowodzenie aktualizacji/ustawienia zasad przechowywania spowoduje teraz ostrzeżenie zamiast błędu/ponownego uruchomienia, aby obsługiwać bardziej restrykcyjne konfiguracje bazy danych\n(Excodibur/Apollon77) Poprawki i poprawki",
-                "zh-cn": "添加了将元数据（q、ack、from）存储为标签而不是 Influx 2.x 的字段的选项 - 请参阅自述文件！\n更新/设置保留策略失败现在将导致警告而不是错误/重启，以支持更严格的数据库设置\n(Excodibur/Apollon77) 错误修复和调整"
-            },
-            "2.1.1": {
-                "en": "IMPORTANT: The adapter now requires Admin 5.1.15+ and js-controller 3.3+! For other admin or js-controller versions please use the former v1.9.5 of thi adapter.\nAdded InfluxDB 2.0 support\nAdjust Retention handling on Database level to work for InfluxDB 1.x and 2.x\nRemoved retention options on datapoint level because never worked and also not supported really by InfluxDB anymore",
-                "de": "WICHTIG: Der Adapter benötigt jetzt Admin 5.1.15+ und js-controller 3.3+! Für andere Admin- oder js-Controller-Versionen verwenden Sie bitte die frühere v1.9.5 dieses Adapters.\nUnterstützung für InfluxDB 2.0 hinzugefügt\nPassen Sie die Aufbewahrungsbehandlung auf Datenbankebene so an, dass sie für InfluxDB 1.x und 2.x funktioniert\nAufbewahrungsoptionen auf Datenpunktebene entfernt, da nie funktioniert und auch nicht mehr wirklich von InfluxDB unterstützt",
-                "ru": "ВАЖНО: для адаптера теперь требуются Admin 5.1.15+ и js-controller 3.3+! Для других версий admin или js-controller используйте бывшую версию v1.9.5 этого адаптера.\nДобавлена поддержка InfluxDB 2.0.\nНастройте обработку хранения на уровне базы данных для работы с InfluxDB 1.x и 2.x\nУдалены параметры хранения на уровне точек данных, потому что они никогда не работали и больше не поддерживаются InfluxDB.",
-                "pt": "IMPORTANTE: O adaptador agora requer Admin 5.1.15+ e js-controller 3.3+! Para outras versões admin ou js-controller, use a versão anterior v1.9.5 deste adaptador.\nAdicionado suporte a InfluxDB 2.0\nAjuste o manuseio de retenção no nível do banco de dados para funcionar no InfluxDB 1.xe 2.x\nRemovidas as opções de retenção no nível do ponto de dados porque nunca funcionou e também não é mais suportado pelo InfluxDB",
-                "nl": "BELANGRIJK: de adapter vereist nu Admin 5.1.15+ en js-controller 3.3+! Gebruik voor andere admin- of js-controllerversies de voormalige v1.9.5 van deze adapter.\nInfluxDB 2.0-ondersteuning toegevoegd\nPas de retentieafhandeling op databaseniveau aan om te werken voor InfluxDB 1.x en 2.x\nRetentieopties op datapuntniveau verwijderd omdat het nooit heeft gewerkt en ook niet echt meer wordt ondersteund door InfluxDB",
-                "fr": "IMPORTANT : l'adaptateur nécessite désormais Admin 5.1.15+ et js-controller 3.3+ ! Pour les autres versions admin ou js-controller, veuillez utiliser l'ancienne v1.9.5 de cet adaptateur.\nAjout de la prise en charge d'InfluxDB 2.0\nAjustez la gestion de la rétention au niveau de la base de données pour qu'elle fonctionne pour InfluxDB 1.x et 2.x\nSuppression des options de rétention au niveau du point de données car n'a jamais fonctionné et n'est plus vraiment pris en charge par InfluxDB",
-                "it": "IMPORTANTE: l'adattatore ora richiede Admin 5.1.15+ e js-controller 3.3+! Per altre versioni admin o js-controller, utilizzare la precedente v1.9.5 di questo adattatore.\nAggiunto il supporto per InfluxDB 2.0\nRegola la gestione della conservazione a livello di database per funzionare con InfluxDB 1.x e 2.x\nOpzioni di conservazione rimosse a livello di datapoint perché non hanno mai funzionato e inoltre non sono più supportate realmente da InfluxDB",
-                "es": "IMPORTANTE: ¡El adaptador ahora requiere Admin 5.1.15+ y js-controller 3.3+! Para otras versiones de admin o js-controller, utilice la versión anterior v1.9.5 de este adaptador.\nSe agregó compatibilidad con InfluxDB 2.0\nAjuste el manejo de la retención en el nivel de la base de datos para que funcione con InfluxDB 1.xy 2.x\nSe eliminaron las opciones de retención a nivel de punto de datos porque nunca funcionó y tampoco es realmente compatible con InfluxDB",
-                "pl": "WAŻNE: Adapter wymaga teraz Admin 5.1.15+ i js-controller 3.3+! W przypadku innych wersji administratora lub kontrolera js użyj poprzedniej wersji v1.9.5 tego adaptera.\nDodano obsługę InfluxDB 2.0\nDostosuj obsługę przechowywania na poziomie bazy danych, aby działała dla InfluxDB 1.x i 2.x\nUsunięto opcje przechowywania na poziomie punktu danych, ponieważ nigdy nie działały i nie są już obsługiwane przez InfluxDB",
-                "zh-cn": "重要提示：适配器现在需要 Admin 5.1.15+ 和 js-controller 3.3+！对于其他 admin 或 js-controller 版本，请使用该适配器以前的 v1.9.5。\n添加了 InfluxDB 2.0 支持\n调整数据库级别的保留处理以适用于 InfluxDB 1.x 和 2.x\n删除了数据点级别的保留选项，因为从来没有工作过，也不再受到 InfluxDB 的真正支持"
-            },
-            "1.9.5": {
-                "en": "Added the support of Admin5",
-                "de": "Unterstützung von Admin5 hinzugefügt",
-                "ru": "Добавлена поддержка Admin5",
-                "pt": "Adicionado o suporte de Admin5",
-                "nl": "Ondersteuning toegevoegd van Admin5",
-                "fr": "Ajout du support d'Admin5",
-                "it": "Aggiunto il supporto di Admin5",
-                "es": "Se agregó el soporte de Admin5.",
-                "pl": "Dodano obsługę Admin5",
-                "zh-cn": "添加了对Admin5的支持"
-            },
-            "1.9.4": {
-                "en": "Optimize stop handling",
-                "de": "Optimieren Sie das Stop-Handling",
-                "ru": "Оптимизировать обработку остановок",
-                "pt": "Otimize o manuseio de parada",
-                "nl": "Optimaliseer het afhandelen van stops",
-                "fr": "Optimiser la gestion des arrêts",
-                "it": "Ottimizza la gestione delle fermate",
-                "es": "Optimizar el manejo de paradas",
-                "pl": "Zoptymalizuj obsługę zatrzymania",
-                "zh-cn": "优化停止处理"
-            },
-            "1.9.3": {
-                "en": "Crash case prevented (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-                "de": "Absturz verhindert (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-                "ru": "Сбой предотвращен (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-                "pt": "Caso de falha impedido (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-                "nl": "Crashcase voorkomen (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-                "fr": "Crash case évité (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-                "it": "Crash case prevenuto (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-                "es": "Caso de accidente evitado (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-                "pl": "Zapobiegano awariom (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-                "zh-cn": "防止发生崩溃情况（哨兵IOBROKER-INFLUXDB-T，IOBROKER-INFLUXDB-Y）"
-            },
-            "1.9.2": {
-                "en": "crash prevented (Sentry IOBROKER-INFLUXDB-G)",
-                "de": "Absturz verhindert (Sentry IOBROKER-INFLUXDB-G)",
-                "ru": "сбой предотвращен (Sentry IOBROKER-INFLUXDB-G)",
-                "pt": "travamento evitado (Sentry IOBROKER-INFLUXDB-G)",
-                "nl": "crash voorkomen (Sentry IOBROKER-INFLUXDB-G)",
-                "fr": "crash évité (Sentry IOBROKER-INFLUXDB-G)",
-                "it": "crash prevenuto (Sentry IOBROKER-INFLUXDB-G)",
-                "es": "accidente prevenido (Sentry IOBROKER-INFLUXDB-G)",
-                "pl": "zapobieganie awariom (Sentry IOBROKER-INFLUXDB-G)",
-                "zh-cn": "防止崩溃（Sentry IOBROKER-INFLUXDB-G）"
-            },
-            "1.9.1": {
-                "en": "crash prevented (Sentry IOBROKER-INFLUXDB-E)",
-                "de": "Absturz verhindert (Sentry IOBROKER-INFLUXDB-E)",
-                "ru": "предотвращено падение (Sentry IOBROKER-INFLUXDB-E)",
-                "pt": "falha impedida (Sentry IOBROKER-INFLUXDB-E)",
-                "nl": "crash voorkomen (Sentry IOBROKER-INFLUXDB-E)",
-                "fr": "crash évité (Sentry IOBROKER-INFLUXDB-E)",
-                "it": "arresto anomalo impedito (Sentry IOBROKER-INFLUXDB-E)",
-                "es": "accidente evitado (Sentry IOBROKER-INFLUXDB-E)",
-                "pl": "zapobieganie awariom (Sentry IOBROKER-INFLUXDB-E)",
-                "zh-cn": "防止崩溃（Sentry IOBROKER-INFLUXDB-E）"
-            },
-            "1.9.0": {
-                "en": "Optimize handling in case of write errors and host unavailabilities",
-                "de": "Optimieren Sie die Behandlung bei Schreibfehlern und Nichtverfügbarkeiten des Hosts",
-                "ru": "Оптимизировать обработку в случае ошибок записи и недоступности хоста",
-                "pt": "Otimize a manipulação em caso de erros de gravação e indisponibilidade de host",
-                "nl": "Optimaliseer de afhandeling in het geval van schrijffouten en het niet beschikbaar zijn van de host",
-                "fr": "Optimiser la gestion en cas d'erreurs d'écriture et d'indisponibilité de l'hôte",
-                "it": "Ottimizza la gestione in caso di errori di scrittura e indisponibilità dell'host",
-                "es": "Optimice el manejo en caso de errores de escritura y falta de disponibilidad del host",
-                "pl": "Zoptymalizuj obsługę w przypadku błędów zapisu i niedostępności hosta",
-                "zh-cn": "在写入错误和主机不可用的情况下优化处理"
-            },
-            "1.8.8": {
-                "en": "Some errors prevented\nSet timeouts for influxdb connections to make sure connectioens do not run forever",
-                "de": "Einige Fehler wurden verhindert\nLegen Sie Zeitüberschreitungen für Influxdb-Verbindungen fest, um sicherzustellen, dass die Verbindungen nicht für immer ausgeführt werden",
-                "ru": "Предотвращены некоторые ошибки\nУстановите тайм-ауты для подключений на притоке, чтобы убедиться, что соединения не будут работать вечно",
-                "pt": "Alguns erros impedidos\nDefina tempos limite para conexões influxdb para garantir que os conectores não sejam executados para sempre",
-                "nl": "Sommige fouten zijn voorkomen\nStel time-outs in voor influxdb-verbindingen om ervoor te zorgen dat connectioens niet voor altijd worden uitgevoerd",
-                "fr": "Certaines erreurs évitées\nDéfinissez des délais d'expiration pour les connexions influxdb pour vous assurer que les connexions ne s'exécutent pas indéfiniment",
-                "it": "Alcuni errori sono stati prevenuti\nImpostare i timeout per le connessioni influxdb per assicurarsi che i collegamenti non funzionino per sempre",
-                "es": "Algunos errores prevenidos\nEstablezca tiempos de espera para las conexiones influxdb para asegurarse de que las conexiones no se ejecuten para siempre",
-                "pl": "Zapobiegnięto niektórym błędom\nUstaw limity czasu dla połączeń napływających db, aby upewnić się, że connectioens nie będą działać wiecznie",
-                "zh-cn": "防止某些错误\n设置influxdb连接超时，以确保connectioens不会永远运行"
-            },
-            "1.8.7": {
-                "en": "added command to read supported features",
-                "de": "Befehl zum Lesen der unterstützten Funktionen hinzugefügt",
-                "ru": "добавлена команда для чтения поддерживаемых функций",
-                "pt": "comando adicionado para ler os recursos suportados",
-                "nl": "opdracht toegevoegd om ondersteunde functies te lezen",
-                "fr": "commande ajoutée pour lire les fonctionnalités prises en charge",
-                "it": "aggiunto comando per leggere le funzionalità supportate",
-                "es": "comando agregado para leer las funciones compatibles",
-                "pl": "dodano polecenie odczytu obsługiwanych funkcji",
-                "zh-cn": "添加了命令以读取支持的功能"
-            },
-            "1.8.6": {
-                "en": "make sure disabling of datapoints while starting adapter do not crash adapter (Sentry IOBROKER-INFLUXDB-7)\nMake sure all start values are processed correctly\nMore checks to make sure to not crash when states are disabled while data are processed (Sentry IOBROKER-INFLUXDB-8)",
-                "de": "Stellen Sie sicher, dass das Deaktivieren von Datenpunkten beim Starten des Adapters den Adapter nicht zum Absturz bringt (Sentry IOBROKER-INFLUXDB-7).\nStellen Sie sicher, dass alle Startwerte korrekt verarbeitet werden\nWeitere Überprüfungen, um sicherzustellen, dass nicht abgestürzt wird, wenn Status deaktiviert werden, während Daten verarbeitet werden (Sentry IOBROKER-INFLUXDB-8)",
-                "ru": "убедитесь, что отключение точек данных при запуске адаптера не приводит к сбою адаптера (Sentry IOBROKER-INFLUXDB-7)\nУбедитесь, что все начальные значения обработаны правильно\nДополнительные проверки, чтобы убедиться, что не происходит сбой при отключении состояний во время обработки данных (Sentry IOBROKER-INFLUXDB-8)",
-                "pt": "verifique se a desativação dos pontos de dados ao iniciar o adaptador não trava o adaptador (Sentry IOBROKER-INFLUXDB-7)\nVerifique se todos os valores iniciais foram processados corretamente\nMais verificações para garantir que não travam quando os estados são desativados enquanto os dados são processados (Sentry IOBROKER-INFLUXDB-8)",
-                "nl": "zorg ervoor dat het uitschakelen van datapunten tijdens het starten van de adapter de adapter niet crasht (Sentry IOBROKER-INFLUXDB-7)\nZorg ervoor dat alle startwaarden correct worden verwerkt\nMeer controles om ervoor te zorgen dat ze niet crashen wanneer staten zijn uitgeschakeld terwijl gegevens worden verwerkt (Sentry IOBROKER-INFLUXDB-8)",
-                "fr": "assurez-vous que la désactivation des points de données lors du démarrage de l'adaptateur ne plante pas l'adaptateur (Sentry IOBROKER-INFLUXDB-7)\nAssurez-vous que toutes les valeurs de départ sont traitées correctement\nPlus de contrôles pour vous assurer de ne pas planter lorsque les états sont désactivés pendant le traitement des données (Sentry IOBROKER-INFLUXDB-8)",
-                "it": "assicurarsi che la disabilitazione dei punti dati durante l'avvio dell'adattatore non causi l'arresto anomalo dell'adattatore (Sentry IOBROKER-INFLUXDB-7)\nAssicurarsi che tutti i valori iniziali siano elaborati correttamente\nAltri controlli per assicurarsi di non arrestarsi in modo anomalo quando gli stati sono disabilitati durante l'elaborazione dei dati (Sentry IOBROKER-INFLUXDB-8)",
-                "es": "asegúrese de que la desactivación de los puntos de datos al iniciar el adaptador no bloquee el adaptador (Sentry IOBROKER-INFLUXDB-7)\nAsegúrese de que todos los valores iniciales se procesen correctamente\nMás comprobaciones para asegurarse de no bloquearse cuando los estados están deshabilitados mientras se procesan los datos (Sentry IOBROKER-INFLUXDB-8)",
-                "pl": "upewnij się, że wyłączenie punktów danych podczas uruchamiania adaptera nie powoduje awarii adaptera (Sentry IOBROKER-INFLUXDB-7)\nUpewnij się, że wszystkie wartości początkowe są poprawnie przetwarzane\nWięcej kontroli, aby upewnić się, że nie ulegnie awarii, gdy stany są wyłączone podczas przetwarzania danych (Sentry IOBROKER-INFLUXDB-8)",
-                "zh-cn": "确保在启动适配器时禁用数据点不要使适配器崩溃（Sentry IOBROKER-INFLUXDB-7）\n确保正确处理了所有起始值\n更多检查以确保在处理数据时禁用状态时不会崩溃（Sentry IOBROKER-INFLUXDB-8）"
-            },
-            "1.8.5": {
-                "en": "set default history if not yet set",
-                "de": "Standardverlauf festlegen, falls noch nicht festgelegt",
-                "ru": "установить историю по умолчанию, если еще не установлено",
-                "pt": "definir histórico padrão se ainda não estiver definido",
-                "nl": "stel de standaardgeschiedenis in als deze nog niet is ingesteld",
-                "fr": "définir l'historique par défaut s'il n'est pas encore défini",
-                "it": "imposta la cronologia predefinita se non ancora impostata",
-                "es": "establecer el historial predeterminado si aún no está configurado",
-                "pl": "ustaw domyślną historię, jeśli jeszcze nie została ustawiona",
-                "zh-cn": "设置默认历史记录（如果尚未设置）"
-            },
-            "1.8.4": {
-                "en": "make sure disabling of datapoints do not crash adapter (Sentry IOBROKER-INFLUXDB-4)",
-                "de": "Stellen Sie sicher, dass das Deaktivieren von Datenpunkten den Adapter nicht zum Absturz bringt (Sentry IOBROKER-INFLUXDB-4).",
-                "ru": "убедитесь, что отключение точек данных не приводит к сбою адаптера (Sentry IOBROKER-INFLUXDB-4)",
-                "pt": "verifique se a desativação dos pontos de dados não trava o adaptador (Sentry IOBROKER-INFLUXDB-4)",
-                "nl": "zorg ervoor dat het uitschakelen van datapunten de adapter niet crasht (Sentry IOBROKER-INFLUXDB-4)",
-                "fr": "assurez-vous que la désactivation des points de données ne plante pas l'adaptateur (Sentry IOBROKER-INFLUXDB-4)",
-                "it": "assicurarsi che la disabilitazione dei punti dati non causi l'arresto anomalo dell'adattatore (Sentry IOBROKER-INFLUXDB-4)",
-                "es": "asegúrese de que la desactivación de los puntos de datos no bloquee el adaptador (Sentry IOBROKER-INFLUXDB-4)",
-                "pl": "upewnij się, że wyłączenie punktów danych nie powoduje awarii adaptera (Sentry IOBROKER-INFLUXDB-4)",
-                "zh-cn": "确保禁用数据点不会使适配器崩溃（Sentry IOBROKER-INFLUXDB-4）"
-            },
-            "1.8.3": {
-                "en": "Fix pot crash case when deleting objects while saving values (Sentry)",
-                "de": "Behebung eines Pot-Crash-Falls beim Löschen von Objekten beim Speichern von Werten (Sentry)",
-                "ru": "Исправлен случай сбоя банка при удалении объектов при сохранении значений (Sentry)",
-                "pt": "Corrigir caso de falha de maconha ao excluir objetos e salvar valores (Sentry)",
-                "nl": "Pot-crashcase repareren bij het verwijderen van objecten tijdens het opslaan van waarden (Sentry)",
-                "fr": "Correction d'un cas de crash de pot lors de la suppression d'objets lors de l'enregistrement des valeurs (Sentry)",
-                "it": "Risolto il caso di crash del piatto durante l'eliminazione di oggetti durante il salvataggio dei valori (Sentry)",
-                "es": "Se corrigió el caso de bloqueo del bote al eliminar objetos al guardar valores (Sentry)",
-                "pl": "Napraw przypadek awarii puli podczas usuwania obiektów podczas zapisywania wartości (Sentry)",
-                "zh-cn": "修复在保存值的同时删除对象时发生锅底的情况（Sentry）"
-            },
-            "1.8.2": {
-                "en": "REQUIRES at least js-controller 2.0, fixes and optimizations, ready for js-controller 3.0, Sentry added for Error reporting",
-                "de": "ERFORDERT mindestens js-controller 2.0, Korrekturen und Optimierungen, bereit für js-controller 3.0, Sentry für Fehlerberichterstattung hinzugefügt",
-                "ru": "ТРЕБУЕТ как минимум js-controller 2.0, исправления и оптимизации, готов для js-controller 3.0, добавлен Sentry для отчетов об ошибках",
-                "pt": "EXIGE pelo menos o js-controller 2.0, correções e otimizações, pronto para o controller 3.0, acrescentou o Sentry para o relatório de erros",
-                "nl": "VEREIST minimaal js-controller 2.0, fixes en optimalisaties, klaar voor js-controller 3.0, Sentry toegevoegd voor foutrapportage",
-                "fr": "NÉCESSITE au moins js-controller 2.0, des corrections et des optimisations, prêt pour js-controller 3.0, Sentry ajouté pour le rapport d'erreurs",
-                "it": "RICHIEDE almeno js-controller 2.0, correzioni e ottimizzazioni, pronto per js-controller 3.0, aggiunta Sentry per la segnalazione degli errori",
-                "es": "REQUIERE al menos js-controller 2.0, correcciones y optimizaciones, listo para js-controller 3.0, Sentry agregado para informes de errores",
-                "pl": "WYMAGA co najmniej js-kontrolera 2.0, poprawek i optymalizacji, gotowy do js-kontrolera 3.0, dodano Sentry do raportowania błędów",
-                "zh-cn": "至少需要js-controller 2.0，修复和优化，为js-controller 3.0做好准备，并添加了Sentry以进行错误报告"
-            },
-            "1.7.0": {
-                "en": "Support of compact mode",
-                "de": "Unterstützung des Kompaktmodus",
-                "ru": "Поддержка компактного режима",
-                "pt": "Suporte do modo compacto",
-                "nl": "Ondersteuning van compacte modus",
-                "fr": "Prise en charge du mode compact",
-                "it": "Supporto della modalità compatta",
-                "es": "Soporte de modo compacto.",
-                "pl": "Obsługa trybu kompaktowego",
-                "zh-cn": "支持紧凑模式"
-            },
-            "1.6.3": {
-                "en": "Fix several smaller issues and optimized some texts ",
-                "de": "Behebt einige kleinere Probleme und optimiert einige Texte",
-                "ru": "Исправлено несколько мелких проблем и оптимизированы некоторые тексты.",
-                "pt": "Corrigir vários problemas menores e otimizou alguns textos",
-                "nl": "Los enkele kleinere problemen op en optimaliseerde sommige teksten",
-                "fr": "Correction de plusieurs petits problèmes et optimisation de certains textes",
-                "it": "Risolve diversi problemi minori e ottimizzava alcuni testi",
-                "es": "Soluciona varios problemas menores y optimiza algunos textos.",
-                "pl": "Napraw kilka mniejszych problemów i zoptymalizuj niektóre teksty",
-                "zh-cn": "修复几个较小的问题并优化一些文本"
-            },
-            "1.6.2": {
-                "en": "Add option to write data to a different ID to make device changes easier. Retrieving data works for both IDs",
-                "de": "Option zum Schreiben von Daten in eine andere ID hinzufügen, um Geräteänderungen zu vereinfachen. Das Abrufen von Daten funktioniert für beide IDs",
-                "ru": "Добавьте параметр для записи данных на другой идентификатор, чтобы упростить внесение изменений. Получение данных для обоих ID",
-                "pt": "Adicione a opção de gravar dados em um ID diferente para facilitar as alterações no dispositivo. Recuperar dados funciona para os dois IDs",
-                "nl": "Optie toevoegen om gegevens naar een andere ID te schrijven om apparaatwijzigingen gemakkelijker te maken. Het ophalen van gegevens werkt voor beide ID's",
-                "fr": "Ajoutez une option pour écrire des données sur un ID différent afin de faciliter les changements de périphérique. Récupération des données fonctionne pour les deux ID",
-                "it": "Aggiungi l'opzione per scrivere i dati su un ID diverso per facilitare le modifiche ai dispositivi. Il recupero dei dati funziona per entrambi gli ID",
-                "es": "Agregue la opción para escribir datos en una ID diferente para facilitar los cambios en el dispositivo. La recuperación de datos funciona para ambos ID",
-                "pl": "Dodaj opcję zapisywania danych do innego identyfikatora, aby ułatwić zmianę urządzenia. Pobieranie danych działa dla obu identyfikatorów"
-            },
-            "1.5.2": {
-                "en": "Admin3 Fixes",
-                "de": "Admin3-Korrekturen",
-                "ru": "Исправления Admin3",
-                "pt": "Admin3 Fixes",
-                "nl": "Admin3 Fixes",
-                "fr": "Corrections Admin3",
-                "it": "Correzioni di Admin3",
-                "es": "Correcciones de Admin3",
-                "pl": "Poprawki Admin3"
-            }
-        },
-        "mode": "daemon",
-        "platform": "Javascript/Node.js",
-        "loglevel": "info",
-        "messagebox": true,
-        "subscribe": "messagebox",
-        "keywords": [
-            "charts",
-            "logging",
-            "influxdb"
-        ],
-        "preserveSettings": "custom",
-        "supportCustoms": true,
-        "getHistory": true,
-        "enabled": true,
-        "compact": true,
-        "materialize": true,
-        "dependencies": [
-            {
-                "js-controller": ">=3.3.0"
-            }
-        ],
-        "globalDependencies": [
-            {
-                "admin": ">=5.1.19"
-            }
-        ],
-        "supportStopInstance": 3000,
-        "stopTimeout": 3000,
-        "authors": [
-            "Bluefox <dogafox@gmail.com>",
-            "Apollon77 <ingo@fischer-ka.de>",
-            "Excodibur"
-        ],
-        "license": "MIT",
-        "readme": "https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md",
-        "icon": "influxdb.png",
-        "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.influxdb/master/admin/influxdb.png",
-        "type": "storage",
-        "config": {
-            "minWidth": 570,
-            "width ": 435,
-            "minHeight": 200,
-            "height": 540
-        },
-        "docs": {
-            "de": [
-                "docs/de/influxdb.md"
-            ]
-        },
-        "plugins": {
-            "sentry": {
-                "dsn": "https://29eecf4e8c954f2ea78110d47a9b122d@sentry.iobroker.net/54"
-            }
-        },
-        "adminUI": {
-            "config": "json",
-            "custom": "json"
-        },
-        "connectionType": "local",
-        "dataSource": "none",
-        "tier": 1
+  "common": {
+    "name": "influxdb",
+    "desc": {
+      "en": "Logging of states into InfluxDB",
+      "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
+      "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB",
+      "pt": "Registro de estados no InfluxDB",
+      "nl": "Loggen van staten in InfluxDB",
+      "fr": "Journalisation des états dans InfluxDB",
+      "it": "Registrazione degli stati in InfluxDB",
+      "es": "Registro de estados en InfluxDB",
+      "pl": "Logowanie stanów do InfluxDB",
+      "zh-cn": "将状态记录到InfluxDB中"
     },
-    "native": {
-        "debounce": 1000,
-        "retention": 31536000,
-        "dbname": "iobroker",
-        "host": "localhost",
-        "protocol": "http",
-        "port": 8086,
-        "user": "",
-        "password": "",
-        "token": "",
-        "organization": "",
-        "round": 4,
-        "seriesBufferMax": 0,
-        "seriesBufferFlushInterval": 600,
-        "changesRelogInterval": 0,
-        "changesMinDelta": 0,
-        "reconnectInterval": 10000,
-        "pingInterval": 15000,
-        "dbversion": "1.x",
-        "usetags": false
+    "version": "2.3.0",
+    "title": "Logging data with InfluxDB",
+    "titleLang": {
+      "en": "Logging data with InfluxDB",
+      "de": "Daten mit InfluxDB protokollieren",
+      "ru": "Запись данных с помощью InfluxDB",
+      "pt": "Registro de dados com InfluxDB",
+      "nl": "Loggen van gegevens met InfluxDB",
+      "fr": "Consignation des données avec InfluxDB",
+      "it": "Registrazione dei dati con InfluxDB",
+      "es": "Datos de registro con InfluxDB",
+      "pl": "Rejestrowanie danych za pomocą InfluxDB",
+      "zh-cn": "使用InfluxDB记录数据"
     },
-    "protectedNative": [
-        "password",
-        "token"
+    "news": {
+      "2.3.0": {
+        "en": "Support only `js.controller` >= 3.3.x\nUsed system/custom view for collecting the objects\nImplemented option to ignore zero- or/and below zero- values",
+        "de": "Unterstützt nur `js.controller` >= 3.3.x\nVerwendete Systemansicht/benutzerdefinierte Ansicht zum Sammeln der Objekte\nImplementierte Option zum Ignorieren von Null- oder/und Unter-Null-Werten",
+        "ru": "Поддерживает только `js.controller`> = 3.3.x\nИспользуемый системный / пользовательский вид для сбора объектов\nРеализована возможность игнорировать нулевые и / или отрицательные значения.",
+        "pt": "Suporte apenas `js.controller`> = 3.3.x\nSistema usado / visão personalizada para coletar os objetos\nOpção implementada para ignorar valores zero ou / e abaixo de zero",
+        "nl": "Ondersteuning alleen `js.controller` >= 3.3.x\nGebruikt systeem/aangepaste weergave voor het verzamelen van de objecten\nGeïmplementeerde optie om nul- of/en onder nul-waarden te negeren",
+        "fr": "Supporte uniquement `js.controller` >= 3.3.x\nSystème utilisé/vue personnalisée pour la collecte des objets\nOption implémentée pour ignorer les valeurs zéro ou/et inférieures à zéro",
+        "it": "Supporta solo `js.controller` >= 3.3.x\nSistema utilizzato/vista personalizzata per la raccolta degli oggetti\nOpzione implementata per ignorare i valori zero o/o inferiori a zero",
+        "es": "Admite solo `js.controller`> = 3.3.x\nSistema usado / vista personalizada para recolectar los objetos.\nOpción implementada para ignorar valores cero o inferiores a cero",
+        "pl": "Obsługuje tylko `js.controller` >= 3.3.x\nUżywany system/widok niestandardowy do zbierania obiektów\nZaimplementowana opcja ignorowania wartości zerowych lub/i poniżej zera",
+        "zh-cn": "仅支持 `js.controller` >= 3.3.x\n用于收集对象的系统/自定义视图\n已实现忽略零或/和低于零值的选项"
+      },
+      "2.2.0": {
+        "en": "Added option to store metadata (q, ack, from) as tags instead of fields for Influx 2.x - see README!\nFailure to update/set retention policy will now cause warning instead of error/restart, to support more restrictive DB setups\n(Excodibur/Apollon77) Bug fixes and adjustments",
+        "de": "Option zum Speichern von Metadaten (q, ack, from) als Tags anstelle von Feldern für Influx 2.x hinzugefügt - siehe README!\nWenn die Aufbewahrungsrichtlinie nicht aktualisiert/festgelegt wird, führt dies jetzt zu einer Warnung anstelle eines Fehlers/Neustarts, um restriktivere DB-Setups zu unterstützen\n(Excodibur/Apollon77) Fehlerbehebungen und Anpassungen",
+        "ru": "Добавлена возможность хранить метаданные (q, ack, from) в виде тегов вместо полей для Influx 2.x - см. README!\nНевозможность обновить / установить политику хранения теперь будет вызывать предупреждение вместо ошибки / перезапуска для поддержки более строгих настроек БД.\n(Excodibur / Apollon77) Исправления и корректировки.",
+        "pt": "Adicionada opção para armazenar metadados (q, ack, from) como tags em vez de campos para o Influx 2.x - veja README!\nA falha em atualizar / definir a política de retenção agora causará um aviso em vez de erro / reinicialização, para oferecer suporte a configurações de banco de dados mais restritivas\n(Excodibur / Apollon77) Correções e ajustes de bugs",
+        "nl": "Optie toegevoegd om metadata (q, ack, from) op te slaan als tags in plaats van velden voor Influx 2.x - zie README!\nAls het bewaarbeleid niet wordt bijgewerkt/ingesteld, wordt er nu een waarschuwing gegeven in plaats van een fout/herstart, om restrictievere DB-instellingen te ondersteunen\n(Excodibur/Apollon77) Bugfixes en aanpassingen",
+        "fr": "Ajout d'une option pour stocker les métadonnées (q, ack, from) sous forme de balises au lieu de champs pour Influx 2.x - voir README !\nL'échec de la mise à jour/définition de la politique de rétention entraînera désormais un avertissement au lieu d'une erreur/redémarrage, pour prendre en charge des configurations de base de données plus restrictives\n(Excodibur/Apollon77) Corrections de bugs et ajustements",
+        "it": "Aggiunta l'opzione per memorizzare i metadati (q, ack, from) come tag invece dei campi per Influx 2.x - vedi README!\nIl mancato aggiornamento/impostazione della politica di conservazione ora causerà un avviso anziché un errore/riavvio, per supportare configurazioni DB più restrittive\n(Excodibur/Apollon77) Correzioni di bug e aggiustamenti",
+        "es": "Opción agregada para almacenar metadatos (q, ack, from) como etiquetas en lugar de campos para Influx 2.x - ¡vea README!\nSi no se actualiza / establece la política de retención, ahora se generará una advertencia en lugar de un error / reinicio, para admitir configuraciones de base de datos más restrictivas\n(Excodibur / Apollon77) Corrección de errores y ajustes",
+        "pl": "Dodano opcję przechowywania metadanych (q, ack, from) jako tagów zamiast pól dla Influx 2.x - zobacz README!\nNiepowodzenie aktualizacji/ustawienia zasad przechowywania spowoduje teraz ostrzeżenie zamiast błędu/ponownego uruchomienia, aby obsługiwać bardziej restrykcyjne konfiguracje bazy danych\n(Excodibur/Apollon77) Poprawki i poprawki",
+        "zh-cn": "添加了将元数据（q、ack、from）存储为标签而不是 Influx 2.x 的字段的选项 - 请参阅自述文件！\n更新/设置保留策略失败现在将导致警告而不是错误/重启，以支持更严格的数据库设置\n(Excodibur/Apollon77) 错误修复和调整"
+      },
+      "2.1.1": {
+        "en": "IMPORTANT: The adapter now requires Admin 5.1.15+ and js-controller 3.3+! For other admin or js-controller versions please use the former v1.9.5 of thi adapter.\nAdded InfluxDB 2.0 support\nAdjust Retention handling on Database level to work for InfluxDB 1.x and 2.x\nRemoved retention options on datapoint level because never worked and also not supported really by InfluxDB anymore",
+        "de": "WICHTIG: Der Adapter benötigt jetzt Admin 5.1.15+ und js-controller 3.3+! Für andere Admin- oder js-Controller-Versionen verwenden Sie bitte die frühere v1.9.5 dieses Adapters.\nUnterstützung für InfluxDB 2.0 hinzugefügt\nPassen Sie die Aufbewahrungsbehandlung auf Datenbankebene so an, dass sie für InfluxDB 1.x und 2.x funktioniert\nAufbewahrungsoptionen auf Datenpunktebene entfernt, da nie funktioniert und auch nicht mehr wirklich von InfluxDB unterstützt",
+        "ru": "ВАЖНО: для адаптера теперь требуются Admin 5.1.15+ и js-controller 3.3+! Для других версий admin или js-controller используйте бывшую версию v1.9.5 этого адаптера.\nДобавлена поддержка InfluxDB 2.0.\nНастройте обработку хранения на уровне базы данных для работы с InfluxDB 1.x и 2.x\nУдалены параметры хранения на уровне точек данных, потому что они никогда не работали и больше не поддерживаются InfluxDB.",
+        "pt": "IMPORTANTE: O adaptador agora requer Admin 5.1.15+ e js-controller 3.3+! Para outras versões admin ou js-controller, use a versão anterior v1.9.5 deste adaptador.\nAdicionado suporte a InfluxDB 2.0\nAjuste o manuseio de retenção no nível do banco de dados para funcionar no InfluxDB 1.xe 2.x\nRemovidas as opções de retenção no nível do ponto de dados porque nunca funcionou e também não é mais suportado pelo InfluxDB",
+        "nl": "BELANGRIJK: de adapter vereist nu Admin 5.1.15+ en js-controller 3.3+! Gebruik voor andere admin- of js-controllerversies de voormalige v1.9.5 van deze adapter.\nInfluxDB 2.0-ondersteuning toegevoegd\nPas de retentieafhandeling op databaseniveau aan om te werken voor InfluxDB 1.x en 2.x\nRetentieopties op datapuntniveau verwijderd omdat het nooit heeft gewerkt en ook niet echt meer wordt ondersteund door InfluxDB",
+        "fr": "IMPORTANT : l'adaptateur nécessite désormais Admin 5.1.15+ et js-controller 3.3+ ! Pour les autres versions admin ou js-controller, veuillez utiliser l'ancienne v1.9.5 de cet adaptateur.\nAjout de la prise en charge d'InfluxDB 2.0\nAjustez la gestion de la rétention au niveau de la base de données pour qu'elle fonctionne pour InfluxDB 1.x et 2.x\nSuppression des options de rétention au niveau du point de données car n'a jamais fonctionné et n'est plus vraiment pris en charge par InfluxDB",
+        "it": "IMPORTANTE: l'adattatore ora richiede Admin 5.1.15+ e js-controller 3.3+! Per altre versioni admin o js-controller, utilizzare la precedente v1.9.5 di questo adattatore.\nAggiunto il supporto per InfluxDB 2.0\nRegola la gestione della conservazione a livello di database per funzionare con InfluxDB 1.x e 2.x\nOpzioni di conservazione rimosse a livello di datapoint perché non hanno mai funzionato e inoltre non sono più supportate realmente da InfluxDB",
+        "es": "IMPORTANTE: ¡El adaptador ahora requiere Admin 5.1.15+ y js-controller 3.3+! Para otras versiones de admin o js-controller, utilice la versión anterior v1.9.5 de este adaptador.\nSe agregó compatibilidad con InfluxDB 2.0\nAjuste el manejo de la retención en el nivel de la base de datos para que funcione con InfluxDB 1.xy 2.x\nSe eliminaron las opciones de retención a nivel de punto de datos porque nunca funcionó y tampoco es realmente compatible con InfluxDB",
+        "pl": "WAŻNE: Adapter wymaga teraz Admin 5.1.15+ i js-controller 3.3+! W przypadku innych wersji administratora lub kontrolera js użyj poprzedniej wersji v1.9.5 tego adaptera.\nDodano obsługę InfluxDB 2.0\nDostosuj obsługę przechowywania na poziomie bazy danych, aby działała dla InfluxDB 1.x i 2.x\nUsunięto opcje przechowywania na poziomie punktu danych, ponieważ nigdy nie działały i nie są już obsługiwane przez InfluxDB",
+        "zh-cn": "重要提示：适配器现在需要 Admin 5.1.15+ 和 js-controller 3.3+！对于其他 admin 或 js-controller 版本，请使用该适配器以前的 v1.9.5。\n添加了 InfluxDB 2.0 支持\n调整数据库级别的保留处理以适用于 InfluxDB 1.x 和 2.x\n删除了数据点级别的保留选项，因为从来没有工作过，也不再受到 InfluxDB 的真正支持"
+      },
+      "1.9.5": {
+        "en": "Added the support of Admin5",
+        "de": "Unterstützung von Admin5 hinzugefügt",
+        "ru": "Добавлена поддержка Admin5",
+        "pt": "Adicionado o suporte de Admin5",
+        "nl": "Ondersteuning toegevoegd van Admin5",
+        "fr": "Ajout du support d'Admin5",
+        "it": "Aggiunto il supporto di Admin5",
+        "es": "Se agregó el soporte de Admin5.",
+        "pl": "Dodano obsługę Admin5",
+        "zh-cn": "添加了对Admin5的支持"
+      },
+      "1.9.4": {
+        "en": "Optimize stop handling",
+        "de": "Optimieren Sie das Stop-Handling",
+        "ru": "Оптимизировать обработку остановок",
+        "pt": "Otimize o manuseio de parada",
+        "nl": "Optimaliseer het afhandelen van stops",
+        "fr": "Optimiser la gestion des arrêts",
+        "it": "Ottimizza la gestione delle fermate",
+        "es": "Optimizar el manejo de paradas",
+        "pl": "Zoptymalizuj obsługę zatrzymania",
+        "zh-cn": "优化停止处理"
+      },
+      "1.9.3": {
+        "en": "Crash case prevented (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
+        "de": "Absturz verhindert (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
+        "ru": "Сбой предотвращен (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
+        "pt": "Caso de falha impedido (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
+        "nl": "Crashcase voorkomen (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
+        "fr": "Crash case évité (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
+        "it": "Crash case prevenuto (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
+        "es": "Caso de accidente evitado (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
+        "pl": "Zapobiegano awariom (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
+        "zh-cn": "防止发生崩溃情况（哨兵IOBROKER-INFLUXDB-T，IOBROKER-INFLUXDB-Y）"
+      },
+      "1.9.2": {
+        "en": "crash prevented (Sentry IOBROKER-INFLUXDB-G)",
+        "de": "Absturz verhindert (Sentry IOBROKER-INFLUXDB-G)",
+        "ru": "сбой предотвращен (Sentry IOBROKER-INFLUXDB-G)",
+        "pt": "travamento evitado (Sentry IOBROKER-INFLUXDB-G)",
+        "nl": "crash voorkomen (Sentry IOBROKER-INFLUXDB-G)",
+        "fr": "crash évité (Sentry IOBROKER-INFLUXDB-G)",
+        "it": "crash prevenuto (Sentry IOBROKER-INFLUXDB-G)",
+        "es": "accidente prevenido (Sentry IOBROKER-INFLUXDB-G)",
+        "pl": "zapobieganie awariom (Sentry IOBROKER-INFLUXDB-G)",
+        "zh-cn": "防止崩溃（Sentry IOBROKER-INFLUXDB-G）"
+      }
+    },
+    "mode": "daemon",
+    "platform": "Javascript/Node.js",
+    "loglevel": "info",
+    "messagebox": true,
+    "subscribe": "messagebox",
+    "keywords": [
+      "charts",
+      "logging",
+      "influxdb"
     ],
-    "encryptedNative": [
-        "password",
-        "token"
+    "preserveSettings": "custom",
+    "supportCustoms": true,
+    "getHistory": true,
+    "enabled": true,
+    "compact": true,
+    "materialize": true,
+    "dependencies": [
+      {
+        "js-controller": ">=3.3.0"
+      }
     ],
-    "instanceObjects": [
-        {
-            "_id": "info",
-            "type": "channel",
-            "common": {
-                "name": "Information"
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.connection",
-            "type": "state",
-            "common": {
-                "role": "indicator.connected",
-                "name": "If connected to InfluxDB",
-                "type": "boolean",
-                "read": true,
-                "write": false,
-                "def": false
-            },
-            "native": {}
-        }
+    "globalDependencies": [
+      {
+        "admin": ">=5.1.19"
+      }
     ],
-    "objects": []
+    "supportStopInstance": 3000,
+    "stopTimeout": 3000,
+    "authors": [
+      "Bluefox <dogafox@gmail.com>",
+      "Apollon77 <ingo@fischer-ka.de>",
+      "Excodibur"
+    ],
+    "license": "MIT",
+    "readme": "https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md",
+    "icon": "influxdb.png",
+    "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.influxdb/master/admin/influxdb.png",
+    "type": "storage",
+    "config": {
+      "minWidth": 570,
+      "width ": 435,
+      "minHeight": 200,
+      "height": 540
+    },
+    "docs": {
+      "de": [
+        "docs/de/influxdb.md"
+      ]
+    },
+    "plugins": {
+      "sentry": {
+        "dsn": "https://29eecf4e8c954f2ea78110d47a9b122d@sentry.iobroker.net/54"
+      }
+    },
+    "adminUI": {
+      "config": "json",
+      "custom": "json"
+    },
+    "connectionType": "local",
+    "dataSource": "none",
+    "tier": 1
+  },
+  "native": {
+    "debounce": 1000,
+    "retention": 31536000,
+    "dbname": "iobroker",
+    "host": "localhost",
+    "protocol": "http",
+    "port": 8086,
+    "user": "",
+    "password": "",
+    "token": "",
+    "organization": "",
+    "round": 4,
+    "seriesBufferMax": 0,
+    "seriesBufferFlushInterval": 600,
+    "changesRelogInterval": 0,
+    "changesMinDelta": 0,
+    "reconnectInterval": 10000,
+    "pingInterval": 15000,
+    "dbversion": "1.x",
+    "usetags": false
+  },
+  "protectedNative": [
+    "password",
+    "token"
+  ],
+  "encryptedNative": [
+    "password",
+    "token"
+  ],
+  "instanceObjects": [
+    {
+      "_id": "info",
+      "type": "channel",
+      "common": {
+        "name": "Information"
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.connection",
+      "type": "state",
+      "common": {
+        "role": "indicator.connected",
+        "name": "If connected to InfluxDB",
+        "type": "boolean",
+        "read": true,
+        "write": false,
+        "def": false
+      },
+      "native": {}
+    }
+  ],
+  "objects": []
 }
