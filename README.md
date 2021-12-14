@@ -305,6 +305,11 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 	### __WORK IN PROGRESS__
 -->
 ## Changelog
+### __WORK IN PROGRESS__
+* (bluefox) Support only `js.controller` >= 3.3.x
+* (bluefox) Used system/custom view for collecting the objects
+* (bluefox) Implemented option to ignore zero- or/and below zero- values
+
 ### 2.2.0 (2021-08-25)
 * (Excodibur) Added option to store metadata (q, ack, from) as tags instead of fields for Influx 2.x - see README!
 * (Excodibur) Failure to update/set retention policy will now cause warning instead of error/restart, to support more restrictive DB setups

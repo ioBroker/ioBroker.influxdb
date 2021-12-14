@@ -369,15 +369,5 @@
             "native": {}
         }
     ],
-    "objects": [
-        {
-            "_id": "_design/custom",
-            "language": "javascript",
-            "views": {
-                "state": {
-                    "map": "function(doc) { if (doc.type==='state' && (doc.common.custom || doc.common.history)) emit(doc._id, doc.common.custom || doc.common.history) }"
-                }
-            }
-        }
-    ]
+    "objects": []
 }
