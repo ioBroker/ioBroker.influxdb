@@ -859,11 +859,11 @@ function pushValueIntoDB(adapter, id, state, cb) {
         return cb && cb('InfluxDB can not handle null/non-existing values');
     }
 
-    if (adapter._influxDPs[id][adapter.namespace].ignoreZero && state.val === 0) {
+    if (adapter._influxDPs[id] && adapter._influxDPs[id][adapter.namespace] && adapter._influxDPs[id][adapter.namespace].ignoreZero && state.val === 0) {
         adapter.log.debug(`pushValueIntoDB called for ${id} was ignored because the value zero or null`);
         return cb && cb();
     } else
-    if (state && adapter._influxDPs[id][adapter.namespace].ignoreBelowZero && typeof state.val === 'number' && state.val < 0) {
+    if (state && adapter._influxDPs[id] && adapter._influxDPs[id][adapter.namespace] && adapter._influxDPs[id][adapter.namespace].ignoreBelowZero && typeof state.val === 'number' && state.val < 0) {
         adapter.log.debug(`pushValueIntoDB called for ${id} and state: ${JSON.stringify(state)} was ignored because the value is below 0`);
         return cb && cb();
     }

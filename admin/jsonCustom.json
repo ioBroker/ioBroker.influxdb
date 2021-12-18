@@ -195,7 +195,7 @@
       "type": "number",
       "label": "De-bounce time",
       "help": "De-bounce interval(ms)",
-      "min": 500,
+      "min": 0,
       "max": 86400000,
       "defaultFunc": "customObj && customObj.common && customObj.common.type === 'number' ? instanceObj.native.debounce : 0",
       "sm": 6
