@@ -260,7 +260,17 @@
             "title": "Please confirm!",
             "type": "warning"
           }
-        }
+        },
+        "pingserver": {
+            "type": "checkbox",
+            "sm": 12,
+            "md": 6,
+            "min": 0,
+            "label": "Send health-check pings to database",
+            "help": "health-check help",
+            "hidden": "data.dbversion === '1.x'",
+            "disabled": "data.dbversion === '1.x'"
+          }
       }
     }
   }
