@@ -13,7 +13,7 @@
       "pl": "Logowanie stanów do InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "2.3.0",
+    "version": "2.4.0",
     "title": "Logging data with InfluxDB",
     "titleLang": {
       "en": "Logging data with InfluxDB",
@@ -28,6 +28,18 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "2.4.0": {
+        "en": "Added expert settings to deactivate health checks for Influx 2 db (There are no health checks for Influx 1)\nHide settings not relevant when \"log changes only\" is not used\nAllow all number values for debounce again\nInfluxDB also do not like Infinite values, so ignore them too",
+        "de": "Experteneinstellungen hinzugefügt, um Gesundheitsprüfungen für Influx 2 db zu deaktivieren (Es gibt keine Gesundheitsprüfungen für Influx 1)\nNicht relevante Einstellungen ausblenden, wenn \"Nur Änderungen protokollieren\" nicht verwendet wird\nAlle Zahlenwerte wieder für die Entprellung zulassen\nInfluxDB mag auch keine unendlichen Werte, also ignoriere sie auch",
+        "ru": "Добавлены экспертные настройки для отключения проверок работоспособности для Influx 2 db (для Influx 1 проверки работоспособности отсутствуют)\nСкрыть настройки, не актуальные, если не используется \"только журнал изменений\"\nРазрешить все числовые значения для устранения дребезга снова\nInfluxDB также не любит бесконечные значения, поэтому игнорируйте их тоже",
+        "pt": "Adicionadas configurações de especialistas para desativar verificações de saúde para o Influx 2 db (não há verificações de saúde para o Influx 1)\nOcultar configurações irrelevantes quando \"apenas registro de alterações\" não é usado\nPermitir todos os valores numéricos para debounce novamente\nInfluxDB também não gosta de valores infinitos, então ignore-os também",
+        "nl": "Expertinstellingen toegevoegd om statuscontroles voor Influx 2 db te deactiveren (Er zijn geen statuscontroles voor Influx 1)\nInstellingen verbergen die niet relevant zijn wanneer \"alleen logboekwijzigingen\" niet wordt gebruikt\nSta alle getalwaarden opnieuw toe voor debounce\nInfluxDB houdt ook niet van oneindige waarden, dus negeer ze ook",
+        "fr": "Ajout de paramètres experts pour désactiver les contrôles de santé pour Influx 2 db (il n'y a pas de contrôles de santé pour Influx 1)\nMasquer les paramètres non pertinents lorsque \"log changes only\" n'est pas utilisé\nAutoriser à nouveau toutes les valeurs numériques pour l'anti-rebond\nInfluxDB n'aime pas non plus les valeurs infinies, alors ignorez-les aussi",
+        "it": "Aggiunte impostazioni avanzate per disattivare i controlli di integrità per Influx 2 db (non ci sono controlli di integrità per Influx 1)\nNascondi le impostazioni non rilevanti quando non viene utilizzato \"solo modifiche al registro\"\nConsenti di nuovo l'antirimbalzo di tutti i valori numerici\nAnche a InfluxDB non piacciono i valori Infinite, quindi ignorali anche tu",
+        "es": "Se agregaron configuraciones de experto para desactivar los controles de salud para Influx 2 db (no hay controles de salud para Influx 1)\nOcultar la configuración que no es relevante cuando no se utiliza \"solo cambios de registro\"\nPermitir todos los valores numéricos para antirrebote nuevamente\nInfluxDB tampoco le gustan los valores infinitos, así que ignórelos también",
+        "pl": "Dodano ustawienia eksperckie, aby dezaktywować kontrole kondycji dla Influx 2 db (Brak kontroli kondycji dla Influx 1)\nUkryj ustawienia nieistotne, gdy nie używasz opcji „tylko rejestruj zmiany”\nZezwól ponownie na odrzucenie wszystkich wartości liczbowych\nInfluxDB również nie lubi wartości Infinite, więc je również zignoruj",
+        "zh-cn": "添加了专家设置以停用 Influx 2 db 的健康检查（Influx 1 没有健康检查）\n不使用“仅记录更改”时隐藏不相关的设置\n再次允许所有数值去抖动\nInfluxDB 也不喜欢 Infinite 值，所以也忽略它们"
+      },
       "2.3.0": {
         "en": "Support only `js.controller` >= 3.3.x\nUsed system/custom view for collecting the objects\nImplemented option to ignore zero- or/and below zero- values",
         "de": "Unterstützt nur `js.controller` >= 3.3.x\nVerwendete Systemansicht/benutzerdefinierte Ansicht zum Sammeln der Objekte\nImplementierte Option zum Ignorieren von Null- oder/und Unter-Null-Werten",
@@ -99,18 +111,6 @@
         "es": "Caso de accidente evitado (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
         "pl": "Zapobiegano awariom (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
         "zh-cn": "防止发生崩溃情况（哨兵IOBROKER-INFLUXDB-T，IOBROKER-INFLUXDB-Y）"
-      },
-      "1.9.2": {
-        "en": "crash prevented (Sentry IOBROKER-INFLUXDB-G)",
-        "de": "Absturz verhindert (Sentry IOBROKER-INFLUXDB-G)",
-        "ru": "сбой предотвращен (Sentry IOBROKER-INFLUXDB-G)",
-        "pt": "travamento evitado (Sentry IOBROKER-INFLUXDB-G)",
-        "nl": "crash voorkomen (Sentry IOBROKER-INFLUXDB-G)",
-        "fr": "crash évité (Sentry IOBROKER-INFLUXDB-G)",
-        "it": "crash prevenuto (Sentry IOBROKER-INFLUXDB-G)",
-        "es": "accidente prevenido (Sentry IOBROKER-INFLUXDB-G)",
-        "pl": "zapobieganie awariom (Sentry IOBROKER-INFLUXDB-G)",
-        "zh-cn": "防止崩溃（Sentry IOBROKER-INFLUXDB-G）"
       }
     },
     "mode": "daemon",
