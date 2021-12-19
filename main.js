@@ -810,6 +810,12 @@ function pushHelper(adapter, _id, cb) {
     if (adapter._influxDPs[_id].state.val === null) { // InfluxDB can not handle null values
         return cb && setImmediate(cb, `null value for ${_id} can not be handled`);
     }
+    if (adapter._influxDPs[_id].state.val === null) { // InfluxDB can not handle null values
+        return cb && setImmediate(cb, `null value for ${_id} can not be handled`);
+    }
+    if (typeof adapter._influxDPs[_id].state.val === 'number' && !isFinite(adapter._influxDPs[_id].state.val)) { // InfluxDB can not handle Infinite values
+        return cb && setImmediate(cb, `Non Finite value ${adapter._influxDPs[_id].state.val} for ${_id} can not be handled`);
+    }
 
     if (typeof adapter._influxDPs[_id].state.val === 'object') {
         adapter._influxDPs[_id].state.val = JSON.stringify(adapter._influxDPs[_id].state.val);
@@ -855,8 +861,8 @@ function pushValueIntoDB(adapter, id, state, cb) {
     if (state.val === null || state.val === undefined) {
         return cb && cb('InfluxDB can not handle null/non-existing values');
     } // InfluxDB can not handle null/non-existing values
-    if (typeof state.val === 'number' && isNaN(state.val)) {
-        return cb && cb('InfluxDB can not handle null/non-existing values');
+    if (typeof state.val === 'number' && !isFinite(state.val)) {
+        return cb && cb(`InfluxDB can not handle non finite values like ${state.val}`);
     }
 
     if (adapter._influxDPs[id] && adapter._influxDPs[id][adapter.namespace] && adapter._influxDPs[id][adapter.namespace].ignoreZero && state.val === 0) {
