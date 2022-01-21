@@ -294,6 +294,13 @@ function connect(adapter) {
     }
 
     adapter._client.getDatabaseNames((err, dbNames) => {
+        if (adapter.config.dbversion === '2.x') {
+	    adapter.log.warn('Insufficient permissions to bucket management in 2.x, please create bucket and retention policy in the Influx2 UI');
+	    setConnected(adapter, true);
+	    checkMetaDataStorageType(adapter);
+	    return;
+        }
+
         if (err) {
             adapter.log.error(err);
             reconnect(adapter);
