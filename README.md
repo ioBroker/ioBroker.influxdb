@@ -27,7 +27,7 @@ When doing custom queries via the "query" message you can use InfluxQL to select
 Since 2.0 of the adapter also InfluxDB 2.x is supported which works a bit different.
 Here beside the Host-IP and Port the following data are required:
 * **Organization**: You need to create an organization on the commandline and need to enter the name or ID of that organization here. If you created one Organization when doing the InfluxDB setup you have created an initial organization and can use this here, else use `influx org list` to see available organizations.
-* **Authentication Token**: You need to create an Authentication token  that have sufficient rights to basically do all actions on the provided organization! **Important: For now just use the initial owner auth token because we still struggle on how to create a token that has sufficient permissions. The Owner Token was generated on InfluxDB setup process. If you know how to create the right tokens let us now :-)**
+* **Authentication Token**: You need to create an Authentication token  that have sufficient rights to basically do all actions on the provided organization! If you create a token just for a particular bucket all the magic database management (retention policy, bucket creation) won't work, but storing datapoints and retrieving history should.
 
 You can also define a database name - this is used as Bucket. The default is "iobroker". On first adapter start this bucket is created in the configured organization.
 
