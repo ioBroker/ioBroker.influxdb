@@ -94,7 +94,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                 console.log('extracted token =' + authToken);
                 config.native.dbversion = '2.x';
 
-                let secret = setup.getSecret();
+                let secret = await setup.getSecret();
                 if (secret === null)
                     secret = 'Zgfr56gFe87jJOM';
 

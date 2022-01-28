@@ -81,8 +81,8 @@ describe('Test ' + adapterShortName + ' adapter with Buffered write', function()
     before('Test ' + adapterShortName + ' adapter: Start js-controller', function (_done) {
         this.timeout(600000); // because of first install from npm
 
-        setup.setupController(function () {
-            var config = setup.getAdapterConfig();
+        setup.setupController(async function () {
+            var config = await setup.getAdapterConfig();
             // enable adapter
             config.common.enabled  = true;
             config.common.loglevel = 'debug';
@@ -92,8 +92,8 @@ describe('Test ' + adapterShortName + ' adapter with Buffered write', function()
                 console.log('AUTHTOKEN=' + process.env.AUTHTOKEN);
                 console.log('extracted token =' + authToken);
                 config.native.dbversion = '2.x';
-                
-                let secret = setup.getSecret();
+
+                let secret = await setup.getSecret();
                 if (secret === null)
                     secret = 'Zgfr56gFe87jJOM';
 
@@ -106,7 +106,7 @@ describe('Test ' + adapterShortName + ' adapter with Buffered write', function()
 
             //config.native.dbtype   = 'sqlite';
 
-            setup.setAdapterConfig(config.common, config.native);
+            await setup.setAdapterConfig(config.common, config.native);
 
             setup.startController(true, function(id, obj) {}, function (id, state) {
                     if (onStateChanged) onStateChanged(id, state);
