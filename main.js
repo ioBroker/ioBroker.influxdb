@@ -1390,7 +1390,6 @@ function getHistory(adapter, msg) {
         adapter.log.debug('ROWS:' + JSON.stringify(rows));
         let result = [];
         if (rows && rows.length) {
-            const rowsLast = rows.length - 1;
             for (let qr = 0; qr < rows.length; qr++) {
                 for (let rr = 0; rr < rows[qr].length; rr++) {
                     if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
@@ -1620,14 +1619,13 @@ function getHistoryIflx2(adapter, msg) {
             adapter.log.debug('Parsing retrieved rows:' + JSON.stringify(rows));
             let result = [];
             if (rows && rows.length) {
-                const rowsLast = rows.length - 1;
                 for (let qr = 0; qr < rows.length; qr++) {
                     for (let rr = 0; rr < rows[qr].length; rr++) {
                         if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
                             rows[qr][rr].val = rows[qr][rr].value;
                             delete rows[qr][rr].value;
                         }
-                        rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();                     
+                        rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
                         delete rows[qr][rr].time;
                         if (rows[qr][rr].val !== null) {
                             const f = parseFloat(rows[qr][rr].val);
