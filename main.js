@@ -1364,21 +1364,15 @@ function getHistory(adapter, msg) {
         query += ' LIMIT ' + options.count;
     }
 
-    let 
-        isPrefixAdded = false,
-        isSuffixAdded = false;
-
     // select one datapoint more then wanted
     if (options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none') {
         let addQuery = '';
         if (options.start) {
             addQuery = 'SELECT value from "' + options.id + '"' + " WHERE time <= '" + new Date(options.start).toISOString() + "' ORDER BY time DESC LIMIT 1;";
             query = addQuery + query;
-            isPrefixAdded = true;
         }
         addQuery = ';SELECT value from "' + options.id + '"' + " WHERE time >= '" + new Date(options.end).toISOString() + "' LIMIT 1";
         query = query + addQuery;
-        isSuffixAdded = true;
     }
 
     adapter.log.debug(query);
@@ -1404,18 +1398,6 @@ function getHistory(adapter, msg) {
                         delete rows[qr][rr].value;
                     }
                     rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
-                    if (isPrefixAdded && (qr === 0) && (rr === 0)) {
-                        const startTime = new Date(options.start).getTime();
-                        if ( (startTime - rows[qr][rr].ts) > 1000) {
-                            rows[qr][rr].ts  = startTime - 1000;
-                        }
-                    }
-                    if (isSuffixAdded && (qr === rowsLast) && (rr === (rows[qr].length - 1) )) {
-                        const endTime = new Date(options.end).getTime();
-                        if ( (rows[qr][rr].ts - endTime ) > 1000) {
-                            rows[qr][rr].ts  = endTime + 1000;
-                        }
-                    }
                     delete rows[qr][rr].time;
                     if (rows[qr][rr].val !== null) {
                         const f = parseFloat(rows[qr][rr].val);
@@ -1430,6 +1412,19 @@ function getHistory(adapter, msg) {
                     result.push(rows[qr][rr]);
                 }
             }
+        }
+
+        if ((result.length > 0) && ((options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none'))) {
+            if (options.start) {
+                const startTime = new Date(options.start).getTime();
+                if (startTime - result[0].time > 1000) {
+                    result[0].time = startTime - 1000
+                }
+            }
+            const endTime = new Date(options.end).getTime();
+            if ( (result[result.length - 1].time - endTime ) > 1000) {
+                result[result.length - 1].time  = endTime + 1000;
+            }   
         }
 
         if ((result.length > 0) && (options.aggregate === 'minmax')) {
@@ -1581,10 +1576,6 @@ function getHistoryIflx2(adapter, msg) {
 
         fluxQueries.push(fluxQuery);
 
-        let 
-            isPrefixAdded = false,
-            isSuffixAdded = false;
-
         // select one datapoint more then wanted
         if (options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none') {
             let addFluxQuery = '';
@@ -1601,7 +1592,6 @@ function getHistoryIflx2(adapter, msg) {
                 const mainQuery = fluxQueries.pop();
                 fluxQueries.push(addFluxQuery);
                 fluxQueries.push(mainQuery);
-                isPrefixAdded = true;
             }
             // get one entry "after" the defined timeframe for displaying purposes
             addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
@@ -1613,7 +1603,6 @@ function getHistoryIflx2(adapter, msg) {
                 |> limit(n: 1)';
             //fluxQuery = fluxQuery + addFluxQuery;
             fluxQueries.push(addFluxQuery);
-            isSuffixAdded = true;
         }
 
         adapter.log.debug('History-queries to execute: ' + fluxQueries);
@@ -1638,19 +1627,7 @@ function getHistoryIflx2(adapter, msg) {
                             rows[qr][rr].val = rows[qr][rr].value;
                             delete rows[qr][rr].value;
                         }
-                        rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
-                        if (isPrefixAdded && (qr === 0) && (rr === 0)) {
-                            const startTime = new Date(options.start).getTime();
-                            if ( (startTime - rows[qr][rr].ts) > 1000) {
-                                rows[qr][rr].ts  = startTime - 1000;
-                            }
-                        }
-                        if (isSuffixAdded && (qr === rowsLast) && (rr === (rows[qr].length - 1))) {
-                            const endTime = new Date(options.end).getTime();
-                            if ( (rows[qr][rr].ts - endTime ) > 1000) {
-                                rows[qr][rr].ts  = endTime + 1000;
-                            }
-                        }                        
+                        rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();                     
                         delete rows[qr][rr].time;
                         if (rows[qr][rr].val !== null) {
                             const f = parseFloat(rows[qr][rr].val);
@@ -1666,6 +1643,19 @@ function getHistoryIflx2(adapter, msg) {
                     }
                 }
             }
+
+            if ((result.length > 0) && ((options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none'))) {
+                if (options.start) {
+                    const startTime = new Date(options.start).getTime();
+                    if (startTime - result[0].time > 1000) {
+                        result[0].time = startTime - 1000
+                    }
+                }
+                const endTime = new Date(options.end).getTime();
+                if ( (result[result.length - 1].time - endTime ) > 1000) {
+                    result[result.length - 1].time  = endTime + 1000;
+                }   
+            }   
 
             if ((result.length > 0) && (options.aggregate === 'minmax')) {
                 Aggregate.initAggregate(options);
