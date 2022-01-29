@@ -127,7 +127,10 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                             }
                         },
                         type: 'state'
-                    }, _done);
+                    }, (err) => {
+                        console.log('EXTEND ' + err);
+                        _done();
+                    });
                 });
         });
     });
