@@ -737,7 +737,8 @@ function startController(isStartAdapter, onObjectChange, onStateChange, callback
                     'user': '',
                     'pass': '',
                     'noFileCache': false,
-                    'connectTimeout': 2000
+                    'connectTimeout': 2000,
+                    enhancedLogging: true
                 },
                 logger: {
                     silly: function (msg) {
