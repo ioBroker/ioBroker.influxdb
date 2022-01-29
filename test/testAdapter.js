@@ -111,7 +111,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                 function (_objects, _states) {
                     objects = _objects;
                     states  = _states;
-                    objects.setObject('influxdb.0.memRss', {
+                    objects.extendObject('influxdb.0.memRss', {
                         common: {
                             type: 'number',
                             role: 'state',
