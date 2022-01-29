@@ -105,33 +105,37 @@ describe('Test ' + adapterShortName + ' adapter', function() {
 
             await setup.setAdapterConfig(config.common, config.native);
 
-            setup.startController(true, function(id, obj) {}, function (id, state) {
+            setup.startController(false, function(id, obj) {}, function (id, state) {
                     if (onStateChanged) onStateChanged(id, state);
                 },
                 function (_objects, _states) {
                     objects = _objects;
                     states  = _states;
                     console.log('START EXTEND');
-                    objects.extendObject('influxdb.0.memRss', {
-                        common: {
-                            type: 'number',
-                            role: 'state',
-                            custom: {
-                                "influxdb.0": {
-                                    enabled: true,
-                                    changesOnly:  true,
-                                    debounce:     0,
-                                    retention:    31536000,
-                                    maxLength:    3,
-                                    changesMinDelta: 0.5
+                    try {
+                        objects.extendObject('influxdb.0.memRss', {
+                            common: {
+                                type: 'number',
+                                role: 'state',
+                                custom: {
+                                    "influxdb.0": {
+                                        enabled: true,
+                                        changesOnly: true,
+                                        debounce: 0,
+                                        retention: 31536000,
+                                        maxLength: 3,
+                                        changesMinDelta: 0.5
+                                    }
                                 }
-                            }
-                        },
-                        type: 'state'
-                    }, (err) => {
-                        console.log('EXTEND ' + err);
-                        _done();
-                    });
+                            },
+                            type: 'state'
+                        }, (err) => {
+                            console.log('EXTEND ' + err);
+                            setup.startAdapter(_objects, _states, _done);
+                        });
+                    } catch (err) {
+                        console.error('ERROR on EXTEND: ' + err);
+                    }
                 });
         });
     });
