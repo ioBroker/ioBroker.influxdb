@@ -108,30 +108,37 @@ describe('Test ' + adapterShortName + ' adapter with Buffered write', function()
 
             await setup.setAdapterConfig(config.common, config.native);
 
-            setup.startController(true, function(id, obj) {}, function (id, state) {
+            setup.startController(false, function(id, obj) {}, function (id, state) {
                     if (onStateChanged) onStateChanged(id, state);
                 },
                 function (_objects, _states) {
                     objects = _objects;
                     states  = _states;
-                    objects.extendObject('influxdb.0.memRss', {
-                        common: {
-                            type: 'number',
-                            role: 'state',
-                            custom: {
-                                "influxdb.0": {
-                                    enabled: true,
-                                    changesOnly:  true,
-                                    debounce:     0,
-                                    retention:    31536000,
-                                    maxLength:    3,
-                                    changesMinDelta: 0.5
+                    console.log('START EXTEND');
+                    try {
+                        objects.extendObject('influxdb.0.memRss', {
+                            common: {
+                                type: 'number',
+                                role: 'state',
+                                custom: {
+                                    "influxdb.0": {
+                                        enabled: true,
+                                        changesOnly: true,
+                                        debounce: 0,
+                                        retention: 31536000,
+                                        maxLength: 3,
+                                        changesMinDelta: 0.5
+                                    }
                                 }
-                            }
-                        },
-                        type: 'state'
-                    }, () =>
-                        states.setState('influxdb.0.memRss', {val: 0, from: 'test.0'}, _done));
+                            },
+                            type: 'state'
+                        }, (err) => {
+                            console.log('EXTEND ' + err);
+                            setup.startAdapter(_objects, _states, () => states.setState('influxdb.0.memRss', {val: 0, from: 'test.0'}, _done));
+                        });
+                    } catch (err) {
+                        console.error('ERROR on EXTEND: ' + err);
+                    }
                 });
         });
     });
