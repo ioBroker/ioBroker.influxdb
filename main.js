@@ -598,6 +598,7 @@ function main(adapter) {
     // read all custom settings
     adapter.getObjectView('system', 'custom', {}, (err, doc) => {
         if (err) adapter.log.error('main/getObjectView: ' + err);
+        adapter.log.info('getObjectView result: ' + JSON.stringify(doc));
         let count = 0;
         if (doc && doc.rows) {
             for (let i = 0, l = doc.rows.length; i < l; i++) {
