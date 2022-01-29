@@ -111,6 +111,7 @@ describe('Test ' + adapterShortName + ' adapter', function() {
                 function (_objects, _states) {
                     objects = _objects;
                     states  = _states;
+                    console.log('START EXTEND');
                     objects.extendObject('influxdb.0.memRss', {
                         common: {
                             type: 'number',
