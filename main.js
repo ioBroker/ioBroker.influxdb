@@ -1416,13 +1416,13 @@ function getHistory(adapter, msg) {
         if ((result.length > 0) && ((options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none'))) {
             if (options.start) {
                 const startTime = new Date(options.start).getTime();
-                if (startTime - result[0].time > 1000) {
-                    result[0].time = startTime - 1000
+                if (startTime - result[0].ts > 1000) {
+                    result[0].ts = startTime - 1000
                 }
             }
             const endTime = new Date(options.end).getTime();
-            if ( (result[result.length - 1].time - endTime ) > 1000) {
-                result[result.length - 1].time  = endTime + 1000;
+            if ( (result[result.length - 1].ts - endTime ) > 1000) {
+                result[result.length - 1].ts  = endTime + 1000;
             }   
         }
 
@@ -1626,7 +1626,6 @@ function getHistoryIflx2(adapter, msg) {
                             delete rows[qr][rr].value;
                         }
                         rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
-                        delete rows[qr][rr].time;
                         if (rows[qr][rr].val !== null) {
                             const f = parseFloat(rows[qr][rr].val);
                             if (f == rows[qr][rr].val) {
@@ -1645,13 +1644,13 @@ function getHistoryIflx2(adapter, msg) {
             if ((result.length > 0) && ((options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none'))) {
                 if (options.start) {
                     const startTime = new Date(options.start).getTime();
-                    if (startTime - result[0].time > 1000) {
-                        result[0].time = startTime - 1000
+                    if (startTime - result[0].ts > 1000) {
+                        result[0].ts = startTime - 1000
                     }
                 }
                 const endTime = new Date(options.end).getTime();
-                if ( (result[result.length - 1].time - endTime ) > 1000) {
-                    result[result.length - 1].time  = endTime + 1000;
+                if ( (result[result.length - 1].ts - endTime ) > 1000) {
+                    result[result.length - 1].ts  = endTime + 1000;
                 }   
             }   
 
