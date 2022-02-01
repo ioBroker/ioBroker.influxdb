@@ -20,7 +20,7 @@
   ],
   "optionalDependencies": {},
   "dependencies": {
-    "@influxdata/influxdb-client": "^1.21.0",
+    "@influxdata/influxdb-client": "^1.22.0",
     "@influxdata/influxdb-client-apis": "^1.21.0",
     "@iobroker/adapter-core": "^2.5.1",
     "influx": "^4.2.3"
