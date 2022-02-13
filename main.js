@@ -20,7 +20,7 @@ function isEqual(a, b) {
     //console.log('Compare ' + JSON.stringify(a) + ' with ' +  JSON.stringify(b));
     // Create arrays of property names
     if (a === null || a === undefined || b === null || b === undefined) {
-        return (a === b);
+        return a === b;
     }
 
     const aProps = Object.getOwnPropertyNames(a);
@@ -76,7 +76,7 @@ function startAdapter(options) {
             if (obj.common.custom && obj.common.custom[adapter.namespace] && obj.common.custom[adapter.namespace].aliasId) {
                 if (obj.common.custom[adapter.namespace].aliasId !== id) {
                     adapter._aliasMap[id] = obj.common.custom[adapter.namespace].aliasId;
-                    adapter.log.debug('Registered Alias: ' + id + ' --> ' + adapter._aliasMap[id]);
+                    adapter.log.debug(`Registered Alias: ${id} --> ${adapter._aliasMap[id]}`);
                     id = adapter._aliasMap[id];
                     checkForRemove = false;
                 } else {
@@ -85,7 +85,7 @@ function startAdapter(options) {
                 }
             }
             if (checkForRemove && adapter._aliasMap[id]) {
-                adapter.log.debug('Removed Alias: ' + id + ' !-> ' + adapter._aliasMap[id]);
+                adapter.log.debug(`Removed Alias: ${id} !-> ${adapter._aliasMap[id]}`);
                 delete adapter._aliasMap[id];
             }
 
@@ -759,6 +759,7 @@ function pushHistory(adapter, id, state, timerRelog) {
             // only store state if really changed
             adapter._influxDPs[id].state = state;
         }
+
         adapter._influxDPs[id].lastLogTime = state.ts;
         adapter._influxDPs[id].skipped = null;
 
@@ -1145,7 +1146,7 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
                     adapter._errorPoints[pointId]++;
                 }
                 if (adapter._errorPoints[pointId] < 10) {
-                    // re-add that point to buffer to try write again
+                    // re-add that point to buffer to try to write again
                     adapter.log.info(`Add point that had error for ${pointId} to buffer again, error-count=${adapter._errorPoints[pointId]}`);
                     addPointToSeriesBuffer(adapter, pointId, point);
                 } else {
@@ -1179,6 +1180,8 @@ function writeFileBufferToDisk() {
 }
 
 function finish(adapter, callback) {
+    adapter.setState && adapter.setState('info.connection', false, true);
+
     if (!adapter._subscribeAll) {
         // unsubscribe
         for (const _id in adapter._influxDPs) {
@@ -1198,7 +1201,7 @@ function finish(adapter, callback) {
         adapter._pingInterval = null;
     }
     if (adapter._finished) {
-        if (callback) callback();
+        callback && callback();
         return;
     }
     adapter._finished = true;
@@ -1208,7 +1211,9 @@ function finish(adapter, callback) {
     }
     let count = 0;
     for (const id in adapter._influxDPs) {
-        if (!adapter._influxDPs.hasOwnProperty(id)) continue;
+        if (!adapter._influxDPs.hasOwnProperty(id)) {
+            continue;
+        }
 
         if (adapter._influxDPs[id].relogTimeout) {
             clearTimeout(adapter._influxDPs[id].relogTimeout);
@@ -1251,7 +1256,7 @@ function finish(adapter, callback) {
         if (callback) {
             callback();
         } else {
-            adapter.terminate ? adapter.terminate() : process.exit()
+            adapter.terminate ? adapter.terminate() : process.exit();
         }
     }
 }
@@ -1312,7 +1317,7 @@ function getHistory(adapter, msg) {
         query += ' *';
     }
 
-    query += ' from "' + options.id + '"';
+    query += ` from "${options.id}"`;
 
     if (!adapter._influxDPs[options.id]) {
         adapter.sendTo(msg.from, msg.command, {
@@ -1336,42 +1341,44 @@ function getHistory(adapter, msg) {
         options.start = options.end - 86400000; // - 1 day
     }
 
-    // query one timegroup-value more then requested originally at start and end
-    // to make sure to have no 0 values because of the way InfluxDB doies group by time
+    // query one timegroup-value more than requested originally at start and end
+    // to make sure to have no 0 values because of the way InfluxDB does group by time
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
         if (!options.step) {
             // calculate "step" based on difference between start and end using count
             options.step = parseInt((options.end - options.start) / options.count, 10);
         }
-        if (options.start) options.start -= options.step;
+        if (options.start) {
+            options.start -= options.step;
+        }
         options.end += options.step;
         options.limit += 2;
     }
 
     query += " WHERE ";
     if (options.start) {
-        query += " time > '" + new Date(options.start).toISOString() + "' AND ";
+        query += ` time > '${new Date(options.start).toISOString()}' AND `;
     }
-    query += " time < '" + new Date(options.end).toISOString() + "'";
+    query += ` time < '${new Date(options.end).toISOString()}'`;
 
     if (!options.start && (options.count || options.limit)) {
-        query += " ORDER BY time DESC";
+        query += ` ORDER BY time DESC`;
     }
 
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
-        query += ' GROUP BY time(' + options.step + 'ms) fill(previous) LIMIT ' + options.limit;
+        query += ` GROUP BY time(${options.step}ms) fill(previous) LIMIT ${options.limit}`;
     } else if (options.aggregate !== 'minmax') {
-        query += ' LIMIT ' + options.count;
+        query += ` LIMIT ${options.count}`;
     }
 
-    // select one datapoint more then wanted
+    // select one datapoint more than wanted
     if (options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none') {
         let addQuery = '';
         if (options.start) {
-            addQuery = 'SELECT value from "' + options.id + '"' + " WHERE time <= '" + new Date(options.start).toISOString() + "' ORDER BY time DESC LIMIT 1;";
+            addQuery = `SELECT value from "${options.id}" WHERE time <= '${new Date(options.start).toISOString()}' ORDER BY time DESC LIMIT 1;`;
             query = addQuery + query;
         }
-        addQuery = ';SELECT value from "' + options.id + '"' + " WHERE time >= '" + new Date(options.end).toISOString() + "' LIMIT 1";
+        addQuery = `;SELECT value from "${options.id}" WHERE time >= '${new Date(options.end).toISOString()}' LIMIT 1`;
         query = query + addQuery;
     }
 
@@ -1387,8 +1394,11 @@ function getHistory(adapter, msg) {
         } else {
             setConnected(adapter, true);
         }
+
         adapter.log.debug('ROWS:' + JSON.stringify(rows));
+
         let result = [];
+
         if (rows && rows.length) {
             for (let qr = 0; qr < rows.length; qr++) {
                 for (let rr = 0; rr < rows[qr].length; rr++) {
@@ -1446,17 +1456,16 @@ function getHistoryIflx2(adapter, msg) {
         options.id = adapter._aliasMap[options.id];
     }
     const fluxQueries = [];
-    let fluxQuery = 'from(bucket: "' + adapter.config.dbname + '") ';
+    let fluxQuery = `from(bucket: "${adapter.config.dbname}") `;
 
     const valueColumn = adapter.config.usetags ? '_value' : 'value';
 
     if (!adapter._influxDPs[options.id]) {
-        adapter.sendTo(msg.from, msg.command, {
+        return adapter.sendTo(msg.from, msg.command, {
             result: [],
             step:   0,
             error:  'No connection'
         }, msg.callback);
-        return;
     }
 
     if (options.start > options.end) {
@@ -1472,8 +1481,8 @@ function getHistoryIflx2(adapter, msg) {
         options.start = options.end - 86400000; // - 1 day
     }
 
-    // query one timegroup-value more then requested originally at start and end
-    // to make sure to have no 0 values because of the way InfluxDB doies group by time
+    // query one timegroup-value more than requested originally at start and end
+    // to make sure to have no 0 values because of the way InfluxDB does group by time
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
         if (!options.step) {
             // calculate "step" based on difference between start and end using count
@@ -1484,8 +1493,8 @@ function getHistoryIflx2(adapter, msg) {
         options.limit += 2;
     }
 
-    fluxQuery += " |> range(" + ((options.start) ? "start: " + new Date(options.start).toISOString() + ", " : "start: -" + adapter.config.retention +"ms, ") + "stop: " + new Date(options.end).toISOString() + ")";
-    fluxQuery += ' |> filter(fn: (r) => r["_measurement"] == "' + options.id + '")';
+    fluxQuery += ` |> range(${(options.start) ? "start: " + new Date(options.start).toISOString() + ", " : "start: -" + adapter.config.retention + "ms, "}stop: ${new Date(options.end).toISOString()})`;
+    fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${options.id}")`;
 
     if (adapter.config.usetags)
         fluxQuery += ' |> duplicate(column: "_value", as: "value")';
@@ -1493,100 +1502,98 @@ function getHistoryIflx2(adapter, msg) {
         fluxQuery += ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
 
     if (!options.start && (options.count || options.limit)) {
-        fluxQuery += " |> sort(columns:[\"_time\"], desc: true)";
+        fluxQuery += ` |> sort(columns:["_time"], desc: true)`;
     }
 
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
         if ((options.step !== null) && (options.step > 0))
-            fluxQuery += ' |> window(every: ' + options.step + 'ms)';
-        fluxQuery += '|> fill(column: "' + valueColumn +'", usePrevious: true)';
+            fluxQuery += ` |> window(every: ${options.step}ms)`;
+        fluxQuery += `|> fill(column: "${valueColumn}", usePrevious: true)`;
     } else if (options.aggregate !== 'minmax') {
-        fluxQuery += ' |> group() |> limit(n: ' + options.count + ')';
+        fluxQuery += ` |> group() |> limit(n: ${options.count})`;
     }
 
-    //Workaround to detect if measurement is of type bool (to skip non-sensical aggregation options)
-    //There seems to be no officially supported way to detect this, so we check it by forcing a type-conflict
-    const booleanTypeCheckQuery = '\
-        from(bucket: "' + adapter.config.dbname + '")\
-        |> range(' + ((options.start) ? 'start: ' + new Date(options.start).toISOString() + ', ' : 'start: -' + adapter.config.retention +'ms, ') + 'stop: ' + new Date(options.end).toISOString() + ')\
-        |> filter(fn: (r) => r["_measurement"] == "' + options.id + '" and contains(value: r._value, set: [true, false]))\
-    ';
+    // Workaround to detect if measurement is of type bool (to skip non-sensual aggregation options)
+    // There seems to be no officially supported way to detect this, so we check it by forcing a type-conflict
+    const booleanTypeCheckQuery = `
+        from(bucket: "${adapter.config.dbname}")
+        |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: -${adapter.config.retention}ms, `}stop: ${new Date(options.end).toISOString()})
+        |> filter(fn: (r) => r["_measurement"] == "${options.id}" and contains(value: r._value, set: [true, false]))
+    `;
 
     adapter._client.query(booleanTypeCheckQuery, (error, _rslt) => {
         let isBoolean;
         if (error) {
-            if (error.message.match('.*type conflict: bool.*'))
+            if (error.message.match('.*type conflict: bool.*')) {
                 isBoolean = false;
-            else {
-                adapter.sendTo(msg.from, msg.command, {
+            } else {
+                return adapter.sendTo(msg.from, msg.command, {
                     result:     [],
                     error:      error,
                     sessionId:  options.sessionId
                 }, msg.callback);
-                return;
             }
         } else {
             isBoolean = true;
             adapter.log.debug(`Measurement ${options.id} is of type Boolean - skipping aggregation options`);
         }
 
-
         if (options.step && !isBoolean) {
 
             switch (options.aggregate) {
                 case 'average':
-                    fluxQuery += ' |> mean(column: "'+ valueColumn +'")';
+                    fluxQuery += ` |> mean(column: "${valueColumn}")`;
                     break;
 
                 case 'max':
-                    fluxQuery += ' |> max(column: "'+ valueColumn +'")';
+                    fluxQuery += ` |> max(column: "${valueColumn}")`;
                     break;
 
                 case 'min':
-                    fluxQuery += ' |> min(column: "'+ valueColumn +'")';
+                    fluxQuery += ` |> min(column: "${valueColumn}")`;
                     break;
 
                 case 'total':
-                    fluxQuery += ' |> sum(column: "'+ valueColumn +'")';
+                    fluxQuery += ` |> sum(column: "${valueColumn}")`;
                     break;
 
                 case 'count':
-                    fluxQuery += ' |> count(column: "'+ valueColumn +'")';
+                    fluxQuery += ` |> count(column: "${valueColumn}")`;
                     break;
 
                 default:
-                    fluxQuery += ' |> mean(column: "'+ valueColumn +'")';
+                    fluxQuery += ` |> mean(column: "${valueColumn}")`;
                     break;
             }
         }
 
         fluxQueries.push(fluxQuery);
 
-        // select one datapoint more then wanted
+        // select one datapoint more than wanted
         if (options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none') {
             let addFluxQuery = '';
             if (options.start) {
                 // get one entry "before" the defined timeframe for displaying purposes
-                addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
-                |> range(start: ' + new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString() + ', stop: ' + new Date(options.start).toISOString() + ') \
-                |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
-                ' + ((!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : '') + '\
-                |> sort(columns: ["_time"], desc: true) \
-                |> group() \
-                |> limit(n: 1)';
+                addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
+                |> range(start: ${new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString()}, stop: ${new Date(options.start).toISOString()}) 
+                |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
+                ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
+                |> sort(columns: ["_time"], desc: true) 
+                |> group() 
+                |> limit(n: 1)`;
 
                 const mainQuery = fluxQueries.pop();
                 fluxQueries.push(addFluxQuery);
                 fluxQueries.push(mainQuery);
             }
             // get one entry "after" the defined timeframe for displaying purposes
-            addFluxQuery = 'from(bucket: "' + adapter.config.dbname + '") \
-                |> range(start: ' + new Date(options.end).toISOString() + ') \
-                |> filter(fn: (r) => r["_measurement"] == "' + options.id + '") \
-                ' + ((!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : '') + '\
-                |> sort(columns: ["_time"], desc: false) \
-                |> group() \
-                |> limit(n: 1)';
+            addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
+                |> range(start: ${new Date(options.end).toISOString()}) 
+                |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
+                ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
+                |> sort(columns: ["_time"], desc: false) 
+                |> group() 
+                |> limit(n: 1)`;
             //fluxQuery = fluxQuery + addFluxQuery;
             fluxQueries.push(addFluxQuery);
         }
@@ -1603,8 +1610,11 @@ function getHistoryIflx2(adapter, msg) {
             } else {
                 setConnected(adapter, true);
             }
+
             adapter.log.debug('Parsing retrieved rows:' + JSON.stringify(rows));
+
             let result = [];
+
             if (rows && rows.length) {
                 for (let qr = 0; qr < rows.length; qr++) {
                     for (let rr = 0; rr < rows[qr].length; rr++) {
@@ -1736,9 +1746,9 @@ function multiQuery(adapter, msg) {
                 }
                 adapter.log.error('queries: ' + err);
                 return adapter.sendTo(msg.from, msg.command, {
-                        result: [],
-                        error:  'Invalid call'
-                    }, msg.callback);
+                    result: [],
+                    error:  'Invalid call'
+                }, msg.callback);
             } else {
                 setConnected(adapter, true);
             }
@@ -1841,17 +1851,13 @@ function disableHistory(adapter, msg) {
     obj.common.custom = {};
     obj.common.custom[adapter.namespace] = {};
     obj.common.custom[adapter.namespace].enabled = false;
-    adapter.extendForeignObject(msg.message.id, obj, err => {
-        if (err) {
-            adapter.log.error('disableHistory: ' + err);
-            adapter.sendTo(msg.from, msg.command, {
-                error:  err
-            }, msg.callback);
+    adapter.extendForeignObject(msg.message.id, obj, error => {
+        if (error) {
+            adapter.log.error('disableHistory: ' + error);
+            adapter.sendTo(msg.from, msg.command, {error}, msg.callback);
         } else {
             adapter.log.info(JSON.stringify(obj));
-            adapter.sendTo(msg.from, msg.command, {
-                success:                  true
-            }, msg.callback);
+            adapter.sendTo(msg.from, msg.command, {success: true}, msg.callback);
         }
     });
 }

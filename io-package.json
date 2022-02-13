@@ -151,12 +151,6 @@
     "icon": "influxdb.png",
     "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.influxdb/master/admin/influxdb.png",
     "type": "storage",
-    "config": {
-      "minWidth": 570,
-      "width ": 435,
-      "minHeight": 200,
-      "height": 540
-    },
     "docs": {
       "de": [
         "docs/de/influxdb.md"
@@ -172,7 +166,7 @@
       "custom": "json"
     },
     "connectionType": "local",
-    "dataSource": "none",
+    "dataSource": "push",
     "tier": 1
   },
   "native": {
