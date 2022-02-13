@@ -1630,6 +1630,7 @@ function getHistoryIflx2(adapter, msg) {
                             delete rows[qr][rr].value;
                         }
                         rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
+                        delete rows[qr][rr].time;
                         if (rows[qr][rr].val !== null) {
                             const f = parseFloat(rows[qr][rr].val);
                             if (f == rows[qr][rr].val) {
