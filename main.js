@@ -1418,15 +1418,15 @@ function getHistory(adapter, msg) {
         }
 
         if ((result.length > 2) && ((options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none'))) {
-            if (options.start ) {
+            if (options.start) {
                 const startTime = new Date(options.start).getTime();
                 if (startTime > result[0].ts) {
-                    result[0] = interpolateData(result[0], result[1], startTime);
+                    result[0]= {...result[0], ...interpolateData(result[0], result[1], startTime)};
                 }
             }
             const endTime = new Date(options.end).getTime();
-            if ( result[result.length - 1].ts < endTime ) {
-                result[result.length - 1] = interpolateData(result[result.length - 2], result[result.length - 1], endTime);
+            if ( result[result.length - 1].ts > endTime ) {
+                result[result.length - 1] = {...result[result.length - 1], ...interpolateData(result[result.length - 2], result[result.length - 1], endTime)};
             }   
         }
 
@@ -1650,12 +1650,12 @@ function getHistoryIflx2(adapter, msg) {
                 if (options.start) {
                     const startTime = new Date(options.start).getTime();
                     if (startTime > result[0].ts) {
-                        result[0] = interpolateData(result[0], result[1], startTime);
+                        result[0]= {...result[0], ...interpolateData(result[0], result[1], startTime)};
                     }
                 }
                 const endTime = new Date(options.end).getTime();
-                if ( result[result.length - 1].ts < endTime ) {
-                    result[result.length - 1] = interpolateData(result[result.length - 2], result[result.length - 1], endTime);
+                if ( result[result.length - 1].ts > endTime ) {
+                    result[result.length - 1] = {...result[result.length - 1], ...interpolateData(result[result.length - 2], result[result.length - 1], endTime)};
                 }   
             }
 
