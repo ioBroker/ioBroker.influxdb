@@ -1352,7 +1352,7 @@ function getHistory(adapter, msg) {
         options.limit += 2;
     }
 
-    query += " WHERE ";
+    query += ` WHERE `;
     if (options.start) {
         query += " time > '" + new Date(options.start).toISOString() + "' AND ";
     }
@@ -1430,7 +1430,7 @@ function getHistory(adapter, msg) {
             }   
         }
 
-        if ((result.length > 0) && (options.aggregate === 'minmax')) {
+        if (result.length > 0 && options.aggregate === 'minmax') {
             Aggregate.initAggregate(options);
             Aggregate.aggregation(options, result);
             Aggregate.finishAggregation(options);
