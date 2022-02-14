@@ -473,9 +473,25 @@ function destroyDB(adapter, msg) {
 function processMessage(adapter, msg) {
     adapter.log.debug(`Incoming message ${msg.command} from ${msg.from}`);
     if (msg.command === 'features') {
-        adapter.sendTo(msg.from, msg.command, {supportedFeatures: []}, msg.callback);
-    } else
-    if (msg.command === 'getHistory') {
+        // influxdb 1
+        if (adapter.config.dbversion === '1.x') {
+            adapter.sendTo(msg.from, msg.command, {supportedFeatures: ['update', 'delete', 'deleteRange', 'deleteAll', 'storeState']}, msg.callback);
+        } else {
+            // not yet implemented
+            adapter.sendTo(msg.from, msg.command, {supportedFeatures: ['storeState']}, msg.callback);
+        }
+    }
+    else if (msg.command === 'update') {
+        updateState(adapter, msg);
+    } else if (msg.command === 'delete') {
+        deleteState(adapter, msg);
+    } else if (msg.command === 'deleteAll') {
+        deleteStateAll(adapter, msg);
+    } else if (msg.command === 'deleteRange') {
+        deleteState(adapter, msg);
+    } else if (msg.command === 'storeState') {
+        storeState(adapter, msg);
+    } else if (msg.command === 'getHistory') {
         adapter.config.dbversion === '1.x' ? getHistory(adapter, msg) : getHistoryIflx2(adapter, msg);
     }
     else if (msg.command === 'test') {
@@ -501,9 +517,6 @@ function processMessage(adapter, msg) {
     }
     else if (msg.command === 'resetConflictingPoints') {
         resetConflictingPoints(adapter, msg);
-    }
-    else if (msg.command === 'storeState') {
-        storeState(adapter, msg);
     }
     else if (msg.command === 'enableHistory') {
         enableHistory(adapter, msg);
@@ -1009,7 +1022,8 @@ function writeAllSeriesPerID(adapter, series, cb, idList) {
         return cb && cb();
     }
     const id = idList.shift();
-    writeSeriesPerID(adapter, id, series[id], () => writeAllSeriesPerID(adapter, series, cb, idList));
+    writeSeriesPerID(adapter, id, series[id], () =>
+        writeAllSeriesPerID(adapter, series, cb, idList));
 }
 
 function writeSeriesPerID(adapter, seriesId, points, cb) {
@@ -1075,7 +1089,7 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
     adapter._client.writePoint(pointId, point, null, (err /* , result */) => {
         if (err) {
             adapter.log.warn(`Error on writePoint("${JSON.stringify(point)}): ${err} / ${JSON.stringify(err.message)}"`);
-            if ((adapter._client.request.getHostsAvailable().length === 0) || (err.message && err.message === 'timeout')) {
+            if (!adapter._client.request.getHostsAvailable().length || (err.message && err.message === 'timeout')) {
                 reconnect(adapter);
                 addPointToSeriesBuffer(adapter, pointId, point);
             } else if (err.message && typeof err.message === 'string' && err.message.includes('field type conflict')) {
@@ -1136,7 +1150,7 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
                 }
                 if (!directWrite || !retry) {
                     // remember this as a pot. conflicting point and write synchronous
-                    adapter._conflictingPoints[pointId]=1;
+                    adapter._conflictingPoints[pointId] = 1;
                     adapter.log.warn(`Add ${pointId} to conflicting Points (${Object.keys(adapter._conflictingPoints).length} now)`);
                 }
             } else {
@@ -1177,6 +1191,331 @@ function writeFileBufferToDisk() {
         }
     }
     adapter._seriesBufferCounter = null;
+}
+
+function _delete(adapter, id, state, cb) {
+    if (!adapter._connected) {
+        return cb && cb('not connected');
+    }
+
+    if (adapter.config.dbversion === '1.x') {
+        let query;
+        if (state.ts) {
+            query = `DELETE FROM "${id}" WHERE time = '${new Date(state.ts).toISOString()}'`;
+        } else if (state.start) {
+            query = `DELETE FROM "${id}" WHERE time >= '${new Date(state.start).toISOString()}'${state.end ? ` AND time <= '${new Date(state.end).toISOString()}'` : ''}`;
+        } else if (state.end) {
+            query = `DELETE FROM "${id}" WHERE time <= '${new Date(state.end).toISOString()}`;
+        } else {
+            query = `DELETE FROM "${id}" WHERE time >= '2000-01-01T00:00:00.000Z'`; // delete all
+        }
+
+        adapter._client.query(query, err => {
+            if (err) {
+                adapter.log.warn(`Error on delete("${query}): ${err} / ${JSON.stringify(err.message)}"`);
+                cb(err);
+            } else {
+                setConnected(adapter, true);
+            }
+            cb && cb();
+        });
+    } else {
+        cb && cb('not implemented');
+    }
+}
+
+function deleteState(adapter, msg) {
+    if (!msg.message) {
+        adapter.log.error('deleteState called with invalid data');
+        return adapter.sendTo(msg.from, msg.command, {
+            error: 'Invalid call: ' + JSON.stringify(msg)
+        }, msg.callback);
+    }
+    let id;
+    if (Array.isArray(msg.message)) {
+        adapter.log.debug(`deleteState ${msg.message.length} items`);
+
+        for (let i = 0; i < msg.message.length; i++) {
+            id = adapter._aliasMap[msg.message[i].id] ? adapter._aliasMap[msg.message[i].id] : msg.message[i].id;
+
+            // {id: 'blabla', ts: 892}
+            if (msg.message[i].ts) {
+                _delete(adapter, id, {ts: msg.message[i].ts});
+            } else
+            if (msg.message[i].start) {
+                if (typeof msg.message[i].start === 'string') {
+                    msg.message[i].start = new Date(msg.message[i].start).getTime();
+                }
+                if (typeof msg.message[i].end === 'string') {
+                    msg.message[i].end = new Date(msg.message[i].end).getTime();
+                }
+                _delete(adapter, id, {start: msg.message[i].start, end: msg.message[i].end || Date.now()});
+            } else
+            if (typeof msg.message[i].state === 'object' && msg.message[i].state && msg.message[i].state.ts) {
+                _delete(adapter, id, {ts: msg.message[i].state.ts});
+            } else
+            if (typeof msg.message[i].state === 'object' && msg.message[i].state && msg.message[i].state.start) {
+                if (typeof msg.message[i].state.start === 'string') {
+                    msg.message[i].state.start = new Date(msg.message[i].state.start).getTime();
+                }
+                if (typeof msg.message[i].state.end === 'string') {
+                    msg.message[i].state.end = new Date(msg.message[i].state.end).getTime();
+                }
+                _delete(adapter, id, {start: msg.message[i].state.start, end: msg.message[i].state.end || Date.now()});
+            } else {
+                adapter.log.warn('Invalid state for ' + JSON.stringify(msg.message[i]));
+            }
+        }
+    } else if (msg.message.state && Array.isArray(msg.message.state)) {
+        adapter.log.debug(`deleteState ${msg.message.state.length} items`);
+        id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
+
+        for (let j = 0; j < msg.message.state.length; j++) {
+            if (msg.message.state[j] && typeof msg.message.state[j] === 'object') {
+                if (msg.message.state[j].ts) {
+                    _delete(adapter, id, {ts: msg.message.state[j].ts});
+                } else if (msg.message.state[j].start) {
+                    if (typeof msg.message.state[j].start === 'string') {
+                        msg.message.state[j].start = new Date(msg.message.state[j].start).getTime();
+                    }
+                    if (typeof msg.message.state[j].end === 'string') {
+                        msg.message.state[j].end = new Date(msg.message.state[j].end).getTime();
+                    }
+                    _delete(adapter, id, {start: msg.message.state[j].start, end: msg.message.state[j].end || Date.now()});
+                }
+            } else if (msg.message.state[j] && typeof msg.message.state[j] === 'number') {
+                _delete(adapter, id, {ts: msg.message.state[j]});
+            } else {
+                adapter.log.warn('Invalid state for ' + JSON.stringify(msg.message.state[j]));
+            }
+        }
+    } else if (msg.message.ts && Array.isArray(msg.message.ts)) {
+        adapter.log.debug(`deleteState ${msg.message.ts.length} items`);
+        id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
+        for (let j = 0; j < msg.message.ts.length; j++) {
+            if (msg.message.ts[j] && typeof msg.message.ts[j] === 'number') {
+                _delete(adapter, id, {ts: msg.message.ts[j]});
+            } else {
+                adapter.log.warn('Invalid state for ' + JSON.stringify(msg.message.ts[j]));
+            }
+        }
+    } else if (msg.message.id && msg.message.state && typeof msg.message.state === 'object') {
+        adapter.log.debug('deleteState 1 item');
+        id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
+        return _delete(adapter, id, {ts: msg.message.state.ts}, error => adapter.sendTo(msg.from, msg.command, {
+            success: !error,
+            error,
+            connected: !!adapter._connected
+        }, msg.callback));
+    } else if (msg.message.id && msg.message.ts && typeof msg.message.ts === 'number') {
+        adapter.log.debug('deleteState 1 item');
+        id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
+        return _delete(adapter, id, {ts: msg.message.ts}, error => adapter.sendTo(msg.from, msg.command, {
+            success: !error,
+            error,
+            connected: !!adapter._connected
+        }, msg.callback));
+    } else {
+        adapter.log.error('deleteState called with invalid data');
+        return adapter.sendTo(msg.from, msg.command, {error: 'Invalid call: ' + JSON.stringify(msg)}, msg.callback);
+    }
+
+    setTimeout(() => {
+        adapter.sendTo(msg.from, msg.command, {
+            success: true,
+            connected: !!adapter._connected
+        }, msg.callback);
+    }, 300);
+}
+
+function deleteStateAll(adapter, msg) {
+    if (!msg.message) {
+        adapter.log.error('deleteState called with invalid data');
+        return adapter.sendTo(msg.from, msg.command, {
+            error: 'Invalid call: ' + JSON.stringify(msg)
+        }, msg.callback);
+    }
+    let id;
+    if (Array.isArray(msg.message)) {
+        adapter.log.debug(`deleteStateAll ${msg.message.length} items`);
+        for (let i = 0; i < msg.message.length; i++) {
+            id = adapter._aliasMap[msg.message[i].id] ? adapter._aliasMap[msg.message[i].id] : msg.message[i].id;
+            _delete(adapter, id, {}, error => {
+                adapter.sendTo(msg.from, msg.command, {
+                    success: !error,
+                    error,
+                    connected: !!adapter._connected
+                }, msg.callback);
+            });
+        }
+    } else if (msg.message.id) {
+        adapter.log.debug('deleteStateAll 1 item');
+        id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
+        _delete(adapter, id, {}, error => {
+            adapter.sendTo(msg.from, msg.command, {
+                success: !error,
+                error,
+                connected: !!adapter._connected
+            }, msg.callback);
+        });
+    } else {
+        adapter.log.error('deleteStateAll called with invalid data');
+        return adapter.sendTo(msg.from, msg.command, {error: 'Invalid call: ' + JSON.stringify(msg)}, msg.callback);
+    }
+}
+
+function update(adapter, id, state, cb) {
+    if (!adapter._connected) {
+        return cb && cb('not connected');
+    }
+
+    if (adapter.config.dbversion === '1.x') {
+        let query = `SELECT * FROM "${id}" WHERE time = '${new Date(state.ts).toISOString()}'`;
+
+        adapter._client.query(query, (err, result) => {
+            if (err) {
+                adapter.log.warn(`Error on update("${query}): ${err} / ${JSON.stringify(err.message)}"`);
+                cb(err);
+            } else {
+                setConnected(adapter, true);
+
+                console.log(JSON.stringify(result));
+                if (result[0] && result[0][0]) {
+                    const stored = result[0][0];
+                    if (state.val !== undefined) {
+                        stored.val = state.val;
+                    }
+                    if (state.ack !== undefined) {
+                        stored.ack = state.ack;
+                    }
+                    if (state.q !== undefined) {
+                        stored.q = state.q;
+                    }
+                    if (state.from) {
+                        stored.from = state.from;
+                    }
+                    stored.ts = state.ts;
+                    delete stored.time;
+
+                    _delete(adapter, id, {ts: stored.ts}, error => {
+                        if (error) {
+                            adapter.log.error(`Cannot delete value for ${id}: ${JSON.stringify(state)}`);
+                            cb(err);
+                        } else {
+                            pushValueIntoDB(adapter, id, stored);
+                            cb && cb();
+                        }
+                    });
+                } else {
+                    adapter.log.error(`Cannot find value to delete for ${id}: ${JSON.stringify(state)}`);
+                    cb && cb('not found');
+                }
+            }
+        });
+    } else {
+        cb && cb('not implemented');
+    }
+}
+
+function updateState(adapter, msg) {
+    if (!msg.message) {
+        adapter.log.error('updateState called with invalid data');
+        return adapter.sendTo(msg.from, msg.command, {
+            error: 'Invalid call: ' + JSON.stringify(msg)
+        }, msg.callback);
+    }
+    let id;
+    if (Array.isArray(msg.message)) {
+        adapter.log.debug(`updateState ${msg.message.length} items`);
+        for (let i = 0; i < msg.message.length; i++) {
+            id = adapter._aliasMap[msg.message[i].id] ? adapter._aliasMap[msg.message[i].id] : msg.message[i].id;
+
+            if (msg.message[i].state && typeof msg.message[i].state === 'object') {
+                update(adapter, id, msg.message[i].state);
+            } else {
+                adapter.log.warn('Invalid state for ' + JSON.stringify(msg.message[i]));
+            }
+        }
+        adapter.sendTo(msg.from, msg.command, {
+            success: true,
+            connected: !!adapter._connected
+        }, msg.callback);
+    } else if (msg.message.state && Array.isArray(msg.message.state)) {
+        adapter.log.debug('updateState ' + msg.message.state.length + ' items');
+        id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
+        for (let j = 0; j < msg.message.state.length; j++) {
+            if (msg.message.state[j] && typeof msg.message.state[j] === 'object') {
+                update(adapter, id, msg.message.state[j]);
+            } else {
+                adapter.log.warn('Invalid state for ' + JSON.stringify(msg.message.state[j]));
+            }
+        }
+        adapter.sendTo(msg.from, msg.command, {
+            success: true,
+            connected: !!adapter._connected
+        }, msg.callback);
+    } else if (msg.message.id && msg.message.state && typeof msg.message.state === 'object') {
+        adapter.log.debug('updateState 1 item');
+        id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
+        update(adapter, id, msg.message.state, error => adapter.sendTo(msg.from, msg.command, {
+            success: !error,
+            error,
+            connected: !!adapter._connected
+        }, msg.callback));
+    } else {
+        adapter.log.error('updateState called with invalid data');
+        adapter.sendTo(msg.from, msg.command, {
+            error: 'Invalid call: ' + JSON.stringify(msg)
+        }, msg.callback);
+    }
+}
+
+function storeState(adapter, msg) {
+    if (!msg.message) {
+        adapter.log.error('storeState called with invalid data');
+        return adapter.sendTo(msg.from, msg.command, {
+            error:  'Invalid call: ' + JSON.stringify(msg)
+        }, msg.callback);
+    }
+
+    let id;
+    if (Array.isArray(msg.message)) {
+        adapter.log.debug(`storeState ${msg.message.length} items`);
+        for (let i = 0; i < msg.message.length; i++) {
+            id = adapter._aliasMap[msg.message[i].id] ? adapter._aliasMap[msg.message[i].id] : msg.message[i].id;
+            if (msg.message[i].state && typeof msg.message[i].state === 'object') {
+                pushValueIntoDB(adapter, id, msg.message[i].state);
+            } else {
+                adapter.log.warn('Invalid state for ' + JSON.stringify(msg.message[i]));
+            }
+        }
+    } else if (msg.message.state && Array.isArray(msg.message.state)) {
+        adapter.log.debug(`storeState ${msg.message.state.length} items`);
+        id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
+        for (let j = 0; j < msg.message.state.length; j++) {
+            if (msg.message.state[j] && typeof msg.message.state[j] === 'object') {
+                pushValueIntoDB(adapter, id, msg.message.state[j]);
+            } else {
+                adapter.log.warn(`Invalid state for ${JSON.stringify(msg.message.state[j])}`);
+            }
+        }
+    } else if (msg.message.id && msg.message.state && typeof msg.message.state === 'object') {
+        adapter.log.debug('storeState 1 item');
+        id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
+        pushValueIntoDB(adapter, id, msg.message.state);
+    } else {
+        adapter.log.error('storeState called with invalid data');
+        return adapter.sendTo(msg.from, msg.command, {
+            error: `Invalid call: ${JSON.stringify(msg)}`
+        }, msg.callback);
+    }
+
+    adapter.sendTo(msg.from, msg.command, {
+        success:    true,
+        connected: !!adapter._connected,
+        seriesBufferCounter:      adapter._seriesBufferCounter,
+        seriesBufferFlushPlanned: adapter._seriesBufferFlushPlanned
+    }, msg.callback);
 }
 
 function finish(adapter, callback) {
@@ -1262,6 +1601,8 @@ function finish(adapter, callback) {
 }
 
 function getHistory(adapter, msg) {
+    const startTime = Date.now();
+
     const options = {
         id:         msg.message.id === '*' ? null : msg.message.id,
         start:      msg.message.options.start,
@@ -1333,9 +1674,14 @@ function getHistory(adapter, msg) {
         options.end   = options.start;
         options.start = _end;
     }
+
     // if less 2000.01.01 00:00:00
-    if (options.end   && options.end   < 946681200000) options.end   *= 1000;
-    if (options.start && options.start < 946681200000) options.start *= 1000;
+    if (options.end   && options.end   < 946681200000) {
+        options.end   *= 1000;
+    }
+    if (options.start && options.start < 946681200000) {
+        options.start *= 1000;
+    }
 
     if (!options.start && !options.count) {
         options.start = options.end - 86400000; // - 1 day
@@ -1385,12 +1731,12 @@ function getHistory(adapter, msg) {
     adapter.log.debug(query);
 
     // if specific id requested
-    adapter._client.query(query, (err, rows) => {
-        if (err) {
+    adapter._client.query(query, (error, rows) => {
+        if (error) {
             if (adapter._client.request.getHostsAvailable().length === 0) {
                 setConnected(adapter, false);
             }
-            adapter.log.error('getHistory: ' + err);
+            adapter.log.error('getHistory: ' + error);
         } else {
             setConnected(adapter, true);
         }
@@ -1417,28 +1763,21 @@ function getHistory(adapter, msg) {
                             }
                         }
                     }
-                    if (options.addId) rows[qr][rr].id = msg.message.id;
+                    if (options.addId) {
+                        rows[qr][rr].id = msg.message.id;
+                    }
                     result.push(rows[qr][rr]);
                 }
             }
         }
 
-        if (result.length > 0 && options.aggregate === 'minmax') {
-            Aggregate.initAggregate(options);
-            Aggregate.aggregation(options, result);
-            Aggregate.finishAggregation(options);
-            result = options.result;
-        }
-
-        adapter.sendTo(msg.from, msg.command, {
-            result:     result,
-            error:      err,
-            sessionId:  options.sessionId
-        }, msg.callback);
+        Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
     });
 }
 
 function getHistoryIflx2(adapter, msg) {
+    const startTime = Date.now();
+
     const options = {
         id:         msg.message.id === '*' ? null : msg.message.id,
         start:      msg.message.options.start,
@@ -1622,8 +1961,11 @@ function getHistoryIflx2(adapter, msg) {
                             rows[qr][rr].val = rows[qr][rr].value;
                             delete rows[qr][rr].value;
                         }
-                        rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
+
+                        rows[qr][rr].ts = new Date(rows[qr][rr].time).getTime();
+
                         delete rows[qr][rr].time;
+
                         if (rows[qr][rr].val !== null) {
                             const f = parseFloat(rows[qr][rr].val);
                             if (f == rows[qr][rr].val) {
@@ -1633,24 +1975,17 @@ function getHistoryIflx2(adapter, msg) {
                                 }
                             }
                         }
-                        if (options.addId) rows[qr][rr].id = msg.message.id;
+
+                        if (options.addId) {
+                            rows[qr][rr].id = msg.message.id;
+                        }
+
                         result.push(rows[qr][rr]);
                     }
                 }
             }
 
-            if ((result.length > 0) && (options.aggregate === 'minmax')) {
-                Aggregate.initAggregate(options);
-                Aggregate.aggregation(options, result);
-                Aggregate.finishAggregation(options);
-                result = options.result;
-            }
-
-            adapter.sendTo(msg.from, msg.command, {
-                result:     result,
-                error:      err,
-                sessionId:  options.sessionId
-            }, msg.callback);
+            Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
         });
     });
 }
@@ -1776,42 +2111,6 @@ function multiQuery(adapter, msg) {
             error:  'No connection'
         }, msg.callback);
     }
-}
-
-function storeState(adapter, msg) {
-    if (!msg.message || !msg.message.id || !msg.message.state) {
-        adapter.log.error('storeState called with invalid data');
-        adapter.sendTo(msg.from, msg.command, {
-            error: 'Invalid call'
-        }, msg.callback);
-        return;
-    }
-
-    let id;
-    if (Array.isArray(msg.message)) {
-        adapter.log.debug(`storeState: store ${msg.message.length} states for multiple ids`);
-        for (let i = 0; i < msg.message.length; i++) {
-            id = adapter._aliasMap[msg.message[i].id] ? adapter._aliasMap[msg.message[i].id] : msg.message[i].id;
-            pushValueIntoDB(adapter, id, msg.message[i].state);
-        }
-    } else if (Array.isArray(msg.message.state)) {
-        adapter.log.debug(`storeState: store ${msg.message.state.length} states for ${msg.message.id}`);
-        for (let j = 0; j < msg.message.state.length; j++) {
-            id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
-            pushValueIntoDB(adapter, id, msg.message.state[j]);
-        }
-    } else {
-        adapter.log.debug(`storeState: store 1 state for ${msg.message.id}`);
-        id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
-        pushValueIntoDB(adapter, id, msg.message.state);
-    }
-
-    adapter.sendTo(msg.from, msg.command, {
-        success:                  true,
-        connected:                adapter._connected,
-        seriesBufferCounter:      adapter._seriesBufferCounter,
-        seriesBufferFlushPlanned: adapter._seriesBufferFlushPlanned
-    }, msg.callback);
 }
 
 function enableHistory(adapter, msg) {
