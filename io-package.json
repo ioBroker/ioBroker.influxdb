@@ -13,7 +13,7 @@
       "pl": "Logowanie stanów do InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "2.4.0",
+    "version": "2.5.0",
     "title": "Logging data with InfluxDB",
     "titleLang": {
       "en": "Logging data with InfluxDB",
@@ -28,6 +28,18 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "2.5.0": {
+        "en": "Added new messages: 'update', 'delete', 'deleteRange', 'deleteAll' (only for influxdb v1)\nCorrected aggregation of data",
+        "de": "Neue Nachrichten hinzugefügt: 'update', 'delete', 'deleteRange', 'deleteAll' (nur für influxdb v1)\nKorrigierte Aggregation von Daten",
+        "ru": "Добавлены новые сообщения: 'update', 'delete', 'deleteRange', 'deleteAll' (только для influxdb v1)\nИсправлена агрегация данных",
+        "pt": "Adicionadas novas mensagens: 'update', 'delete', 'deleteRange', 'deleteAll' (somente para influxdb v1)\nAgregação de dados corrigida",
+        "nl": "Nieuwe berichten toegevoegd: 'update', 'delete', 'deleteRange', 'deleteAll' (alleen voor influxdb v1)\nGecorrigeerde aggregatie van gegevens",
+        "fr": "Ajout de nouveaux messages : 'update', 'delete', 'deleteRange', 'deleteAll' (uniquement pour influxdb v1)\nAgrégation corrigée des données",
+        "it": "Aggiunti nuovi messaggi: 'update', 'delete', 'deleteRange', 'deleteAll' (solo per influxdb v1)\nAggregazione dei dati corretta",
+        "es": "Se agregaron nuevos mensajes: 'actualizar', 'eliminar', 'eliminar rango', 'eliminar todo' (solo para influxdb v1)\nAgregación corregida de datos",
+        "pl": "Dodano nowe wiadomości: 'update', 'delete', 'deleteRange', 'deleteAll' (tylko dla influxdb v1)\nPoprawiona agregacja danych",
+        "zh-cn": "添加了新消息：'update'、'delete'、'deleteRange'、'deleteAll'（仅适用于 influxdb v1）\n更正的数据聚合"
+      },
       "2.4.0": {
         "en": "Added expert settings to deactivate health checks for Influx 2 db (There are no health checks for Influx 1)\nHide settings not relevant when \"log changes only\" is not used\nAllow all number values for debounce again\nInfluxDB also do not like Infinite values, so ignore them too",
         "de": "Experteneinstellungen hinzugefügt, um Gesundheitsprüfungen für Influx 2 db zu deaktivieren (Es gibt keine Gesundheitsprüfungen für Influx 1)\nNicht relevante Einstellungen ausblenden, wenn \"Nur Änderungen protokollieren\" nicht verwendet wird\nAlle Zahlenwerte wieder für die Entprellung zulassen\nInfluxDB mag auch keine unendlichen Werte, also ignoriere sie auch",
@@ -99,18 +111,6 @@
         "es": "Optimizar el manejo de paradas",
         "pl": "Zoptymalizuj obsługę zatrzymania",
         "zh-cn": "优化停止处理"
-      },
-      "1.9.3": {
-        "en": "Crash case prevented (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-        "de": "Absturz verhindert (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-        "ru": "Сбой предотвращен (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-        "pt": "Caso de falha impedido (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-        "nl": "Crashcase voorkomen (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-        "fr": "Crash case évité (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-        "it": "Crash case prevenuto (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-        "es": "Caso de accidente evitado (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-        "pl": "Zapobiegano awariom (Sentry IOBROKER-INFLUXDB-T, IOBROKER-INFLUXDB-Y)",
-        "zh-cn": "防止发生崩溃情况（哨兵IOBROKER-INFLUXDB-T，IOBROKER-INFLUXDB-Y）"
       }
     },
     "mode": "daemon",
