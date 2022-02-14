@@ -1261,6 +1261,10 @@ function finish(adapter, callback) {
     }
 }
 
+function interpolateData(itemOne, itemTwo, ts) {
+    return {'val' : itemOne.val + (itemTwo.val - itemOne.val)/(itemTwo.ts - itemOne.ts)*(ts - itemOne.ts), 'ts': ts};
+}
+
 function getHistory(adapter, msg) {
     const options = {
         id:         msg.message.id === '*' ? null : msg.message.id,
@@ -1421,6 +1425,19 @@ function getHistory(adapter, msg) {
                     result.push(rows[qr][rr]);
                 }
             }
+        }
+        
+        if ((result.length > 2) && ((options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none'))) {
+            if (options.start ) {
+                const startTime = new Date(options.start).getTime();
+                if (startTime > result[0].ts) {
+                    result[0]= {...result[0], ...interpolateData(result[0], result[1], startTime)};
+                }
+            }
+            const endTime = new Date(options.end).getTime();
+            if ( result[result.length - 1].ts > endTime ) {
+                result[result.length - 1] = {...result[result.length - 1], ...interpolateData(result[result.length - 2], result[result.length - 1], endTime)};
+            }   
         }
 
         if (result.length > 0 && options.aggregate === 'minmax') {
@@ -1639,6 +1656,19 @@ function getHistoryIflx2(adapter, msg) {
                 }
             }
 
+            if ((result.length > 2) && ((options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none'))) {
+                if (options.start ) {
+                    const startTime = new Date(options.start).getTime();
+                    if (startTime > result[0].ts) {
+                        result[0]= {...result[0], ...interpolateData(result[0], result[1], startTime)};
+                    }
+                }
+                const endTime = new Date(options.end).getTime();
+                if ( result[result.length - 1].ts > endTime ) {
+                    result[result.length - 1] = {...result[result.length - 1], ...interpolateData(result[result.length - 2], result[result.length - 1], endTime)};
+                }   
+            } 
+            
             if ((result.length > 0) && (options.aggregate === 'minmax')) {
                 Aggregate.initAggregate(options);
                 Aggregate.aggregation(options, result);
