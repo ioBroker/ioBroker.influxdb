@@ -13,7 +13,7 @@
       "pl": "Logowanie stanów do InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "2.5.0",
+    "version": "2.5.1",
     "title": "Logging data with InfluxDB",
     "titleLang": {
       "en": "Logging data with InfluxDB",
@@ -28,6 +28,18 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "2.5.1": {
+        "en": "Marked interpolated data with `i=true`",
+        "de": "Markierte interpolierte Daten mit `i=true`",
+        "ru": "Помеченные интерполированные данные с `i=true`",
+        "pt": "Dados interpolados marcados com `i=true`",
+        "nl": "Gemarkeerde geïnterpoleerde gegevens met `i=true`",
+        "fr": "Données interpolées marquées avec `i=true`",
+        "it": "Dati interpolati contrassegnati con `i=true`",
+        "es": "Datos interpolados marcados con `i=true`",
+        "pl": "Oznaczono dane interpolowane za pomocą `i=true`",
+        "zh-cn": "用 `i=true` 标记插值数据"
+      },
       "2.5.0": {
         "en": "Added new messages: 'update', 'delete', 'deleteRange', 'deleteAll' (only for influxdb v1)\nCorrected aggregation of data",
         "de": "Neue Nachrichten hinzugefügt: 'update', 'delete', 'deleteRange', 'deleteAll' (nur für influxdb v1)\nKorrigierte Aggregation von Daten",
@@ -99,18 +111,6 @@
         "es": "Se agregó el soporte de Admin5.",
         "pl": "Dodano obsługę Admin5",
         "zh-cn": "添加了对Admin5的支持"
-      },
-      "1.9.4": {
-        "en": "Optimize stop handling",
-        "de": "Optimieren Sie das Stop-Handling",
-        "ru": "Оптимизировать обработку остановок",
-        "pt": "Otimize o manuseio de parada",
-        "nl": "Optimaliseer het afhandelen van stops",
-        "fr": "Optimiser la gestion des arrêts",
-        "it": "Ottimizza la gestione delle fermate",
-        "es": "Optimizar el manejo de paradas",
-        "pl": "Zoptymalizuj obsługę zatrzymania",
-        "zh-cn": "优化停止处理"
       }
     },
     "mode": "daemon",

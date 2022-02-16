@@ -355,7 +355,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
-### __WORK IN PROGRESS__
+### 2.5.1 (2022-02-16)
 * (bluefox) Marked interpolated data with `i=true`
 
 ### 2.5.0 (2022-02-14)
