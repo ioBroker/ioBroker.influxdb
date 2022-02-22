@@ -156,6 +156,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
                 }, result => {
                     expect(result.error).to.be.undefined;
                     expect(result.success).to.be.true;
+
                     sendTo('influxdb.0', 'enableHistory', {
                         id: 'system.adapter.influxdb.0.uptime',
                         options: {
@@ -218,9 +219,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
         now = Date.now();
 
         states.setState('system.adapter.influxdb.0.memHeapUsed', {val: 'Blubb', ts: now - 20000, from: 'test.0'}, err => {
-            if (err) {
-                console.log(err);
-            }
+            err && console.log(err);
             done();
         });
     });
