@@ -282,8 +282,6 @@ sendTo('sql.0', 'update', [
 
 `ts` is mandatory. At least one other flags must be included in state object.
 
-Be careful with `counters`. The `counters` in DB will not be reset, and you must handle it yourself.
-
 ## History Logging Management via Javascript
 The adapter supports enabling and disabling of history logging via JavaScript and also retrieving the list of enabled data points with their settings.
 
