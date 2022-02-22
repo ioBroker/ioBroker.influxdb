@@ -272,9 +272,9 @@ function connect(adapter) {
         case '1.x':
         default:
             if (/[\x00-\x08\x0E-\x1F\x80-\xFF]/.test(adapter.config.password)) {
-                adapter.log.error('Password error: Please re-enter the password in Admin. Stopping');
-                return;
+                return adapter.log.error('Password error: Please re-enter the password in Admin. Stopping');
             }
+
             adapter._client = new DatabaseInfluxDB1x(
                 adapter.log,
                 adapter.config.host,
@@ -610,10 +610,11 @@ function main(adapter) {
 
     // read all custom settings
     adapter.getObjectView('system', 'custom', {}, (err, doc) => {
-        if (err) adapter.log.error('main/getObjectView: ' + err);
+        err && adapter.log.error('main/getObjectView: ' + err);
         let count = 0;
         if (doc && doc.rows) {
-            for (let i = 0, l = doc.rows.length; i < l; i++) {
+            const l = doc.rows.length;
+            for (let i = 0; i < l; i++) {
                 if (doc.rows[i].value) {
                     let id = doc.rows[i].id;
                     const realId = id;
@@ -650,7 +651,8 @@ function main(adapter) {
                         } else {
                             adapter._influxDPs[id][adapter.namespace].changesMinDelta = adapter.config.changesMinDelta;
                         }
-                        if (!adapter._influxDPs[id][adapter.namespace].storageType) adapter._influxDPs[id][adapter.namespace].storageType = false;
+
+                        adapter._influxDPs[id][adapter.namespace].storageType = adapter._influxDPs[id][adapter.namespace].storageType || false;
 
                         adapter._influxDPs[id].realId  = realId;
                         writeInitialValue(adapter, realId, id);

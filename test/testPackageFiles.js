@@ -1,5 +1,5 @@
 /* jshint -W097 */
-/* jshint strict:false */
+/* jshint strict: false */
 /* jslint node: true */
 /* jshint expr: true */
 'use strict';
@@ -56,10 +56,10 @@ describe('Test package.json and io-package.json', () => {
             console.log();
         }
         if (
-            ioPackage.common.title.indexOf('iobroker') !== -1 ||
-            ioPackage.common.title.indexOf('ioBroker') !== -1 ||
-            ioPackage.common.title.indexOf('adapter') !== -1 ||
-            ioPackage.common.title.indexOf('Adapter') !== -1
+            ioPackage.common.title.includes('iobroker') ||
+            ioPackage.common.title.includes('ioBroker') ||
+            ioPackage.common.title.includes('adapter') ||
+            ioPackage.common.title.includes('Adapter')
         ) {
             console.log('WARNING: title contains Adapter or ioBroker. It is clear anyway, that it is adapter for ioBroker.');
             console.log();
@@ -77,16 +77,16 @@ describe('Test package.json and io-package.json', () => {
 
         const licenseFileExists = fs.existsSync(__dirname + '/../LICENSE');
         const fileContentReadme = fs.readFileSync(__dirname + '/../README.md', 'utf8');
-        if (fileContentReadme.indexOf('## Changelog') === -1) {
+        if (!fileContentReadme.includes('## Changelog')) {
             console.log('Warning: The README.md should have a section ## Changelog');
             console.log();
         }
-        expect((licenseFileExists || fileContentReadme.indexOf('## License') !== -1), 'A LICENSE must exist as LICENSE file or as part of the README.md').to.be.true;
+        expect((licenseFileExists || fileContentReadme.includes('## License')), 'A LICENSE must exist as LICENSE file or as part of the README.md').to.be.true;
         if (!licenseFileExists) {
             console.log('Warning: The License should also exist as LICENSE file');
             console.log();
         }
-        if (fileContentReadme.indexOf('## License') === -1) {
+        if (!fileContentReadme.includes('## License')) {
             console.log('Warning: The README.md should also have a section ## License to be shown in Admin3');
             console.log();
         }
