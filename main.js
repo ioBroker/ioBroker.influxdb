@@ -229,18 +229,17 @@ function stopPing(adapter) {
 
 function ping(adapter) {
     adapter._client.ping && adapter.config.pingserver !== false && adapter._client.ping(adapter.config.pingInterval - 1000 < 0 ? 1000 : adapter.config.pingInterval - 1000)
-        .then(
-            hosts => {
-                if (!hosts.some(host => host.online)) {
-                    reconnect(adapter);
-                } else {
-                    adapter.log.debug('PING OK');
-                }
-            },
-            error => {
-                adapter.log.error(`Error during ping: ${error}. Attempting reconnect.`);
+        .then(hosts => {
+            if (!hosts.some(host => host.online)) {
                 reconnect(adapter);
-            });
+            } else {
+                adapter.log.debug('PING OK');
+            }
+        },
+        error => {
+            adapter.log.error(`Error during ping: ${error}. Attempting reconnect.`);
+            reconnect(adapter);
+        });
 }
 
 function connect(adapter) {

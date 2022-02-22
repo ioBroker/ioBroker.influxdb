@@ -366,7 +366,7 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
                 }
             }, result => {
                 console.log(JSON.stringify(result.result, null, 2));
-                expect(result.result.length).to.be.equal(3);
+                expect(result.result.length).to.be.equal(2);
                 done();
             });
         });
