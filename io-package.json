@@ -13,7 +13,7 @@
       "pl": "Logowanie stanów do InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "2.5.1",
+    "version": "2.5.2",
     "title": "Logging data with InfluxDB",
     "titleLang": {
       "en": "Logging data with InfluxDB",
@@ -28,6 +28,18 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "2.5.2": {
+        "en": "Marked interpolated data with `i=true`",
+        "de": "Markierte interpolierte Daten mit `i=true`",
+        "ru": "Помеченные интерполированные данные с `i=true`",
+        "pt": "Dados interpolados marcados com `i=true`",
+        "nl": "Gemarkeerde geïnterpoleerde gegevens met `i=true`",
+        "fr": "Données interpolées marquées avec `i=true`",
+        "it": "Dati interpolati contrassegnati con `i=true`",
+        "es": "Datos interpolados marcados con `i=true`",
+        "pl": "Oznaczono dane interpolowane za pomocą `i=true`",
+        "zh-cn": "用 `i=true` 标记插值数据"
+      },
       "2.5.1": {
         "en": "Marked interpolated data with `i=true`",
         "de": "Markierte interpolierte Daten mit `i=true`",
@@ -99,18 +111,6 @@
         "es": "IMPORTANTE: ¡El adaptador ahora requiere Admin 5.1.15+ y js-controller 3.3+! Para otras versiones de admin o js-controller, utilice la versión anterior v1.9.5 de este adaptador.\nSe agregó compatibilidad con InfluxDB 2.0\nAjuste el manejo de la retención en el nivel de la base de datos para que funcione con InfluxDB 1.xy 2.x\nSe eliminaron las opciones de retención a nivel de punto de datos porque nunca funcionó y tampoco es realmente compatible con InfluxDB",
         "pl": "WAŻNE: Adapter wymaga teraz Admin 5.1.15+ i js-controller 3.3+! W przypadku innych wersji administratora lub kontrolera js użyj poprzedniej wersji v1.9.5 tego adaptera.\nDodano obsługę InfluxDB 2.0\nDostosuj obsługę przechowywania na poziomie bazy danych, aby działała dla InfluxDB 1.x i 2.x\nUsunięto opcje przechowywania na poziomie punktu danych, ponieważ nigdy nie działały i nie są już obsługiwane przez InfluxDB",
         "zh-cn": "重要提示：适配器现在需要 Admin 5.1.15+ 和 js-controller 3.3+！对于其他 admin 或 js-controller 版本，请使用该适配器以前的 v1.9.5。\n添加了 InfluxDB 2.0 支持\n调整数据库级别的保留处理以适用于 InfluxDB 1.x 和 2.x\n删除了数据点级别的保留选项，因为从来没有工作过，也不再受到 InfluxDB 的真正支持"
-      },
-      "1.9.5": {
-        "en": "Added the support of Admin5",
-        "de": "Unterstützung von Admin5 hinzugefügt",
-        "ru": "Добавлена поддержка Admin5",
-        "pt": "Adicionado o suporte de Admin5",
-        "nl": "Ondersteuning toegevoegd van Admin5",
-        "fr": "Ajout du support d'Admin5",
-        "it": "Aggiunto il supporto di Admin5",
-        "es": "Se agregó el soporte de Admin5.",
-        "pl": "Dodano obsługę Admin5",
-        "zh-cn": "添加了对Admin5的支持"
       }
     },
     "mode": "daemon",
