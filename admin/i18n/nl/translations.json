@@ -47,6 +47,7 @@
     "Token": "Teken",
     "Use tags to store metadata information, instead of fields": "Gebruik tags om metadata-informatie op te slaan in plaats van velden",
     "User": "Gebruiker",
+    "Validate SSL certificate": "SSL-certificaat valideren",
     "debounce": "Wijzigingen negeren totdat waarde ongewijzigd blijft voor X Milliseconds",
     "health-check help": "Regelmatige gezondheidscontroles worden naar de DB-server gestuurd om te controleren of deze nog in leven is.",
     "keep forever": "blijf voor altijd",

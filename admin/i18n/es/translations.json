@@ -47,6 +47,7 @@
     "Token": "Simbólico",
     "Use tags to store metadata information, instead of fields": "Utilice etiquetas para almacenar información de metadatos, en lugar de campos",
     "User": "Usuario",
+    "Validate SSL certificate": "Validar certificado SSL",
     "debounce": "Ignorar cambios hasta que el valor permanezca sin cambios durante X milisegundos",
     "health-check help": "Se envían sondas de verificación de estado regulares al servidor de base de datos para verificar si todavía está vivo.",
     "keep forever": "mantener para siempre",

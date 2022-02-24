@@ -47,6 +47,7 @@
     "Token": "代币",
     "Use tags to store metadata information, instead of fields": "使用标签来存储元数据信息，而不是字段",
     "User": "用户",
+    "Validate SSL certificate": "验证 SSL 证书",
     "debounce": "忽略更改，直到值保持不变为X毫秒",
     "health-check help": "定期健康检查探针会发送到数据库服务器以检查它是否还活着。",
     "keep forever": "永远保持",

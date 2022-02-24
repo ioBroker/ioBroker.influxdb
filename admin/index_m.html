@@ -77,7 +77,8 @@
                                 organization: $('#organization').val(),
                                 token: $('#token').val(),
                                 dbname: $('#dbname').val(),
-                                requestTimeout: $("#requestTimeout").val()
+                                requestTimeout: $("#requestTimeout").val(),
+                                validateSSL: $("#validateSSL").val()
                             }
                         }, function (response) {
                             $('#test').button('option', 'disabled', false);
@@ -111,20 +112,6 @@
                     }
                 });
             });
-            $('#dbtype').on('change', function () {
-                if ($(this).val() === 'sqlite') {
-                    $('.real-sql').hide();
-                    $('.baby-sql').show();
-                } else if ($(this).val() === 'mssql') {
-                    $('.real-sql').show();
-                    $('.baby-sql').hide();
-                } else {
-                    $('.real-sql').show();
-                    $('.baby-sql').hide();
-                    $('.ms-sql').hide();
-                }
-            }).trigger('change');
-
             $('#dbversion').on('change', function () {
                 if ($(this).val() === '1.x') {
                     $('.influx1').show();
@@ -240,6 +227,12 @@
                 <div class="col s12 m4">
                     <input id="requestTimeout" class="value"/>
                     <label for="requestTimeout"><span  class="translate">Request timeout</span> (<span class="translate">Milliseconds</span>)</label>
+                </div>
+            </div>
+            <div class="row influx2">
+                <div class="col s12 influx2">
+                    <input id="validateSSL" type="checkbox" class="value"/>
+                    <label for="validateSSL" class="translate">Validate SSL certificate</label>
                 </div>
             </div>
             <div class="row">
