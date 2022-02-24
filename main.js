@@ -265,6 +265,7 @@ function connect(adapter) {
                 adapter.config.token,
                 adapter.config.organization,
                 adapter.config.dbname,
+                adapter.config.requestTimeout,
                 adapter.config.usetags
             )
             break;
@@ -282,8 +283,8 @@ function connect(adapter) {
                 adapter.config.user,
                 adapter.config.password,
                 adapter.config.dbname,
-                'ms',
-                30000
+                adapter.config.requestTimeout,
+                'ms'
             );
             break;
     }
@@ -383,6 +384,7 @@ function getRetention(adapter, msg) {
 function testConnection(adapter, msg) {
     adapter.log.debug('testConnection msg-object: ' + JSON.stringify(msg));
     msg.message.config.port = parseInt(msg.message.config.port, 10) || 0;
+    msg.message.config.requestTimeout = parseInt(msg.message.config.requestTimeout) || 30000;
 
     let timeout;
     try {
@@ -403,7 +405,8 @@ function testConnection(adapter, msg) {
                     msg.message.config.protocol,  // optional, default 'http'
                     msg.message.config.token,
                     msg.message.config.organization,
-                    msg.message.config.dbname || appName
+                    msg.message.config.dbname || appName,
+                    msg.message.config.requestTimeout
                 )
                 break;
             default:
@@ -415,7 +418,8 @@ function testConnection(adapter, msg) {
                     msg.message.config.protocol,  // optional, default 'http'
                     msg.message.config.user,
                     msg.message.config.password,
-                    msg.message.config.dbname || appName
+                    msg.message.config.dbname || appName,
+                    msg.message.config.requestTimeout
                 );
                 break;
         }
@@ -583,6 +587,8 @@ function main(adapter) {
     }
 
     adapter.config.seriesBufferFlushInterval = parseInt(adapter.config.seriesBufferFlushInterval, 10) || 600;
+
+    adapter.config.requestTimeout = parseInt(adapter.config.requestTimeout, 10) || 30000;
 
     if (adapter.config.changesMinDelta !== null && adapter.config.changesMinDelta !== undefined) {
         adapter.config.changesMinDelta = parseFloat(adapter.config.changesMinDelta.toString().replace(/,/g, '.'));

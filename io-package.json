@@ -187,6 +187,7 @@
     "changesMinDelta": 0,
     "reconnectInterval": 10000,
     "pingInterval": 15000,
+    "requestTimeout": 30000,
     "dbversion": "1.x",
     "usetags": false,
     "pingserver": true

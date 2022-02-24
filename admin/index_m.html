@@ -76,7 +76,8 @@
                                 password: $('#password').val(),
                                 organization: $('#organization').val(),
                                 token: $('#token').val(),
-                                dbname: $('#dbname').val()
+                                dbname: $('#dbname').val(),
+                                requestTimeout: $("#requestTimeout").val()
                             }
                         }, function (response) {
                             $('#test').button('option', 'disabled', false);
@@ -235,6 +236,10 @@
                 <div class="col s12">
                     <input id="dbname" class="value"/>
                     <label for="dbname" class="translate">DB Name</label>
+                </div>
+                <div class="col s12 m4">
+                    <input id="requestTimeout" class="value"/>
+                    <label for="requestTimeout"><span  class="translate">Request timeout</span> (<span class="translate">Milliseconds</span>)</label>
                 </div>
             </div>
             <div class="row">
