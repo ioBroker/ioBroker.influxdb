@@ -47,6 +47,7 @@
     "Token": "Znak",
     "Use tags to store metadata information, instead of fields": "Używaj tagów do przechowywania informacji o metadanych zamiast pól",
     "User": "Użytkownik",
+    "Validate SSL certificate": "Zweryfikuj certyfikat SSL",
     "debounce": "Zignoruj ​​zmiany, aż wartość pozostanie niezmieniona przez X Milliseconds",
     "health-check help": "Regularne sondy sprawdzające kondycję są wysyłane do serwera bazy danych w celu sprawdzenia, czy nadal działa.",
     "keep forever": "zachowaj na zawsze",

@@ -47,6 +47,7 @@
     "Token": "Jeton",
     "Use tags to store metadata information, instead of fields": "Utilisez des balises pour stocker les informations de métadonnées, au lieu de champs",
     "User": "User",
+    "Validate SSL certificate": "Valider le certificat SSL",
     "debounce": "Ignorer les modifications jusqu'à ce que la valeur reste inchangée pour X millisecondes",
     "health-check help": "Des vérifications de santé régulières sont envoyées au serveur de base de données pour vérifier s'il est toujours actif.",
     "keep forever": "keep forever",

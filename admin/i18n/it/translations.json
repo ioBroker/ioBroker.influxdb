@@ -47,6 +47,7 @@
     "Token": "Gettone",
     "Use tags to store metadata information, instead of fields": "Usa i tag per memorizzare le informazioni sui metadati, invece dei campi",
     "User": "Utente",
+    "Validate SSL certificate": "Convalida il certificato SSL",
     "debounce": "Ignora le modifiche fino a quando il valore rimane invariato per X Milliseconds",
     "health-check help": "Controlli di integrità regolari vengono inviati al server DB per verificare se è ancora attivo.",
     "keep forever": "tienilo per sempre",

@@ -353,6 +353,11 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
+
+### __WORK IN PROGRESS__
+* (Excodibur) Make request timeout configurable - defaults to 30s
+* (Apollon77) Add option to also accept self signed ssl certificates for InfluxDB 2.x
+
 ### 2.5.2 (2022-02-22)
 * (bluefox) Marked interpolated data with `i=true`
 

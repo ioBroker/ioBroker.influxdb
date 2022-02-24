@@ -246,6 +246,7 @@ function connect(adapter) {
     adapter.log.info(`Connecting ${adapter.config.protocol}://${adapter.config.host}:${adapter.config.port} ...`);
 
     adapter.config.dbname = adapter.config.dbname || appName;
+    adapter.config.validateSSL = adapter.config.validateSSL !== undefined ? !!adapter.config.validateSSL :  true;
 
     adapter.config.seriesBufferMax = parseInt(adapter.config.seriesBufferMax, 10) || 0;
 
@@ -266,6 +267,7 @@ function connect(adapter) {
                 adapter.config.organization,
                 adapter.config.dbname,
                 adapter.config.requestTimeout,
+                adapter.config.validateSSL,
                 adapter.config.usetags
             )
             break;

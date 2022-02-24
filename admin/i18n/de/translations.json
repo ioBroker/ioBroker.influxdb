@@ -47,6 +47,7 @@
     "Token": "Token",
     "Use tags to store metadata information, instead of fields": "Verwende Tags, anstelle von Feldern, um Metadateninformationen zu speichern",
     "User": "Benutzer",
+    "Validate SSL certificate": "SSL-Zertifikat validieren",
     "debounce": "Änderungen ignorieren, bis der Wert für X Millisekunden unverändert bleibt",
     "health-check help": "Regelmäßige Verfügbarkeits-Anfragen werden an den DB-Server gesendet, um zu überprüfen, ob er noch aktiv ist.",
     "keep forever": "keine automatische Löschung",
