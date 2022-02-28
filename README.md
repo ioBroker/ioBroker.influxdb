@@ -353,8 +353,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
-
-### __WORK IN PROGRESS__
+### 2.6.1 (2022-02-28)
 * (Excodibur) Address issue with updating retention policy for influxDB 1
 
 ### 2.6.0 (2022-02-24)

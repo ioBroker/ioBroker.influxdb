@@ -13,7 +13,7 @@
       "pl": "Logowanie stanów do InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "2.6.0",
+    "version": "2.6.1",
     "title": "Logging data with InfluxDB",
     "titleLang": {
       "en": "Logging data with InfluxDB",
@@ -28,6 +28,18 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "2.6.1": {
+        "en": "Address issue with updating retention policy for influxDB 1",
+        "de": "Beheben Sie ein Problem mit der Aktualisierung der Aufbewahrungsrichtlinie für influxDB 1",
+        "ru": "Устранить проблему с обновлением политики хранения для influxDB 1.",
+        "pt": "Resolva o problema com a atualização da política de retenção para o influxDB 1",
+        "nl": "Probleem oplossen met het bijwerken van het bewaarbeleid voor influxDB 1",
+        "fr": "Résoudre le problème de mise à jour de la stratégie de rétention pour influxDB 1",
+        "it": "Risoluzione del problema con l'aggiornamento del criterio di conservazione per influxDB 1",
+        "es": "Solucionar el problema con la actualización de la política de retención para influxDB 1",
+        "pl": "Rozwiąż problem z aktualizacją zasad przechowywania dla influxDB 1",
+        "zh-cn": "解决更新 influxDB 1 保留策略的问题"
+      },
       "2.6.0": {
         "en": "Make request timeout configurable - defaults to 30s\nAdd option to also accept self signed ssl certificates for InfluxDB 2.x",
         "de": "Anforderungs-Timeout konfigurierbar machen – standardmäßig 30 Sekunden\nOption hinzugefügt, um auch selbstsignierte SSL-Zertifikate für InfluxDB 2.x zu akzeptieren",
@@ -99,18 +111,6 @@
         "es": "Admite solo `js.controller`> = 3.3.x\nSistema usado / vista personalizada para recolectar los objetos.\nOpción implementada para ignorar valores cero o inferiores a cero",
         "pl": "Obsługuje tylko `js.controller` >= 3.3.x\nUżywany system/widok niestandardowy do zbierania obiektów\nZaimplementowana opcja ignorowania wartości zerowych lub/i poniżej zera",
         "zh-cn": "仅支持 `js.controller` >= 3.3.x\n用于收集对象的系统/自定义视图\n已实现忽略零或/和低于零值的选项"
-      },
-      "2.2.0": {
-        "en": "Added option to store metadata (q, ack, from) as tags instead of fields for Influx 2.x - see README!\nFailure to update/set retention policy will now cause warning instead of error/restart, to support more restrictive DB setups\n(Excodibur/Apollon77) Bug fixes and adjustments",
-        "de": "Option zum Speichern von Metadaten (q, ack, from) als Tags anstelle von Feldern für Influx 2.x hinzugefügt - siehe README!\nWenn die Aufbewahrungsrichtlinie nicht aktualisiert/festgelegt wird, führt dies jetzt zu einer Warnung anstelle eines Fehlers/Neustarts, um restriktivere DB-Setups zu unterstützen\n(Excodibur/Apollon77) Fehlerbehebungen und Anpassungen",
-        "ru": "Добавлена возможность хранить метаданные (q, ack, from) в виде тегов вместо полей для Influx 2.x - см. README!\nНевозможность обновить / установить политику хранения теперь будет вызывать предупреждение вместо ошибки / перезапуска для поддержки более строгих настроек БД.\n(Excodibur / Apollon77) Исправления и корректировки.",
-        "pt": "Adicionada opção para armazenar metadados (q, ack, from) como tags em vez de campos para o Influx 2.x - veja README!\nA falha em atualizar / definir a política de retenção agora causará um aviso em vez de erro / reinicialização, para oferecer suporte a configurações de banco de dados mais restritivas\n(Excodibur / Apollon77) Correções e ajustes de bugs",
-        "nl": "Optie toegevoegd om metadata (q, ack, from) op te slaan als tags in plaats van velden voor Influx 2.x - zie README!\nAls het bewaarbeleid niet wordt bijgewerkt/ingesteld, wordt er nu een waarschuwing gegeven in plaats van een fout/herstart, om restrictievere DB-instellingen te ondersteunen\n(Excodibur/Apollon77) Bugfixes en aanpassingen",
-        "fr": "Ajout d'une option pour stocker les métadonnées (q, ack, from) sous forme de balises au lieu de champs pour Influx 2.x - voir README !\nL'échec de la mise à jour/définition de la politique de rétention entraînera désormais un avertissement au lieu d'une erreur/redémarrage, pour prendre en charge des configurations de base de données plus restrictives\n(Excodibur/Apollon77) Corrections de bugs et ajustements",
-        "it": "Aggiunta l'opzione per memorizzare i metadati (q, ack, from) come tag invece dei campi per Influx 2.x - vedi README!\nIl mancato aggiornamento/impostazione della politica di conservazione ora causerà un avviso anziché un errore/riavvio, per supportare configurazioni DB più restrittive\n(Excodibur/Apollon77) Correzioni di bug e aggiustamenti",
-        "es": "Opción agregada para almacenar metadatos (q, ack, from) como etiquetas en lugar de campos para Influx 2.x - ¡vea README!\nSi no se actualiza / establece la política de retención, ahora se generará una advertencia en lugar de un error / reinicio, para admitir configuraciones de base de datos más restrictivas\n(Excodibur / Apollon77) Corrección de errores y ajustes",
-        "pl": "Dodano opcję przechowywania metadanych (q, ack, from) jako tagów zamiast pól dla Influx 2.x - zobacz README!\nNiepowodzenie aktualizacji/ustawienia zasad przechowywania spowoduje teraz ostrzeżenie zamiast błędu/ponownego uruchomienia, aby obsługiwać bardziej restrykcyjne konfiguracje bazy danych\n(Excodibur/Apollon77) Poprawki i poprawki",
-        "zh-cn": "添加了将元数据（q、ack、from）存储为标签而不是 Influx 2.x 的字段的选项 - 请参阅自述文件！\n更新/设置保留策略失败现在将导致警告而不是错误/重启，以支持更严格的数据库设置\n(Excodibur/Apollon77) 错误修复和调整"
       }
     },
     "mode": "daemon",
