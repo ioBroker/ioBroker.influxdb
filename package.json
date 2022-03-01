@@ -23,7 +23,7 @@
     "@influxdata/influxdb-client": "^1.23.0",
     "@influxdata/influxdb-client-apis": "^1.23.0",
     "@iobroker/adapter-core": "^2.6.0",
-    "influx": "^4.2.3"
+    "influx": "^5.9.3"
   },
   "devDependencies": {
     "@alcalzone/release-script": "^3.5.2",
