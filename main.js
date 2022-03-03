@@ -1872,7 +1872,7 @@ function getHistoryIflx2(adapter, msg) {
     adapter._client.query(booleanTypeCheckQuery, (error, _rslt) => {
         let isBoolean;
         if (error) {
-            if (error.message.contains('type conflict: bool')) {
+            if (error.message.includes('type conflict: bool')) {
                 isBoolean = false;
                 error = null;
             } else {
