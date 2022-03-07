@@ -187,16 +187,6 @@ function startAdapter(options) {
     return adapter;
 }
 
-process.on('SIGINT', () => adapter && adapter.setState && finish(adapter));
-process.on('SIGTERM', () => adapter && adapter.setState && finish(adapter));
-
-process.on('uncaughtException', err => {
-    adapter.log.warn('Exception: ' + err);
-    if (adapter && adapter.setState) {
-        finish(adapter);
-    }
-});
-
 function setConnected(adapter, isConnected) {
     if (adapter._connected !== isConnected) {
         adapter._connected = isConnected;
@@ -1222,7 +1212,7 @@ function _delete(adapter, id, state, cb) {
         adapter._client.query(query, err => {
             if (err) {
                 adapter.log.warn(`Error on delete("${query}): ${err} / ${JSON.stringify(err.message)}"`);
-                cb(err);
+                cb && cb(err);
             } else {
                 setConnected(adapter, true);
             }
@@ -1384,7 +1374,7 @@ function update(adapter, id, state, cb) {
         adapter._client.query(query, (err, result) => {
             if (err) {
                 adapter.log.warn(`Error on update("${query}): ${err} / ${JSON.stringify(err.message)}"`);
-                cb(err);
+                cb && cb(err);
             } else {
                 setConnected(adapter, true);
 
@@ -1409,7 +1399,7 @@ function update(adapter, id, state, cb) {
                     _delete(adapter, id, {ts: stored.ts}, error => {
                         if (error) {
                             adapter.log.error(`Cannot delete value for ${id}: ${JSON.stringify(state)}`);
-                            cb(err);
+                            cb && cb(err);
                         } else {
                             pushValueIntoDB(adapter, id, stored);
                             cb && cb();
