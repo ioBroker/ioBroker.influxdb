@@ -1768,10 +1768,17 @@ function getHistory(adapter, msg) {
                     result.push(rows[qr][rr]);
                 }
             }
+            result = result.sort(sortByTs);
         }
 
         Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
     });
+}
+
+function sortByTs(a, b) {
+    const aTs = a.ts;
+    const bTs = b.ts;
+    return (aTs < bTs) ? -1 : ((aTs > bTs) ? 1 : 0);
 }
 
 function getHistoryIflx2(adapter, msg) {
@@ -1983,6 +1990,7 @@ function getHistoryIflx2(adapter, msg) {
                         result.push(rows[qr][rr]);
                     }
                 }
+                result = result.sort(sortByTs);
             }
 
             Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
