@@ -100,7 +100,7 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
                 config.native.host = process.env.INFLUX_DB1_HOST;
             }
 
-            config.native.seriesBufferFlushInterval = 0.5;
+            config.native.seriesBufferFlushInterval = 30;
             config.native.seriesBufferMax = 30;
             config.native.dbname = 'otheriobroker';
 
