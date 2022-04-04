@@ -100,6 +100,7 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
                 config.native.host = process.env.INFLUX_DB1_HOST;
             }
 
+            config.native.seriesBufferFlushInterval = 0.5;
             config.native.seriesBufferMax = 3;
             config.native.dbname = 'otheriobroker';
 
@@ -303,31 +304,8 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
         });
     });
 
-    it(`Test ${adapterShortName}: Read values from DB using query`, function (done) {
-        this.timeout(10000);
-
-        let query = 'SELECT * FROM "influxdb.0.memRss"';
-        if (process.env.INFLUXDB2) {
-            query = 'from(bucket: "otheriobroker") |> range(start:-1h) |> filter(fn: (r) => r._measurement == "influxdb.0.memRss") |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
-        }
-
-        sendTo('influxdb.0', 'query', query, result => {
-            console.log(JSON.stringify(result.result, null, 2));
-            expect(result.result[0].length).to.be.at.least(5);
-            let found = 0;
-            for (let i = 0; i < result.result[0].length; i++) {
-                if (result.result[0][i].value >= 1 && result.result[0][i].value <= 3) {
-                    found ++;
-                }
-            }
-            expect(found).to.be.equal(7);
-
-            done();
-        });
-    });
-
     it(`Test ${adapterShortName}: Read values from DB using GetHistory`, function (done) {
-        this.timeout(10000);
+        this.timeout(20000);
 
         states.setState('influxdb.0.memRss', {val: 5, ts: Date.now(), from: 'test.0'}, err => {
             err && console.log(err);
@@ -386,11 +364,34 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
                             console.log(JSON.stringify(result.result, null, 2));
                             expect(result.result.length).to.be.equal(2);
                             expect(result.result[0].ts > latestTs).to.be.true;
-                            done();
+                            setTimeout(done, 10000);
                         });
                     });
                 });
             }, 500);
+        });
+    });
+
+    it(`Test ${adapterShortName}: Read values from DB using query`, function (done) {
+        this.timeout(10000);
+
+        let query = 'SELECT * FROM "influxdb.0.memRss"';
+        if (process.env.INFLUXDB2) {
+            query = 'from(bucket: "otheriobroker") |> range(start:-1h) |> filter(fn: (r) => r._measurement == "influxdb.0.memRss") |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
+        }
+
+        sendTo('influxdb.0', 'query', query, result => {
+            console.log(JSON.stringify(result.result, null, 2));
+            expect(result.result[0].length).to.be.at.least(5);
+            let found = 0;
+            for (let i = 0; i < result.result[0].length; i++) {
+                if (result.result[0][i].value >= 1 && result.result[0][i].value <= 3) {
+                    found ++;
+                }
+            }
+            expect(found).to.be.equal(7);
+
+            done();
         });
     });
 
