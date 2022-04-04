@@ -356,6 +356,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 ### __WORK IN PROGRESS__
 * (Apollon77) Add flag returnNewestEntries for GetHistory to determine which records to return when more entries as "count" are existing for aggregate "none"
+* (Apollon77) Flush the buffer for the datapoint which is queried by GetHistory before the query is done, so that all data are in the database
 
 ### 2.6.3 (2022-03-07)
 * (Apollon77) Fix potential crash cases (Sentry IOBROKER-INFLUXDB-4Q)
