@@ -307,7 +307,7 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
     it(`Test ${adapterShortName}: Read values from DB using GetHistory`, function (done) {
         this.timeout(20000);
 
-        states.setState('influxdb.0.memRss', {val: 5, ts: now-100, from: 'test.0'}, err => {
+        states.setState('influxdb.0.memRss', {val: 5, ts: now - 100, from: 'test.0'}, err => {
             err && console.log(err);
 
             setTimeout(() => {
@@ -335,7 +335,7 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
                             found23 = true;
                         }
                     }
-                    expect(found).to.be.equal(7);
+                    expect(found).to.be.equal(6);
                     expect(found22).to.be.false;
                     expect(found23).to.be.true;
 
@@ -389,7 +389,7 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
                     found ++;
                 }
             }
-            expect(found).to.be.equal(7);
+            expect(found).to.be.equal(6);
 
             done();
         });
