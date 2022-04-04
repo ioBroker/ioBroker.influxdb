@@ -973,12 +973,11 @@ function storeBufferedSeries(adapter, id, cb) {
     }
 
     if (id) {
-        const idSeries = {};
-        idSeries[id] = adapter._seriesBuffer[id];
+        const idSeries = adapter._seriesBuffer[id];
         adapter._seriesBuffer[id] = [];
         adapter.log.debug(`Store ${idSeries[id].length} buffered influxDB history points for ${id}`);
         adapter._seriesBufferCounter -= idSeries[id].length;
-        writeAllSeriesAtOnce(adapter, idSeries, cb);
+        writeSeriesPerID(adapter, id, idSeries, cb);
         return;
     }
 
