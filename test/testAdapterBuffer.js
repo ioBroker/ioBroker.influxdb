@@ -307,7 +307,7 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
     it(`Test ${adapterShortName}: Read values from DB using GetHistory`, function (done) {
         this.timeout(20000);
 
-        states.setState('influxdb.0.memRss', {val: 5, ts: Date.now(), from: 'test.0'}, err => {
+        states.setState('influxdb.0.memRss', {val: 5, ts: now-100, from: 'test.0'}, err => {
             err && console.log(err);
 
             setTimeout(() => {
