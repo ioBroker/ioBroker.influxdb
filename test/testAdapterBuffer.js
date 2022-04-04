@@ -389,7 +389,7 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
                     found ++;
                 }
             }
-            expect(found).to.be.equal(6);
+            expect(found).to.be.equal(7);
 
             done();
         });
