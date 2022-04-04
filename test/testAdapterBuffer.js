@@ -335,7 +335,7 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
                             found23 = true;
                         }
                     }
-                    expect(found).to.be.equal(6);
+                    expect(found).to.be.equal(7);
                     expect(found22).to.be.false;
                     expect(found23).to.be.true;
 
