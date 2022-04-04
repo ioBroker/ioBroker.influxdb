@@ -329,62 +329,68 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
     it(`Test ${adapterShortName}: Read values from DB using GetHistory`, function (done) {
         this.timeout(10000);
 
-        sendTo('influxdb.0', 'getHistory', {
-            id: 'influxdb.0.memRss',
-            options: {
-                start:     now - 30000,
-                count:     50,
-                aggregate: 'none'
-            }
-        }, result => {
-            console.log(JSON.stringify(result.result, null, 2));
-            expect(result.result.length).to.be.at.least(5);
-            let found = 0;
-            let found22 = false;
-            let found23 = false;
-            for (let i = 0; i < result.result.length; i++) {
-                if (result.result[i].val >= 1 && result.result[i].val <= 3) {
-                    found ++;
-                }
-                if (result.result[i].val === 2.2) {
-                    found22 = true;
-                }
-                if (result.result[i].val === 2.3) {
-                    found23 = true;
-                }
-            }
-            expect(found).to.be.equal(7);
-            expect(found22).to.be.false;
-            expect(found23).to.be.true;
+        states.setState('influxdb.0.memRss', {val: 5, ts: Date.now(), from: 'test.0'}, err => {
+            err && console.log(err);
 
-            sendTo('influxdb.0', 'getHistory', {
-                id: 'influxdb.0.memRss',
-                options: {
-                    start:     now - 15000,
-                    count:     2,
-                    aggregate: 'none'
-                }
-            }, result => {
-                console.log(JSON.stringify(result.result, null, 2));
-                expect(result.result.length).to.be.equal(2);
-
-                const latestTs = result.result[result.result.length - 1].ts;
-
+            setTimeout(() => {
                 sendTo('influxdb.0', 'getHistory', {
                     id: 'influxdb.0.memRss',
                     options: {
-                        start:     now - 15000,
-                        count:     2,
-                        aggregate: 'none',
-                        returnNewestEntries: true
+                        start:     now - 30000,
+                        count:     50,
+                        aggregate: 'none'
                     }
                 }, result => {
                     console.log(JSON.stringify(result.result, null, 2));
-                    expect(result.result.length).to.be.equal(2);
-                    expect(result.result[0].ts > latestTs).to.be.true;
-                    done();
+                    expect(result.result.length).to.be.at.least(5);
+                    let found = 0;
+                    let found22 = false;
+                    let found23 = false;
+                    for (let i = 0; i < result.result.length; i++) {
+                        if (result.result[i].val >= 1 && result.result[i].val <= 3) {
+                            found ++;
+                        }
+                        if (result.result[i].val === 2.2) {
+                            found22 = true;
+                        }
+                        if (result.result[i].val === 2.3) {
+                            found23 = true;
+                        }
+                    }
+                    expect(found).to.be.equal(7);
+                    expect(found22).to.be.false;
+                    expect(found23).to.be.true;
+
+                    sendTo('influxdb.0', 'getHistory', {
+                        id: 'influxdb.0.memRss',
+                        options: {
+                            start:     now - 15000,
+                            count:     2,
+                            aggregate: 'none'
+                        }
+                    }, result => {
+                        console.log(JSON.stringify(result.result, null, 2));
+                        expect(result.result.length).to.be.equal(2);
+
+                        const latestTs = result.result[result.result.length - 1].ts;
+
+                        sendTo('influxdb.0', 'getHistory', {
+                            id: 'influxdb.0.memRss',
+                            options: {
+                                start:     now - 15000,
+                                count:     2,
+                                aggregate: 'none',
+                                returnNewestEntries: true
+                            }
+                        }, result => {
+                            console.log(JSON.stringify(result.result, null, 2));
+                            expect(result.result.length).to.be.equal(2);
+                            expect(result.result[0].ts > latestTs).to.be.true;
+                            done();
+                        });
+                    });
                 });
-            });
+            }, 500);
         });
     });
 

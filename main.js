@@ -948,7 +948,14 @@ function addPointToSeriesBuffer(adapter, id, stateObj, cb) {
     }
 }
 
-function storeBufferedSeries(adapter, cb) {
+function storeBufferedSeries(adapter, id, cb) {
+    if (typeof id === 'function') {
+        cb = id;
+        id = null;
+    }
+    if (id && (!adapter._seriesBuffer[id] || !adapter._seriesBuffer[id].length)) {
+        return cb && cb();
+    }
     if (Object.keys(adapter._seriesBuffer).length === 0) {
         return cb && cb();
     }
@@ -964,6 +971,17 @@ function storeBufferedSeries(adapter, cb) {
         adapter._seriesBufferFlushPlanned = false;
         return cb && cb('Not connected to InfluxDB, try later');
     }
+
+    if (id) {
+        const idSeries = {};
+        idSeries[id] = adapter._seriesBuffer[id];
+        adapter._seriesBuffer[id] = [];
+        adapter.log.debug(`Store ${idSeries[id].length} buffered influxDB history points for ${id}`);
+        adapter._seriesBufferCounter -= idSeries[id].length;
+        writeAllSeriesAtOnce(adapter, idSeries, cb);
+        return;
+    }
+
     adapter._seriesBufferChecker && clearInterval(adapter._seriesBufferChecker);
 
     adapter.log.info(`Store ${adapter._seriesBufferCounter} buffered influxDB history points`);
@@ -1718,7 +1736,7 @@ function getHistory(adapter, msg) {
     if ((!options.start && options.count) || (options.aggregate === 'none' && options.count && options.returnNewestEntries) ) {
         query += ` ORDER BY time DESC`;
     } else {
-        query += " ASC";
+        query += ' ORDER BY time ASC';
     }
 
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
@@ -1740,49 +1758,51 @@ function getHistory(adapter, msg) {
 
     adapter.log.debug(query);
 
-    // if specific id requested
-    adapter._client.query(query, (error, rows) => {
-        if (error) {
-            if (adapter._client.request.getHostsAvailable().length === 0) {
-                setConnected(adapter, false);
+    storeBufferedSeries(adapter, options.id, () => {
+        // if specific id requested
+        adapter._client.query(query, (error, rows) => {
+            if (error) {
+                if (adapter._client.request.getHostsAvailable().length === 0) {
+                    setConnected(adapter, false);
+                }
+                adapter.log.error(`getHistory: ${error}`);
+            } else {
+                setConnected(adapter, true);
             }
-            adapter.log.error(`getHistory: ${error}`);
-        } else {
-            setConnected(adapter, true);
-        }
 
-        adapter.log.debug(`ROWS:${JSON.stringify(rows)}`);
+            adapter.log.debug(`Response rows: ${JSON.stringify(rows)}`);
 
-        let result = [];
+            let result = [];
 
-        if (rows && rows.length) {
-            for (let qr = 0; qr < rows.length; qr++) {
-                for (let rr = 0; rr < rows[qr].length; rr++) {
-                    if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
-                        rows[qr][rr].val = rows[qr][rr].value;
-                        delete rows[qr][rr].value;
-                    }
-                    rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
-                    delete rows[qr][rr].time;
-                    if (rows[qr][rr].val !== null) {
-                        const f = parseFloat(rows[qr][rr].val);
-                        if (f == rows[qr][rr].val) {
-                            rows[qr][rr].val = f;
-                            if (adapter.config.round) {
-                                rows[qr][rr].val = Math.round(rows[qr][rr].val * adapter.config.round) / adapter.config.round;
+            if (rows && rows.length) {
+                for (let qr = 0; qr < rows.length; qr++) {
+                    for (let rr = 0; rr < rows[qr].length; rr++) {
+                        if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
+                            rows[qr][rr].val = rows[qr][rr].value;
+                            delete rows[qr][rr].value;
+                        }
+                        rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
+                        delete rows[qr][rr].time;
+                        if (rows[qr][rr].val !== null) {
+                            const f = parseFloat(rows[qr][rr].val);
+                            if (f == rows[qr][rr].val) {
+                                rows[qr][rr].val = f;
+                                if (adapter.config.round) {
+                                    rows[qr][rr].val = Math.round(rows[qr][rr].val * adapter.config.round) / adapter.config.round;
+                                }
                             }
                         }
+                        if (options.addId) {
+                            rows[qr][rr].id = msg.message.id;
+                        }
+                        result.push(rows[qr][rr]);
                     }
-                    if (options.addId) {
-                        rows[qr][rr].id = msg.message.id;
-                    }
-                    result.push(rows[qr][rr]);
                 }
+                result = result.sort(sortByTs);
             }
-            result = result.sort(sortByTs);
-        }
 
-        Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
+            Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
+        });
     });
 }
 
@@ -1876,134 +1896,136 @@ function getHistoryIflx2(adapter, msg) {
         |> filter(fn: (r) => r["_measurement"] == "${options.id}" and contains(value: r._value, set: [true, false]))
     `;
 
-    adapter._client.query(booleanTypeCheckQuery, (error, _rslt) => {
-        let isBoolean;
-        if (error) {
-            if (error.message.includes('type conflict: bool')) {
-                isBoolean = false;
-                error = null;
-            } else {
-                return adapter.sendTo(msg.from, msg.command, {
-                    result:     [],
-                    error:      error,
-                    sessionId:  options.sessionId
-                }, msg.callback);
-            }
-        } else {
-            isBoolean = true;
-            adapter.log.debug(`Measurement ${options.id} is of type Boolean - skipping aggregation options`);
-        }
-
-        if (options.step && !isBoolean) {
-
-            switch (options.aggregate) {
-                case 'average':
-                    fluxQuery += ` |> mean(column: "${valueColumn}")`;
-                    break;
-
-                case 'max':
-                    fluxQuery += ` |> max(column: "${valueColumn}")`;
-                    break;
-
-                case 'min':
-                    fluxQuery += ` |> min(column: "${valueColumn}")`;
-                    break;
-
-                case 'total':
-                    fluxQuery += ` |> sum(column: "${valueColumn}")`;
-                    break;
-
-                case 'count':
-                    fluxQuery += ` |> count(column: "${valueColumn}")`;
-                    break;
-
-                default:
-                    fluxQuery += ` |> mean(column: "${valueColumn}")`;
-                    break;
-            }
-        }
-
-        fluxQueries.push(fluxQuery);
-
-        // select one datapoint more than wanted
-        if (options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none') {
-            let addFluxQuery = '';
-            if (options.start) {
-                // get one entry "before" the defined timeframe for displaying purposes
-                addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
-                |> range(start: ${new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString()}, stop: ${new Date(options.start).toISOString()}) 
-                |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
-                ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
-                |> sort(columns: ["_time"], desc: true) 
-                |> group() 
-                |> limit(n: 1)`;
-
-                const mainQuery = fluxQueries.pop();
-                fluxQueries.push(addFluxQuery);
-                fluxQueries.push(mainQuery);
-            }
-            // get one entry "after" the defined timeframe for displaying purposes
-            addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
-                |> range(start: ${new Date(options.end).toISOString()}) 
-                |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
-                ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
-                |> sort(columns: ["_time"], desc: false) 
-                |> group() 
-                |> limit(n: 1)`;
-            //fluxQuery = fluxQuery + addFluxQuery;
-            fluxQueries.push(addFluxQuery);
-        }
-
-        adapter.log.debug(`History-queries to execute: ${fluxQueries}`);
-
-        // if specific id requested
-        adapter._client.queries(fluxQueries, (err, rows) => {
-            if (err && !rows) {
-                if (adapter._client.request.getHostsAvailable().length === 0) {
-                    setConnected(adapter, false);
+    storeBufferedSeries(adapter, options.id, () => {
+        adapter._client.query(booleanTypeCheckQuery, (error, _rslt) => {
+            let isBoolean;
+            if (error) {
+                if (error.message.includes('type conflict: bool')) {
+                    isBoolean = false;
+                    error = null;
+                } else {
+                    return adapter.sendTo(msg.from, msg.command, {
+                        result:     [],
+                        error:      error,
+                        sessionId:  options.sessionId
+                    }, msg.callback);
                 }
-                adapter.log.error(`getHistory: ${err}`);
             } else {
-                setConnected(adapter, true);
+                isBoolean = true;
+                adapter.log.debug(`Measurement ${options.id} is of type Boolean - skipping aggregation options`);
             }
 
-            adapter.log.debug(`Parsing retrieved rows:${JSON.stringify(rows)}`);
+            if (options.step && !isBoolean) {
 
-            let result = [];
+                switch (options.aggregate) {
+                    case 'average':
+                        fluxQuery += ` |> mean(column: "${valueColumn}")`;
+                        break;
 
-            if (rows && rows.length) {
-                for (let qr = 0; qr < rows.length; qr++) {
-                    for (let rr = 0; rr < rows[qr].length; rr++) {
-                        if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
-                            rows[qr][rr].val = rows[qr][rr].value;
-                            delete rows[qr][rr].value;
-                        }
+                    case 'max':
+                        fluxQuery += ` |> max(column: "${valueColumn}")`;
+                        break;
 
-                        rows[qr][rr].ts = new Date(rows[qr][rr].time).getTime();
+                    case 'min':
+                        fluxQuery += ` |> min(column: "${valueColumn}")`;
+                        break;
 
-                        delete rows[qr][rr].time;
+                    case 'total':
+                        fluxQuery += ` |> sum(column: "${valueColumn}")`;
+                        break;
 
-                        if (rows[qr][rr].val !== null) {
-                            const f = parseFloat(rows[qr][rr].val);
-                            if (f == rows[qr][rr].val) {
-                                rows[qr][rr].val = f;
-                                if (adapter.config.round) {
-                                    rows[qr][rr].val = Math.round(rows[qr][rr].val * adapter.config.round) / adapter.config.round;
+                    case 'count':
+                        fluxQuery += ` |> count(column: "${valueColumn}")`;
+                        break;
+
+                    default:
+                        fluxQuery += ` |> mean(column: "${valueColumn}")`;
+                        break;
+                }
+            }
+
+            fluxQueries.push(fluxQuery);
+
+            // select one datapoint more than wanted
+            if (options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none') {
+                let addFluxQuery = '';
+                if (options.start) {
+                    // get one entry "before" the defined timeframe for displaying purposes
+                    addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
+                    |> range(start: ${new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString()}, stop: ${new Date(options.start).toISOString()}) 
+                    |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
+                    ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
+                    |> sort(columns: ["_time"], desc: true) 
+                    |> group() 
+                    |> limit(n: 1)`;
+
+                    const mainQuery = fluxQueries.pop();
+                    fluxQueries.push(addFluxQuery);
+                    fluxQueries.push(mainQuery);
+                }
+                // get one entry "after" the defined timeframe for displaying purposes
+                addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
+                    |> range(start: ${new Date(options.end).toISOString()}) 
+                    |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
+                    ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
+                    |> sort(columns: ["_time"], desc: false) 
+                    |> group() 
+                    |> limit(n: 1)`;
+                //fluxQuery = fluxQuery + addFluxQuery;
+                fluxQueries.push(addFluxQuery);
+            }
+
+            adapter.log.debug(`History-queries to execute: ${fluxQueries}`);
+
+            // if specific id requested
+            adapter._client.queries(fluxQueries, (err, rows) => {
+                if (err && !rows) {
+                    if (adapter._client.request.getHostsAvailable().length === 0) {
+                        setConnected(adapter, false);
+                    }
+                    adapter.log.error(`getHistory: ${err}`);
+                } else {
+                    setConnected(adapter, true);
+                }
+
+                adapter.log.debug(`Parsing retrieved rows:${JSON.stringify(rows)}`);
+
+                let result = [];
+
+                if (rows && rows.length) {
+                    for (let qr = 0; qr < rows.length; qr++) {
+                        for (let rr = 0; rr < rows[qr].length; rr++) {
+                            if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
+                                rows[qr][rr].val = rows[qr][rr].value;
+                                delete rows[qr][rr].value;
+                            }
+
+                            rows[qr][rr].ts = new Date(rows[qr][rr].time).getTime();
+
+                            delete rows[qr][rr].time;
+
+                            if (rows[qr][rr].val !== null) {
+                                const f = parseFloat(rows[qr][rr].val);
+                                if (f == rows[qr][rr].val) {
+                                    rows[qr][rr].val = f;
+                                    if (adapter.config.round) {
+                                        rows[qr][rr].val = Math.round(rows[qr][rr].val * adapter.config.round) / adapter.config.round;
+                                    }
                                 }
                             }
-                        }
 
-                        if (options.addId) {
-                            rows[qr][rr].id = msg.message.id;
-                        }
+                            if (options.addId) {
+                                rows[qr][rr].id = msg.message.id;
+                            }
 
-                        result.push(rows[qr][rr]);
+                            result.push(rows[qr][rr]);
+                        }
                     }
+                    result = result.sort(sortByTs);
                 }
-                result = result.sort(sortByTs);
-            }
 
-            Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
+                Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
+            });
         });
     });
 }
