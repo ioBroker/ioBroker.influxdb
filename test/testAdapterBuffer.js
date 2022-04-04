@@ -367,7 +367,23 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
             }, result => {
                 console.log(JSON.stringify(result.result, null, 2));
                 expect(result.result.length).to.be.equal(2);
-                done();
+
+                const latestTs = result.result[result.result.length - 1].ts;
+
+                sendTo('influxdb.0', 'getHistory', {
+                    id: 'influxdb.0.memRss',
+                    options: {
+                        start:     now - 15000,
+                        count:     2,
+                        aggregate: 'none',
+                        returnNewestEntries: true
+                    }
+                }, result => {
+                    console.log(JSON.stringify(result.result, null, 2));
+                    expect(result.result.length).to.be.equal(2);
+                    expect(result.result[0].ts > latestTs).to.be.true;
+                    done();
+                });
             });
         });
     });

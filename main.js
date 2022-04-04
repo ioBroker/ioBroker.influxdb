@@ -11,8 +11,8 @@ const fs          = require('fs');
 const path        = require('path');
 const [appName, adapterName] = require('./package.json').name.split('.');
 const Aggregate   = require('./lib/aggregate.js');
-const dataDir     = path.normalize(utils.controllerDir + '/' + require(utils.controllerDir + '/lib/tools').getDefaultDataDir());
-const cacheFile   = dataDir + 'influxdata.json';
+const dataDir     = path.normalize(`${utils.controllerDir}/${require(`${utils.controllerDir}/lib/tools`).getDefaultDataDir()}`);
+const cacheFile   = `${dataDir}influxdata.json`;
 
 let adapter;
 
@@ -80,7 +80,7 @@ function startAdapter(options) {
                     id = adapter._aliasMap[id];
                     checkForRemove = false;
                 } else {
-                    adapter.log.warn('Ignoring Alias-ID because identical to ID for ' + id);
+                    adapter.log.warn(`Ignoring Alias-ID because identical to ID for ${id}`);
                     obj.common.custom[adapter.namespace].aliasId = '';
                 }
             }
@@ -153,7 +153,7 @@ function startAdapter(options) {
                 adapter._influxDPs[id].timeout && clearTimeout(adapter._influxDPs[id].timeout);
 
                 delete adapter._influxDPs[id];
-                adapter.log.info('disabled logging of ' + id);
+                adapter.log.info(`disabled logging of ${id}`);
             }
         }
     });
@@ -192,8 +192,8 @@ function setConnected(adapter, isConnected) {
         adapter._connected = isConnected;
         adapter.setState('info.connection', adapter._connected, true, err =>
             // analyse if the state could be set (because of permissions)
-            err ? adapter.log.error('Can not update adapter._connected state: ' + err) :
-                adapter.log.debug('connected set to ' + adapter._connected));
+            err ? adapter.log.error(`Can not update adapter._connected state: ${err}`) :
+                adapter.log.debug(`connected set to ${adapter._connected}`));
     }
 }
 
@@ -240,7 +240,7 @@ function connect(adapter) {
 
     adapter.config.seriesBufferMax = parseInt(adapter.config.seriesBufferMax, 10) || 0;
 
-    adapter.log.info('Influx DB Version used: ' + adapter.config.dbversion);
+    adapter.log.info(`Influx DB Version used: ${adapter.config.dbversion}`);
 
     switch (adapter.config.dbversion) {
         case '2.x':
@@ -374,7 +374,7 @@ function getRetention(adapter, msg) {
 }
 
 function testConnection(adapter, msg) {
-    adapter.log.debug('testConnection msg-object: ' + JSON.stringify(msg));
+    adapter.log.debug(`testConnection msg-object: ${JSON.stringify(msg)}`);
     msg.message.config.port = parseInt(msg.message.config.port, 10) || 0;
     msg.message.config.requestTimeout = parseInt(msg.message.config.requestTimeout) || 30000;
 
@@ -386,7 +386,7 @@ function testConnection(adapter, msg) {
         }, 5000);
 
         let lClient;
-        adapter.log.debug('TEST DB Version: ' + msg.message.config.dbversion);
+        adapter.log.debug(`TEST DB Version: ${msg.message.config.dbversion}`);
         switch (msg.message.config.dbversion) {
             case '2.x':
                 adapter.log.info('Connecting to InfluxDB 2');
@@ -449,7 +449,7 @@ function destroyDB(adapter, msg) {
                 adapter.sendTo(msg.from, msg.command, {error: null}, msg.callback);
                 // restart adapter
                 setTimeout(() => {
-                    adapter.getForeignObject('system.adapter.' + adapter.namespace, (err, obj) => {
+                    adapter.getForeignObject(`system.adapter.${adapter.namespace}`, (err, obj) => {
                         if (!err) {
                             adapter.setForeignObject(obj._id, obj);
                         } else {
@@ -607,7 +607,7 @@ function main(adapter) {
 
     // read all custom settings
     adapter.getObjectView('system', 'custom', {}, (err, doc) => {
-        err && adapter.log.error('main/getObjectView: ' + err);
+        err && adapter.log.error(`main/getObjectView: ${err}`);
         let count = 0;
         if (doc && doc.rows) {
             const l = doc.rows.length;
@@ -686,7 +686,7 @@ function main(adapter) {
 function writeInitialValue(adapter, realId, id) {
     adapter.getForeignState(realId, (err, state) => {
         if (state && adapter._influxDPs[id]) {
-            state.from = 'system.adapter.' + adapter.namespace;
+            state.from = `system.adapter.${adapter.namespace}`;
             adapter._influxDPs[id].state = state;
             adapter._tasksStart.push(id);
             if (adapter._tasksStart.length === 1 && adapter._connected) {
@@ -754,7 +754,7 @@ function pushHistory(adapter, id, state, timerRelog) {
         let ignoreDebounce = false;
         if (timerRelog) {
             state.ts = Date.now();
-            state.from = 'system.adapter.' + adapter.namespace;
+            state.from = `system.adapter.${adapter.namespace}`;
             adapter.log.debug(`timed-relog ${id}, value=${state.val}, lastLogTime=${adapter._influxDPs[id].lastLogTime}, ts=${state.ts}`);
             ignoreDebounce = true;
         } else {
@@ -787,13 +787,13 @@ function pushHistory(adapter, id, state, timerRelog) {
 
 function reLogHelper(adapter, _id) {
     if (!adapter._influxDPs[_id]) {
-        adapter.log.info('non-existing id ' + _id);
+        adapter.log.info(`non-existing id ${_id}`);
         return;
     }
     adapter._influxDPs[_id].relogTimeout = null;
     if (adapter._influxDPs[_id].skipped) {
         adapter._influxDPs[_id].state = adapter._influxDPs[_id].skipped;
-        adapter._influxDPs[_id].state.from = 'system.adapter.' + adapter.namespace;
+        adapter._influxDPs[_id].state.from = `system.adapter.${adapter.namespace}`;
         adapter._influxDPs[_id].skipped = null;
         pushHistory(adapter, _id, adapter._influxDPs[_id].state, true);
     }
@@ -836,7 +836,7 @@ function pushHelper(adapter, _id, cb) {
 
     adapter.log.debug(`Datatype ${_id}: Currently: ${typeof adapter._influxDPs[_id].state.val}, StorageType: ${_settings.storageType}`);
     if (typeof adapter._influxDPs[_id].state.val === 'string' && _settings.storageType !== 'String') {
-        adapter.log.debug('Do Automatic Datatype conversion for ' + _id);
+        adapter.log.debug(`Do Automatic Datatype conversion for ${_id}`);
         const f = parseFloat(adapter._influxDPs[_id].state.val);
         if (f == adapter._influxDPs[_id].state.val) {
             adapter._influxDPs[_id].state.val = f;
@@ -986,7 +986,7 @@ function storeBufferedSeries(adapter, cb) {
 function writeAllSeriesAtOnce(adapter, series, cb) {
     adapter._client.writeSeries(series, (err /* , result */) => {
         if (err) {
-            adapter.log.warn('Error on writeSeries: ' + err);
+            adapter.log.warn(`Error on writeSeries: ${err}`);
             if (adapter._client.request.getHostsAvailable().length === 0) {
                 setConnected(adapter, false);
                 adapter.log.info('Host not available, move all points back in the Buffer');
@@ -1142,7 +1142,7 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
                             if (err) {
                                 adapter.log.error(`error updating history config for ${pointId} to pin datatype: ${err}`);
                             } else {
-                                adapter.log.info('changed history configuration to pin detected datatype for ' + pointId);
+                                adapter.log.info(`changed history configuration to pin detected datatype for ${pointId}`);
                             }
                         });
                     }
@@ -1186,7 +1186,7 @@ function writeFileBufferToDisk() {
             adapter.log.warn(`Store data for ${fileData.seriesBufferCounter} points and ${Object.keys(fileData.conflictingPoints).length} conflicts`);
         }
         catch (err) {
-            adapter.log.warn('Could not save non-stored data to file: ' + err);
+            adapter.log.warn(`Could not save non-stored data to file: ${err}`);
         }
     }
     adapter._seriesBufferCounter = null;
@@ -1227,7 +1227,7 @@ function deleteState(adapter, msg) {
     if (!msg.message) {
         adapter.log.error('deleteState called with invalid data');
         return adapter.sendTo(msg.from, msg.command, {
-            error: 'Invalid call: ' + JSON.stringify(msg)
+            error: `Invalid call: ${JSON.stringify(msg)}`
         }, msg.callback);
     }
     let id;
@@ -1262,7 +1262,7 @@ function deleteState(adapter, msg) {
                 }
                 _delete(adapter, id, {start: msg.message[i].state.start, end: msg.message[i].state.end || Date.now()});
             } else {
-                adapter.log.warn('Invalid state for ' + JSON.stringify(msg.message[i]));
+                adapter.log.warn(`Invalid state for ${JSON.stringify(msg.message[i])}`);
             }
         }
     } else if (msg.message.state && Array.isArray(msg.message.state)) {
@@ -1285,7 +1285,7 @@ function deleteState(adapter, msg) {
             } else if (msg.message.state[j] && typeof msg.message.state[j] === 'number') {
                 _delete(adapter, id, {ts: msg.message.state[j]});
             } else {
-                adapter.log.warn('Invalid state for ' + JSON.stringify(msg.message.state[j]));
+                adapter.log.warn(`Invalid state for ${JSON.stringify(msg.message.state[j])}`);
             }
         }
     } else if (msg.message.ts && Array.isArray(msg.message.ts)) {
@@ -1295,7 +1295,7 @@ function deleteState(adapter, msg) {
             if (msg.message.ts[j] && typeof msg.message.ts[j] === 'number') {
                 _delete(adapter, id, {ts: msg.message.ts[j]});
             } else {
-                adapter.log.warn('Invalid state for ' + JSON.stringify(msg.message.ts[j]));
+                adapter.log.warn(`Invalid state for ${JSON.stringify(msg.message.ts[j])}`);
             }
         }
     } else if (msg.message.id && msg.message.state && typeof msg.message.state === 'object') {
@@ -1316,7 +1316,7 @@ function deleteState(adapter, msg) {
         }, msg.callback));
     } else {
         adapter.log.error('deleteState called with invalid data');
-        return adapter.sendTo(msg.from, msg.command, {error: 'Invalid call: ' + JSON.stringify(msg)}, msg.callback);
+        return adapter.sendTo(msg.from, msg.command, {error: `Invalid call: ${JSON.stringify(msg)}`}, msg.callback);
     }
 
     setTimeout(() => {
@@ -1331,7 +1331,7 @@ function deleteStateAll(adapter, msg) {
     if (!msg.message) {
         adapter.log.error('deleteState called with invalid data');
         return adapter.sendTo(msg.from, msg.command, {
-            error: 'Invalid call: ' + JSON.stringify(msg)
+            error: `Invalid call: ${JSON.stringify(msg)}`
         }, msg.callback);
     }
     let id;
@@ -1359,7 +1359,7 @@ function deleteStateAll(adapter, msg) {
         });
     } else {
         adapter.log.error('deleteStateAll called with invalid data');
-        return adapter.sendTo(msg.from, msg.command, {error: 'Invalid call: ' + JSON.stringify(msg)}, msg.callback);
+        return adapter.sendTo(msg.from, msg.command, {error: `Invalid call: ${JSON.stringify(msg)}`}, msg.callback);
     }
 }
 
@@ -1420,7 +1420,7 @@ function updateState(adapter, msg) {
     if (!msg.message) {
         adapter.log.error('updateState called with invalid data');
         return adapter.sendTo(msg.from, msg.command, {
-            error: 'Invalid call: ' + JSON.stringify(msg)
+            error: `Invalid call: ${JSON.stringify(msg)}`
         }, msg.callback);
     }
     let id;
@@ -1432,7 +1432,7 @@ function updateState(adapter, msg) {
             if (msg.message[i].state && typeof msg.message[i].state === 'object') {
                 update(adapter, id, msg.message[i].state);
             } else {
-                adapter.log.warn('Invalid state for ' + JSON.stringify(msg.message[i]));
+                adapter.log.warn(`Invalid state for ${JSON.stringify(msg.message[i])}`);
             }
         }
         adapter.sendTo(msg.from, msg.command, {
@@ -1440,13 +1440,13 @@ function updateState(adapter, msg) {
             connected: !!adapter._connected
         }, msg.callback);
     } else if (msg.message.state && Array.isArray(msg.message.state)) {
-        adapter.log.debug('updateState ' + msg.message.state.length + ' items');
+        adapter.log.debug(`updateState ${msg.message.state.length} items`);
         id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
         for (let j = 0; j < msg.message.state.length; j++) {
             if (msg.message.state[j] && typeof msg.message.state[j] === 'object') {
                 update(adapter, id, msg.message.state[j]);
             } else {
-                adapter.log.warn('Invalid state for ' + JSON.stringify(msg.message.state[j]));
+                adapter.log.warn(`Invalid state for ${JSON.stringify(msg.message.state[j])}`);
             }
         }
         adapter.sendTo(msg.from, msg.command, {
@@ -1464,7 +1464,7 @@ function updateState(adapter, msg) {
     } else {
         adapter.log.error('updateState called with invalid data');
         adapter.sendTo(msg.from, msg.command, {
-            error: 'Invalid call: ' + JSON.stringify(msg)
+            error: `Invalid call: ${JSON.stringify(msg)}`
         }, msg.callback);
     }
 }
@@ -1473,7 +1473,7 @@ function storeState(adapter, msg) {
     if (!msg.message) {
         adapter.log.error('storeState called with invalid data');
         return adapter.sendTo(msg.from, msg.command, {
-            error:  'Invalid call: ' + JSON.stringify(msg)
+            error:  `Invalid call: ${JSON.stringify(msg)}`
         }, msg.callback);
     }
 
@@ -1485,7 +1485,7 @@ function storeState(adapter, msg) {
             if (msg.message[i].state && typeof msg.message[i].state === 'object') {
                 pushValueIntoDB(adapter, id, msg.message[i].state);
             } else {
-                adapter.log.warn('Invalid state for ' + JSON.stringify(msg.message[i]));
+                adapter.log.warn(`Invalid state for ${JSON.stringify(msg.message[i])}`);
             }
         }
     } else if (msg.message.state && Array.isArray(msg.message.state)) {
@@ -1599,6 +1599,12 @@ function finish(adapter, callback) {
     }
 }
 
+function sortByTs(a, b) {
+    const aTs = a.ts;
+    const bTs = b.ts;
+    return (aTs < bTs) ? -1 : ((aTs > bTs) ? 1 : 0);
+}
+
 function getHistory(adapter, msg) {
     const startTime = Date.now();
 
@@ -1609,11 +1615,14 @@ function getHistory(adapter, msg) {
         step:       parseInt(msg.message.options.step,  10) || null,
         count:      parseInt(msg.message.options.count, 10) || 500,
         aggregate:  msg.message.options.aggregate || 'average', // One of: max, min, average, total
-        limit:      parseInt(msg.message.options.limit || adapter.config.limit || 2000),
+        limit:      parseInt(msg.message.options.limit, 10) || parseInt(msg.message.options.count, 10) || adapter.config.limit || 2000,
         addId:      msg.message.options.addId || false,
         ignoreNull: true,
-        sessionId:  msg.message.options.sessionId
+        sessionId:  msg.message.options.sessionId,
+        returnNewestEntries: msg.message.options.returnNewestEntries || false
     };
+
+    adapter.log.debug(`getHistory call: ${JSON.stringify(options)}`);
 
     if (options.id && adapter._aliasMap[options.id]) {
         options.id = adapter._aliasMap[options.id];
@@ -1663,7 +1672,7 @@ function getHistory(adapter, msg) {
         adapter.sendTo(msg.from, msg.command, {
             result: [],
             step:   0,
-            error:  'No connection'
+            error:  `Logging not activated for ${options.id}`
         }, msg.callback);
         return;
     }
@@ -1691,7 +1700,7 @@ function getHistory(adapter, msg) {
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
         if (!options.step) {
             // calculate "step" based on difference between start and end using count
-            options.step = parseInt((options.end - options.start) / options.count, 10);
+            options.step = Math.round((options.end - options.start) / options.count);
         }
         if (options.start) {
             options.start -= options.step;
@@ -1706,8 +1715,10 @@ function getHistory(adapter, msg) {
     }
     query += ` time < '${new Date(options.end).toISOString()}'`;
 
-    if (!options.start && (options.count || options.limit)) {
+    if ((!options.start && options.count) || (options.aggregate === 'none' && options.count && options.returnNewestEntries) ) {
         query += ` ORDER BY time DESC`;
+    } else {
+        query += " ASC";
     }
 
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
@@ -1735,12 +1746,12 @@ function getHistory(adapter, msg) {
             if (adapter._client.request.getHostsAvailable().length === 0) {
                 setConnected(adapter, false);
             }
-            adapter.log.error('getHistory: ' + error);
+            adapter.log.error(`getHistory: ${error}`);
         } else {
             setConnected(adapter, true);
         }
 
-        adapter.log.debug('ROWS:' + JSON.stringify(rows));
+        adapter.log.debug(`ROWS:${JSON.stringify(rows)}`);
 
         let result = [];
 
@@ -1775,12 +1786,6 @@ function getHistory(adapter, msg) {
     });
 }
 
-function sortByTs(a, b) {
-    const aTs = a.ts;
-    const bTs = b.ts;
-    return (aTs < bTs) ? -1 : ((aTs > bTs) ? 1 : 0);
-}
-
 function getHistoryIflx2(adapter, msg) {
     const startTime = Date.now();
 
@@ -1791,11 +1796,14 @@ function getHistoryIflx2(adapter, msg) {
         step:       parseInt(msg.message.options.step,  10) || null,
         count:      parseInt(msg.message.options.count, 10) || 500,
         aggregate:  msg.message.options.aggregate || 'average', // One of: max, min, average, total
-        limit:      parseInt(msg.message.options.limit || adapter.config.limit || 2000),
+        limit:      parseInt(msg.message.options.limit, 10) || parseInt(msg.message.options.count, 10) || adapter.config.limit || 2000,
         addId:      msg.message.options.addId || false,
         ignoreNull: true,
-        sessionId:  msg.message.options.sessionId
+        sessionId:  msg.message.options.sessionId,
+        returnNewestEntries: msg.message.options.returnNewestEntries || false
     };
+
+    adapter.log.debug(`getHistory call: ${JSON.stringify(options)}`);
 
     if (options.id && adapter._aliasMap[options.id]) {
         options.id = adapter._aliasMap[options.id];
@@ -1809,7 +1817,7 @@ function getHistoryIflx2(adapter, msg) {
         return adapter.sendTo(msg.from, msg.command, {
             result: [],
             step:   0,
-            error:  'No connection'
+            error:  `Logging not activated for ${options.id}`
         }, msg.callback);
     }
 
@@ -1831,14 +1839,14 @@ function getHistoryIflx2(adapter, msg) {
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
         if (!options.step) {
             // calculate "step" based on difference between start and end using count
-            options.step = parseInt((options.end - options.start) / options.count, 10);
+            options.step = Math.round((options.end - options.start) / options.count);
         }
         if (options.start) options.start -= options.step;
         options.end += options.step;
         options.limit += 2;
     }
 
-    fluxQuery += ` |> range(${(options.start) ? "start: " + new Date(options.start).toISOString() + ", " : "start: -" + adapter.config.retention + "ms, "}stop: ${new Date(options.end).toISOString()})`;
+    fluxQuery += ` |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: -${adapter.config.retention}ms, `}stop: ${new Date(options.end).toISOString()})`;
     fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${options.id}")`;
 
     if (adapter.config.usetags)
@@ -1846,8 +1854,10 @@ function getHistoryIflx2(adapter, msg) {
     else
         fluxQuery += ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
 
-    if (!options.start && (options.count || options.limit)) {
+    if ((!options.start && options.count) || (options.aggregate === 'none' && options.count && options.returnNewestEntries) ) {
         fluxQuery += ` |> sort(columns:["_time"], desc: true)`;
+    } else {
+        fluxQuery += ` |> sort(columns:["_time"], desc: false)`;
     }
 
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
@@ -1944,7 +1954,7 @@ function getHistoryIflx2(adapter, msg) {
             fluxQueries.push(addFluxQuery);
         }
 
-        adapter.log.debug('History-queries to execute: ' + fluxQueries);
+        adapter.log.debug(`History-queries to execute: ${fluxQueries}`);
 
         // if specific id requested
         adapter._client.queries(fluxQueries, (err, rows) => {
@@ -1952,12 +1962,12 @@ function getHistoryIflx2(adapter, msg) {
                 if (adapter._client.request.getHostsAvailable().length === 0) {
                     setConnected(adapter, false);
                 }
-                adapter.log.error('getHistory: ' + err);
+                adapter.log.error(`getHistory: ${err}`);
             } else {
                 setConnected(adapter, true);
             }
 
-            adapter.log.debug('Parsing retrieved rows:' + JSON.stringify(rows));
+            adapter.log.debug(`Parsing retrieved rows:${JSON.stringify(rows)}`);
 
             let result = [];
 
@@ -2003,7 +2013,7 @@ function query(adapter, msg) {
         const query = msg.message.query || msg.message;
 
         if (!query || typeof query !== 'string') {
-          adapter.log.error('query missing: ' + query);
+          adapter.log.error(`query missing: ${query}`);
           adapter.sendTo(msg.from, msg.command, {
               result: [],
               error:  'Query missing'
@@ -2011,14 +2021,14 @@ function query(adapter, msg) {
           return;
         }
 
-        adapter.log.debug('query: ' + query);
+        adapter.log.debug(`query: ${query}`);
 
         adapter._client.query(query, (err, rows) => {
             if (err) {
                 if (adapter._client.request.getHostsAvailable().length === 0) {
                     setConnected(adapter, false);
                 }
-                adapter.log.error('query: ' + err);
+                adapter.log.error(`query: ${err}`);
                 return adapter.sendTo(msg.from, msg.command, {
                         result: [],
                         error:  'Invalid call'
@@ -2027,7 +2037,7 @@ function query(adapter, msg) {
                 setConnected(adapter, true);
             }
 
-            adapter.log.debug('result: ' + JSON.stringify(rows));
+            adapter.log.debug(`result: ${JSON.stringify(rows)}`);
 
             for (let r = 0, l = rows.length; r < l; r++) {
                 for (let rr = 0, ll = rows[r].length; rr < ll; rr++) {
@@ -2073,21 +2083,21 @@ function multiQuery(adapter, msg) {
                 c++;
             }
         } catch (error) {
-            adapter.log.warn('Error in received multiQuery: ' + error);
+            adapter.log.warn(`Error in received multiQuery: ${error}`);
             adapter.sendTo(msg.from, msg.command, {
                 result: [],
                 error:  error
             }, msg.callback);
             return;
         }
-        adapter.log.debug('queries: ' + queries);
+        adapter.log.debug(`queries: ${queries}`);
 
         adapter._client.queries(queries, (err, rows) => {
             if (err) {
                 if (adapter._client.request.getHostsAvailable().length === 0) {
                     setConnected(adapter, false);
                 }
-                adapter.log.error('queries: ' + err);
+                adapter.log.error(`queries: ${err}`);
                 return adapter.sendTo(msg.from, msg.command, {
                     result: [],
                     error:  'Invalid call'
@@ -2096,7 +2106,7 @@ function multiQuery(adapter, msg) {
                 setConnected(adapter, true);
             }
 
-            adapter.log.debug('result: ' + JSON.stringify(rows));
+            adapter.log.debug(`result: ${JSON.stringify(rows)}`);
 
             for (let r = 0, l = rows.length; r < l; r++) {
                 for (let rr = 0, ll = rows[r].length; rr < ll; rr++) {
@@ -2138,7 +2148,7 @@ function enableHistory(adapter, msg) {
     obj.common.custom[adapter.namespace].enabled = true;
     adapter.extendForeignObject(msg.message.id, obj, error => {
         if (error) {
-            adapter.log.error('enableHistory: ' + error);
+            adapter.log.error(`enableHistory: ${error}`);
             adapter.sendTo(msg.from, msg.command, {error}, msg.callback);
         } else {
             adapter.log.info(JSON.stringify(obj));
@@ -2160,7 +2170,7 @@ function disableHistory(adapter, msg) {
     obj.common.custom[adapter.namespace].enabled = false;
     adapter.extendForeignObject(msg.message.id, obj, error => {
         if (error) {
-            adapter.log.error('disableHistory: ' + error);
+            adapter.log.error(`disableHistory: ${error}`);
             adapter.sendTo(msg.from, msg.command, {error}, msg.callback);
         } else {
             adapter.log.info(JSON.stringify(obj));
