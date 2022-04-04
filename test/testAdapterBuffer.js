@@ -101,7 +101,7 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
             }
 
             config.native.seriesBufferFlushInterval = 30;
-            config.native.seriesBufferMax = 30;
+            config.native.seriesBufferMax = 5;
             config.native.dbname = 'otheriobroker';
 
             await setup.setAdapterConfig(config.common, config.native);
