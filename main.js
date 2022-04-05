@@ -1736,6 +1736,10 @@ function getHistory(adapter, msg) {
     }
     query += ` time < '${new Date(options.end).toISOString()}'`;
 
+    if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
+        query += ` GROUP BY time(${options.step}ms) fill(previous)`;
+    }
+
     if ((!options.start && options.count) || (options.aggregate === 'none' && options.count && options.returnNewestEntries) ) {
         query += ` ORDER BY time DESC`;
     } else {
@@ -1743,7 +1747,7 @@ function getHistory(adapter, msg) {
     }
 
     if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
-        query += ` GROUP BY time(${options.step}ms) fill(previous) LIMIT ${options.limit}`;
+        query += ` LIMIT ${options.limit}`;
     } else if (options.aggregate !== 'minmax') {
         query += ` LIMIT ${options.count}`;
     }
