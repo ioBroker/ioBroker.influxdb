@@ -363,6 +363,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
             }, result => {
                 console.log(JSON.stringify(result.result, null, 2));
                 expect(result.result.length).to.be.equal(2);
+                expect(result.result[0].id).to.be.empty;
 
                 const latestTs = result.result[result.result.length - 1].ts;
 
@@ -372,15 +373,36 @@ describe(`Test ${adapterShortName} adapter`, function () {
                         start:     now - 15000,
                         count:     2,
                         aggregate: 'none',
+                        addId: true,
                         returnNewestEntries: true
                     }
                 }, result => {
                     console.log(JSON.stringify(result.result, null, 2));
                     expect(result.result.length).to.be.equal(2);
                     expect(result.result[0].ts > latestTs).to.be.true;
+                    expect(result.result[0].id).to.be.equal('influxdb.0.memRss');
                     done();
                 });
             });
+        });
+    });
+
+    it(`Test ${adapterShortName}: Read average values from DB using GetHistory`, function (done) {
+        this.timeout(10000);
+
+        sendTo('influxdb.0', 'getHistory', {
+            id: 'influxdb.0.memRss',
+            options: {
+                start:     now - 30000,
+                count:     2,
+                aggregate: 'average',
+                addId: true
+            }
+        }, result => {
+            console.log(JSON.stringify(result.result, null, 2));
+            expect(result.result.length).to.be.at.least(4);
+            expect(result.result[0].id).to.be.equal('influxdb.0.memRss');
+            done();
         });
     });
 
