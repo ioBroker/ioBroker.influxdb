@@ -363,7 +363,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
             }, result => {
                 console.log(JSON.stringify(result.result, null, 2));
                 expect(result.result.length).to.be.equal(2);
-                expect(result.result[0].id).to.be.empty;
+                expect(result.result[0].id).to.be.undefined;
 
                 const latestTs = result.result[result.result.length - 1].ts;
 
@@ -394,7 +394,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
             id: 'influxdb.0.memRss',
             options: {
                 start:     now - 30000,
-                count:     2,
+                count:     4,
                 aggregate: 'average',
                 addId: true
             }
