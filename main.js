@@ -1649,46 +1649,6 @@ function getHistory(adapter, msg) {
         options.id = adapter._aliasMap[options.id];
     }
 
-    let query = 'SELECT';
-    if (options.step) {
-        switch (options.aggregate) {
-            case 'average':
-                query += ' mean(value) as val';
-                break;
-
-            case 'max':
-                query += ' max(value) as val';
-                break;
-
-            case 'min':
-                query += ' min(value) as val';
-                break;
-
-            case 'total':
-                query += ' sum(value) as val';
-                break;
-
-            case 'count':
-                query += ' count(value) as val';
-                break;
-
-            case 'none':
-            case 'onchange':
-            case 'minmax':
-                query += ' value';
-                break;
-
-            default:
-                query += ' mean(value) as val';
-                break;
-        }
-
-    } else {
-        query += ' *';
-    }
-
-    query += ` from "${options.id}"`;
-
     if (!adapter._influxDPs[options.id]) {
         adapter.sendTo(msg.from, msg.command, {
             result: [],
@@ -1729,6 +1689,46 @@ function getHistory(adapter, msg) {
         options.end += options.step;
         options.limit += 2;
     }
+
+    let query = 'SELECT';
+    if (options.step) {
+        switch (options.aggregate) {
+            case 'average':
+                query += ' mean(value) as val';
+                break;
+
+            case 'max':
+                query += ' max(value) as val';
+                break;
+
+            case 'min':
+                query += ' min(value) as val';
+                break;
+
+            case 'total':
+                query += ' sum(value) as val';
+                break;
+
+            case 'count':
+                query += ' count(value) as val';
+                break;
+
+            case 'none':
+            case 'onchange':
+            case 'minmax':
+                query += ' value';
+                break;
+
+            default:
+                query += ' mean(value) as val';
+                break;
+        }
+
+    } else {
+        query += ' *';
+    }
+
+    query += ` from "${options.id}"`;
 
     query += ` WHERE `;
     if (options.start) {
