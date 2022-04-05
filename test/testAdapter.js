@@ -414,7 +414,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
             id: 'influxdb.0.memRss',
             options: {
                 start:     now - 30000,
-                end:       now,
+                end:       now + 30000,
                 count:     4,
                 aggregate: 'minmax',
                 addId: true
