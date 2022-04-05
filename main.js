@@ -1692,7 +1692,6 @@ function getHistory(adapter, msg) {
 
     let query = 'SELECT';
     if (options.step) {
-        options.alreadyAggregated = true;
         switch (options.aggregate) {
             case 'average':
                 query += ' mean(value) as val';
@@ -1718,7 +1717,6 @@ function getHistory(adapter, msg) {
             case 'onchange':
             case 'minmax':
                 query += ' value';
-                options.alreadyAggregated = false
                 break;
 
             default:
@@ -1925,7 +1923,6 @@ function getHistoryIflx2(adapter, msg) {
             }
 
             if (options.step && !isBoolean) {
-                options.alreadyAggregated = true;
                 switch (options.aggregate) {
                     case 'average':
                         fluxQuery += ` |> mean(column: "${valueColumn}")`;
@@ -1951,8 +1948,6 @@ function getHistoryIflx2(adapter, msg) {
                         fluxQuery += ` |> mean(column: "${valueColumn}")`;
                         break;
                 }
-            } else {
-                options.alreadyAggregated = false;
             }
 
             fluxQueries.push(fluxQuery);
