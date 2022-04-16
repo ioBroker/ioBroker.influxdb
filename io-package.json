@@ -136,7 +136,7 @@
     ],
     "globalDependencies": [
       {
-        "admin": ">=5.1.19"
+        "admin": ">=5.1.28"
       }
     ],
     "supportStopInstance": 3000,
@@ -167,7 +167,47 @@
     },
     "connectionType": "local",
     "dataSource": "push",
-    "tier": 1
+    "tier": 1,
+    "messages": [
+      {
+        "condition": {
+          "operand": "and",
+          "rules": [
+            "oldVersion<2.1.1",
+            "newVersion>=2.1.1"
+          ]
+        },
+        "title": {
+          "en": "Password needs to re re-entered after upgrade",
+          "de": "Das Passwort muss nach dem Upgrade erneut eingegeben werden",
+          "ru": "Пароль необходимо повторно ввести после обновления",
+          "pt": "A senha precisa ser reinserida após a atualização",
+          "nl": "Wachtwoord moet opnieuw worden ingevoerd na upgrade",
+          "fr": "Le mot de passe doit être ressaisi après la mise à niveau",
+          "it": "La password deve essere reinserita dopo l'aggiornamento",
+          "es": "La contraseña debe volver a ingresarse después de la actualización",
+          "pl": "Hasło musi zostać ponownie wprowadzone po aktualizacji",
+          "zh-cn": "升级后需要重新输入密码"
+        },
+        "text": {
+          "en": "After upgrading to Version 2.1.1 or later you need to re-entr your passwort/token for the access to the InfluxDB in the instance configuration.",
+          "de": "Nach dem Upgrade auf Version 2.1.1 oder höher müssen Sie Ihr Passwort/Token für den Zugriff auf die InfluxDB in der Instanzkonfiguration erneut eingeben.",
+          "ru": "После обновления до версии 2.1.1 или более поздней вам необходимо повторно ввести свой пароль/токен для доступа к InfluxDB в конфигурации экземпляра.",
+          "pt": "Após atualizar para a Versão 2.1.1 ou posterior, você precisa reinserir sua senha/token para acesso ao InfluxDB na configuração da instância.",
+          "nl": "Na het upgraden naar versie 2.1.1 of hoger moet u uw wachtwoord/token opnieuw invoeren voor toegang tot de InfluxDB in de instantieconfiguratie.",
+          "fr": "Après la mise à niveau vers la version 2.1.1 ou ultérieure, vous devez ressaisir votre mot de passe/token pour l'accès à InfluxDB dans la configuration de l'instance.",
+          "it": "Dopo l'aggiornamento alla versione 2.1.1 o successiva è necessario reinserire la password/token per l'accesso a InfluxDB nella configurazione dell'istanza.",
+          "es": "Después de actualizar a la versión 2.1.1 o posterior, debe volver a ingresar su contraseña/token para acceder a InfluxDB en la configuración de la instancia.",
+          "pl": "Po aktualizacji do wersji 2.1.1 lub nowszej należy ponownie wprowadzić hasło/token, aby uzyskać dostęp do bazy danych InfluxDB w konfiguracji instancji.",
+          "zh-cn": "升级到 2.1.1 或更高版本后，您需要重新输入密码/令牌才能在实例配置中访问 InfluxDB。"
+        },
+        "level": "warn",
+        "buttons": [
+          "agree",
+          "cancel"
+        ]
+      }
+    ]
   },
   "native": {
     "debounce": 1000,
