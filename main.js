@@ -1284,6 +1284,7 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
             } else if (err.message && typeof err.message === 'string' && err.message.includes('field type conflict')) {
                 // retry write after type correction for some easy cases
                 let retry = false;
+                let adjustType = false;
                 if (adapter._influxDPs[pointId] && adapter._influxDPs[pointId][adapter.namespace] && !adapter._influxDPs[pointId][adapter.namespace].storageType) {
                     let convertDirection = '';
                     if (err.message.includes('is type bool, already exists as type float') ||
@@ -1292,10 +1293,12 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
                         if (point.value === true) {
                             point.value = 1;
                             retry = true;
+                            adjustType = true;
                         }
                         else if (point.value === false) {
                             point.value = 0;
                             retry = true;
+                            adjustType = true;
                         }
                         adapter._influxDPs[pointId][adapter.namespace].storageType = 'Number';
                         adapter._influxDPs[pointId].storageTypeAdjustedInternally = true;
@@ -1306,10 +1309,12 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
                         if (point.value === 1) {
                             point.value = true;
                             retry = true;
+                            adjustType = true;
                         }
                         else if (point.value === 0) {
                             point.value = false;
                             retry = true;
+                            adjustType = true;
                         }
                         adapter._influxDPs[pointId][adapter.namespace].storageType = 'Boolean';
                         adapter._influxDPs[pointId].storageTypeAdjustedInternally = true;
@@ -1317,12 +1322,23 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
                     else if (err.message.includes(', already exists as type string')) {
                         point.value = point.value.toString();
                         retry = true;
+                        adjustType = true;
                         adapter._influxDPs[pointId][adapter.namespace].storageType = 'String';
+                        adapter._influxDPs[pointId].storageTypeAdjustedInternally = true;
+                    } else if (err.message.includes('is type string, already exists as type float')) {
+                        if (isFinite(point.value)) {
+                            point.value = parseFloat(point.value);
+                            retry = true;
+                            adjustType = true;
+                        }
+                        adapter._influxDPs[pointId][adapter.namespace].storageType = 'Number';
                         adapter._influxDPs[pointId].storageTypeAdjustedInternally = true;
                     }
                     if (retry) {
                         adapter.log.info(`Try to convert ${convertDirection} and re-write for ${pointId} and set storageType to ${adapter._influxDPs[pointId][adapter.namespace].storageType}`);
                         writeOnePointForID(adapter, pointId, point, true, cb);
+                    }
+                    if (adjustType) {
                         const obj = {};
                         obj.common = {};
                         obj.common.custom = {};

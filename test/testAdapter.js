@@ -203,7 +203,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
                     found ++;
                 }
             }
-            expect(found).to.be.equal(7);
+            expect(found).to.be.equal(14);
 
             done();
         });
@@ -213,12 +213,12 @@ describe(`Test ${adapterShortName} adapter`, function () {
         this.timeout(65000);
 
         if (process.env.INFLUXDB2) {
-            // TODO: FIndFlux equivalent!
+            // TODO: Find Flux equivalent!
             return done();
         }
 
         setTimeout(function() {
-            let query = 'SHOW FIELD KEYS FROM "influxdb.0.memRss"';
+            let query = 'SHOW FIELD KEYS FROM "influxdb.0.testValue"';
             sendTo('influxdb.0', 'query', query, result => {
                 console.log(`result: ${JSON.stringify(result.result, null, 2)}`);
                 let found = false;
@@ -267,7 +267,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
         this.timeout(5000);
 
         objects.getObject('system.adapter.influxdb.0.memHeapUsed', (err, obj) => {
-            expect(obj.common.custom['influxdb.0'].storageType).to.be.equal('String');
+            expect(obj.common.custom['influxdb.0'].storageType).to.be.equal('Number');
             expect(err).to.be.null;
             done();
         });

@@ -212,7 +212,7 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
                     found ++;
                 }
             }
-            expect(found).to.be.equal(7);
+            expect(found).to.be.equal(14);
 
             done();
         });
@@ -227,7 +227,7 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
         }
 
         setTimeout(function() {
-            sendTo('influxdb.0', 'query', 'SHOW FIELD KEYS FROM "influxdb.0.memRss"', result => {
+            sendTo('influxdb.0', 'query', 'SHOW FIELD KEYS FROM "influxdb.0.testValue"', result => {
                 console.log('result: ' + JSON.stringify(result.result, null, 2));
                 let found = false;
                 for (let i = 0; i < result.result[0].length; i++) {
@@ -276,7 +276,7 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
 
         objects.getObject('system.adapter.influxdb.0.memHeapUsed', (err, obj) => {
             if (process.env.INFLUXDB2) {
-                expect(obj.common.custom['influxdb.0'].storageType).to.be.equal('String');
+                expect(obj.common.custom['influxdb.0'].storageType).to.be.equal('Number');
             }
             expect(err).to.be.null;
             done();
