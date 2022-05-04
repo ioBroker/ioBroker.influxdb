@@ -168,7 +168,6 @@ describe(`Test ${adapterShortName} adapter`, function () {
                         // wait till adapter receives the new settings
                         setTimeout(() =>
                             done(), 2000);
-                        });
                     });
                 });
             });
@@ -209,7 +208,6 @@ describe(`Test ${adapterShortName} adapter`, function () {
             done();
         });
     });
-
 
     it(`Test ${adapterShortName}: Check Datapoint Types`, function (done) {
         this.timeout(65000);

@@ -175,7 +175,6 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
 
                             setTimeout(() =>
                                 done(), 2000);
-                            });
                         });
                     });
                 });
