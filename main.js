@@ -1884,16 +1884,18 @@ function getHistory(adapter, msg) {
     // query one timegroup-value more than requested originally at start and end
     // to make sure to have no 0 values because of the way InfluxDB does group by time
 
-    if (resultsFromInfluxDB && !options.removeBorderValues) {
+    if (resultsFromInfluxDB) {
         if (!options.step) {
             // calculate "step" based on difference between start and end using count
             options.step = Math.round((options.end - options.start) / options.count);
         }
-        if (options.start) {
-            options.start -= options.step;
+        if (!options.removeBorderValues) {
+            if (options.start) {
+                options.start -= options.step;
+            }
+            options.end += options.step;
+            options.limit += 2;
         }
-        options.end += options.step;
-        options.limit += 2;
     }
 
     let query = 'SELECT';
@@ -2102,7 +2104,7 @@ function getHistoryIflx2(adapter, msg) {
         options.integralUnit = 60;
     }
 
-    if (!adapter._influxDPs[options.id]) {
+    if (!adapter._influxDPs[options.id] || !adapter._influxDPs[options.id][adapter.namespace]) {
         return adapter.sendTo(msg.from, msg.command, {
             result: [],
             step:   0,
@@ -2124,13 +2126,15 @@ function getHistoryIflx2(adapter, msg) {
 
     // query one timegroup-value more than requested originally at start and end
     // to make sure to have no 0 values because of the way InfluxDB does group by time
-    if (resultsFromInfluxDB && !options.removeBorderValues) {
+    if (resultsFromInfluxDB) {
         if (!options.step) {
             // calculate "step" based on difference between start and end using count
             options.step = Math.round((options.end - options.start) / options.count);
         }
-        if (options.start) options.start -= options.step;
-        options.end += options.step;
+        if (!options.removeBorderValues) {
+            if (options.start) options.start -= options.step;
+            options.end += options.step;
+        }
         options.limit += 2;
     }
 
@@ -2184,6 +2188,7 @@ function getHistoryIflx2(adapter, msg) {
                     }, msg.callback);
                 }
             } else {
+                console.log('Boolean check response: ' + JSON.stringify(_rslt));
                 isBoolean = true;
                 debugLog && adapter.log.debug(`Measurement ${options.id} is of type Boolean - skipping aggregation options`);
             }
