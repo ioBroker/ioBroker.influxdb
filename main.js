@@ -1879,7 +1879,10 @@ function getHistory(adapter, msg) {
         options.start = options.end - 86400000; // - 1 day
     }
 
-    const resultsFromInfluxDB = options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax' && (options.aggregate !== 'integral' && options.integralInterpolation === 'linear');
+    let resultsFromInfluxDB = options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax';
+    if (options.aggregate === 'integral' && options.integralInterpolation === 'linear') {
+        resultsFromInfluxDB = false;
+    }
 
     // query one timegroup-value more than requested originally at start and end
     // to make sure to have no 0 values because of the way InfluxDB does group by time
@@ -2174,11 +2177,11 @@ function getHistoryIflx2(adapter, msg) {
     `;
 
     storeBufferedSeries(adapter, options.id, () => {
-        adapter._client.query(booleanTypeCheckQuery, (error, _rslt) => {
-            let isBoolean;
+        adapter._client.query(booleanTypeCheckQuery, (error, rslt) => {
+            let supportsAggregates;
             if (error) {
                 if (error.message.includes('type conflict: bool')) {
-                    isBoolean = false;
+                    supportsAggregates = true;
                     error = null;
                 } else {
                     return adapter.sendTo(msg.from, msg.command, {
@@ -2188,12 +2191,24 @@ function getHistoryIflx2(adapter, msg) {
                     }, msg.callback);
                 }
             } else {
-                console.log('Boolean check response: ' + JSON.stringify(_rslt));
-                isBoolean = true;
-                debugLog && adapter.log.debug(`Measurement ${options.id} is of type Boolean - skipping aggregation options`);
+                if (rslt.find(r => r.error && r.error.message.includes('type conflict: bool'))) {
+                    supportsAggregates = true;
+                } else {
+                    supportsAggregates = false;
+                    debugLog && adapter.log.debug(`Measurement ${options.id} seems to be no number - skipping aggregation options`);
+                }
+            }
+            if (supportsAggregates) {
+                if (adapter._influxDPs[options.id][adapter.namespace].storageType && adapter._influxDPs[options.id][adapter.namespace].storageType !== 'Number') {
+                    supportsAggregates = false;
+                } else if (adapter._influxDPs[options.id][adapter.namespace].state && typeof adapter._influxDPs[options.id][adapter.namespace].state.val !== 'number') {
+                    supportsAggregates = false;
+                } else if (adapter._influxDPs[options.id][adapter.namespace].skipped && typeof adapter._influxDPs[options.id][adapter.namespace].skipped.val !== 'number') {
+                    supportsAggregates = false;
+                }
             }
 
-            if (options.step && !isBoolean) {
+            if (options.step && supportsAggregates) {
                 switch (options.aggregate) {
                     case 'average':
                         fluxQuery += ` |> mean(column: "${valueColumn}")`;
