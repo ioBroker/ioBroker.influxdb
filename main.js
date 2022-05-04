@@ -983,9 +983,9 @@ function reLogHelper(adapter, _id) {
     adapter._influxDPs[_id].relogTimeout = null;
     adapter._influxDPs[_id].relogTimeout = null;
     if (adapter._influxDPs[_id].skipped) {
-        pushHistory(_id, adapter._influxDPs[_id].skipped, true);
+        pushHistory(adapter, _id, adapter._influxDPs[_id].skipped, true);
     } else if (adapter._influxDPs[_id].state) {
-        pushHistory(_id, adapter._influxDPs[_id].state, true);
+        pushHistory(adapter, _id, adapter._influxDPs[_id].state, true);
     } else {        adapter.getForeignState(adapter._influxDPs[_id].realId, (err, state) => {
             if (err) {
                 adapter.log.info(`init timed Relog: can not get State for ${_id}: ${err}`);
