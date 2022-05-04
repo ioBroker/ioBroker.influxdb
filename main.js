@@ -1884,7 +1884,7 @@ function getHistory(adapter, msg) {
     // query one timegroup-value more than requested originally at start and end
     // to make sure to have no 0 values because of the way InfluxDB does group by time
 
-    if (resultsFromInfluxDB) {
+    if (resultsFromInfluxDB && !options.removeBorderValues) {
         if (!options.step) {
             // calculate "step" based on difference between start and end using count
             options.step = Math.round((options.end - options.start) / options.count);
@@ -2124,7 +2124,7 @@ function getHistoryIflx2(adapter, msg) {
 
     // query one timegroup-value more than requested originally at start and end
     // to make sure to have no 0 values because of the way InfluxDB does group by time
-    if (resultsFromInfluxDB) {
+    if (resultsFromInfluxDB && !options.removeBorderValues) {
         if (!options.step) {
             // calculate "step" based on difference between start and end using count
             options.step = Math.round((options.end - options.start) / options.count);
