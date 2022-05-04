@@ -2208,7 +2208,7 @@ function getHistoryIflx2(adapter, msg) {
                     }, msg.callback);
                 }
             } else {
-                if (rslt.find(r => r.error && r.error.message.includes('type conflict: bool'))) {
+                if (rslt.find(r => r.error && r.error.includes('type conflict: bool'))) {
                     supportsAggregates = true;
                 } else {
                     supportsAggregates = false;

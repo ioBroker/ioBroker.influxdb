@@ -275,10 +275,9 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
         this.timeout(5000);
 
         objects.getObject('system.adapter.influxdb.0.memHeapUsed', (err, obj) => {
-            if (process.env.INFLUXDB2) {
-                expect(obj.common.custom['influxdb.0'].storageType).to.be.equal('Number');
-            }
             expect(err).to.be.null;
+            console.log(JSON.stringify(obj, null, 2));
+            expect(obj.common.custom['influxdb.0'].storageType).to.be.equal('Number');
             done();
         });
     });
