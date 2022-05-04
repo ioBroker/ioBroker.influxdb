@@ -1001,7 +1001,7 @@ function reLogHelper(adapter, _id) {
 }
 
 function pushHelper(adapter, _id, state, cb) {
-    if (!adapter._influxDPs[_id][_id] || !adapter._influxDPs[_id][adapter.namespace] || (!adapter._influxDPs[_id][_id].state && !state)) {
+    if (!adapter._influxDPs[_id] || !adapter._influxDPs[_id][adapter.namespace] || (!adapter._influxDPs[_id].state && !state)) {
         return cb && setImmediate(cb, `ID ${_id} not activated for logging`);
     }
     if (!state) {
