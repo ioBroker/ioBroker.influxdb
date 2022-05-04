@@ -1901,6 +1901,7 @@ function getHistory(adapter, msg) {
         }
     }
 
+    options.reAggregated = true;
     let query = 'SELECT';
     if (options.step) {
         switch (options.aggregate) {
@@ -1927,6 +1928,7 @@ function getHistory(adapter, msg) {
             case 'integral':
                 if (options.integralInterpolation === 'linear') {
                     query += ' value';
+                    options.reAggregated = false;
                 } else {
                     query += ` integral(value, ${options.integralUnit}s) as val`;
                 }
@@ -1944,6 +1946,7 @@ function getHistory(adapter, msg) {
             case 'onchange':
             case 'minmax':
                 query += ' value';
+                options.reAggregated = false;
                 break;
 
             default:
@@ -1980,7 +1983,7 @@ function getHistory(adapter, msg) {
     }
 
     // select one datapoint more than wanted
-    if (!resultsFromInfluxDB) {
+    if (!options.removeBorderValues) {
         let addQuery = '';
         if (options.start) {
             addQuery = `SELECT value from "${options.id}" WHERE time <= '${new Date(options.start).toISOString()}' ORDER BY time DESC LIMIT 1;`;
@@ -2208,6 +2211,7 @@ function getHistoryIflx2(adapter, msg) {
                 }
             }
 
+            options.reAggregated = true;
             if (options.step && supportsAggregates) {
                 switch (options.aggregate) {
                     case 'average':
@@ -2244,6 +2248,7 @@ function getHistoryIflx2(adapter, msg) {
 
                     default:
                         fluxQuery += ` |> mean(column: "${valueColumn}")`;
+                        options.reAggregated = false;
                         break;
                 }
             }
@@ -2251,7 +2256,7 @@ function getHistoryIflx2(adapter, msg) {
             fluxQueries.push(fluxQuery);
 
             // select one datapoint more than wanted
-            if (!resultsFromInfluxDB) {
+            if (!options.removeBorderValues) {
                 let addFluxQuery = '';
                 if (options.start) {
                     // get one entry "before" the defined timeframe for displaying purposes
@@ -2325,6 +2330,10 @@ function getHistoryIflx2(adapter, msg) {
                         }
                     }
                     result = result.sort(sortByTs);
+                }
+
+                if (options.debugLog) {
+                    options.log = adapter.log.debug;
                 }
 
                 Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
