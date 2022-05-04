@@ -2029,7 +2029,7 @@ function getHistory(adapter, msg) {
                         }
 
                         if (options.addId) {
-                            rows[qr][rr].id = msg.message.id;
+                            rows[qr][rr].id = options.id;
                         }
                         result.push(rows[qr][rr]);
                     }
@@ -2321,7 +2321,7 @@ function getHistoryIflx2(adapter, msg) {
                             }
 
                             if (options.addId) {
-                                rows[qr][rr].id = msg.message.id;
+                                rows[qr][rr].id = options.id;
                             }
 
                             result.push(rows[qr][rr]);
