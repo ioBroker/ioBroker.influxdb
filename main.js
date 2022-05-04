@@ -1892,13 +1892,11 @@ function getHistory(adapter, msg) {
             // calculate "step" based on difference between start and end using count
             options.step = Math.round((options.end - options.start) / options.count);
         }
-        if (!options.removeBorderValues) {
-            if (options.start) {
-                options.start -= options.step;
-            }
-            options.end += options.step;
-            options.limit += 2;
+        if (options.start) {
+            options.start -= options.step;
         }
+        options.end += options.step;
+        options.limit += 2;
     }
 
     options.preAggregated = true;
@@ -2137,10 +2135,10 @@ function getHistoryIflx2(adapter, msg) {
             // calculate "step" based on difference between start and end using count
             options.step = Math.round((options.end - options.start) / options.count);
         }
-        if (!options.removeBorderValues) {
-            if (options.start) options.start -= options.step;
-            options.end += options.step;
+        if (options.start) {
+            options.start -= options.step;
         }
+        options.end += options.step;
         options.limit += 2;
     }
 
