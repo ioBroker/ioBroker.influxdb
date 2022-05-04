@@ -1901,7 +1901,7 @@ function getHistory(adapter, msg) {
         }
     }
 
-    options.reAggregated = true;
+    options.preAggregated = true;
     let query = 'SELECT';
     if (options.step) {
         switch (options.aggregate) {
@@ -1928,7 +1928,7 @@ function getHistory(adapter, msg) {
             case 'integral':
                 if (options.integralInterpolation === 'linear') {
                     query += ' value';
-                    options.reAggregated = false;
+                    options.preAggregated = false;
                 } else {
                     query += ` integral(value, ${options.integralUnit}s) as val`;
                 }
@@ -1946,7 +1946,7 @@ function getHistory(adapter, msg) {
             case 'onchange':
             case 'minmax':
                 query += ' value';
-                options.reAggregated = false;
+                options.preAggregated = false;
                 break;
 
             default:
@@ -2211,7 +2211,7 @@ function getHistoryIflx2(adapter, msg) {
                 }
             }
 
-            options.reAggregated = true;
+            options.preAggregated = true;
             if (options.step && supportsAggregates) {
                 switch (options.aggregate) {
                     case 'average':
@@ -2248,7 +2248,7 @@ function getHistoryIflx2(adapter, msg) {
 
                     default:
                         fluxQuery += ` |> mean(column: "${valueColumn}")`;
-                        options.reAggregated = false;
+                        options.preAggregated = false;
                         break;
                 }
             }
