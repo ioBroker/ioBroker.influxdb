@@ -191,6 +191,7 @@ function startAdapter(options) {
 
             const state = adapter._influxDPs[formerAliasId] ? adapter._influxDPs[formerAliasId].state : null;
             const skipped = adapter._influxDPs[formerAliasId] ? adapter._influxDPs[formerAliasId].skipped : null;
+            const timeout = adapter._influxDPs[formerAliasId] ? adapter._influxDPs[formerAliasId].timeout : null;
 
             adapter._influxDPs[id] = obj.common.custom;
             adapter._influxDPs[id].realId = realId;
