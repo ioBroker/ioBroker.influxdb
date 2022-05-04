@@ -1,268 +1,271 @@
 {
-  "common": {
-    "name": "influxdb",
-    "desc": {
-      "en": "Logging of states into InfluxDB",
-      "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
-      "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB",
-      "pt": "Registro de estados no InfluxDB",
-      "nl": "Loggen van staten in InfluxDB",
-      "fr": "Journalisation des états dans InfluxDB",
-      "it": "Registrazione degli stati in InfluxDB",
-      "es": "Registro de estados en InfluxDB",
-      "pl": "Logowanie stanów do InfluxDB",
-      "zh-cn": "将状态记录到InfluxDB中"
-    },
-    "version": "2.6.3",
-    "title": "Logging data with InfluxDB",
-    "titleLang": {
-      "en": "Logging data with InfluxDB",
-      "de": "Daten mit InfluxDB protokollieren",
-      "ru": "Запись данных с помощью InfluxDB",
-      "pt": "Registro de dados com InfluxDB",
-      "nl": "Loggen van gegevens met InfluxDB",
-      "fr": "Consignation des données avec InfluxDB",
-      "it": "Registrazione dei dati con InfluxDB",
-      "es": "Datos de registro con InfluxDB",
-      "pl": "Rejestrowanie danych za pomocą InfluxDB",
-      "zh-cn": "使用InfluxDB记录数据"
-    },
-    "news": {
-      "2.6.3": {
-        "en": "Fix potential crash cases (Sentry IOBROKER-INFLUXDB-4Q)",
-        "de": "Mögliche Absturzfälle beheben (Sentry IOBROKER-INFLUXDB-4Q)",
-        "ru": "Исправление возможных случаев сбоя (Sentry IOBROKER-INFLUXDB-4Q)",
-        "pt": "Corrigir possíveis casos de travamento (Sentry IOBROKER-INFLUXDB-4Q)",
-        "nl": "Mogelijke crashgevallen oplossen (Sentry IOBROKER-INFLUXDB-4Q)",
-        "fr": "Correction des cas de plantage potentiels (Sentry IOBROKER-INFLUXDB-4Q)",
-        "it": "Risolvi potenziali casi di crash (Sentry IOBROKER-INFLUXDB-4Q)",
-        "es": "Solucionar posibles casos de bloqueo (Sentry IOBROKER-INFLUXDB-4Q)",
-        "pl": "Napraw potencjalne przypadki awarii (Sentry IOBROKER-INFLUXDB-4Q)",
-        "zh-cn": "修复潜在的崩溃案例 (Sentry IOBROKER-INFLUXDB-4Q)"
-      },
-      "2.6.2": {
-        "en": "Correctly handle db names with hyphens for InfluxDB 1\nFix getHistory for non boolean fields\nAdjust shard group duration to influxdb proposals",
-        "de": "Behandeln Sie DB-Namen mit Bindestrichen für InfluxDB 1 korrekt\nGetHistory für nicht boolesche Felder korrigiert\nPassen Sie die Dauer der Shard-Gruppe an die Vorschläge von influxdb an",
-        "ru": "Правильно обрабатывать имена баз данных с дефисами для InfluxDB 1\nИсправление getHistory для нелогических полей\nОтрегулируйте продолжительность группы сегментов для предложений influxdb",
-        "pt": "Manipule corretamente nomes de banco de dados com hífens para InfluxDB 1\nCorrige getHistory para campos não booleanos\nAjustar a duração do grupo de fragmentos para propostas influxdb",
-        "nl": "Correct omgaan met db-namen met koppeltekens voor InfluxDB 1\nGetHistory repareren voor niet-booleaanse velden\nPas de duur van de shardgroep aan voor influxdb-voorstellen",
-        "fr": "Gérer correctement les noms de base de données avec des traits d'union pour InfluxDB 1\nCorrection de getHistory pour les champs non booléens\nAjuster la durée du groupe de fragments aux propositions influxdb",
-        "it": "Gestire correttamente i nomi db con trattini per InfluxDB 1\nRisolto il problema con getHistory per i campi non booleani\nRegola la durata del gruppo di shard alle proposte influxdb",
-        "es": "Manejar correctamente los nombres de bases de datos con guiones para InfluxDB 1\nArreglar getHistory para campos no booleanos\nAjuste la duración del grupo de fragmentos a las propuestas de influxdb",
-        "pl": "Prawidłowo obsługuj nazwy baz danych z myślnikami dla InfluxDB 1\nNapraw getHistory dla pól innych niż logiczne\nDostosuj czas trwania grupy shard do propozycji influxdb",
-        "zh-cn": "正确处理带有连字符的数据库名称，用于 InfluxDB 1\n修复非布尔字段的 getHistory\n调整分片组持续时间以适应 influxdb 提案"
-      },
-      "2.6.1": {
-        "en": "Address issue with updating retention policy for influxDB 1",
-        "de": "Beheben Sie ein Problem mit der Aktualisierung der Aufbewahrungsrichtlinie für influxDB 1",
-        "ru": "Устранить проблему с обновлением политики хранения для influxDB 1.",
-        "pt": "Resolva o problema com a atualização da política de retenção para o influxDB 1",
-        "nl": "Probleem oplossen met het bijwerken van het bewaarbeleid voor influxDB 1",
-        "fr": "Résoudre le problème de mise à jour de la stratégie de rétention pour influxDB 1",
-        "it": "Risoluzione del problema con l'aggiornamento del criterio di conservazione per influxDB 1",
-        "es": "Solucionar el problema con la actualización de la política de retención para influxDB 1",
-        "pl": "Rozwiąż problem z aktualizacją zasad przechowywania dla influxDB 1",
-        "zh-cn": "解决更新 influxDB 1 保留策略的问题"
-      },
-      "2.6.0": {
-        "en": "Make request timeout configurable - defaults to 30s\nAdd option to also accept self signed ssl certificates for InfluxDB 2.x",
-        "de": "Anforderungs-Timeout konfigurierbar machen – standardmäßig 30 Sekunden\nOption hinzugefügt, um auch selbstsignierte SSL-Zertifikate für InfluxDB 2.x zu akzeptieren",
-        "ru": "Сделать время ожидания запроса настраиваемым — по умолчанию 30 с.\nДобавить возможность также принимать самозаверяющие ssl-сертификаты для InfluxDB 2.x.",
-        "pt": "Tornar o tempo limite de solicitação configurável - o padrão é 30s\nAdicionar opção para também aceitar certificados SSL autoassinados para InfluxDB 2.x",
-        "nl": "Verzoek time-out configureerbaar maken - standaard ingesteld op 30s\nOptie toevoegen om ook zelfondertekende SSL-certificaten te accepteren voor InfluxDB 2.x",
-        "fr": "Faire en sorte que le délai d'attente de la demande soit configurable - par défaut à 30 s\nAjouter une option pour accepter également les certificats SSL auto-signés pour InfluxDB 2.x",
-        "it": "Rendi configurabile il timeout della richiesta: il valore predefinito è 30 secondi\nAggiungi l'opzione per accettare anche certificati SSL autofirmati per InfluxDB 2.x",
-        "es": "Hacer que el tiempo de espera de la solicitud sea configurable: el valor predeterminado es 30 s\nAgregue la opción para aceptar también certificados SSL autofirmados para InfluxDB 2.x",
-        "pl": "Ustaw limit czasu żądania konfigurowalny - domyślnie 30s\nDodaj opcję akceptowania również samopodpisanych certyfikatów ssl dla InfluxDB 2.x",
-        "zh-cn": "使请求超时可配置 - 默认为 30 秒\n添加选项以接受 InfluxDB 2.x 的自签名 ssl 证书"
-      },
-      "2.5.2": {
-        "en": "Marked interpolated data with `i=true`",
-        "de": "Markierte interpolierte Daten mit `i=true`",
-        "ru": "Помеченные интерполированные данные с `i=true`",
-        "pt": "Dados interpolados marcados com `i=true`",
-        "nl": "Gemarkeerde geïnterpoleerde gegevens met `i=true`",
-        "fr": "Données interpolées marquées avec `i=true`",
-        "it": "Dati interpolati contrassegnati con `i=true`",
-        "es": "Datos interpolados marcados con `i=true`",
-        "pl": "Oznaczono dane interpolowane za pomocą `i=true`",
-        "zh-cn": "用 `i=true` 标记插值数据"
-      },
-      "2.5.1": {
-        "en": "Marked interpolated data with `i=true`",
-        "de": "Markierte interpolierte Daten mit `i=true`",
-        "ru": "Помеченные интерполированные данные с `i=true`",
-        "pt": "Dados interpolados marcados com `i=true`",
-        "nl": "Gemarkeerde geïnterpoleerde gegevens met `i=true`",
-        "fr": "Données interpolées marquées avec `i=true`",
-        "it": "Dati interpolati contrassegnati con `i=true`",
-        "es": "Datos interpolados marcados con `i=true`",
-        "pl": "Oznaczono dane interpolowane za pomocą `i=true`",
-        "zh-cn": "用 `i=true` 标记插值数据"
-      },
-      "2.5.0": {
-        "en": "Added new messages: 'update', 'delete', 'deleteRange', 'deleteAll' (only for influxdb v1)\nCorrected aggregation of data",
-        "de": "Neue Nachrichten hinzugefügt: 'update', 'delete', 'deleteRange', 'deleteAll' (nur für influxdb v1)\nKorrigierte Aggregation von Daten",
-        "ru": "Добавлены новые сообщения: 'update', 'delete', 'deleteRange', 'deleteAll' (только для influxdb v1)\nИсправлена агрегация данных",
-        "pt": "Adicionadas novas mensagens: 'update', 'delete', 'deleteRange', 'deleteAll' (somente para influxdb v1)\nAgregação de dados corrigida",
-        "nl": "Nieuwe berichten toegevoegd: 'update', 'delete', 'deleteRange', 'deleteAll' (alleen voor influxdb v1)\nGecorrigeerde aggregatie van gegevens",
-        "fr": "Ajout de nouveaux messages : 'update', 'delete', 'deleteRange', 'deleteAll' (uniquement pour influxdb v1)\nAgrégation corrigée des données",
-        "it": "Aggiunti nuovi messaggi: 'update', 'delete', 'deleteRange', 'deleteAll' (solo per influxdb v1)\nAggregazione dei dati corretta",
-        "es": "Se agregaron nuevos mensajes: 'actualizar', 'eliminar', 'eliminar rango', 'eliminar todo' (solo para influxdb v1)\nAgregación corregida de datos",
-        "pl": "Dodano nowe wiadomości: 'update', 'delete', 'deleteRange', 'deleteAll' (tylko dla influxdb v1)\nPoprawiona agregacja danych",
-        "zh-cn": "添加了新消息：'update'、'delete'、'deleteRange'、'deleteAll'（仅适用于 influxdb v1）\n更正的数据聚合"
-      }
-    },
-    "mode": "daemon",
-    "platform": "Javascript/Node.js",
-    "loglevel": "info",
-    "messagebox": true,
-    "subscribe": "messagebox",
-    "keywords": [
-      "charts",
-      "logging",
-      "influxdb"
-    ],
-    "preserveSettings": "custom",
-    "supportCustoms": true,
-    "getHistory": true,
-    "enabled": true,
-    "compact": true,
-    "materialize": true,
-    "dependencies": [
-      {
-        "js-controller": ">=3.3.0"
-      }
-    ],
-    "globalDependencies": [
-      {
-        "admin": ">=5.1.28"
-      }
-    ],
-    "supportStopInstance": 3000,
-    "stopTimeout": 3000,
-    "authors": [
-      "Bluefox <dogafox@gmail.com>",
-      "Apollon77 <ingo@fischer-ka.de>",
-      "Excodibur"
-    ],
-    "license": "MIT",
-    "readme": "https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md",
-    "icon": "influxdb.png",
-    "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.influxdb/master/admin/influxdb.png",
-    "type": "storage",
-    "docs": {
-      "de": [
-        "docs/de/influxdb.md"
-      ]
-    },
-    "plugins": {
-      "sentry": {
-        "dsn": "https://29eecf4e8c954f2ea78110d47a9b122d@sentry.iobroker.net/54"
-      }
-    },
-    "adminUI": {
-      "config": "json",
-      "custom": "json"
-    },
-    "connectionType": "local",
-    "dataSource": "push",
-    "tier": 1,
-    "messages": [
-      {
-        "condition": {
-          "operand": "and",
-          "rules": [
-            "oldVersion<2.1.1",
-            "newVersion>=2.1.1"
-          ]
+    "common": {
+        "name": "influxdb",
+        "desc": {
+            "en": "Logging of states into InfluxDB",
+            "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
+            "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB",
+            "pt": "Registro de estados no InfluxDB",
+            "nl": "Loggen van staten in InfluxDB",
+            "fr": "Journalisation des états dans InfluxDB",
+            "it": "Registrazione degli stati in InfluxDB",
+            "es": "Registro de estados en InfluxDB",
+            "pl": "Logowanie stanów do InfluxDB",
+            "zh-cn": "将状态记录到InfluxDB中"
         },
-        "title": {
-          "en": "Password needs to re re-entered after upgrade",
-          "de": "Das Passwort muss nach dem Upgrade erneut eingegeben werden",
-          "ru": "Пароль необходимо повторно ввести после обновления",
-          "pt": "A senha precisa ser reinserida após a atualização",
-          "nl": "Wachtwoord moet opnieuw worden ingevoerd na upgrade",
-          "fr": "Le mot de passe doit être ressaisi après la mise à niveau",
-          "it": "La password deve essere reinserita dopo l'aggiornamento",
-          "es": "La contraseña debe volver a ingresarse después de la actualización",
-          "pl": "Hasło musi zostać ponownie wprowadzone po aktualizacji",
-          "zh-cn": "升级后需要重新输入密码"
+        "version": "3.0.0",
+        "title": "Logging data with InfluxDB",
+        "titleLang": {
+            "en": "Logging data with InfluxDB",
+            "de": "Daten mit InfluxDB protokollieren",
+            "ru": "Запись данных с помощью InfluxDB",
+            "pt": "Registro de dados com InfluxDB",
+            "nl": "Loggen van gegevens met InfluxDB",
+            "fr": "Consignation des données avec InfluxDB",
+            "it": "Registrazione dei dati con InfluxDB",
+            "es": "Datos de registro con InfluxDB",
+            "pl": "Rejestrowanie danych za pomocą InfluxDB",
+            "zh-cn": "使用InfluxDB记录数据"
         },
-        "text": {
-          "en": "After upgrading to Version 2.1.1 or later you need to re-entr your passwort/token for the access to the InfluxDB in the instance configuration.",
-          "de": "Nach dem Upgrade auf Version 2.1.1 oder höher müssen Sie Ihr Passwort/Token für den Zugriff auf die InfluxDB in der Instanzkonfiguration erneut eingeben.",
-          "ru": "После обновления до версии 2.1.1 или более поздней вам необходимо повторно ввести свой пароль/токен для доступа к InfluxDB в конфигурации экземпляра.",
-          "pt": "Após atualizar para a Versão 2.1.1 ou posterior, você precisa reinserir sua senha/token para acesso ao InfluxDB na configuração da instância.",
-          "nl": "Na het upgraden naar versie 2.1.1 of hoger moet u uw wachtwoord/token opnieuw invoeren voor toegang tot de InfluxDB in de instantieconfiguratie.",
-          "fr": "Après la mise à niveau vers la version 2.1.1 ou ultérieure, vous devez ressaisir votre mot de passe/token pour l'accès à InfluxDB dans la configuration de l'instance.",
-          "it": "Dopo l'aggiornamento alla versione 2.1.1 o successiva è necessario reinserire la password/token per l'accesso a InfluxDB nella configurazione dell'istanza.",
-          "es": "Después de actualizar a la versión 2.1.1 o posterior, debe volver a ingresar su contraseña/token para acceder a InfluxDB en la configuración de la instancia.",
-          "pl": "Po aktualizacji do wersji 2.1.1 lub nowszej należy ponownie wprowadzić hasło/token, aby uzyskać dostęp do bazy danych InfluxDB w konfiguracji instancji.",
-          "zh-cn": "升级到 2.1.1 或更高版本后，您需要重新输入密码/令牌才能在实例配置中访问 InfluxDB。"
+        "news": {
+            "2.6.3": {
+                "en": "Fix potential crash cases (Sentry IOBROKER-INFLUXDB-4Q)",
+                "de": "Mögliche Absturzfälle beheben (Sentry IOBROKER-INFLUXDB-4Q)",
+                "ru": "Исправление возможных случаев сбоя (Sentry IOBROKER-INFLUXDB-4Q)",
+                "pt": "Corrigir possíveis casos de travamento (Sentry IOBROKER-INFLUXDB-4Q)",
+                "nl": "Mogelijke crashgevallen oplossen (Sentry IOBROKER-INFLUXDB-4Q)",
+                "fr": "Correction des cas de plantage potentiels (Sentry IOBROKER-INFLUXDB-4Q)",
+                "it": "Risolvi potenziali casi di crash (Sentry IOBROKER-INFLUXDB-4Q)",
+                "es": "Solucionar posibles casos de bloqueo (Sentry IOBROKER-INFLUXDB-4Q)",
+                "pl": "Napraw potencjalne przypadki awarii (Sentry IOBROKER-INFLUXDB-4Q)",
+                "zh-cn": "修复潜在的崩溃案例 (Sentry IOBROKER-INFLUXDB-4Q)"
+            },
+            "2.6.2": {
+                "en": "Correctly handle db names with hyphens for InfluxDB 1\nFix getHistory for non boolean fields\nAdjust shard group duration to influxdb proposals",
+                "de": "Behandeln Sie DB-Namen mit Bindestrichen für InfluxDB 1 korrekt\nGetHistory für nicht boolesche Felder korrigiert\nPassen Sie die Dauer der Shard-Gruppe an die Vorschläge von influxdb an",
+                "ru": "Правильно обрабатывать имена баз данных с дефисами для InfluxDB 1\nИсправление getHistory для нелогических полей\nОтрегулируйте продолжительность группы сегментов для предложений influxdb",
+                "pt": "Manipule corretamente nomes de banco de dados com hífens para InfluxDB 1\nCorrige getHistory para campos não booleanos\nAjustar a duração do grupo de fragmentos para propostas influxdb",
+                "nl": "Correct omgaan met db-namen met koppeltekens voor InfluxDB 1\nGetHistory repareren voor niet-booleaanse velden\nPas de duur van de shardgroep aan voor influxdb-voorstellen",
+                "fr": "Gérer correctement les noms de base de données avec des traits d'union pour InfluxDB 1\nCorrection de getHistory pour les champs non booléens\nAjuster la durée du groupe de fragments aux propositions influxdb",
+                "it": "Gestire correttamente i nomi db con trattini per InfluxDB 1\nRisolto il problema con getHistory per i campi non booleani\nRegola la durata del gruppo di shard alle proposte influxdb",
+                "es": "Manejar correctamente los nombres de bases de datos con guiones para InfluxDB 1\nArreglar getHistory para campos no booleanos\nAjuste la duración del grupo de fragmentos a las propuestas de influxdb",
+                "pl": "Prawidłowo obsługuj nazwy baz danych z myślnikami dla InfluxDB 1\nNapraw getHistory dla pól innych niż logiczne\nDostosuj czas trwania grupy shard do propozycji influxdb",
+                "zh-cn": "正确处理带有连字符的数据库名称，用于 InfluxDB 1\n修复非布尔字段的 getHistory\n调整分片组持续时间以适应 influxdb 提案"
+            },
+            "2.6.1": {
+                "en": "Address issue with updating retention policy for influxDB 1",
+                "de": "Beheben Sie ein Problem mit der Aktualisierung der Aufbewahrungsrichtlinie für influxDB 1",
+                "ru": "Устранить проблему с обновлением политики хранения для influxDB 1.",
+                "pt": "Resolva o problema com a atualização da política de retenção para o influxDB 1",
+                "nl": "Probleem oplossen met het bijwerken van het bewaarbeleid voor influxDB 1",
+                "fr": "Résoudre le problème de mise à jour de la stratégie de rétention pour influxDB 1",
+                "it": "Risoluzione del problema con l'aggiornamento del criterio di conservazione per influxDB 1",
+                "es": "Solucionar el problema con la actualización de la política de retención para influxDB 1",
+                "pl": "Rozwiąż problem z aktualizacją zasad przechowywania dla influxDB 1",
+                "zh-cn": "解决更新 influxDB 1 保留策略的问题"
+            },
+            "2.6.0": {
+                "en": "Make request timeout configurable - defaults to 30s\nAdd option to also accept self signed ssl certificates for InfluxDB 2.x",
+                "de": "Anforderungs-Timeout konfigurierbar machen – standardmäßig 30 Sekunden\nOption hinzugefügt, um auch selbstsignierte SSL-Zertifikate für InfluxDB 2.x zu akzeptieren",
+                "ru": "Сделать время ожидания запроса настраиваемым — по умолчанию 30 с.\nДобавить возможность также принимать самозаверяющие ssl-сертификаты для InfluxDB 2.x.",
+                "pt": "Tornar o tempo limite de solicitação configurável - o padrão é 30s\nAdicionar opção para também aceitar certificados SSL autoassinados para InfluxDB 2.x",
+                "nl": "Verzoek time-out configureerbaar maken - standaard ingesteld op 30s\nOptie toevoegen om ook zelfondertekende SSL-certificaten te accepteren voor InfluxDB 2.x",
+                "fr": "Faire en sorte que le délai d'attente de la demande soit configurable - par défaut à 30 s\nAjouter une option pour accepter également les certificats SSL auto-signés pour InfluxDB 2.x",
+                "it": "Rendi configurabile il timeout della richiesta: il valore predefinito è 30 secondi\nAggiungi l'opzione per accettare anche certificati SSL autofirmati per InfluxDB 2.x",
+                "es": "Hacer que el tiempo de espera de la solicitud sea configurable: el valor predeterminado es 30 s\nAgregue la opción para aceptar también certificados SSL autofirmados para InfluxDB 2.x",
+                "pl": "Ustaw limit czasu żądania konfigurowalny - domyślnie 30s\nDodaj opcję akceptowania również samopodpisanych certyfikatów ssl dla InfluxDB 2.x",
+                "zh-cn": "使请求超时可配置 - 默认为 30 秒\n添加选项以接受 InfluxDB 2.x 的自签名 ssl 证书"
+            },
+            "2.5.2": {
+                "en": "Marked interpolated data with `i=true`",
+                "de": "Markierte interpolierte Daten mit `i=true`",
+                "ru": "Помеченные интерполированные данные с `i=true`",
+                "pt": "Dados interpolados marcados com `i=true`",
+                "nl": "Gemarkeerde geïnterpoleerde gegevens met `i=true`",
+                "fr": "Données interpolées marquées avec `i=true`",
+                "it": "Dati interpolati contrassegnati con `i=true`",
+                "es": "Datos interpolados marcados con `i=true`",
+                "pl": "Oznaczono dane interpolowane za pomocą `i=true`",
+                "zh-cn": "用 `i=true` 标记插值数据"
+            },
+            "2.5.1": {
+                "en": "Marked interpolated data with `i=true`",
+                "de": "Markierte interpolierte Daten mit `i=true`",
+                "ru": "Помеченные интерполированные данные с `i=true`",
+                "pt": "Dados interpolados marcados com `i=true`",
+                "nl": "Gemarkeerde geïnterpoleerde gegevens met `i=true`",
+                "fr": "Données interpolées marquées avec `i=true`",
+                "it": "Dati interpolati contrassegnati con `i=true`",
+                "es": "Datos interpolados marcados con `i=true`",
+                "pl": "Oznaczono dane interpolowane za pomocą `i=true`",
+                "zh-cn": "用 `i=true` 标记插值数据"
+            },
+            "2.5.0": {
+                "en": "Added new messages: 'update', 'delete', 'deleteRange', 'deleteAll' (only for influxdb v1)\nCorrected aggregation of data",
+                "de": "Neue Nachrichten hinzugefügt: 'update', 'delete', 'deleteRange', 'deleteAll' (nur für influxdb v1)\nKorrigierte Aggregation von Daten",
+                "ru": "Добавлены новые сообщения: 'update', 'delete', 'deleteRange', 'deleteAll' (только для influxdb v1)\nИсправлена агрегация данных",
+                "pt": "Adicionadas novas mensagens: 'update', 'delete', 'deleteRange', 'deleteAll' (somente para influxdb v1)\nAgregação de dados corrigida",
+                "nl": "Nieuwe berichten toegevoegd: 'update', 'delete', 'deleteRange', 'deleteAll' (alleen voor influxdb v1)\nGecorrigeerde aggregatie van gegevens",
+                "fr": "Ajout de nouveaux messages : 'update', 'delete', 'deleteRange', 'deleteAll' (uniquement pour influxdb v1)\nAgrégation corrigée des données",
+                "it": "Aggiunti nuovi messaggi: 'update', 'delete', 'deleteRange', 'deleteAll' (solo per influxdb v1)\nAggregazione dei dati corretta",
+                "es": "Se agregaron nuevos mensajes: 'actualizar', 'eliminar', 'eliminar rango', 'eliminar todo' (solo para influxdb v1)\nAgregación corregida de datos",
+                "pl": "Dodano nowe wiadomości: 'update', 'delete', 'deleteRange', 'deleteAll' (tylko dla influxdb v1)\nPoprawiona agregacja danych",
+                "zh-cn": "添加了新消息：'update'、'delete'、'deleteRange'、'deleteAll'（仅适用于 influxdb v1）\n更正的数据聚合"
+            }
         },
-        "level": "warn",
-        "buttons": [
-          "agree",
-          "cancel"
+        "mode": "daemon",
+        "platform": "Javascript/Node.js",
+        "loglevel": "info",
+        "messagebox": true,
+        "subscribe": "messagebox",
+        "keywords": [
+            "charts",
+            "logging",
+            "influxdb"
+        ],
+        "preserveSettings": "custom",
+        "supportCustoms": true,
+        "getHistory": true,
+        "enabled": true,
+        "compact": true,
+        "dependencies": [
+            {
+                "js-controller": ">=3.3.0"
+            }
+        ],
+        "globalDependencies": [
+            {
+                "admin": ">=5.1.28"
+            }
+        ],
+        "supportStopInstance": 10000,
+        "stopTimeout": 10000,
+        "authors": [
+            "Bluefox <dogafox@gmail.com>",
+            "Apollon77 <ingo@fischer-ka.de>",
+            "Excodibur"
+        ],
+        "license": "MIT",
+        "readme": "https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md",
+        "icon": "influxdb.png",
+        "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.influxdb/master/admin/influxdb.png",
+        "type": "storage",
+        "docs": {
+            "de": [
+                "docs/de/influxdb.md"
+            ]
+        },
+        "plugins": {
+            "sentry": {
+                "dsn": "https://29eecf4e8c954f2ea78110d47a9b122d@sentry.iobroker.net/54"
+            }
+        },
+        "adminUI": {
+            "config": "json",
+            "custom": "json"
+        },
+        "connectionType": "local",
+        "dataSource": "push",
+        "tier": 1,
+        "messages": [
+            {
+                "condition": {
+                    "operand": "and",
+                    "rules": [
+                        "oldVersion<2.1.1",
+                        "newVersion>=2.1.1"
+                    ]
+                },
+                "title": {
+                    "en": "Password needs to re re-entered after upgrade and other changes",
+                    "de": "Das Passwort muss nach dem Upgrade erneut eingegeben werden",
+                    "ru": "Пароль необходимо повторно ввести после обновления",
+                    "pt": "A senha precisa ser reinserida após a atualização",
+                    "nl": "Wachtwoord moet opnieuw worden ingevoerd na upgrade",
+                    "fr": "Le mot de passe doit être ressaisi après la mise à niveau",
+                    "it": "La password deve essere reinserita dopo l'aggiornamento",
+                    "es": "La contraseña debe volver a ingresarse después de la actualización",
+                    "pl": "Hasło musi zostać ponownie wprowadzone po aktualizacji",
+                    "zh-cn": "升级后需要重新输入密码"
+                },
+                "text": {
+                    "en": "After upgrading to Version 2.1.1 or later you need to re-entr your passwort/token for the access to the InfluxDB in the instance configuration.",
+                    "de": "Nach dem Upgrade auf Version 2.1.1 oder höher müssen Sie Ihr Passwort/Token für den Zugriff auf die InfluxDB in der Instanzkonfiguration erneut eingeben.",
+                    "ru": "После обновления до версии 2.1.1 или более поздней вам необходимо повторно ввести свой пароль/токен для доступа к InfluxDB в конфигурации экземпляра.",
+                    "pt": "Após atualizar para a Versão 2.1.1 ou posterior, você precisa reinserir sua senha/token para acesso ao InfluxDB na configuração da instância.",
+                    "nl": "Na het upgraden naar versie 2.1.1 of hoger moet u uw wachtwoord/token opnieuw invoeren voor toegang tot de InfluxDB in de instantieconfiguratie.",
+                    "fr": "Après la mise à niveau vers la version 2.1.1 ou ultérieure, vous devez ressaisir votre mot de passe/token pour l'accès à InfluxDB dans la configuration de l'instance.",
+                    "it": "Dopo l'aggiornamento alla versione 2.1.1 o successiva è necessario reinserire la password/token per l'accesso a InfluxDB nella configurazione dell'istanza.",
+                    "es": "Después de actualizar a la versión 2.1.1 o posterior, debe volver a ingresar su contraseña/token para acceder a InfluxDB en la configuración de la instancia.",
+                    "pl": "Po aktualizacji do wersji 2.1.1 lub nowszej należy ponownie wprowadzić hasło/token, aby uzyskać dostęp do bazy danych InfluxDB w konfiguracji instancji.",
+                    "zh-cn": "升级到 2.1.1 或更高版本后，您需要重新输入密码/令牌才能在实例配置中访问 InfluxDB。"
+                },
+                "level": "warn",
+                "buttons": [
+                    "agree",
+                    "cancel"
+                ]
+            }
         ]
-      }
-    ]
-  },
-  "native": {
-    "debounce": 1000,
-    "retention": 31536000,
-    "dbname": "iobroker",
-    "host": "localhost",
-    "protocol": "http",
-    "port": 8086,
-    "user": "",
-    "password": "",
-    "token": "",
-    "organization": "",
-    "round": 4,
-    "seriesBufferMax": 0,
-    "seriesBufferFlushInterval": 600,
-    "changesRelogInterval": 0,
-    "changesMinDelta": 0,
-    "reconnectInterval": 10000,
-    "pingInterval": 15000,
-    "requestTimeout": 30000,
-    "validateSSL": true,
-    "dbversion": "1.x",
-    "usetags": false,
-    "pingserver": true
-  },
-  "protectedNative": [
-    "password",
-    "token"
-  ],
-  "encryptedNative": [
-    "password",
-    "token"
-  ],
-  "instanceObjects": [
-    {
-      "_id": "info",
-      "type": "channel",
-      "common": {
-        "name": "Information"
-      },
-      "native": {}
     },
-    {
-      "_id": "info.connection",
-      "type": "state",
-      "common": {
-        "role": "indicator.connected",
-        "name": "If connected to InfluxDB",
-        "type": "boolean",
-        "read": true,
-        "write": false,
-        "def": false
-      },
-      "native": {}
-    }
-  ],
-  "objects": []
+    "native": {
+        "debounce": 1000,
+        "retention": 31536000,
+        "dbname": "iobroker",
+        "host": "localhost",
+        "protocol": "http",
+        "port": 8086,
+        "user": "",
+        "password": "",
+        "token": "",
+        "organization": "",
+        "round": 4,
+        "seriesBufferMax": 0,
+        "seriesBufferFlushInterval": 600,
+        "changesRelogInterval": 0,
+        "changesMinDelta": 0,
+        "reconnectInterval": 10000,
+        "pingInterval": 15000,
+        "requestTimeout": 30000,
+        "validateSSL": true,
+        "dbversion": "1.x",
+        "usetags": false,
+        "pingserver": true,
+        "blockTime": 0,
+        "debounceTime": 0,
+        "disableSkippedValueLogging": false,
+        "enableLogging": false
+    },
+    "protectedNative": [
+        "password",
+        "token"
+    ],
+    "encryptedNative": [
+        "password",
+        "token"
+    ],
+    "instanceObjects": [
+        {
+            "_id": "info",
+            "type": "channel",
+            "common": {
+                "name": "Information"
+            },
+            "native": {}
+        },
+        {
+            "_id": "info.connection",
+            "type": "state",
+            "common": {
+                "role": "indicator.connected",
+                "name": "If connected to InfluxDB",
+                "type": "boolean",
+                "read": true,
+                "write": false,
+                "def": false
+            },
+            "native": {}
+        }
+    ],
+    "objects": []
 }

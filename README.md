@@ -116,6 +116,106 @@ Explanation for other OS can be found [here](http://docs.grafana.org/installatio
 
 After the Grafana is installed, follow [this](http://docs.grafana.org/datasources/influxdb/) to create connection.
 
+## Default Settings
+- **Debounce Time** - Protection against unstable values to make sure that only stable values are logged when the value did not change in the defined amount of Milliseconds. ATTENTION: If values change more often then this setting effectively no value will be logged (because any value is unstable)
+- **Blocktime** - Defines for how long after storing the last value no further value is stored. When the given time in Milliseconds is over then the next value that fulfills all other checks is logged.
+- **Record changes only** - This function make sure that only changed values are logged if they fulfill other checks (see below). Same values will not be logged.
+- **still record the same values (seconds)** - When using "Record changes only" you can set a time interval in seconds here after which also unchanged values will be re-logged into the DB. You can detect the values re-logged by the adapter with the "from" field.
+- **Minimum difference from last value** - When using "Record changes only" you can define the required minimum difference between the new value and the last value. If this is not reached the value is not recorded.
+- **ignore 0 or null values (==0)** - You can define if 0 or null values should be ignored.
+- **ignore values below zero (<0)** - You can define if values below zero should be ignored.
+- **Disable charting optimized logging of skipped values** - By default the adapter tries to record the values for optimized charting. This can mean that additional values (that e.g. not fulfilled all checks above) are logged automatically. If this is not wanted, you can disable this feature.
+- **Alias-ID** - You can define an alias for the ID. This is useful if you have changed a device and want to have continuous data logging. Please consider switching to real alias States in teh future!
+- **Storage retention** - How many values in the past will be stored on disk. Data are deleted when the time is reached as soon as new data should be stored for a datapoint.
+- **Enable enhanced debug logs for the datapoint** - If you want to see more detailed logs for this datapoint, you can enable this option. You still need to enable "debug" loglevel for these additional values to be visible! This helps in debugging issues or understanding why the adapter is logging a value (or not).
+
+Most of these values can be pre-defined in the instance settings and are then pre-filled or used for the datapoint.
+
+## Access values from Javascript adapter
+The sorted values can be accessed from Javascript adapter.
+
+* Get 50 last stored events for all IDs
+```
+sendTo('influxdb.0', 'getHistory', {
+    id: '*',
+    options: {
+        end:       Date.now(),
+        count:     50,
+        aggregate: 'onchange',
+        addId: true
+    }
+}, function (result) {
+    for (var i = 0; i < result.result.length; i++) {
+        console.log(result.result[i].id + ' ' + new Date(result.result[i].ts).toISOString());
+    }
+});
+```
+
+* Get stored values for "system.adapter.admin.0.memRss" in last hour
+```
+var end = Date.now();
+sendTo('influxdb.0', 'getHistory', {
+    id: 'system.adapter.admin.0.memRss',
+    options: {
+        start:      end - 3600000,
+        end:        end,
+        aggregate: 'onchange',
+        addId: true
+    }
+}, function (result) {
+    for (var i = 0; i < result.result.length; i++) {
+        console.log(result.result[i].id + ' ' + new Date(result.result[i].ts).toISOString());
+    }
+});
+```
+
+Possible options:
+- **start** - (optional) time in ms - *Date.now()*'
+- **end** - (optional) time in ms - *Date.now()*', by default is (now + 5000 seconds)
+- **step** - (optional) used in aggregate (m4, max, min, average, total) step in ms of intervals
+- **count** - number of values if aggregate is 'onchange' or number of intervals if other aggregate method. Count will be ignored if step is set, else default is 500 if not set
+- **from** - if *from* field should be included in answer
+- **ack** - if *ack* field should be included in answer
+- **q** - if *q* field should be included in answer
+- **addId** - if *id* field should be included in answer
+- **limit** - do not return more entries than limit
+- **round** - round result to number of digits after decimal point
+- **ignoreNull** - if null values should be included (false), replaced by last not null value (true) or replaced with 0 (0)
+- **removeBorderValues** - By default additional border values are returned to optimize charting. Set this option to true if this is not wanted (e.g. for script data processing)
+- **returnNewestEntries** - The returned data are always sorted by timestamp ascending. When using aggregate "none" and also providing "count" or "limit" this means that normally the oldest entries are returned (unless no start data is provided). Set this option to true to get the newest entries instead.
+- **aggregate** - aggregate method:
+  - *minmax* - used special algorithm. Splice the whole time range in small intervals and find for every interval max, min, start and end values.
+  - *max* - Splice the whole time range in small intervals and find for every interval max value and use it for this interval (nulls will be ignored).
+  - *min* - Same as max, but take minimal value.
+  - *average* - Same as max, but take average value.
+  - *total* - Same as max, but calculate total value.
+  - *count* - Same as max, but calculate number of values (nulls will be calculated).
+  - *percentile* - Calculate n-th percentile (n is given in options.percentile or defaults to 50 if not provided).
+  - *quantile* - Calculate n quantile (n is given in options.quantile or defaults to 0.5 if not provided).
+  - *integral* - Calculate integral (additional parameters see below).
+  - *none* - No aggregation at all. Only raw values in given period.
+- **percentile** - (optional) when using aggregate method "percentile" defines the percentile level (0..100)(defaults to 50)
+- **quantile** - (optional) when using aggregate method "quantile" defines the quantile level (0..1)(defaults to 0.5)
+- **integralUnit** - (optional) when using aggregate method "integral" defines the unit in seconds (defaults to 60s). e.g. to get integral in hours for Wh or such, set to 3600.
+- **integralInterpolation** - (optional) when using aggregate method "integral" defines the interpolation method (defaults to "none").
+  - *linear* - linear interpolation
+  - *none* - no/stepwise interpolation
+
+The first and last points will be calculated for aggregations, except aggregation "none".
+If you manually request some aggregation you should ignore first and last values, because they are calculated from values outside of period.
+
+When raw data are selected without using 'step' the returned fields are ts, val, ack, q and from.
+As soon as step is used the returned fields are ts and val.
+
+Interpolated values will be marked as `i=true`, like: `{i: true, val: 4.7384845, ts: 29892365723652}`.
+
+Please hold in mind that InfluxDB aggregates on "rounded time boundaries" (see https://docs.influxdata.com/influxdb/v0.11/troubleshooting/frequently_encountered_issues/#understanding-the-time-intervals-returned-from-group-by-time-queries)
+
+InfluxDB is very strict when it comes to data types. This has effects for aggregator functions, e.g.:
+* average (MEAN) can not be used for boolean values (true/false), only MIN or MAX works here
+* average (MEAN) can not be used for string values (text), no aggregator makes sense here at all
+* ...
+
 ## Custom queries
 The user can execute custom queries on data from javascript adapter.
 
@@ -182,50 +282,6 @@ sendTo('influxdb.0', 'query', 'from(bucket: "iobroker") |> range(start: -3h); fr
 ```
 **NOTE:** The values are coming back in the result array in filename "value" (instead of "val" as normal in ioBroker)
 
-## Get history
-Additional to custom queries, you can use build in system function **getHistory** to access the stored history for data points:
-```
-var end = new Date().getTime();
-sendTo('influxdb.0', 'getHistory', {
-    id: 'system.adapter.admin.0.memRss',
-    options: {
-        start:      end - 3600000,
-        end:        end,
-        aggregate: 'average' // or 'none' to get raw values
-    }
-}, function (result) {
-    for (var i = 0; i < result.result.length; i++) {
-        console.log(result.result[i].val + ' ' + new Date(result.result[i].ts).toISOString());
-    }
-});
-```
-Possible options:
-- **start** - (optional) time in ms - *new Date().getTime()*'
-- **end** - (optional) time in ms - *new Date().getTime()*', by default is (now + 5000 seconds)
-- **step** - (required if aggregate is not "none") used for  aggregate functions (max, min, average, total, count) step in ms of intervals
-- **count** - (optional) number of values if aggregate is 'onchange'/'none' or number of intervals if other aggregate method. Count will be ignored if step is set.
-- **limit** - do not return more entries than limit (only used if aggregate is 'onchange'/'none')
-- **addId** - if *id* field should be included in answer
-- **aggregate** - aggregate method:
-    - *minmax* - Splice the whole time range in small intervals and find for every interval max value and min value and use them for this interval (nulls will be ignored).
-    - *max* - Splice the whole time range in small intervals and find for every interval max value and use it for this interval (nulls will be ignored).
-    - *min* - Same as max, but take minimal value.
-    - *average* - Same as max, but take average value.
-    - *total* - Same as max, but calculate total value.
-    - *count* - Same as max, but calculate number of values (nulls will be calculated).
-    - *none*/*onchange* - No aggregation at all. Only raw values in given period.
-
-When raw data are selected without using 'step' the returned fields are ts, val, ack, q and from.
-As soon as step is used the returned fields are ts and val.
-
-Interpolated values will be marked as `i=true`, like: `{i: true, val: 4.7384845, ts: 29892365723652}`.
-
-Please hold in mind that InfluxDB aggregates on "rounded time boundaries" (see https://docs.influxdata.com/influxdb/v0.11/troubleshooting/frequently_encountered_issues/#understanding-the-time-intervals-returned-from-group-by-time-queries)
-
-InfluxDB is very strict when it comes to data types. This has effects for aggregator functions, e.g.:
-* average (MEAN) can not be used for boolean values (true/false), only MIN or MAX works here
-* average (MEAN) can not be used for string values (text), no aggregator makes sense here at all
-* ...
 
 ## storeState
 If you want to write other data into the InfluxDB you can use the build in system function **storeState**.
@@ -358,6 +414,24 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 * (Apollon77) Add flag returnNewestEntries for GetHistory to determine which records to return when more entries as "count" are existing for aggregate "none"
 * (Apollon77) Flush the buffer for the datapoint which is queried by GetHistory before the query is done, so that all data are in the database
 * (Apollon77) make sure id is always returned on GetHistory when addId is set
+
+
+* (Apollon77) Breaking: Configuration is only working in the new Admin 5 UI!
+* (Apollon77) Breaking! Did bigger adjustments to the recording logic. Debounce is refined and blockTime is added to differentiate between the two checks
+* (Apollon77) Breaking! GetHistory requests now need to deliver the ts in milliseconds! Make sure to use up to date scripts and Charting UIs
+* (Apollon77) New setting added to disable the "logging of additional values for charting optimization" - then only the expected data are logged
+* (Apollon77) Add new Debug flag to enable/disable debug logging on datapoint level (default is false) to optimize performance
+* (Apollon77) Add aggregate method "percentile" to calculate the percentile (0..100) of the values (requires options.percentile with the percentile level, defaults to 50 if not provided). Basically same as Quantile just different levels are used
+* (Apollon77) Add aggregate method "quantile" to calculate the quantile (0..1) of the values (requires options.quantile with the quantile level, defaults to 0.5 if not provided). Basically same as Percentile just different levels are used
+* (Apollon77) Add (experimental) method "integral" to calculate the integral of the values. Requires options.integralUnit with the time duration of the integral in seconds, defaults to 60s if not provided. Optionally a linear interpolation can be done by setting options.integralInterpolation to "linear"
+* (Apollon77) When request contains flag removeBorderValues: true, the result then cut the additional pre and post border values out of the results
+* (Apollon77) Enhance the former "Ignore below 0" feature and now allow specifying to ignore below or above specified values. The old setting is converted to the new one
+* (Apollon77) Upgrade MSSQL and MySQL drivers incl. Support for MySQL 8
+* (Apollon77) Make sure that min change delta allows numbers entered with comma (german notation) in all cases
+* (Apollon77) Add support to specify how to round numbers on query per datapoint
+* (Apollon77) Do not log passwords for Postgres connections
+* (Apollon77) Optimize SSL support for database connections including option to allow self signed certificates
+
 
 ### 2.6.3 (2022-03-07)
 * (Apollon77) Fix potential crash cases (Sentry IOBROKER-INFLUXDB-4Q)
