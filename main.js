@@ -2177,7 +2177,7 @@ function getHistoryIflx2(adapter, msg) {
             fluxQuery += ` |> window(every: ${options.step}ms)`;
         fluxQuery += `|> fill(column: "${valueColumn}", usePrevious: true)`;
     } else if (options.aggregate !== 'minmax' && options.aggregate !== 'integral') {
-        fluxQuery += ` |> group() |> limit(n: ${options.count})`;
+        fluxQuery += ` |> group()`;
     }
 
     if ((!options.start && options.count) || (options.aggregate === 'none' && options.count && options.returnNewestEntries) ) {
@@ -2186,6 +2186,9 @@ function getHistoryIflx2(adapter, msg) {
         fluxQuery += ` |> sort(columns:["_time"], desc: false)`;
     }
 
+    if (!resultsFromInfluxDB && options.aggregate !== 'minmax' && options.aggregate !== 'integral') {
+        fluxQuery += ` |> limit(n: ${options.count})`;
+    }
 
     // Workaround to detect if measurement is of type bool (to skip non-sensual aggregation options)
     // There seems to be no officially supported way to detect this, so we check it by forcing a type-conflict
