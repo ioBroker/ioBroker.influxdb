@@ -192,7 +192,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
 
         let query = 'SELECT * FROM "influxdb.0.testValue"';
         if (process.env.INFLUXDB2) {
-            query = 'from(bucket: "iobroker") |> range(start:-1h) |> filter(fn: (r) => r._measurement == "influxdb.0.testValue") |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
+            query = 'from(bucket: "iobroker") |> filter(fn: (r) => r._measurement == "influxdb.0.testValue") |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
         }
         sendTo('influxdb.0', 'query', query, result => {
             console.log(JSON.stringify(result.result, null, 2));

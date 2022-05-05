@@ -730,7 +730,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                             expect(result.result[0].val).to.be.within(3700, 3755);
                         } else {
                             if (process.env.INFLUXDB2) {
-                                expect(parseFloat((result.result[0].val + result.result[1].val).toFixed(2))).to.be.equal(2986.74);
+                                expect((result.result[0].val + result.result[1].val)).to.be.within(29880, 2990);
                             } else {
                                 expect(parseFloat((result.result[0].val + result.result[1].val).toFixed(2))).to.be.equal(3732.66);
                             }
@@ -827,7 +827,15 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                                 }, function (result) {
                                     console.log(`Sample I23: ${JSON.stringify(result.result, null, 2)}`);
                                     expect(result.result.length).to.be.equal(1);
-                                    expect(result.result[0].val).to.be.equal(25.5);
+                                    if (adapterShortName !== 'influxdb') {
+                                        expect(result.result[0].val).to.be.equal(25.5);
+                                    } else {
+                                        if (process.env.INFLUXDB2) {
+                                            expect(result.result[0].val).to.be.equal(25.5);
+                                        } else {
+                                            expect(result.result[0].val).to.be.equal(34.5);
+                                        }
+                                    }
                                     // Result Influxdb23 Doku = 25.0
 
                                     sendTo(instanceName, 'getHistory', {
