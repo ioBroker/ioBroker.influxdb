@@ -1990,7 +1990,7 @@ function getHistory(adapter, msg) {
 
     if (resultsFromInfluxDB) {
         query += ` LIMIT ${options.limit}`;
-    } else if (options.aggregate !== 'minmax') {
+    } else if (options.aggregate !== 'minmax' && (options.aggregate !== 'integral')) {
         query += ` LIMIT ${options.count}`;
     }
 
@@ -2173,7 +2173,7 @@ function getHistoryIflx2(adapter, msg) {
         if ((options.step !== null) && (options.step > 0))
             fluxQuery += ` |> window(every: ${options.step}ms)`;
         fluxQuery += `|> fill(column: "${valueColumn}", usePrevious: true)`;
-    } else if (options.aggregate !== 'minmax') {
+    } else if (options.aggregate !== 'minmax' && options.aggregate !== 'integral') {
         fluxQuery += ` |> group() |> limit(n: ${options.count})`;
     }
 
@@ -2293,7 +2293,6 @@ function getHistoryIflx2(adapter, msg) {
                     |> group() 
                     |> sort(columns: ["_time"], desc: false) 
                     |> limit(n: 1)`;
-                //fluxQuery = fluxQuery + addFluxQuery;
                 fluxQueries.push(addFluxQuery);
             }
 
