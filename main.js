@@ -672,6 +672,8 @@ function main(adapter) {
         adapter.config.debounceTime = 0;
     }
 
+    adapter.config.retention = parseInt(adapter.config.retention, 10) || 0;
+
     // analyse if by the last stop the values were cached into file
     try {
         if (fs.statSync(cacheFile).isFile()) {
@@ -2161,7 +2163,7 @@ function getHistoryIflx2(adapter, msg) {
 
     const valueColumn = adapter.config.usetags ? '_value' : 'value';
 
-    fluxQuery += ` |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - adapter.config.retention).toISOString()}ms, `}stop: ${new Date(options.end).toISOString()})`;
+    fluxQuery += ` |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}ms, `}stop: ${new Date(options.end).toISOString()})`;
     fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${options.id}")`;
 
     if (adapter.config.usetags)
@@ -2188,7 +2190,7 @@ function getHistoryIflx2(adapter, msg) {
     // There seems to be no officially supported way to detect this, so we check it by forcing a type-conflict
     const booleanTypeCheckQuery = `
         from(bucket: "${adapter.config.dbname}")
-        |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: -${adapter.config.retention}ms, `}stop: ${new Date(options.end).toISOString()})
+        |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}ms, `}stop: ${new Date(options.end).toISOString()})
         |> filter(fn: (r) => r["_measurement"] == "${options.id}" and contains(value: r._value, set: [true, false]))
     `;
 
@@ -2274,7 +2276,7 @@ function getHistoryIflx2(adapter, msg) {
                 if (options.start) {
                     // get one entry "before" the defined timeframe for displaying purposes
                     addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
-                    |> range(start: ${new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString()}, stop: ${new Date(options.start).toISOString()}) 
+                    |> range(start: ${new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString()}, stop: ${new Date(options.start - 1).toISOString()}) 
                     |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
                     ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
                     |> group() 
@@ -2287,7 +2289,7 @@ function getHistoryIflx2(adapter, msg) {
                 }
                 // get one entry "after" the defined timeframe for displaying purposes
                 addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
-                    |> range(start: ${new Date(options.end).toISOString()}) 
+                    |> range(start: ${new Date(options.end + 1).toISOString()}) 
                     |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
                     ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
                     |> group() 
