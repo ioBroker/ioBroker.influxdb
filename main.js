@@ -2401,6 +2401,10 @@ function query(adapter, msg) {
                     if (rows[r][rr].time) {
                         rows[r][rr].ts = new Date(rows[r][rr].time).getTime();
                         delete rows[r][rr].time;
+                    } else if (rows[r][rr]._start && rows[r][rr]._stop) {
+                        const startTime = new Date(rows[r][rr]._start).getTime();
+                        const stopTime = new Date(rows[r][rr]._stop).getTime();
+                        rows[r][rr].ts = startTime + (stopTime - startTime) / 2;
                     }
                 }
             }
