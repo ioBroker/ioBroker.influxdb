@@ -310,15 +310,13 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                 expect(result.result[3].val).to.be.equal(2.57);
             } else {
                 if (process.env.INFLUXDB2) {
-                    expect(result.result.length).to.be.equal(2);
-                    expect(result.result[0].val).to.be.equal(1.5);
-                    expect(result.result[1].val).to.be.equal(2.5667);
+                    expect(result.result.length).to.be.equal(4);
                 } else {
                     expect(result.result.length).to.be.equal(5);
-                    expect(result.result[1].val).to.be.equal(1);
-                    expect(result.result[2].val).to.be.equal(2.425);
-                    expect(result.result[3].val).to.be.equal(2.425);
                 }
+                expect(result.result[1].val).to.be.equal(1);
+                expect(result.result[2].val).to.be.equal(2.425);
+                expect(result.result[3].val).to.be.equal(2.425);
             }
             expect(result.result[0].id).to.be.equal(`${instanceName}.testValue`);
             done();
@@ -527,9 +525,9 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
             } else {
                 expect(result.result.length).to.be.equal(2);
                 if (process.env.INFLUXDB2) {
-                    expect(result.result[1].val).to.be.equal(6.45);
+                    expect(result.result[1].val).to.be.within(6.45, 6.725);
                 } else {
-                    expect(result.result[1].val).to.be.equal(5);
+                    expect(result.result[1].val).to.be.equal(6.3);
                 }
                 expect(result.result[1].id).to.be.equal(`${instanceName}.testValueDebounce alias`);
             }
@@ -729,11 +727,20 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                         }
                     }, function (result) {
                         console.log(`Sample I1-60: ${JSON.stringify(result.result, null, 2)}`);
-                        expect(result.result.length).to.be.equal(1);
-                        if (assumeExistingData) {
-                            expect(result.result[0].val).to.be.lessThan(62.25);
+                        if (adapterShortName !== 'influxdb') {
+                            expect(result.result.length).to.be.equal(1);
+                            if (assumeExistingData) {
+                                expect(result.result[0].val).to.be.lessThan(62.25);
+                            } else {
+                                expect(result.result[0].val).to.be.equal(62.25);
+                            }
                         } else {
-                            expect(result.result[0].val).to.be.equal(62.25);
+                            expect(result.result.length).to.be.equal(2);
+                            if (assumeExistingData) {
+                                expect(result.result[0].val).to.be.equal(62.211);
+                            } else {
+                                expect(result.result[0].val + result.result[1].val).to.be.equal(62.211);
+                            }
                         }
                         // Result Influxdb1 Doku = 62.211
 
@@ -949,7 +956,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         sendTo(instanceName, 'getHistory', {
             id: `${instanceName}.testValue`,
             options: {
-                start:     preInitTime - 5000,
+                start:     preInitTime,
                 count:     500,
                 aggregate: 'none'
             }

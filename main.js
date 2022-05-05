@@ -2247,7 +2247,7 @@ function getHistoryIflx2(adapter, msg) {
                         break;
 
                     case 'integral':
-                        fluxQuery += ` |> integral(column: "_value", unit: ${options.integralUnit}s, interpolate: ${options.integralInterpolation === 'linear' ? 'linear' : ''})`;
+                        fluxQuery += ` |> integral(column: "${valueColumn}", unit: ${options.integralUnit}s, interpolate: ${options.integralInterpolation === 'linear' ? '"linear"' : '""'})`;
                         break;
 
                     case 'total':
