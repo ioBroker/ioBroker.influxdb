@@ -2161,19 +2161,13 @@ function getHistoryIflx2(adapter, msg) {
 
     const valueColumn = adapter.config.usetags ? '_value' : 'value';
 
-    fluxQuery += ` |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: -${adapter.config.retention}ms, `}stop: ${new Date(options.end).toISOString()})`;
+    fluxQuery += ` |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - adapter.config.retention).toISOString()}ms, `}stop: ${new Date(options.end).toISOString()})`;
     fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${options.id}")`;
 
     if (adapter.config.usetags)
         fluxQuery += ' |> duplicate(column: "_value", as: "value")';
     else
         fluxQuery += ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
-
-    if ((!options.start && options.count) || (options.aggregate === 'none' && options.count && options.returnNewestEntries) ) {
-        fluxQuery += ` |> sort(columns:["_time"], desc: true)`;
-    } else {
-        fluxQuery += ` |> sort(columns:["_time"], desc: false)`;
-    }
 
     if (resultsFromInfluxDB) {
         if ((options.step !== null) && (options.step > 0))
@@ -2182,6 +2176,13 @@ function getHistoryIflx2(adapter, msg) {
     } else if (options.aggregate !== 'minmax') {
         fluxQuery += ` |> group() |> limit(n: ${options.count})`;
     }
+
+    if ((!options.start && options.count) || (options.aggregate === 'none' && options.count && options.returnNewestEntries) ) {
+        fluxQuery += ` |> sort(columns:["_time"], desc: true)`;
+    } else {
+        fluxQuery += ` |> sort(columns:["_time"], desc: false)`;
+    }
+
 
     // Workaround to detect if measurement is of type bool (to skip non-sensual aggregation options)
     // There seems to be no officially supported way to detect this, so we check it by forcing a type-conflict
@@ -2276,8 +2277,8 @@ function getHistoryIflx2(adapter, msg) {
                     |> range(start: ${new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString()}, stop: ${new Date(options.start).toISOString()}) 
                     |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
                     ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
-                    |> sort(columns: ["_time"], desc: true) 
                     |> group() 
+                    |> sort(columns: ["_time"], desc: true) 
                     |> limit(n: 1)`;
 
                     const mainQuery = fluxQueries.pop();
@@ -2289,8 +2290,8 @@ function getHistoryIflx2(adapter, msg) {
                     |> range(start: ${new Date(options.end).toISOString()}) 
                     |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
                     ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
-                    |> sort(columns: ["_time"], desc: false) 
                     |> group() 
+                    |> sort(columns: ["_time"], desc: false) 
                     |> limit(n: 1)`;
                 //fluxQuery = fluxQuery + addFluxQuery;
                 fluxQueries.push(addFluxQuery);
