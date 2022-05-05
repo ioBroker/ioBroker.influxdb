@@ -2164,7 +2164,7 @@ function getHistoryIflx2(adapter, msg) {
 
     const valueColumn = adapter.config.usetags ? '_value' : 'value';
 
-    fluxQuery += ` |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}ms, `}stop: ${new Date(options.end).toISOString()})`;
+    fluxQuery += ` |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end).toISOString()})`;
     fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${options.id}")`;
 
     if (adapter.config.usetags)
@@ -2194,7 +2194,7 @@ function getHistoryIflx2(adapter, msg) {
     // There seems to be no officially supported way to detect this, so we check it by forcing a type-conflict
     const booleanTypeCheckQuery = `
         from(bucket: "${adapter.config.dbname}")
-        |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}ms, `}stop: ${new Date(options.end).toISOString()})
+        |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end).toISOString()})
         |> filter(fn: (r) => r["_measurement"] == "${options.id}" and contains(value: r._value, set: [true, false]))
     `;
 
