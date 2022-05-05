@@ -245,7 +245,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
             sendTo(instanceName, 'getHistory', {
                 id: `${instanceName}.testValue`,
                 options: {
-                    start:     now + 15000,
+                    start:     now,
                     end:       now + 30000,
                     count:     2,
                     aggregate: 'none'
@@ -265,7 +265,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                 sendTo(instanceName, 'getHistory', {
                     id: `${instanceName}.testValue`,
                     options: {
-                        start:     now + 15000,
+                        start:     now,
                         end:       now + 30000,
                         count:     2,
                         aggregate: 'none',
@@ -764,7 +764,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                             if (assumeExistingData) {
                                 expect(result.result[0].val).to.be.equal(62.211);
                             } else {
-                                expect(result.result[0].val + result.result[1].val).to.be.equal(62.211);
+                                expect(parseFloat((result.result[0].val + result.result[1].val).toFixed(2))).to.be.equal(62.211);
                             }
                         }
                         // Result Influxdb1 Doku = 62.211
