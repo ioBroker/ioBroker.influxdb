@@ -1970,6 +1970,7 @@ function getHistory(adapter, msg) {
 
     } else {
         query += ' *';
+        options.preAggregated = false;
     }
 
     query += ` from "${options.id}"`;
@@ -2226,8 +2227,8 @@ function getHistoryIflx2(adapter, msg) {
                 }
             }
 
-            options.preAggregated = true;
             if (options.step && supportsAggregates) {
+                options.preAggregated = true;
                 switch (options.aggregate) {
                     case 'average':
                         fluxQuery += ` |> mean(column: "${valueColumn}")`;
