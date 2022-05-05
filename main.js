@@ -1293,13 +1293,12 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
                         if (point.value === true) {
                             point.value = 1;
                             retry = true;
-                            adjustType = true;
                         }
                         else if (point.value === false) {
                             point.value = 0;
                             retry = true;
-                            adjustType = true;
                         }
+                        adjustType = true;
                         adapter._influxDPs[pointId][adapter.namespace].storageType = 'Number';
                         adapter._influxDPs[pointId].storageTypeAdjustedInternally = true;
                     }
@@ -1309,13 +1308,12 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
                         if (point.value === 1) {
                             point.value = true;
                             retry = true;
-                            adjustType = true;
                         }
                         else if (point.value === 0) {
                             point.value = false;
                             retry = true;
-                            adjustType = true;
                         }
+                        adjustType = true;
                         adapter._influxDPs[pointId][adapter.namespace].storageType = 'Boolean';
                         adapter._influxDPs[pointId].storageTypeAdjustedInternally = true;
                     }
@@ -1329,8 +1327,8 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
                         if (isFinite(point.value)) {
                             point.value = parseFloat(point.value);
                             retry = true;
-                            adjustType = true;
                         }
+                        adjustType = true;
                         adapter._influxDPs[pointId][adapter.namespace].storageType = 'Number';
                         adapter._influxDPs[pointId].storageTypeAdjustedInternally = true;
                     }
@@ -2249,7 +2247,7 @@ function getHistoryIflx2(adapter, msg) {
                         break;
 
                     case 'integral':
-                        fluxQuery += ` |> integral(column: "${valueColumn}", unit: ${options.integralUnit}s, interpolate: ${options.integralInterpolation === 'linear' ? 'linear' : ''})`;
+                        fluxQuery += ` |> integral(column: "_value", unit: ${options.integralUnit}s, interpolate: ${options.integralInterpolation === 'linear' ? 'linear' : ''})`;
                         break;
 
                     case 'total':
@@ -2323,10 +2321,6 @@ function getHistoryIflx2(adapter, msg) {
                                 delete rows[qr][rr].value;
                             }
 
-                            rows[qr][rr].ts = new Date(rows[qr][rr].time).getTime();
-
-                            delete rows[qr][rr].time;
-
                             if (rows[qr][rr].val !== null) {
                                 if (isFinite(rows[qr][rr].val)) {
                                     rows[qr][rr].val = parseFloat(rows[qr][rr].val);
@@ -2336,9 +2330,24 @@ function getHistoryIflx2(adapter, msg) {
                                 }
                             }
 
-                            if (options.addId) {
-                                rows[qr][rr].id = options.id;
+                            if (rows[qr][rr].time) {
+                                rows[qr][rr].ts = new Date(rows[qr][rr].time).getTime();
+                                delete rows[qr][rr].time;
+                            } else if (rows[qr][rr]._start && rows[qr][rr]._stop) {
+                                const startTime = new Date(rows[qr][rr]._start).getTime();
+                                const stopTime = new Date(rows[qr][rr]._stop).getTime();
+                                rows[qr][rr].ts = startTime + (stopTime - startTime) / 2;
+                                delete rows[qr][rr]._start;
+                                delete rows[qr][rr]._stop;
                             }
+
+                            delete rows[qr][rr].result;
+                            delete rows[qr][rr].table;
+
+                            if (options.addId) {
+                                rows[qr][rr].id = rows[qr][rr]._measurement || options.id;
+                            }
+                            delete rows[qr][rr]._measurement;
 
                             result.push(rows[qr][rr]);
                         }
