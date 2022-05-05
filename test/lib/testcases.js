@@ -525,7 +525,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
             } else {
                 expect(result.result.length).to.be.within(1,2);
                 if (process.env.INFLUXDB2) {
-                    expect(result.result[1].val).to.be.within(5, 6.725);
+                    expect(result.result[1].val).to.be.within(5, 7);
                 } else {
                     expect(result.result[1].val).to.be.within(5, 7);
                 }
@@ -730,7 +730,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                             expect(result.result[0].val).to.be.within(3700, 3755);
                         } else {
                             if (process.env.INFLUXDB2) {
-                                expect((result.result[0].val + result.result[1].val)).to.be.within(29880, 2990);
+                                expect((result.result[0].val + result.result[1].val)).to.be.within(2980, 2990);
                             } else {
                                 expect(parseFloat((result.result[0].val + result.result[1].val).toFixed(2))).to.be.equal(3732.66);
                             }
@@ -870,8 +870,13 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                                             }
                                         }, function (result) {
                                             console.log(`Sample I22-Quantile: ${JSON.stringify(result.result, null, 2)}`);
-                                            expect(result.result.length).to.be.equal(3);
-                                            expect(result.result[1].val).to.be.equal(19);
+                                            if (adapterShortName !== 'influxdb') {
+                                                expect(result.result.length).to.be.equal(3);
+                                                expect(result.result[1].val).to.be.equal(19);
+                                            } else {
+                                                expect(result.result.length).to.be.within(3, 4);
+                                                expect(result.result[1].val).to.be.equal(19);
+                                            }
 
                                             resolve();
                                         });
