@@ -764,7 +764,11 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                             if (assumeExistingData) {
                                 expect(parseFloat(result.result[0].val.toFixed(2))).to.be.equal(62.21);
                             } else {
-                                expect(parseFloat((result.result[0].val + result.result[1].val).toFixed(2))).to.be.equal(62.21);
+                                if (process.env.INFLUXDB2) {
+                                    expect(parseFloat((result.result[0].val + result.result[1].val).toFixed(2))).to.be.equal(49.78);
+                                } else {
+                                    expect(parseFloat((result.result[0].val + result.result[1].val).toFixed(2))).to.be.equal(62.21);
+                                }
                             }
                         }
                         // Result Influxdb1 Doku = 62.211
