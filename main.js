@@ -2219,6 +2219,7 @@ function getHistoryIflx2(adapter, msg) {
     const booleanTypeCheckQuery = `
         from(bucket: "${adapter.config.dbname}")
         |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end).toISOString()})
+        |> group()
         |> filter(fn: (r) => r["_measurement"] == "${options.id}" and contains(value: r._value, set: [true, false]))
     `;
 
@@ -2245,7 +2246,6 @@ function getHistoryIflx2(adapter, msg) {
                         supportsAggregates = true;
                     } else {
                         supportsAggregates = false;
-                        debugLog && adapter.log.debug(`Measurement ${options.id} seems to be no number - skipping aggregation options`);
                     }
                 }
                 if (supportsAggregates) {
@@ -2256,6 +2256,9 @@ function getHistoryIflx2(adapter, msg) {
                     } else if (adapter._influxDPs[options.id][adapter.namespace].skipped && typeof adapter._influxDPs[options.id][adapter.namespace].skipped.val !== 'number') {
                         supportsAggregates = false;
                     }
+                }
+                if (!supportsAggregates) {
+                    debugLog && adapter.log.debug(`Measurement ${options.id} seems to be no number - skipping aggregation options`);
                 }
 
                 if (options.step && supportsAggregates) {
