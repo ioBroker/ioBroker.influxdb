@@ -1146,22 +1146,22 @@ function storeBufferedSeries(adapter, id, cb) {
         id = null;
     }
     if (id && (!adapter._seriesBuffer[id] || !adapter._seriesBuffer[id].length)) {
-        return cb && cb();
+        return cb && cb(null, 0);
     }
     if (Object.keys(adapter._seriesBuffer).length === 0) {
-        return cb && cb();
+        return cb && cb(null, 0);
     }
 
     if (!adapter._client || adapter._client.request.getHostsAvailable().length === 0) {
         setConnected(adapter, false);
-        adapter.log.info('Currently no hosts available, try later');
+        adapter.log.info('Currently no hosts available, try later', 0);
         adapter._seriesBufferFlushPlanned = false;
-        return cb && cb('Currently no hosts available, try later');
+        return cb && cb('Currently no hosts available, try later', 0);
     }
     if (!adapter._connected) {
-        adapter.log.info('Not connected to InfluxDB, try later');
+        adapter.log.info('Not connected to InfluxDB, try later', 0);
         adapter._seriesBufferFlushPlanned = false;
-        return cb && cb('Not connected to InfluxDB, try later');
+        return cb && cb('Not connected to InfluxDB, try later', 0);
     }
 
     if (id) {
@@ -1169,11 +1169,14 @@ function storeBufferedSeries(adapter, id, cb) {
         adapter._seriesBuffer[id] = [];
         adapter.log.debug(`Store ${idSeries.length} buffered influxDB history points for ${id}`);
         adapter._seriesBufferCounter -= idSeries.length;
-        writeSeriesPerID(adapter, id, idSeries, cb);
+        writeSeriesPerID(adapter, id, idSeries, err => cb && cb(err, idSeries.length));
         return;
     }
 
-    adapter._seriesBufferChecker && clearInterval(adapter._seriesBufferChecker);
+    if (adapter._seriesBufferChecker) {
+        clearInterval(adapter._seriesBufferChecker);
+        adapter._seriesBufferChecker = null;
+    }
 
     adapter.log.info(`Store ${adapter._seriesBufferCounter} buffered influxDB history points`);
 
@@ -1181,9 +1184,9 @@ function storeBufferedSeries(adapter, id, cb) {
     if (adapter._seriesBufferCounter > 15000) {
         // if we have too many data points in buffer; we better writer them per id
         adapter.log.info(`Too many data points (${adapter._seriesBufferCounter}) to write at once; write per ID`);
-        writeAllSeriesPerID(adapter, currentBuffer, cb);
+        writeAllSeriesPerID(adapter, currentBuffer, err => cb && cb(err, adapter._seriesBufferCounter));
     } else {
-        writeAllSeriesAtOnce(adapter, currentBuffer, cb);
+        writeAllSeriesAtOnce(adapter, currentBuffer, err => cb && cb(err, adapter._seriesBufferCounter));
     }
     adapter._seriesBuffer = {};
     adapter._seriesBufferCounter = 0;
@@ -2027,52 +2030,56 @@ function getHistory(adapter, msg) {
 
     debugLog && adapter.log.debug(query);
 
-    storeBufferedSeries(adapter, options.id, () => {
-        // if specific id requested
-        adapter._client.query(query, (error, rows) => {
-            if (error) {
-                if (adapter._client.request.getHostsAvailable().length === 0) {
-                    setConnected(adapter, false);
+    storeBufferedSeries(adapter, options.id, (err, storedCount) => {
+        if (err) {
+            adapter.log.info(`Error storing buffered series for ${options.id} before GetHistory: ${err}`);
+        }
+        setTimeout(() => {
+            adapter._client.query(query, (error, rows) => {
+                if (error) {
+                    if (adapter._client.request.getHostsAvailable().length === 0) {
+                        setConnected(adapter, false);
+                    }
+                    adapter.log.error(`getHistory: ${error}`);
+                } else {
+                    setConnected(adapter, true);
                 }
-                adapter.log.error(`getHistory: ${error}`);
-            } else {
-                setConnected(adapter, true);
-            }
 
-            debugLog && adapter.log.debug(`Response rows: ${JSON.stringify(rows)}`);
+                debugLog && adapter.log.debug(`Response rows: ${JSON.stringify(rows)}`);
 
-            let result = [];
+                let result = [];
 
-            if (rows && rows.length) {
-                for (let qr = 0; qr < rows.length; qr++) {
-                    for (let rr = 0; rr < rows[qr].length; rr++) {
-                        if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
-                            rows[qr][rr].val = rows[qr][rr].value;
-                            delete rows[qr][rr].value;
-                        }
-                        rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
-                        delete rows[qr][rr].time;
+                if (rows && rows.length) {
+                    for (let qr = 0; qr < rows.length; qr++) {
+                        for (let rr = 0; rr < rows[qr].length; rr++) {
+                            if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
+                                rows[qr][rr].val = rows[qr][rr].value;
+                                delete rows[qr][rr].value;
+                            }
+                            rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
+                            delete rows[qr][rr].time;
 
-                        if (rows[qr][rr].val !== null) {
-                            if (isFinite(rows[qr][rr].val)) {
-                                rows[qr][rr].val = parseFloat(rows[qr][rr].val);
-                                if (options.round) {
-                                    rows[qr][rr].val = Math.round(rows[qr][rr].val * options.round) / options.round;
+                            if (rows[qr][rr].val !== null) {
+                                if (isFinite(rows[qr][rr].val)) {
+                                    rows[qr][rr].val = parseFloat(rows[qr][rr].val);
+                                    if (options.round) {
+                                        rows[qr][rr].val = Math.round(rows[qr][rr].val * options.round) / options.round;
+                                    }
                                 }
                             }
-                        }
 
-                        if (options.addId) {
-                            rows[qr][rr].id = options.id;
+                            if (options.addId) {
+                                rows[qr][rr].id = options.id;
+                            }
+                            result.push(rows[qr][rr]);
                         }
-                        result.push(rows[qr][rr]);
                     }
+                    result = result.sort(sortByTs);
                 }
-                result = result.sort(sortByTs);
-            }
 
-            Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
-        });
+                Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
+            });
+        }, storedCount ? 50 : 0);
     });
 }
 
@@ -2215,176 +2222,181 @@ function getHistoryIflx2(adapter, msg) {
         |> filter(fn: (r) => r["_measurement"] == "${options.id}" and contains(value: r._value, set: [true, false]))
     `;
 
-    storeBufferedSeries(adapter, options.id, () => {
-        adapter._client.query(booleanTypeCheckQuery, (error, rslt) => {
-            let supportsAggregates;
-            if (error) {
-                if (error.message.includes('type conflict: bool')) {
-                    supportsAggregates = true;
-                    error = null;
-                } else {
-                    return adapter.sendTo(msg.from, msg.command, {
-                        result:     [],
-                        error:      error,
-                        sessionId:  options.sessionId
-                    }, msg.callback);
-                }
-            } else {
-                if (rslt.find(r => r.error && r.error.includes('type conflict: bool'))) {
-                    supportsAggregates = true;
-                } else {
-                    supportsAggregates = false;
-                    debugLog && adapter.log.debug(`Measurement ${options.id} seems to be no number - skipping aggregation options`);
-                }
-            }
-            if (supportsAggregates) {
-                if (adapter._influxDPs[options.id][adapter.namespace].storageType && adapter._influxDPs[options.id][adapter.namespace].storageType !== 'Number') {
-                    supportsAggregates = false;
-                } else if (adapter._influxDPs[options.id][adapter.namespace].state && typeof adapter._influxDPs[options.id][adapter.namespace].state.val !== 'number') {
-                    supportsAggregates = false;
-                } else if (adapter._influxDPs[options.id][adapter.namespace].skipped && typeof adapter._influxDPs[options.id][adapter.namespace].skipped.val !== 'number') {
-                    supportsAggregates = false;
-                }
-            }
-
-            if (options.step && supportsAggregates) {
-                options.preAggregated = true;
-                switch (options.aggregate) {
-                    case 'average':
-                        fluxQuery += ` |> mean(column: "${valueColumn}")`;
-                        break;
-
-                    case 'max':
-                        fluxQuery += ` |> max(column: "${valueColumn}")`;
-                        break;
-
-                    case 'min':
-                        fluxQuery += ` |> min(column: "${valueColumn}")`;
-                        break;
-
-                    case 'percentile':
-                        fluxQuery += ` |> quantile(column: "${valueColumn}", q: ${options.percentile / 100})`;
-                        break;
-
-                    case 'quantile':
-                        fluxQuery += ` |> quantile(column: "${valueColumn}", q: ${options.quantile})`;
-                        break;
-
-                    case 'integral':
-                        fluxQuery += ` |> integral(column: "${valueColumn}", unit: ${options.integralUnit}s, interpolate: ${options.integralInterpolation === 'linear' ? '"linear"' : '""'})`;
-                        break;
-
-                    case 'total':
-                        fluxQuery += ` |> sum(column: "${valueColumn}")`;
-                        break;
-
-                    case 'count':
-                        fluxQuery += ` |> count(column: "${valueColumn}")`;
-                        break;
-
-                    default:
-                        fluxQuery += ` |> mean(column: "${valueColumn}")`;
-                        options.preAggregated = false;
-                        break;
-                }
-            }
-
-            fluxQueries.push(fluxQuery);
-
-            // select one datapoint more than wanted
-            if (!options.removeBorderValues) {
-                let addFluxQuery = '';
-                if (options.start) {
-                    // get one entry "before" the defined timeframe for displaying purposes
-                    addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
-                    |> range(start: ${new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString()}, stop: ${new Date(options.start - 1).toISOString()}) 
-                    |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
-                    ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
-                    |> group() 
-                    |> sort(columns: ["_time"], desc: true) 
-                    |> limit(n: 1)`;
-
-                    const mainQuery = fluxQueries.pop();
-                    fluxQueries.push(addFluxQuery);
-                    fluxQueries.push(mainQuery);
-                }
-                // get one entry "after" the defined timeframe for displaying purposes
-                addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
-                    |> range(start: ${new Date(options.end + 1).toISOString()}) 
-                    |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
-                    ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
-                    |> group() 
-                    |> sort(columns: ["_time"], desc: false) 
-                    |> limit(n: 1)`;
-                fluxQueries.push(addFluxQuery);
-            }
-
-            debugLog && adapter.log.debug(`History-queries to execute: ${fluxQueries}`);
-
-            // if specific id requested
-            adapter._client.queries(fluxQueries, (err, rows) => {
-                if (err && !rows) {
-                    if (adapter._client.request.getHostsAvailable().length === 0) {
-                        setConnected(adapter, false);
+    storeBufferedSeries(adapter, options.id, (err, storedCount) => {
+        if (err) {
+            adapter.log.info(`Error storing buffered series for ${options.id} before GetHistory: ${err}`);
+        }
+        setTimeout(() => {
+            adapter._client.query(booleanTypeCheckQuery, (error, rslt) => {
+                let supportsAggregates;
+                if (error) {
+                    if (error.message.includes('type conflict: bool')) {
+                        supportsAggregates = true;
+                        error = null;
+                    } else {
+                        return adapter.sendTo(msg.from, msg.command, {
+                            result: [],
+                            error: error,
+                            sessionId: options.sessionId
+                        }, msg.callback);
                     }
-                    adapter.log.error(`getHistory: ${err}`);
                 } else {
-                    setConnected(adapter, true);
+                    if (rslt.find(r => r.error && r.error.includes('type conflict: bool'))) {
+                        supportsAggregates = true;
+                    } else {
+                        supportsAggregates = false;
+                        debugLog && adapter.log.debug(`Measurement ${options.id} seems to be no number - skipping aggregation options`);
+                    }
+                }
+                if (supportsAggregates) {
+                    if (adapter._influxDPs[options.id][adapter.namespace].storageType && adapter._influxDPs[options.id][adapter.namespace].storageType !== 'Number') {
+                        supportsAggregates = false;
+                    } else if (adapter._influxDPs[options.id][adapter.namespace].state && typeof adapter._influxDPs[options.id][adapter.namespace].state.val !== 'number') {
+                        supportsAggregates = false;
+                    } else if (adapter._influxDPs[options.id][adapter.namespace].skipped && typeof adapter._influxDPs[options.id][adapter.namespace].skipped.val !== 'number') {
+                        supportsAggregates = false;
+                    }
                 }
 
-                debugLog && adapter.log.debug(`Parsing retrieved rows:${JSON.stringify(rows)}`);
+                if (options.step && supportsAggregates) {
+                    options.preAggregated = true;
+                    switch (options.aggregate) {
+                        case 'average':
+                            fluxQuery += ` |> mean(column: "${valueColumn}")`;
+                            break;
 
-                let result = [];
+                        case 'max':
+                            fluxQuery += ` |> max(column: "${valueColumn}")`;
+                            break;
 
-                if (rows && rows.length) {
-                    for (let qr = 0; qr < rows.length; qr++) {
-                        for (let rr = 0; rr < rows[qr].length; rr++) {
-                            if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
-                                rows[qr][rr].val = rows[qr][rr].value;
-                                delete rows[qr][rr].value;
-                            }
+                        case 'min':
+                            fluxQuery += ` |> min(column: "${valueColumn}")`;
+                            break;
 
-                            if (rows[qr][rr].val !== null) {
-                                if (isFinite(rows[qr][rr].val)) {
-                                    rows[qr][rr].val = parseFloat(rows[qr][rr].val);
-                                    if (options.round) {
-                                        rows[qr][rr].val = Math.round(rows[qr][rr].val * options.round) / options.round;
+                        case 'percentile':
+                            fluxQuery += ` |> quantile(column: "${valueColumn}", q: ${options.percentile / 100})`;
+                            break;
+
+                        case 'quantile':
+                            fluxQuery += ` |> quantile(column: "${valueColumn}", q: ${options.quantile})`;
+                            break;
+
+                        case 'integral':
+                            fluxQuery += ` |> integral(column: "${valueColumn}", unit: ${options.integralUnit}s, interpolate: ${options.integralInterpolation === 'linear' ? '"linear"' : '""'})`;
+                            break;
+
+                        case 'total':
+                            fluxQuery += ` |> sum(column: "${valueColumn}")`;
+                            break;
+
+                        case 'count':
+                            fluxQuery += ` |> count(column: "${valueColumn}")`;
+                            break;
+
+                        default:
+                            fluxQuery += ` |> mean(column: "${valueColumn}")`;
+                            options.preAggregated = false;
+                            break;
+                    }
+                }
+
+                fluxQueries.push(fluxQuery);
+
+                // select one datapoint more than wanted
+                if (!options.removeBorderValues) {
+                    let addFluxQuery = '';
+                    if (options.start) {
+                        // get one entry "before" the defined timeframe for displaying purposes
+                        addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
+                        |> range(start: ${new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString()}, stop: ${new Date(options.start - 1).toISOString()}) 
+                        |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
+                        ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
+                        |> group() 
+                        |> sort(columns: ["_time"], desc: true) 
+                        |> limit(n: 1)`;
+
+                        const mainQuery = fluxQueries.pop();
+                        fluxQueries.push(addFluxQuery);
+                        fluxQueries.push(mainQuery);
+                    }
+                    // get one entry "after" the defined timeframe for displaying purposes
+                    addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
+                        |> range(start: ${new Date(options.end + 1).toISOString()}) 
+                        |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
+                        ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
+                        |> group() 
+                        |> sort(columns: ["_time"], desc: false) 
+                        |> limit(n: 1)`;
+                    fluxQueries.push(addFluxQuery);
+                }
+
+                debugLog && adapter.log.debug(`History-queries to execute: ${fluxQueries}`);
+
+                // if specific id requested
+                adapter._client.queries(fluxQueries, (err, rows) => {
+                    if (err && !rows) {
+                        if (adapter._client.request.getHostsAvailable().length === 0) {
+                            setConnected(adapter, false);
+                        }
+                        adapter.log.error(`getHistory: ${err}`);
+                    } else {
+                        setConnected(adapter, true);
+                    }
+
+                    debugLog && adapter.log.debug(`Parsing retrieved rows:${JSON.stringify(rows)}`);
+
+                    let result = [];
+
+                    if (rows && rows.length) {
+                        for (let qr = 0; qr < rows.length; qr++) {
+                            for (let rr = 0; rr < rows[qr].length; rr++) {
+                                if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
+                                    rows[qr][rr].val = rows[qr][rr].value;
+                                    delete rows[qr][rr].value;
+                                }
+
+                                if (rows[qr][rr].val !== null) {
+                                    if (isFinite(rows[qr][rr].val)) {
+                                        rows[qr][rr].val = parseFloat(rows[qr][rr].val);
+                                        if (options.round) {
+                                            rows[qr][rr].val = Math.round(rows[qr][rr].val * options.round) / options.round;
+                                        }
                                     }
                                 }
+
+                                if (rows[qr][rr].time) {
+                                    rows[qr][rr].ts = new Date(rows[qr][rr].time).getTime();
+                                    delete rows[qr][rr].time;
+                                } else if (rows[qr][rr]._start && rows[qr][rr]._stop) {
+                                    const startTime = new Date(rows[qr][rr]._start).getTime();
+                                    const stopTime = new Date(rows[qr][rr]._stop).getTime();
+                                    rows[qr][rr].ts = startTime + (stopTime - startTime) / 2;
+                                    delete rows[qr][rr]._start;
+                                    delete rows[qr][rr]._stop;
+                                }
+
+                                delete rows[qr][rr].result;
+                                delete rows[qr][rr].table;
+
+                                if (options.addId) {
+                                    rows[qr][rr].id = rows[qr][rr]._measurement || options.id;
+                                }
+                                delete rows[qr][rr]._measurement;
+
+                                result.push(rows[qr][rr]);
                             }
-
-                            if (rows[qr][rr].time) {
-                                rows[qr][rr].ts = new Date(rows[qr][rr].time).getTime();
-                                delete rows[qr][rr].time;
-                            } else if (rows[qr][rr]._start && rows[qr][rr]._stop) {
-                                const startTime = new Date(rows[qr][rr]._start).getTime();
-                                const stopTime = new Date(rows[qr][rr]._stop).getTime();
-                                rows[qr][rr].ts = startTime + (stopTime - startTime) / 2;
-                                delete rows[qr][rr]._start;
-                                delete rows[qr][rr]._stop;
-                            }
-
-                            delete rows[qr][rr].result;
-                            delete rows[qr][rr].table;
-
-                            if (options.addId) {
-                                rows[qr][rr].id = rows[qr][rr]._measurement || options.id;
-                            }
-                            delete rows[qr][rr]._measurement;
-
-                            result.push(rows[qr][rr]);
                         }
+                        result = result.sort(sortByTs);
                     }
-                    result = result.sort(sortByTs);
-                }
 
-                if (options.debugLog) {
-                    options.log = adapter.log.debug;
-                }
+                    if (options.debugLog) {
+                        options.log = adapter.log.debug;
+                    }
 
-                Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
+                    Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
+                });
             });
-        });
+        }, storedCount ? 50 : 0);
     });
 }
 
