@@ -214,6 +214,7 @@
         "dbname": "iobroker",
         "host": "localhost",
         "protocol": "http",
+        "path": "",
         "port": 8086,
         "user": "",
         "password": "",

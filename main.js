@@ -295,7 +295,11 @@ function ping(adapter) {
 }
 
 function connect(adapter) {
-    adapter.log.info(`Connecting ${adapter.config.protocol}://${adapter.config.host}:${adapter.config.port} ...`);
+    if (adapter.config.path.startsWith('/')) {
+        adapter.config.path = adapter.config.path.substring(1);
+    }
+
+    adapter.log.info(`Connecting ${adapter.config.protocol}://${adapter.config.host}:${adapter.config.port}/${adapter.config.dbversion === '2.x' ? adapter.config.path || '' : ''} ...`);
 
     adapter.config.dbname = adapter.config.dbname || appName;
     adapter.config.validateSSL = adapter.config.validateSSL !== undefined ? !!adapter.config.validateSSL :  true;
@@ -315,6 +319,7 @@ function connect(adapter) {
                 adapter.config.host,
                 adapter.config.port, // optional, default 8086
                 adapter.config.protocol, // optional, default 'http'
+                adapter.config.path, // optional, default '/'
                 adapter.config.token,
                 adapter.config.organization,
                 adapter.config.dbname,
