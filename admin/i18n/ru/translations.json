@@ -39,6 +39,7 @@
     "Expert Settings": "Экспертные настройки",
     "History adapter settings": "Настройки драйвера history",
     "Host": "Хост",
+    "Log the last value again on startup": "Снова запишите последнее значение при запуске",
     "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.": "К уменьшению срока хранения следует подходить с осторожностью: прошлые данные, превышающие срок хранения, будут потеряны.",
     "Milliseconds": "Миллисекунды",
     "Number": "Количество",

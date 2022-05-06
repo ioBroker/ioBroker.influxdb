@@ -39,6 +39,7 @@
     "Expert Settings": "Experteneinstellungen",
     "History adapter settings": "History-Adapter Einstellungen",
     "Host": "Server",
+    "Log the last value again on startup": "Protokollieren Sie den letzten Wert erneut beim Start",
     "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.": "Eine Verkürzung der Vorhaltezeit ist mit Vorsicht zu genießen: Vergangene Daten, die die Vorhaltezeit überschreiten, gehen verloren.",
     "Milliseconds": "Millisekunden",
     "Number": "Anzahl",

@@ -39,6 +39,7 @@
     "Expert Settings": "Configurações para especialistas",
     "History adapter settings": "Configurações do adaptador de histórico",
     "Host": "Hospedeiro",
+    "Log the last value again on startup": "Registre o último valor novamente na inicialização",
     "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.": "A redução do período de retenção deve ser considerada com cautela: os dados anteriores que excederem o período de retenção serão perdidos.",
     "Milliseconds": "Milissegundos",
     "Number": "Número",

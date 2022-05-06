@@ -39,6 +39,7 @@
     "Expert Settings": "Expertinstellingen",
     "History adapter settings": "Geschiedenis adapter instellingen",
     "Host": "gastheer",
+    "Log the last value again on startup": "Log de laatste waarde opnieuw bij het opstarten",
     "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.": "Het verlagen van de bewaarperiode moet met de nodige voorzichtigheid worden overwogen: gegevens uit het verleden die de bewaarperiode overschrijden, gaan verloren.",
     "Milliseconds": "milliseconden",
     "Number": "Nummer",

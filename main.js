@@ -623,7 +623,11 @@ function resetConflictingPoints(adapter, msg) {
 
 function main(adapter) {
     adapter.config.port = parseInt(adapter.config.port, 10) || 0;
-
+    if (adapter.config.relogLastValueOnStart === undefined) {
+        adapter.config.relogLastValueOnStart = true;
+    } else if (adapter.config.relogLastValueOnStart === 'false') {
+        adapter.config.relogLastValueOnStart = false;
+    }
     // set default history if not yet set
     adapter.getForeignObject('system.config', (err, obj) => {
         if (obj && obj.common && !obj.common.defaultHistory) {
@@ -838,9 +842,11 @@ function writeInitialValue(adapter, realId, id) {
         if (state && adapter._influxDPs[id]) {
             state.from = `system.adapter.${adapter.namespace}`;
             adapter._influxDPs[id].state = state;
-            adapter._tasksStart.push(id);
-            if (adapter._tasksStart.length === 1 && adapter._connected) {
-                processStartValues(adapter);
+            if (adapter.config.relogLastValueOnStart) {
+                adapter._tasksStart.push(id);
+                if (adapter._tasksStart.length === 1 && adapter._connected) {
+                    processStartValues(adapter);
+                }
             }
         }
     });

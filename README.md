@@ -438,6 +438,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 * (Apollon77) Allow to specify an additional path for the InfluxDB URL, when Reverse proxies are used or such
 * (Apollon77) Make sure that min change delta allows numbers entered with comma (german notation) in all cases
 * (Apollon77) Add support to specify how to round numbers on query per datapoint
+* (Apollon77) Allow to specify if the last value of a state is logged on startup
 
 
 ### 2.6.3 (2022-03-07)

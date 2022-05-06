@@ -39,6 +39,7 @@
     "Expert Settings": "Expert Settings",
     "History adapter settings": "History adapter settings",
     "Host": "Host",
+    "Log the last value again on startup": "Log the last value again on startup",
     "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.": "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.",
     "Milliseconds": "Milliseconds",
     "Number": "Number",

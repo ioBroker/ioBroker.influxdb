@@ -39,6 +39,7 @@
     "Expert Settings": "Impostazioni avanzate",
     "History adapter settings": "Impostazioni della scheda Cronologia",
     "Host": "Ospite",
+    "Log the last value again on startup": "Registra di nuovo l'ultimo valore all'avvio",
     "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.": "La riduzione del periodo di conservazione deve essere considerata con cautela: i dati passati che superano il periodo di conservazione andranno persi.",
     "Milliseconds": "Millisecondi",
     "Number": "Numero",

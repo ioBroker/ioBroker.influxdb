@@ -236,7 +236,8 @@
         "debounceTime": 0,
         "disableSkippedValueLogging": false,
         "enableLogging": false,
-        "customRetentionDuration": 365
+        "customRetentionDuration": 365,
+        "relogLastValueOnStart": true
     },
     "protectedNative": [
         "password",

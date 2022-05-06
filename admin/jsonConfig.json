@@ -119,7 +119,14 @@
           "sm": 12,
           "md": 4
         },
+        "relogLastValueOnStart": {
+          "type": "checkbox",
+          "label": "Log the last value again on startup",
+          "sm": 12,
+          "md": 4
+        },
         "seriesBufferMax": {
+          "newLine": true,
           "type": "number",
           "label": "Buffer Datapoints",
           "help": "use 0 to not buffer at all",
