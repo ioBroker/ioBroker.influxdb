@@ -582,6 +582,7 @@ function processMessage(adapter, msg) {
     }
     else if (msg.command === 'flushBuffer') {
         const id = msg.message ? msg.message.id : undefined;
+        adapter.log.debug(`Flushing buffer ${JSON.stringify(msg.message)} -> ${id}`);
         storeBufferedSeries(adapter, id, error => {
             if (msg.callback) {
                 adapter.sendTo(msg.from, msg.command, {error}, msg.callback);
