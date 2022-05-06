@@ -1,203 +1,31 @@
 {
-  "i18n": {
-    "Store as": {
-      "en": "Store as",
-      "de": "Speichern als",
-      "ru": "Сохранить как",
-      "pt": "Armazenar como",
-      "nl": "Opslaan als",
-      "fr": "Magasin comme",
-      "it": "Conservare come",
-      "es": "Przechowuj jako",
-      "pl": "Przechowuj jako"
-    },
-    "Automatic": {
-      "en": "Automatic",
-      "de": "Automatisch",
-      "ru": "автоматическая",
-      "pt": "Automático",
-      "nl": "automatisch",
-      "fr": "Automatique",
-      "it": "Automatico",
-      "es": "Automatycznyy",
-      "pl": "Automatyczny"
-    },
-    "String": {
-      "en": "String",
-      "de": "Zeichenfolge",
-      "ru": "строка",
-      "pt": "Corda",
-      "nl": "Draad",
-      "fr": "Chaîne",
-      "it": "Stringa",
-      "es": "Strunowy",
-      "pl": "Strunowy"
-    },
-    "Number": {
-      "en": "Number",
-      "de": "Nummer",
-      "ru": "Число",
-      "pt": "Número",
-      "nl": "Aantal",
-      "fr": "Nombre",
-      "it": "Numero",
-      "es": "Numer",
-      "pl": "Numer"
-    },
-    "Boolean": {
-      "en": "Boolean",
-      "de": "Boolesch",
-      "ru": "логический",
-      "pt": "boleano",
-      "nl": "Boolean",
-      "fr": "Booléen",
-      "it": "booleano",
-      "es": "Booleano",
-      "pl": "Boolean"
-    },
-    "De-bounce interval(ms)": {
-      "en": "Ignore changes till value stays unchanged for X Milliseconds",
-      "de": "Änderungen ignorieren, bis der Wert für X Millisekunden unverändert bleibt",
-      "ru": "Игнорировать изменения до тех пор, пока значение не останется неизменным в течение X миллисекунд",
-      "pt": "Ignorar alterações até que o valor permaneça inalterado por X Milissegundos",
-      "nl": "Wijzigingen negeren totdat waarde ongewijzigd blijft voor X Milliseconds",
-      "fr": "Ignorer les modifications jusqu'à ce que la valeur reste inchangée pour X millisecondes",
-      "it": "Ignora le modifiche fino a quando il valore rimane invariato per X Milliseconds",
-      "es": "Ignorar cambios hasta que el valor permanezca sin cambios durante X milisegundos",
-      "pl": "Zignoruj ​​zmiany, aż wartość pozostanie niezmieniona przez X Milliseconds",
-      "zh-cn": "忽略更改，直到值保持不变为X毫秒<br>（去抖时间）"
-    },
-    "De-bounce time": {
-      "en": "De-bounce Time",
-      "de": "Entprellzeit",
-      "ru": "время отладки",
-      "pt": "Tempo de Depuração",
-      "nl": "Debounce Time",
-      "fr": "Debounce Time",
-      "it": "Debounce Time",
-      "es": "Tiempo de rebote",
-      "pl": "Czas odbicia",
-      "zh-cn": "去抖时间"
-    },
-    "enabled": {
-      "en": "enabled",
-      "de": "Aktiviert",
-      "ru": "активно",
-      "pt": "ativado",
-      "nl": "ingeschakeld",
-      "fr": "activée",
-      "it": "abilitato",
-      "es": "habilitado",
-      "pl": "włączony"
-    },
-    "log changes interval(s) (0 = disable)": {
-      "en": "still record the same values (seconds)<br>(0 = disable)",
-      "de": "trotzdem gleiche Werte aufzeichnen (Sekunden) <br> (0 = deaktivieren)",
-      "ru": "по-прежнему записывать те же значения (в секундах) <br> (0 = отключить)",
-      "pt": "ainda gravar os mesmos valores (segundos) <br> (0 = desabilitar)",
-      "nl": "nog steeds dezelfde waarden (seconden) <br> (0 = uitschakelen)",
-      "fr": "toujours enregistrer les mêmes valeurs (secondes) <br> (0 = désactiver)",
-      "it": "registra ancora gli stessi valori (secondi) <br> (0 = disabilita)",
-      "es": "sigue registrando los mismos valores (segundos) <br> (0 = deshabilitar)",
-      "pl": "nadal nagrywaj te same wartości (sekundy) <br> (0 = wyłącz)",
-      "zh-cn": "仍记录相同的值（秒）<br>（0 =禁用）"
-    },
-    "log changes minimal delta (0 = disable delta check)": {
-      "en": "Minimum difference from last value<br>(0 = disable delta check)",
-      "de": "Minimale Differenz zum letzten Wert <br> (0 = Deltaprüfung deaktivieren)",
-      "ru": "Минимальное отличие от последнего значения <br> (0 = отключить дельта-проверку)",
-      "pt": "Diferença mínima do último valor <br> (0 = desabilitar verificação delta)",
-      "nl": "Minimaal verschil met laatste waarde <br> (0 = deltablokkering uitschakelen)",
-      "fr": "Différence minimale par rapport à la dernière valeur <br> (0 = désactiver la vérification delta)",
-      "it": "Differenza minima dall'ultimo valore <br> (0 = disabilita il controllo delta)",
-      "es": "Diferencia mínima desde el último valor <br> (0 = deshabilitar la comprobación delta)",
-      "pl": "Minimalna różnica od ostatniej wartości <br> (0 = wyłącz kontrolę delta)",
-      "zh-cn": "与上一个值的最小差异<br>（0 =禁用增量检查）"
-    },
-    "log changes only": {
-      "en": "Record changes only",
-      "de": "Nur Änderungen aufzeichnen",
-      "ru": "Запись только изменений",
-      "pt": "Registrar apenas alterações",
-      "nl": "Wijzigingen alleen registreren",
-      "fr": "Enregistrer les modifications uniquement",
-      "it": "Registra solo le modifiche",
-      "es": "Registrar solo cambios",
-      "pl": "Zapisz tylko zmiany",
-      "zh-cn": "仅记录更改"
-    },
-    "maximum datapoint count in RAM": {
-      "en": "maximum datapoint count in RAM",
-      "de": "maximale Anzahl Datenpunkte in RAM",
-      "ru": "макс. кол-во значений в RAM памяти",
-      "pt": "contagem máxima do datapoint na RAM",
-      "nl": "maximum aantal datapunten in RAM",
-      "fr": "nombre de points de données maximum en RAM",
-      "it": "massimo conteggio dei punti di accesso nella RAM",
-      "es": "recuento máximo de datos en RAM",
-      "pl": "maksymalna liczba punktów w pamięci RAM"
-    },
-    "aliasId": {
-      "en": "Alias-ID",
-      "de": "Alias-ID",
-      "ru": "Псевдоним ИД",
-      "pt": "Alias-ID",
-      "nl": "Alias-ID",
-      "fr": "Alias-ID",
-      "it": "Alias-ID",
-      "es": "Alias-ID",
-      "pl": "Alias-ID"
-    },
-    "Alias Info": {
-      "en": "if Alias-ID is set, the data will be logged as this ID in database",
-      "de": "Wenn Alias-ID gesetzt ist, werden die Daten als diese ID in der Datenbank protokolliert",
-      "ru": "если установлен Alias-ID, данные будут регистрироваться как этот идентификатор в базе данных",
-      "pt": "Se o Alias-ID for definido, os dados serão registrados como esse ID no banco de dados",
-      "nl": "als Alias-ID is ingesteld, worden de gegevens als deze ID geregistreerd in de database",
-      "fr": "Si Alias-ID est défini, les données seront enregistrées comme cet ID dans la base de données",
-      "it": "se Alias-ID è impostato, i dati verranno registrati come questo ID nel database",
-      "es": "si se establece Alias-ID, los datos se registrarán como esta ID en la base de datos",
-      "pl": "jeśli ustawiony jest Alias-ID, dane będą rejestrowane jako identyfikator w bazie danych"
-    },
-    "ignore zero or null values": {
-      "en": "ignore zero or null values (==0)",
-      "de": "Zero- oder Nullwerte ignorieren (==0)",
-      "ru": "игнорировать нулевые или нулевые значения (== 0)",
-      "pt": "ignorar valores zero ou nulos (== 0)",
-      "nl": "negeer nul- of null-waarden (==0)",
-      "fr": "ignorer les valeurs nulles ou nulles (==0)",
-      "it": "ignora i valori zero o null (==0)",
-      "es": "ignorar valores cero o nulos (== 0)",
-      "pl": "zignoruj wartości zero lub null (==0)",
-      "zh-cn": "忽略零或空值 (==0)"
-    },
-    "ignore values below zero": {
-      "en": "ignore values below zero (<0)",
-      "de": "Werte unter 0 ignorieren (<0)",
-      "ru": "игнорировать значения ниже нуля (<0)",
-      "pt": "ignorar valores abaixo de zero (<0)",
-      "nl": "negeer waarden onder nul (<0)",
-      "fr": "ignorer les valeurs inférieures à zéro (<0)",
-      "it": "ignora i valori inferiori a zero (<0)",
-      "es": "ignorar valores por debajo de cero (<0)",
-      "pl": "zignoruj wartości poniżej zera (<0)",
-      "zh-cn": "忽略低于零 (<0) 的值"
-    }
-  },
+  "i18n": true,
+  "type": "panel",
   "items": {
+    "debounceTime": {
+      "newLine": true,
+      "type": "number",
+      "sm": 6,
+      "min": 0,
+      "max": 86400000,
+      "defaultFunc": "customObj && customObj.common && customObj.common.type === 'number' ? instanceObj.native.debounceTime : 0",
+      "label": "De-bounce time",
+      "help": "De-bounce interval(ms)"
+    },
+    "blockTime": {
+      "type": "number",
+      "sm": 6,
+      "min": 0,
+      "max": 86400000,
+      "label": "Block time",
+      "defaultFunc": "(data.debounce || data.debounce === '0' || data.debounce === 0) ? parseInt(data.debounce, 10) : instanceObj.native.blockTime",
+      "help": "blockTime"
+    },
     "changesOnly": {
+      "newLine": true,
       "type": "checkbox",
       "label": "log changes only",
       "defaultFunc": "customObj && customObj.common && customObj.common.type === 'number'",
-      "sm": 6
-    },
-    "debounce": {
-      "type": "number",
-      "label": "De-bounce time",
-      "help": "De-bounce interval(ms)",
-      "min": 0,
-      "max": 86400000,
-      "defaultFunc": "customObj && customObj.common && customObj.common.type === 'number' ? instanceObj.native.debounce : 0",
       "sm": 6
     },
     "changesRelogInterval": {
@@ -220,6 +48,39 @@
       "sm": 6,
       "help": "0 = disable delta check",
       "disabled": "!data.changesOnly"
+    },
+    "ignoreBelowNumber": {
+      "newLine": true,
+      "type": "text",
+      "label": "ignore values below x",
+      "hidden": "!customObj || !customObj.common || customObj.common.type !== 'number'",
+      "defaultFunc": "data.ignoreBelowZero ? '0' : ''",
+      "validator": "((data.ignoreBelowNumber || '').toString().length === 0) || isFinite(data.ignoreBelowNumber)",
+      "validatorErrorText": "Enter a number or leave the field empty",
+      "validatorNoSaveOnError": true,
+      "sm": 6
+    },
+    "ignoreAboveNumber": {
+      "type": "text",
+      "label": "ignore values above x",
+      "hidden": "!customObj || !customObj.common || customObj.common.type !== 'number'",
+      "validator": "((data.ignoreAboveNumber || '').toString().length === 0) || isFinite(data.ignoreAboveNumber)",
+      "validatorErrorText": "Enter a number or leave the field empty",
+      "validatorNoSaveOnError": true,
+      "sm": 6
+    },
+    "ignoreZero": {
+      "newLine": true,
+      "type": "checkbox",
+      "label": "ignore zero or null values",
+      "sm": 6
+    },
+    "disableSkippedValueLogging": {
+      "newLine": true,
+      "label": "Disable charting optimized logging of skipped values",
+      "type": "checkbox",
+      "sm": 12,
+      "defaultFunc": "instanceObj.native.disableSkippedValueLogging || false"
     },
     "storageType": {
       "newLine": true,
@@ -255,16 +116,37 @@
       "sm": 12,
       "help": "Alias Info"
     },
-    "ignoreZero": {
+    "round": {
       "newLine": true,
+      "type": "text",
+      "label": "Round real to",
+      "sm": 6,
+      "validator": "((data.round || '').toString().length === 0) || isFinite(data.round)",
+      "validatorErrorText": "Enter a number or leave the field empty",
+      "validatorNoSaveOnError": true,
+      "hidden": "!customObj || !customObj.common || customObj.common.type !== 'number' || (data.storageType && data.storageType !== 'Number')"
+    },
+    "enableDebugLogs": {
+      "newLine": true,
+      "label": "Enable enhanced debug logs for the datapoint",
       "type": "checkbox",
-      "label": "ignore zero or null values",
+      "sm": 12,
+      "defaultFunc": "instanceObj.native.enableDebugLogs || false"
+    },
+    "debounce": {
+      "type": "number",
+      "label": "De-bounce time",
+      "help": "De-bounce interval(ms)",
+      "min": 0,
+      "max": 86400000,
+      "defaultFunc": "customObj && customObj.common && customObj.common.type === 'number' ? instanceObj.native.debounce : 0",
+      "hidden": "true",
       "sm": 6
     },
     "ignoreBelowZero": {
       "type": "checkbox",
       "label": "ignore values below zero",
-      "hidden": "!customObj || !customObj.common || customObj.common.type !== 'number'",
+      "hidden": "true",
       "sm": 6
     }
   }

@@ -98,44 +98,106 @@ function startAdapter(options) {
                 adapter.subscribeForeignStates('*');
             }
 
-            if (obj.common.custom[adapter.namespace].debounce !== undefined && obj.common.custom[adapter.namespace].debounce !== null && obj.common.custom[adapter.namespace].debounce !== '') {
-                obj.common.custom[adapter.namespace].debounce = parseInt(obj.common.custom[adapter.namespace].debounce, 10) || 0;
+            // debounceTime and debounce compatibility handling
+            if (!obj.common.custom[adapter.namespace].blockTime && obj.common.custom[adapter.namespace].blockTime !== '0' && obj.common.custom[adapter.namespace].blockTime !== 0) {
+                if (!obj.common.custom[adapter.namespace].debounce && obj.common.custom[adapter.namespace].debounce !== '0' && obj.common.custom[adapter.namespace].debounce !== 0) {
+                    obj.common.custom[adapter.namespace].blockTime = parseInt(adapter.config.blockTime, 10) || 0;
+                } else {
+                    obj.common.custom[adapter.namespace].blockTime = parseInt(obj.common.custom[adapter.namespace].debounce, 10) || 0;
+                }
             } else {
-                obj.common.custom[adapter.namespace].debounce = adapter.config.debounce;
+                obj.common.custom[adapter.namespace].blockTime = parseInt(obj.common.custom[adapter.namespace].blockTime, 10) || 0;
+            }
+            if (!obj.common.custom[adapter.namespace].debounceTime && obj.common.custom[adapter.namespace].debounceTime !== '0' && obj.common.custom[adapter.namespace].debounceTime !== 0) {
+                obj.common.custom[adapter.namespace].debounceTime = parseInt(adapter.config.debounceTime, 10) || 0;
+            } else {
+                obj.common.custom[adapter.namespace].debounceTime = parseInt(obj.common.custom[adapter.namespace].debounceTime, 10) || 0;
             }
 
+            // changesOnly
             obj.common.custom[adapter.namespace].changesOnly = obj.common.custom[adapter.namespace].changesOnly === 'true' || obj.common.custom[adapter.namespace].changesOnly === true;
-            obj.common.custom[adapter.namespace].ignoreZero  = obj.common.custom[adapter.namespace].ignoreZero === 'true' || obj.common.custom[adapter.namespace].ignoreZero === true;
-            obj.common.custom[adapter.namespace].ignoreBelowZero = obj.common.custom[adapter.namespace].ignoreBelowZero === 'true' || obj.common.custom[adapter.namespace].ignoreBelowZero === true;
 
-            if (obj.common.custom[adapter.namespace].changesRelogInterval !== undefined && obj.common.custom[adapter.namespace].changesRelogInterval !== null && obj.common.custom[adapter.namespace].changesRelogInterval !== '') {
+            // ignoreZero
+            obj.common.custom[adapter.namespace].ignoreZero = obj.common.custom[adapter.namespace].ignoreZero === 'true' || obj.common.custom[adapter.namespace].ignoreZero === true;
+
+            // round
+            if (obj.common.custom[adapter.namespace].round !== null && obj.common.custom[adapter.namespace].round !== undefined && obj.common.custom[adapter.namespace] !== '') {
+                obj.common.custom[adapter.namespace].round = parseInt(obj.common.custom[adapter.namespace], 10);
+                if (!isFinite(obj.common.custom[adapter.namespace].round) || obj.common.custom[adapter.namespace].round < 0) {
+                    obj.common.custom[adapter.namespace].round = adapter.config.round;
+                } else {
+                    obj.common.custom[adapter.namespace].round = Math.pow(10, parseInt(obj.common.custom[adapter.namespace].round, 10));
+                }
+            } else {
+                obj.common.custom[adapter.namespace].round = adapter.config.round;
+            }
+
+            // ignoreAboveNumber
+            if (obj.common.custom[adapter.namespace].ignoreAboveNumber !== undefined && obj.common.custom[adapter.namespace].ignoreAboveNumber !== null && obj.common.custom[adapter.namespace].ignoreAboveNumber !== '') {
+                obj.common.custom[adapter.namespace].ignoreAboveNumber = parseFloat(obj.common.custom[adapter.namespace].ignoreAboveNumber) || null;
+            }
+
+            // ignoreBelowNumber incl. ignoreBelowZero compatibility handling
+            if (obj.common.custom[adapter.namespace].ignoreBelowNumber !== undefined && obj.common.custom[adapter.namespace].ignoreBelowNumber !== null && obj.common.custom[adapter.namespace].ignoreBelowNumber !== '') {
+                obj.common.custom[adapter.namespace].ignoreBelowNumber = parseFloat(obj.common.custom[adapter.namespace].ignoreBelowNumber) || null;
+            } else if (obj.common.custom[adapter.namespace].ignoreBelowZero === 'true' || obj.common.custom[adapter.namespace].ignoreBelowZero === true) {
+                obj.common.custom[adapter.namespace].ignoreBelowNumber = 0;
+            }
+
+            // disableSkippedValueLogging
+            if (obj.common.custom[adapter.namespace].disableSkippedValueLogging !== undefined && obj.common.custom[adapter.namespace].disableSkippedValueLogging !== null && obj.common.custom[adapter.namespace].disableSkippedValueLogging !== '') {
+                obj.common.custom[adapter.namespace].disableSkippedValueLogging = obj.common.custom[adapter.namespace].disableSkippedValueLogging === 'true' || obj.common.custom[adapter.namespace].disableSkippedValueLogging === true;
+            } else {
+                obj.common.custom[adapter.namespace].disableSkippedValueLogging = adapter.config.disableSkippedValueLogging;
+            }
+
+            // enableDebugLogs
+            if (obj.common.custom[adapter.namespace].enableDebugLogs !== undefined && obj.common.custom[adapter.namespace].enableDebugLogs !== null && obj.common.custom[adapter.namespace].enableDebugLogs !== '') {
+                obj.common.custom[adapter.namespace].enableDebugLogs = obj.common.custom[adapter.namespace].enableDebugLogs === 'true' || obj.common.custom[adapter.namespace].enableDebugLogs === true;
+            } else {
+                obj.common.custom[adapter.namespace].enableDebugLogs = adapter.config.enableDebugLogs;
+            }
+
+            // changesRelogInterval
+            if (obj.common.custom[adapter.namespace].changesRelogInterval || obj.common.custom[adapter.namespace].changesRelogInterval === 0) {
                 obj.common.custom[adapter.namespace].changesRelogInterval = parseInt(obj.common.custom[adapter.namespace].changesRelogInterval, 10) || 0;
             } else {
                 obj.common.custom[adapter.namespace].changesRelogInterval = adapter.config.changesRelogInterval;
             }
 
-            if (obj.common.custom[adapter.namespace].changesMinDelta !== undefined && obj.common.custom[adapter.namespace].changesMinDelta !== null && obj.common.custom[adapter.namespace].changesMinDelta !== '') {
+            // changesMinDelta
+            if (obj.common.custom[adapter.namespace].changesMinDelta || obj.common.custom[adapter.namespace].changesMinDelta === 0) {
                 obj.common.custom[adapter.namespace].changesMinDelta = parseFloat(obj.common.custom[adapter.namespace].changesMinDelta.toString().replace(/,/g, '.')) || 0;
             } else {
                 obj.common.custom[adapter.namespace].changesMinDelta = adapter.config.changesMinDelta;
             }
 
-            if (!obj.common.custom[adapter.namespace].storageType) obj.common.custom[adapter.namespace].storageType = false;
+            // storageType
+            if (!obj.common.custom[adapter.namespace].storageType) {
+                obj.common.custom[adapter.namespace].storageType = false;
+            }
+
 
             if (adapter._influxDPs[formerAliasId] && !adapter._influxDPs[formerAliasId].storageTypeAdjustedInternally && adapter._influxDPs[formerAliasId][adapter.namespace] && isEqual(obj.common.custom[adapter.namespace], adapter._influxDPs[formerAliasId][adapter.namespace])) {
-                adapter.log.debug(`Object ${id} unchanged. Ignore`);
+                obj.common.custom[adapter.namespace].enableDebugLogs && adapter.log.debug(`Object ${id} unchanged. Ignore`);
                 return;
+            }
+
+            // relogTimeout
+            if (adapter._influxDPs[formerAliasId] && adapter._influxDPs[formerAliasId].relogTimeout) {
+                clearTimeout(adapter._influxDPs[formerAliasId].relogTimeout);
+                adapter._influxDPs[formerAliasId].relogTimeout = null;
             }
 
             const state = adapter._influxDPs[formerAliasId] ? adapter._influxDPs[formerAliasId].state : null;
             const skipped = adapter._influxDPs[formerAliasId] ? adapter._influxDPs[formerAliasId].skipped : null;
+            const timeout = adapter._influxDPs[formerAliasId] ? adapter._influxDPs[formerAliasId].timeout : null;
 
             adapter._influxDPs[id] = obj.common.custom;
             adapter._influxDPs[id].realId = realId;
             adapter._influxDPs[id].state = state;
             adapter._influxDPs[id].skipped = skipped;
-
-            adapter._influxDPs[formerAliasId] && adapter._influxDPs[formerAliasId].relogTimeout && clearTimeout(adapter._influxDPs[formerAliasId].relogTimeout);
+            adapter._influxDPs[id].timeout = timeout;
 
             writeInitialValue(adapter, realId, id);
 
@@ -148,7 +210,7 @@ function startAdapter(options) {
 
             id = formerAliasId;
 
-            if (adapter._influxDPs[id]) {
+            if (adapter._influxDPs[id] && adapter._influxDPs[id][adapter.namespace]) {
                 adapter._influxDPs[id].relogTimeout && clearTimeout(adapter._influxDPs[id].relogTimeout);
                 adapter._influxDPs[id].timeout && clearTimeout(adapter._influxDPs[id].timeout);
 
@@ -233,7 +295,11 @@ function ping(adapter) {
 }
 
 function connect(adapter) {
-    adapter.log.info(`Connecting ${adapter.config.protocol}://${adapter.config.host}:${adapter.config.port} ...`);
+    if (adapter.config.path.startsWith('/')) {
+        adapter.config.path = adapter.config.path.substring(1);
+    }
+
+    adapter.log.info(`Connecting ${adapter.config.protocol}://${adapter.config.host}:${adapter.config.port}/${adapter.config.dbversion === '2.x' ? adapter.config.path || '' : ''} ...`);
 
     adapter.config.dbname = adapter.config.dbname || appName;
     adapter.config.validateSSL = adapter.config.validateSSL !== undefined ? !!adapter.config.validateSSL :  true;
@@ -253,6 +319,7 @@ function connect(adapter) {
                 adapter.config.host,
                 adapter.config.port, // optional, default 8086
                 adapter.config.protocol, // optional, default 'http'
+                adapter.config.path, // optional, default '/'
                 adapter.config.token,
                 adapter.config.organization,
                 adapter.config.dbname,
@@ -513,6 +580,15 @@ function processMessage(adapter, msg) {
     else if (msg.command === 'resetConflictingPoints') {
         resetConflictingPoints(adapter, msg);
     }
+    else if (msg.command === 'flushBuffer') {
+        const id = msg.message ? msg.message.id : undefined;
+        adapter.log.debug(`Flushing buffer for ${id || 'all'}`);
+        storeBufferedSeries(adapter, id, error => {
+            if (msg.callback) {
+                adapter.sendTo(msg.from, msg.command, {error}, msg.callback);
+            }
+        });
+    }
     else if (msg.command === 'enableHistory') {
         enableHistory(adapter, msg);
     }
@@ -567,8 +643,14 @@ function main(adapter) {
     adapter.config.reconnectInterval = parseInt(adapter.config.reconnectInterval, 10) || 10000;
     adapter.config.pingInterval      = parseInt(adapter.config.pingInterval, 10) || 15000;
 
-    if (adapter.config.round !== null && adapter.config.round !== undefined) {
-        adapter.config.round = Math.pow(10, parseInt(adapter.config.round, 10));
+    if (adapter.config.round !== null && adapter.config.round !== undefined && adapter.config.round !== '') {
+        adapter.config.round = parseInt(adapter.config.round, 10);
+        if (!isFinite(adapter.config.round) || adapter.config.round < 0) {
+            adapter.config.round = null;
+            adapter.log.info(`Invalid round value: ${adapter.config.round} - ignore, do not round values`);
+        } else {
+            adapter.config.round = Math.pow(10, parseInt(adapter.config.round, 10));
+        }
     } else {
         adapter.config.round = null;
     }
@@ -586,6 +668,27 @@ function main(adapter) {
         adapter.config.changesMinDelta = parseFloat(adapter.config.changesMinDelta.toString().replace(/,/g, '.'));
     } else {
         adapter.config.changesMinDelta = 0;
+    }
+
+    if (adapter.config.blockTime !== null && adapter.config.blockTime !== undefined) {
+        adapter.config.blockTime = parseInt(adapter.config.blockTime, 10) || 0;
+    } else {
+        if (adapter.config.debounce !== null && adapter.config.debounce !== undefined) {
+            adapter.config.debounce = parseInt(adapter.config.debounce, 10) || 0;
+        } else {
+            adapter.config.blockTime = 0;
+        }
+    }
+
+    if (adapter.config.debounceTime !== null && adapter.config.debounceTime !== undefined) {
+        adapter.config.debounceTime = parseInt(adapter.config.debounceTime, 10) || 0;
+    } else {
+        adapter.config.debounceTime = 0;
+    }
+
+    adapter.config.retention = parseInt(adapter.config.retention, 10) || 0;
+    if (adapter.config.retention === -1 ) { // Custom timeframe
+        adapter.config.retention = (parseInt(adapter.config.customRetentionDuration, 10) || 0) * 24 * 60 * 60;
     }
 
     // analyse if by the last stop the values were cached into file
@@ -628,15 +731,62 @@ function main(adapter) {
                         count++;
                         adapter.log.info(`enabled logging of ${id}, Alias=${id !== realId}, ${count} points now activated`);
 
-                        if (adapter._influxDPs[id][adapter.namespace].debounce !== undefined && adapter._influxDPs[id][adapter.namespace].debounce !== null && adapter._influxDPs[id][adapter.namespace].debounce !== '') {
-                            adapter._influxDPs[id][adapter.namespace].debounce = parseInt(adapter._influxDPs[id][adapter.namespace].debounce, 10) || 0;
+                        // debounceTime and debounce compatibility handling
+                        if (!adapter._influxDPs[id][adapter.namespace].blockTime && adapter._influxDPs[id][adapter.namespace].blockTime !== '0' && adapter._influxDPs[id][adapter.namespace].blockTime !== 0) {
+                            if (!adapter._influxDPs[id][adapter.namespace].debounce && adapter._influxDPs[id][adapter.namespace].debounce !== '0' && adapter._influxDPs[id][adapter.namespace].debounce !== 0) {
+                                adapter._influxDPs[id][adapter.namespace].blockTime = parseInt(adapter.config.blockTime, 10) || 0;
+                            } else {
+                                adapter._influxDPs[id][adapter.namespace].blockTime = parseInt(adapter._influxDPs[id][adapter.namespace].debounce, 10) || 0;
+                            }
                         } else {
-                            adapter._influxDPs[id][adapter.namespace].debounce = adapter.config.debounce;
+                            adapter._influxDPs[id][adapter.namespace].blockTime = parseInt(adapter._influxDPs[id][adapter.namespace].blockTime, 10) || 0;
+                        }
+                        if (!adapter._influxDPs[id][adapter.namespace].debounceTime && adapter._influxDPs[id][adapter.namespace].debounceTime !== '0' && adapter._influxDPs[id][adapter.namespace].debounceTime !== 0) {
+                            adapter._influxDPs[id][adapter.namespace].debounceTime = parseInt(adapter.config.debounceTime, 10) || 0;
+                        } else {
+                            adapter._influxDPs[id][adapter.namespace].debounceTime = parseInt(adapter._influxDPs[id][adapter.namespace].debounceTime, 10) || 0;
                         }
 
                         adapter._influxDPs[id][adapter.namespace].changesOnly   = adapter._influxDPs[id][adapter.namespace].changesOnly   === 'true' || adapter._influxDPs[id][adapter.namespace].changesOnly === true;
                         adapter._influxDPs[id][adapter.namespace].ignoreZero    = adapter._influxDPs[id][adapter.namespace].ignoreZero    === 'true' || adapter._influxDPs[id][adapter.namespace].ignoreZero  === true;
-                        adapter._influxDPs[id][adapter.namespace].ignoreBelowZero = adapter._influxDPs[id][adapter.namespace].ignoreBelowZero === 'true' || adapter._influxDPs[id][adapter.namespace].ignoreBelowZero === true;
+
+                        // round
+                        if (adapter._influxDPs[id][adapter.namespace].round !== null && adapter._influxDPs[id][adapter.namespace].round !== undefined && adapter._influxDPs[id][adapter.namespace] !== '') {
+                            adapter._influxDPs[id][adapter.namespace].round = parseInt(adapter._influxDPs[id][adapter.namespace], 10);
+                            if (!isFinite(adapter._influxDPs[id][adapter.namespace].round) || adapter._influxDPs[id][adapter.namespace].round < 0) {
+                                adapter._influxDPs[id][adapter.namespace].round = adapter.config.round;
+                            } else {
+                                adapter._influxDPs[id][adapter.namespace].round = Math.pow(10, parseInt(adapter._influxDPs[id][adapter.namespace].round, 10));
+                            }
+                        } else {
+                            adapter._influxDPs[id][adapter.namespace].round = adapter.config.round;
+                        }
+
+                        // ignoreAboveNumber
+                        if (adapter._influxDPs[id][adapter.namespace].ignoreAboveNumber !== undefined && adapter._influxDPs[id][adapter.namespace].ignoreAboveNumber !== null && adapter._influxDPs[id][adapter.namespace].ignoreAboveNumber !== '') {
+                            adapter._influxDPs[id][adapter.namespace].ignoreAboveNumber = parseFloat(adapter._influxDPs[id][adapter.namespace].ignoreAboveNumber) || null;
+                        }
+
+                        // ignoreBelowNumber and ignoreBelowZero compatibility handling
+                        if (adapter._influxDPs[id][adapter.namespace].ignoreBelowNumber !== undefined && adapter._influxDPs[id][adapter.namespace].ignoreBelowNumber !== null && adapter._influxDPs[id][adapter.namespace].ignoreBelowNumber !== '') {
+                            adapter._influxDPs[id][adapter.namespace].ignoreBelowNumber = parseFloat(adapter._influxDPs[id][adapter.namespace].ignoreBelowNumber) || null;
+                        } else if (adapter._influxDPs[id][adapter.namespace].ignoreBelowZero === 'true' || adapter._influxDPs[id][adapter.namespace].ignoreBelowZero === true) {
+                            adapter._influxDPs[id][adapter.namespace].ignoreBelowNumber = 0;
+                        }
+
+                        // disableSkippedValueLogging
+                        if (adapter._influxDPs[id][adapter.namespace].disableSkippedValueLogging !== undefined && adapter._influxDPs[id][adapter.namespace].disableSkippedValueLogging !== null && adapter._influxDPs[id][adapter.namespace].disableSkippedValueLogging !== '') {
+                            adapter._influxDPs[id][adapter.namespace].disableSkippedValueLogging = adapter._influxDPs[id][adapter.namespace].disableSkippedValueLogging === 'true' || adapter._influxDPs[id][adapter.namespace].disableSkippedValueLogging === true;
+                        } else {
+                            adapter._influxDPs[id][adapter.namespace].disableSkippedValueLogging = adapter.config.disableSkippedValueLogging;
+                        }
+
+                        // enableDebugLogs
+                        if (adapter._influxDPs[id][adapter.namespace].enableDebugLogs !== undefined && adapter._influxDPs[id][adapter.namespace].enableDebugLogs !== null && adapter._influxDPs[id][adapter.namespace].enableDebugLogs !== '') {
+                            adapter._influxDPs[id][adapter.namespace].enableDebugLogs = adapter._influxDPs[id][adapter.namespace].enableDebugLogs === 'true' || adapter._influxDPs[id][adapter.namespace].enableDebugLogs === true;
+                        } else {
+                            adapter._influxDPs[id][adapter.namespace].enableDebugLogs = adapter.config.enableDebugLogs;
+                        }
 
                         if (adapter._influxDPs[id][adapter.namespace].changesRelogInterval !== undefined && adapter._influxDPs[id][adapter.namespace].changesRelogInterval !== null && adapter._influxDPs[id][adapter.namespace].changesRelogInterval !== '') {
                             adapter._influxDPs[id][adapter.namespace].changesRelogInterval = parseInt(adapter._influxDPs[id][adapter.namespace].changesRelogInterval, 10) || 0;
@@ -710,36 +860,86 @@ function pushHistory(adapter, id, state, timerRelog) {
         }
 
         if (typeof state.val === 'string' && settings.storageType !== 'String') {
-            const f = parseFloat(state.val);
-            if (f == state.val) {
-                state.val = f;
+            if (isFinite(state.val)) {
+                state.val = parseFloat(state.val);
             }
         }
-        if (adapter._influxDPs[id].state && settings.changesOnly && !timerRelog) {
-            if (settings.changesRelogInterval === 0) {
-                if (state.ts !== state.lc) {
-                    adapter._influxDPs[id].skipped = state; // remember new timestamp
-                    adapter.log.debug(`value not changed ${id}, last-value=${adapter._influxDPs[id].state.val}, new-value=${state.val}, ts=${state.ts}`);
-                    return;
-                }
-            } else if (adapter._influxDPs[id].lastLogTime) {
-                if ((state.ts !== state.lc) && (Math.abs(adapter._influxDPs[id].lastLogTime - state.ts) < settings.changesRelogInterval * 1000)) {
-                    adapter.log.debug(`value not changed ${id}, last-value=${adapter._influxDPs[id].state.val}, new-value=${state.val}, ts=${state.ts}`);
-                    adapter._influxDPs[id].skipped = state; // remember new timestamp
-                    return;
-                }
-                if (state.ts !== state.lc) {
-                    adapter.log.debug(`value-changed-relog ${id}, value=${state.val}, lastLogTime=${adapter._influxDPs[id].lastLogTime}, ts=${state.ts}`);
-                }
-            }
-            if (settings.changesMinDelta !== 0 && typeof state.val === 'number' && Math.abs(adapter._influxDPs[id].state.val - state.val) < settings.changesMinDelta) {
-                adapter.log.debug(`Min-Delta not reached ${id}, last-value=${adapter._influxDPs[id].state.val}, new-value=${state.val}, ts=${state.ts}`);
-                adapter._influxDPs[id].skipped = state; // remember new timestamp
+
+        settings.enableDebugLogs && adapter.log.debug(`new value received for ${id} (storageType ${settings.storageType}), new-value=${state.val}, ts=${state.ts}, relog=${timerRelog}`);
+
+        let ignoreDebonce = false;
+
+        if (!timerRelog) {
+            const valueUnstable = !!adapter._influxDPs[id].timeout;
+            // When a debounce timer runs and the value is the same as the last one, ignore it
+            if (adapter._influxDPs[id].timeout && state.ts !== state.lc) {
+                settings.enableDebugLogs && adapter.log.debug(`value not changed debounce ${id}, value=${state.val}, ts=${state.ts}, debounce timer keeps running`);
                 return;
-            } else if (typeof state.val === 'number') {
-                adapter.log.debug(`Min-Delta reached ${id}, last-value=${adapter._influxDPs[id].state.val}, new-value=${state.val}, ts=${state.ts}`);
-            } else {
-                adapter.log.debug(`Min-Delta ignored because no number ${id}, last-value=${adapter._influxDPs[id].state.val}, new-value=${state.val}, ts=${state.ts}`);
+            } else if (adapter._influxDPs[id].timeout) { // if value changed, clear timer
+                settings.enableDebugLogs && adapter.log.debug(`value changed during debounce time ${id}, value=${state.val}, ts=${state.ts}, debounce timer restarted`);
+                clearTimeout(adapter._influxDPs[id].timeout);
+                adapter._influxDPs[id].timeout = null;
+            }
+
+            if (!valueUnstable && settings.blockTime && adapter._influxDPs[id].state && (adapter._influxDPs[id].state.ts + settings.blockTime) > state.ts) {
+                settings.enableDebugLogs && adapter.log.debug(`value ignored blockTime ${id}, value=${state.val}, ts=${state.ts}, lastState.ts=${adapter._influxDPs[id].state.ts}, blockTime=${settings.blockTime}`);
+                return;
+            }
+
+            if (settings.ignoreZero && (state.val === undefined || state.val === null || state.val === 0)) {
+                settings.enableDebugLogs && adapter.log.debug(`value ignore because zero or null ${id}, new-value=${state.val}, ts=${state.ts}`);
+                return;
+            } else
+            if (typeof settings.ignoreBelowNumber === 'number' && typeof state.val === 'number' && state.val < settings.ignoreBelowNumber) {
+                settings.enableDebugLogs && adapter.log.debug(`value ignored because below ${settings.ignoreBelowNumber} for ${id}, new-value=${state.val}, ts=${state.ts}`);
+                return;
+            }
+            if (typeof settings.ignoreAboveNumber === 'number' && typeof state.val === 'number' && state.val > settings.ignoreAboveNumber) {
+                settings.enableDebugLogs && adapter.log.debug(`value ignored because above ${settings.ignoreAboveNumber} for ${id}, new-value=${state.val}, ts=${state.ts}`);
+                return;
+            }
+
+            if (adapter._influxDPs[id].state && settings.changesOnly) {
+                if (settings.changesRelogInterval === 0) {
+                    if ((adapter._influxDPs[id].state.val !== null || state.val === null) && state.ts !== state.lc) {
+                        // remember new timestamp
+                        if (!valueUnstable && !settings.disableSkippedValueLogging) {
+                            adapter._influxDPs[id].skipped = state;
+                        }
+                        settings.enableDebugLogs && adapter.log.debug(`value not changed ${id}, last-value=${adapter._influxDPs[id].state.val}, new-value=${state.val}, ts=${state.ts}`);
+                        return;
+                    }
+                } else if (adapter._influxDPs[id].lastLogTime) {
+                    if ((adapter._influxDPs[id].state.val !== null || state.val === null) && (state.ts !== state.lc) && (Math.abs(adapter._influxDPs[id].lastLogTime - state.ts) < settings.changesRelogInterval * 1000)) {
+                        // remember new timestamp
+                        if (!valueUnstable && !settings.disableSkippedValueLogging) {
+                            adapter._influxDPs[id].skipped = state;
+                        }
+                        settings.enableDebugLogs && adapter.log.debug(`value not changed ${id}, last-value=${adapter._influxDPs[id].state.val}, new-value=${state.val}, ts=${state.ts}`);
+                        return;
+                    }
+                    if (state.ts !== state.lc) {
+                        settings.enableDebugLogs && adapter.log.debug(`value-not-changed-relog ${id}, value=${state.val}, lastLogTime=${adapter._influxDPs[id].lastLogTime}, ts=${state.ts}`);
+                        ignoreDebonce = true;
+                    }
+                }
+                if (typeof state.val === 'number') {
+                    if (
+                        adapter._influxDPs[id].state.val !== null &&
+                        settings.changesMinDelta !== 0 &&
+                        Math.abs(adapter._influxDPs[id].state.val - state.val) < settings.changesMinDelta
+                    ) {
+                        if (!valueUnstable && !settings.disableSkippedValueLogging) {
+                            adapter._influxDPs[id].skipped = state;
+                        }
+                        settings.enableDebugLogs && adapter.log.debug(`Min-Delta not reached ${id}, last-value=${adapter._influxDPs[id].state.val}, new-value=${state.val}, ts=${state.ts}`);
+                        return;
+                    } else if (settings.changesMinDelta !== 0) {
+                        settings.enableDebugLogs && adapter.log.debug(`Min-Delta reached ${id}, last-value=${adapter._influxDPs[id].state.val}, new-value=${state.val}, ts=${state.ts}`);
+                    }
+                } else {
+                    settings.enableDebugLogs && adapter.log.debug(`Min-Delta ignored because no number ${id}, last-value=${adapter._influxDPs[id].state.val}, new-value=${state.val}, ts=${state.ts}`);
+                }
             }
         }
 
@@ -747,40 +947,49 @@ function pushHistory(adapter, id, state, timerRelog) {
             clearTimeout(adapter._influxDPs[id].relogTimeout);
             adapter._influxDPs[id].relogTimeout = null;
         }
-        if (settings.changesRelogInterval > 0) {
-            adapter._influxDPs[id].relogTimeout = setTimeout(() => reLogHelper(adapter, id), settings.changesRelogInterval * 1000);
-        }
-
-        let ignoreDebounce = false;
         if (timerRelog) {
+            state = Object.assign({}, state);
             state.ts = Date.now();
             state.from = `system.adapter.${adapter.namespace}`;
-            adapter.log.debug(`timed-relog ${id}, value=${state.val}, lastLogTime=${adapter._influxDPs[id].lastLogTime}, ts=${state.ts}`);
-            ignoreDebounce = true;
+            settings.enableDebugLogs && adapter.log.debug(`timed-relog ${id}, value=${state.val}, lastLogTime=${adapter._influxDPs[id].lastLogTime}, ts=${state.ts}`);
+            ignoreDebonce = true;
         } else {
             if (settings.changesOnly && adapter._influxDPs[id].skipped) {
-                adapter._influxDPs[id].state = adapter._influxDPs[id].skipped;
-                pushHelper(adapter, id);
+                settings.enableDebugLogs && adapter.log.debug(`Skipped value logged ${id}, value=${adapter._influxDPs[id].skipped.val}, ts=${adapter._influxDPs[id].skipped.ts}`);
+                pushHelper(adapter, id, adapter._influxDPs[id].skipped);
+                adapter._influxDPs[id].skipped = null;
             }
             if (adapter._influxDPs[id].state && ((adapter._influxDPs[id].state.val === null && state.val !== null) || (adapter._influxDPs[id].state.val !== null && state.val === null))) {
-                ignoreDebounce = true;
+                ignoreDebonce = true;
             } else if (!adapter._influxDPs[id].state && state.val === null) {
-                ignoreDebounce = true;
+                ignoreDebonce = true;
             }
-
-            // only store state if really changed
-            adapter._influxDPs[id].state = state;
         }
 
-        adapter._influxDPs[id].lastLogTime = state.ts;
-        adapter._influxDPs[id].skipped = null;
-
-        if (settings.debounce && !ignoreDebounce) {
+        if (settings.debounceTime && !ignoreDebonce && !timerRelog) {
             // Discard changes in de-bounce time to store last stable value
             adapter._influxDPs[id].timeout && clearTimeout(adapter._influxDPs[id].timeout);
-            adapter._influxDPs[id].timeout = setTimeout(() => pushHelper(adapter, id), settings.debounce);
+            adapter._influxDPs[id].timeout = setTimeout((id, state) => {
+                adapter._influxDPs[id].timeout = null;
+                adapter._influxDPs[id].state = state;
+                adapter._influxDPs[id].lastLogTime = state.ts;
+                settings.enableDebugLogs && adapter.log.debug(`Value logged ${id}, value=${adapter._influxDPs[id].state.val}, ts=${adapter._influxDPs[id].state.ts}`);
+                pushHelper(adapter, id);
+                if (settings.changesRelogInterval > 0) {
+                    adapter._influxDPs[id].relogTimeout = setTimeout(reLogHelper, settings.changesRelogInterval * 1000, adapter, id);
+                }
+            }, settings.debounceTime, id, state);
         } else {
-            pushHelper(adapter, id);
+            if (!timerRelog) {
+                adapter._influxDPs[id].state = state;
+            }
+            adapter._influxDPs[id].lastLogTime = state.ts;
+
+            settings.enableDebugLogs && adapter.log.debug(`Value logged ${id}, value=${adapter._influxDPs[id].state.val}, ts=${adapter._influxDPs[id].state.ts}`);
+            pushHelper(adapter, id, state);
+            if (settings.changesRelogInterval > 0) {
+                adapter._influxDPs[id].relogTimeout = setTimeout(reLogHelper, settings.changesRelogInterval * 1000, adapter, id);
+            }
         }
     }
 }
@@ -791,14 +1000,12 @@ function reLogHelper(adapter, _id) {
         return;
     }
     adapter._influxDPs[_id].relogTimeout = null;
+    adapter._influxDPs[_id].relogTimeout = null;
     if (adapter._influxDPs[_id].skipped) {
-        adapter._influxDPs[_id].state = adapter._influxDPs[_id].skipped;
-        adapter._influxDPs[_id].state.from = `system.adapter.${adapter.namespace}`;
-        adapter._influxDPs[_id].skipped = null;
+        pushHistory(adapter, _id, adapter._influxDPs[_id].skipped, true);
+    } else if (adapter._influxDPs[_id].state) {
         pushHistory(adapter, _id, adapter._influxDPs[_id].state, true);
-    }
-    else {
-        adapter.getForeignState(adapter._influxDPs[_id].realId, (err, state) => {
+    } else {        adapter.getForeignState(adapter._influxDPs[_id].realId, (err, state) => {
             if (err) {
                 adapter.log.info(`init timed Relog: can not get State for ${_id}: ${err}`);
             } else if (!state) {
@@ -812,60 +1019,57 @@ function reLogHelper(adapter, _id) {
     }
 }
 
-function pushHelper(adapter, _id, cb) {
-    if (!adapter._influxDPs[_id] || !adapter._influxDPs[_id].state || !adapter._influxDPs[_id][adapter.namespace]) {
+function pushHelper(adapter, _id, state, cb) {
+    if (!adapter._influxDPs[_id] || !adapter._influxDPs[_id][adapter.namespace] || (!adapter._influxDPs[_id].state && !state)) {
         return cb && setImmediate(cb, `ID ${_id} not activated for logging`);
     }
+    if (!state) {
+        state = adapter._influxDPs[_id].state;
+    }
+
     const _settings = adapter._influxDPs[_id][adapter.namespace];
-    // if it was not deleted in this time
-    adapter._influxDPs[_id].timeout = null;
 
-    if (adapter._influxDPs[_id].state.val === null) { // InfluxDB can not handle null values
+    if (state.val === null) { // InfluxDB can not handle null values
         return cb && setImmediate(cb, `null value for ${_id} can not be handled`);
     }
-    if (adapter._influxDPs[_id].state.val === null) { // InfluxDB can not handle null values
-        return cb && setImmediate(cb, `null value for ${_id} can not be handled`);
-    }
-    if (typeof adapter._influxDPs[_id].state.val === 'number' && !isFinite(adapter._influxDPs[_id].state.val)) { // InfluxDB can not handle Infinite values
-        return cb && setImmediate(cb, `Non Finite value ${adapter._influxDPs[_id].state.val} for ${_id} can not be handled`);
+    if (typeof state.val === 'number' && !isFinite(state.val)) { // InfluxDB can not handle Infinite values
+        return cb && setImmediate(cb, `Non Finite value ${state.val} for ${_id} can not be handled`);
     }
 
-    if (typeof adapter._influxDPs[_id].state.val === 'object') {
-        adapter._influxDPs[_id].state.val = JSON.stringify(adapter._influxDPs[_id].state.val);
+    if (state.val !== null && (typeof state.val === 'object' || typeof state.val === 'undefined')) {
+        state.val = JSON.stringify(state.val);
     }
 
-    adapter.log.debug(`Datatype ${_id}: Currently: ${typeof adapter._influxDPs[_id].state.val}, StorageType: ${_settings.storageType}`);
-    if (typeof adapter._influxDPs[_id].state.val === 'string' && _settings.storageType !== 'String') {
-        adapter.log.debug(`Do Automatic Datatype conversion for ${_id}`);
-        const f = parseFloat(adapter._influxDPs[_id].state.val);
-        if (f == adapter._influxDPs[_id].state.val) {
-            adapter._influxDPs[_id].state.val = f;
-        } else if (adapter._influxDPs[_id].state.val === 'true') {
-            adapter._influxDPs[_id].state.val = true;
-        } else if (adapter._influxDPs[_id].state.val === 'false') {
-            adapter._influxDPs[_id].state.val = false;
+    _settings.enableDebugLogs && adapter.log.debug(`Datatype ${_id}: Currently: ${typeof state.val}, StorageType: ${_settings.storageType}`);
+    if (typeof state.val === 'string' && _settings.storageType !== 'String') {
+        _settings.enableDebugLogs && adapter.log.debug(`Do Automatic Datatype conversion for ${_id}`);
+        if (isFinite(state.val)) {
+            state.val = parseFloat(state.val);
+        } else if (state.val === 'true') {
+            state.val = true;
+        } else if (state.val === 'false') {
+            state.val = false;
         }
     }
-    if (_settings.storageType === 'String' && typeof adapter._influxDPs[_id].state.val !== 'string') {
-        adapter._influxDPs[_id].state.val = adapter._influxDPs[_id].state.val.toString();
+    if (_settings.storageType === 'String' && typeof state.val !== 'string') {
+        state.val = state.val.toString();
     }
-    else if (_settings.storageType === 'Number' && typeof adapter._influxDPs[_id].state.val !== 'number') {
-        if (typeof adapter._influxDPs[_id].state.val === 'boolean') {
-            adapter._influxDPs[_id].state.val = adapter._influxDPs[_id].state.val?1:0;
+    else if (_settings.storageType === 'Number' && typeof state.val !== 'number') {
+        if (typeof state.val === 'boolean') {
+            state.val = state.val ? 1 : 0;
         }
         else {
-            adapter.log.info(`Do not store value "${adapter._influxDPs[_id].state.val}" for ${_id} because no number`);
+            adapter.log.info(`Do not store value "${state.val}" for ${_id} because no number`);
             return cb && setImmediate(cb, `do not store value for ${_id} because no number`);
         }
     }
-    else if (_settings.storageType === 'Boolean' && typeof adapter._influxDPs[_id].state.val !== 'boolean') {
-        adapter._influxDPs[_id].state.val = !!adapter._influxDPs[_id].state.val;
+    else if (_settings.storageType === 'Boolean' && typeof state.val !== 'boolean') {
+        state.val = !!state.val;
     }
-    pushValueIntoDB(adapter, _id, adapter._influxDPs[_id].state, () =>
-        cb && setImmediate(cb));
+    pushValueIntoDB(adapter, _id, state, false,() => cb && setImmediate(cb));
 }
 
-function pushValueIntoDB(adapter, id, state, cb) {
+function pushValueIntoDB(adapter, id, state, directWrite, cb) {
     if (!adapter._client) {
         adapter.log.warn('No connection to DB');
         return cb && cb('No connection to DB');
@@ -878,19 +1082,7 @@ function pushValueIntoDB(adapter, id, state, cb) {
         return cb && cb(`InfluxDB can not handle non finite values like ${state.val}`);
     }
 
-    if (adapter._influxDPs[id] && adapter._influxDPs[id][adapter.namespace] && adapter._influxDPs[id][adapter.namespace].ignoreZero && state.val === 0) {
-        adapter.log.debug(`pushValueIntoDB called for ${id} was ignored because the value zero or null`);
-        return cb && cb();
-    } else
-    if (state && adapter._influxDPs[id] && adapter._influxDPs[id][adapter.namespace] && adapter._influxDPs[id][adapter.namespace].ignoreBelowZero && typeof state.val === 'number' && state.val < 0) {
-        adapter.log.debug(`pushValueIntoDB called for ${id} and state: ${JSON.stringify(state)} was ignored because the value is below 0`);
-        return cb && cb();
-    }
-
     state.ts = parseInt(state.ts, 10);
-
-    // if less 2000.01.01 00:00:00
-    if (state.ts < 946681200000) state.ts *= 1000;
 
     if (typeof state.val === 'object') {
         state.val = JSON.stringify(state.val);
@@ -916,7 +1108,7 @@ function pushValueIntoDB(adapter, id, state, cb) {
         ack:   !!state.ack
     };
 
-    if ((adapter._conflictingPoints[id] || adapter.config.seriesBufferMax === 0) && (adapter._connected && adapter._client.request && adapter._client.request.getHostsAvailable().length > 0)) {
+    if ((adapter._conflictingPoints[id] || adapter.config.seriesBufferMax === 0 || directWrite) && (adapter._connected && adapter._client.request && adapter._client.request.getHostsAvailable().length > 0)) {
         if (adapter.config.seriesBufferMax !== 0) {
             adapter.log.debug(`Direct writePoint("${id} - ${influxFields.value} / ${influxFields.time}")`);
         }
@@ -954,22 +1146,22 @@ function storeBufferedSeries(adapter, id, cb) {
         id = null;
     }
     if (id && (!adapter._seriesBuffer[id] || !adapter._seriesBuffer[id].length)) {
-        return cb && cb();
+        return cb && cb(null, 0);
     }
     if (Object.keys(adapter._seriesBuffer).length === 0) {
-        return cb && cb();
+        return cb && cb(null, 0);
     }
 
     if (!adapter._client || adapter._client.request.getHostsAvailable().length === 0) {
         setConnected(adapter, false);
-        adapter.log.info('Currently no hosts available, try later');
+        adapter.log.info('Currently no hosts available, try later', 0);
         adapter._seriesBufferFlushPlanned = false;
-        return cb && cb('Currently no hosts available, try later');
+        return cb && cb('Currently no hosts available, try later', 0);
     }
     if (!adapter._connected) {
-        adapter.log.info('Not connected to InfluxDB, try later');
+        adapter.log.info('Not connected to InfluxDB, try later', 0);
         adapter._seriesBufferFlushPlanned = false;
-        return cb && cb('Not connected to InfluxDB, try later');
+        return cb && cb('Not connected to InfluxDB, try later', 0);
     }
 
     if (id) {
@@ -977,11 +1169,14 @@ function storeBufferedSeries(adapter, id, cb) {
         adapter._seriesBuffer[id] = [];
         adapter.log.debug(`Store ${idSeries.length} buffered influxDB history points for ${id}`);
         adapter._seriesBufferCounter -= idSeries.length;
-        writeSeriesPerID(adapter, id, idSeries, cb);
+        writeSeriesPerID(adapter, id, idSeries, err => cb && cb(err, idSeries.length));
         return;
     }
 
-    adapter._seriesBufferChecker && clearInterval(adapter._seriesBufferChecker);
+    if (adapter._seriesBufferChecker) {
+        clearInterval(adapter._seriesBufferChecker);
+        adapter._seriesBufferChecker = null;
+    }
 
     adapter.log.info(`Store ${adapter._seriesBufferCounter} buffered influxDB history points`);
 
@@ -989,9 +1184,9 @@ function storeBufferedSeries(adapter, id, cb) {
     if (adapter._seriesBufferCounter > 15000) {
         // if we have too many data points in buffer; we better writer them per id
         adapter.log.info(`Too many data points (${adapter._seriesBufferCounter}) to write at once; write per ID`);
-        writeAllSeriesPerID(adapter, currentBuffer, cb);
+        writeAllSeriesPerID(adapter, currentBuffer, err => cb && cb(err, adapter._seriesBufferCounter));
     } else {
-        writeAllSeriesAtOnce(adapter, currentBuffer, cb);
+        writeAllSeriesAtOnce(adapter, currentBuffer, err => cb && cb(err, adapter._seriesBufferCounter));
     }
     adapter._seriesBuffer = {};
     adapter._seriesBufferCounter = 0;
@@ -1044,7 +1239,7 @@ function writeAllSeriesPerID(adapter, series, cb, idList) {
 
 function writeSeriesPerID(adapter, seriesId, points, cb) {
     if (!points.length) {
-        return cb && cb();
+        return cb && setImmediate(cb);
     }
     adapter.log.debug(`writePoints ${points.length} for ${seriesId} at once`);
 
@@ -1111,6 +1306,7 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
             } else if (err.message && typeof err.message === 'string' && err.message.includes('field type conflict')) {
                 // retry write after type correction for some easy cases
                 let retry = false;
+                let adjustType = false;
                 if (adapter._influxDPs[pointId] && adapter._influxDPs[pointId][adapter.namespace] && !adapter._influxDPs[pointId][adapter.namespace].storageType) {
                     let convertDirection = '';
                     if (err.message.includes('is type bool, already exists as type float') ||
@@ -1124,6 +1320,7 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
                             point.value = 0;
                             retry = true;
                         }
+                        adjustType = true;
                         adapter._influxDPs[pointId][adapter.namespace].storageType = 'Number';
                         adapter._influxDPs[pointId].storageTypeAdjustedInternally = true;
                     }
@@ -1138,18 +1335,30 @@ function writeOnePointForID(adapter, pointId, point, directWrite, cb) {
                             point.value = false;
                             retry = true;
                         }
+                        adjustType = true;
                         adapter._influxDPs[pointId][adapter.namespace].storageType = 'Boolean';
                         adapter._influxDPs[pointId].storageTypeAdjustedInternally = true;
                     }
                     else if (err.message.includes(', already exists as type string')) {
                         point.value = point.value.toString();
                         retry = true;
+                        adjustType = true;
                         adapter._influxDPs[pointId][adapter.namespace].storageType = 'String';
+                        adapter._influxDPs[pointId].storageTypeAdjustedInternally = true;
+                    } else if (err.message.includes('is type string, already exists as type float')) {
+                        if (isFinite(point.value)) {
+                            point.value = parseFloat(point.value);
+                            retry = true;
+                        }
+                        adjustType = true;
+                        adapter._influxDPs[pointId][adapter.namespace].storageType = 'Number';
                         adapter._influxDPs[pointId].storageTypeAdjustedInternally = true;
                     }
                     if (retry) {
                         adapter.log.info(`Try to convert ${convertDirection} and re-write for ${pointId} and set storageType to ${adapter._influxDPs[pointId][adapter.namespace].storageType}`);
                         writeOnePointForID(adapter, pointId, point, true, cb);
+                    }
+                    if (adjustType) {
                         const obj = {};
                         obj.common = {};
                         obj.common.custom = {};
@@ -1418,8 +1627,7 @@ function update(adapter, id, state, cb) {
                             adapter.log.error(`Cannot delete value for ${id}: ${JSON.stringify(state)}`);
                             cb && cb(err);
                         } else {
-                            pushValueIntoDB(adapter, id, stored);
-                            cb && cb();
+                            pushValueIntoDB(adapter, id, stored, true, cb);
                         }
                     });
                 } else {
@@ -1588,10 +1796,9 @@ function finish(adapter, callback) {
         }
         const state = adapter._influxDPs[id].state ? tmpState : null;
 */
-        if (adapter._influxDPs[id].skipped) {
+        if (adapter._influxDPs[id].skipped && !(adapter._influxDPs[id][adapter.namespace] && adapter._influxDPs[id][adapter.namespace].disableSkippedValueLogging)) {
             count++;
-            adapter._influxDPs[id].state = adapter._influxDPs[id].skipped;
-            pushHelper(adapter, id, () => {
+            pushHelper(adapter, id, adapter._influxDPs[id].skipped, () => {
                 if (!--count) {
                     writeFileBufferToDisk();
                     if (callback) {
@@ -1625,6 +1832,12 @@ function sortByTs(a, b) {
 function getHistory(adapter, msg) {
     const startTime = Date.now();
 
+    if (!msg.message || !msg.message.options) {
+        return adapter.sendTo(msg.from, msg.command, {
+            error:  'Invalid call. No options for getHistory provided'
+        }, msg.callback);
+    }
+
     const options = {
         id:         msg.message.id === '*' ? null : msg.message.id,
         start:      msg.message.options.start,
@@ -1636,17 +1849,50 @@ function getHistory(adapter, msg) {
         addId:      msg.message.options.addId || false,
         ignoreNull: true,
         sessionId:  msg.message.options.sessionId,
-        returnNewestEntries: msg.message.options.returnNewestEntries || false
+        returnNewestEntries: msg.message.options.returnNewestEntries || false,
+        percentile: msg.message.options.aggregate === 'percentile' ? parseInt(msg.message.options.percentile, 10) || 50 : null,
+        quantile: msg.message.options.aggregate === 'quantile' ? parseFloat(msg.message.options.quantile) || 0.5 : null,
+        integralUnit: msg.message.options.aggregate === 'integral' ? parseInt(msg.message.options.integralUnit, 10) || 60 : null,
+        integralInterpolation: msg.message.options.aggregate === 'integral' ? msg.message.options.integralInterpolation || 'none' : null,
+        removeBorderValues: msg.message.options.removeBorderValues || false
     };
 
     if (!options.start && options.count) {
         options.returnNewestEntries = true;
     }
 
-    adapter.log.debug(`getHistory call: ${JSON.stringify(options)}`);
+    if (msg.message.options.round !== null && msg.message.options.round !== undefined && msg.message.options.round !== '') {
+        msg.message.options.round = parseInt(msg.message.options.round, 10);
+        if (!isFinite(msg.message.options.round) || msg.message.options.round < 0) {
+            options.round = adapter.config.round;
+        } else {
+            options.round = Math.pow(10, parseInt(msg.message.options.round, 10));
+        }
+    } else {
+        options.round = adapter.config.round;
+    }
+
+    const debugLog = options.debugLog = !!(adapter._influxDPs[options.id] && adapter._influxDPs[options.id][adapter.namespace] && adapter._influxDPs[options.id][adapter.namespace].enableDebugLogs);
+
+    debugLog && adapter.log.debug(`getHistory (InfluxDB1) call: ${JSON.stringify(options)}`);
 
     if (options.id && adapter._aliasMap[options.id]) {
         options.id = adapter._aliasMap[options.id];
+    }
+
+    if (options.aggregate === 'percentile' && options.percentile < 0 || options.percentile > 100) {
+        adapter.log.error(`Invalid percentile value: ${options.percentile}, use 50 as default`);
+        options.percentile = 50;
+    }
+
+    if (options.aggregate === 'quantile' && options.quantile < 0 || options.quantile > 1) {
+        adapter.log.error(`Invalid quantile value: ${options.quantile}, use 0.5 as default`);
+        options.quantile = 0.5;
+    }
+
+    if (options.aggregate === 'integral' && (typeof options.integralUnit !== 'number' || options.integralUnit <= 0)) {
+        adapter.log.error(`Invalid integralUnit value: ${options.integralUnit}, use 60s as default`);
+        options.integralUnit = 60;
     }
 
     if (!adapter._influxDPs[options.id]) {
@@ -1664,21 +1910,19 @@ function getHistory(adapter, msg) {
         options.start = _end;
     }
 
-    // if less 2000.01.01 00:00:00
-    if (options.end   && options.end   < 946681200000) {
-        options.end   *= 1000;
-    }
-    if (options.start && options.start < 946681200000) {
-        options.start *= 1000;
-    }
-
     if (!options.start && !options.count) {
         options.start = options.end - 86400000; // - 1 day
     }
 
+    let resultsFromInfluxDB = options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax';
+    if (options.aggregate === 'integral' && options.integralInterpolation === 'linear') {
+        resultsFromInfluxDB = false;
+    }
+
     // query one timegroup-value more than requested originally at start and end
     // to make sure to have no 0 values because of the way InfluxDB does group by time
-    if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
+
+    if (resultsFromInfluxDB) {
         if (!options.step) {
             // calculate "step" based on difference between start and end using count
             options.step = Math.round((options.end - options.start) / options.count);
@@ -1690,6 +1934,7 @@ function getHistory(adapter, msg) {
         options.limit += 2;
     }
 
+    options.preAggregated = true;
     let query = 'SELECT';
     if (options.step) {
         switch (options.aggregate) {
@@ -1705,6 +1950,23 @@ function getHistory(adapter, msg) {
                 query += ' min(value) as val';
                 break;
 
+            case 'percentile':
+                query += ` percentile(value, ${options.percentile}) as val`;
+                break;
+
+            case 'quantile':
+                query += ` percentile(value, ${options.quantile * 100}) as val`;
+                break;
+
+            case 'integral':
+                if (options.integralInterpolation === 'linear') {
+                    query += ' value';
+                    options.preAggregated = false;
+                } else {
+                    query += ` integral(value, ${options.integralUnit}s) as val`;
+                }
+                break;
+
             case 'total':
                 query += ' sum(value) as val';
                 break;
@@ -1717,6 +1979,7 @@ function getHistory(adapter, msg) {
             case 'onchange':
             case 'minmax':
                 query += ' value';
+                options.preAggregated = false;
                 break;
 
             default:
@@ -1726,6 +1989,7 @@ function getHistory(adapter, msg) {
 
     } else {
         query += ' *';
+        options.preAggregated = false;
     }
 
     query += ` from "${options.id}"`;
@@ -1736,7 +2000,7 @@ function getHistory(adapter, msg) {
     }
     query += ` time < '${new Date(options.end).toISOString()}'`;
 
-    if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
+    if (resultsFromInfluxDB) {
         query += ` GROUP BY time(${options.step}ms) fill(previous)`;
     }
 
@@ -1746,14 +2010,14 @@ function getHistory(adapter, msg) {
         query += ' ORDER BY time ASC';
     }
 
-    if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
+    if (resultsFromInfluxDB) {
         query += ` LIMIT ${options.limit}`;
-    } else if (options.aggregate !== 'minmax') {
+    } else if (options.aggregate !== 'minmax' && (options.aggregate !== 'integral')) {
         query += ` LIMIT ${options.count}`;
     }
 
     // select one datapoint more than wanted
-    if (options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none') {
+    if (!options.removeBorderValues) {
         let addQuery = '';
         if (options.start) {
             addQuery = `SELECT value from "${options.id}" WHERE time <= '${new Date(options.start).toISOString()}' ORDER BY time DESC LIMIT 1;`;
@@ -1763,58 +2027,69 @@ function getHistory(adapter, msg) {
         query = query + addQuery;
     }
 
-    adapter.log.debug(query);
+    debugLog && adapter.log.debug(query);
 
-    storeBufferedSeries(adapter, options.id, () => {
-        // if specific id requested
-        adapter._client.query(query, (error, rows) => {
-            if (error) {
-                if (adapter._client.request.getHostsAvailable().length === 0) {
-                    setConnected(adapter, false);
+    storeBufferedSeries(adapter, options.id, (err, storedCount) => {
+        if (err) {
+            adapter.log.info(`Error storing buffered series for ${options.id} before GetHistory: ${err}`);
+        }
+        setTimeout(() => {
+            adapter._client.query(query, (error, rows) => {
+                if (error) {
+                    if (adapter._client.request.getHostsAvailable().length === 0) {
+                        setConnected(adapter, false);
+                    }
+                    adapter.log.error(`getHistory: ${error}`);
+                } else {
+                    setConnected(adapter, true);
                 }
-                adapter.log.error(`getHistory: ${error}`);
-            } else {
-                setConnected(adapter, true);
-            }
 
-            adapter.log.debug(`Response rows: ${JSON.stringify(rows)}`);
+                debugLog && adapter.log.debug(`Response rows: ${JSON.stringify(rows)}`);
 
-            let result = [];
+                let result = [];
 
-            if (rows && rows.length) {
-                for (let qr = 0; qr < rows.length; qr++) {
-                    for (let rr = 0; rr < rows[qr].length; rr++) {
-                        if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
-                            rows[qr][rr].val = rows[qr][rr].value;
-                            delete rows[qr][rr].value;
-                        }
-                        rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
-                        delete rows[qr][rr].time;
-                        if (rows[qr][rr].val !== null) {
-                            const f = parseFloat(rows[qr][rr].val);
-                            if (f == rows[qr][rr].val) {
-                                rows[qr][rr].val = f;
-                                if (adapter.config.round) {
-                                    rows[qr][rr].val = Math.round(rows[qr][rr].val * adapter.config.round) / adapter.config.round;
+                if (rows && rows.length) {
+                    for (let qr = 0; qr < rows.length; qr++) {
+                        for (let rr = 0; rr < rows[qr].length; rr++) {
+                            if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
+                                rows[qr][rr].val = rows[qr][rr].value;
+                                delete rows[qr][rr].value;
+                            }
+                            rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
+                            delete rows[qr][rr].time;
+
+                            if (rows[qr][rr].val !== null) {
+                                if (isFinite(rows[qr][rr].val)) {
+                                    rows[qr][rr].val = parseFloat(rows[qr][rr].val);
+                                    if (options.round) {
+                                        rows[qr][rr].val = Math.round(rows[qr][rr].val * options.round) / options.round;
+                                    }
                                 }
                             }
-                        }
-                        if (options.addId) {
-                            rows[qr][rr].id = msg.message.id;
-                        }
-                        result.push(rows[qr][rr]);
-                    }
-                }
-                result = result.sort(sortByTs);
-            }
 
-            Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
-        });
+                            if (options.addId) {
+                                rows[qr][rr].id = options.id;
+                            }
+                            result.push(rows[qr][rr]);
+                        }
+                    }
+                    result = result.sort(sortByTs);
+                }
+
+                Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
+            });
+        }, storedCount ? 50 : 0);
     });
 }
 
 function getHistoryIflx2(adapter, msg) {
     const startTime = Date.now();
+
+    if (!msg.message || !msg.message.options) {
+        return adapter.sendTo(msg.from, msg.command, {
+            error:  'Invalid call. No options for getHistory provided'
+        }, msg.callback);
+    }
 
     const options = {
         id:         msg.message.id === '*' ? null : msg.message.id,
@@ -1827,20 +2102,53 @@ function getHistoryIflx2(adapter, msg) {
         addId:      msg.message.options.addId || false,
         ignoreNull: true,
         sessionId:  msg.message.options.sessionId,
-        returnNewestEntries: msg.message.options.returnNewestEntries || false
+        returnNewestEntries: msg.message.options.returnNewestEntries || false,
+        percentile: msg.message.options.aggregate === 'percentile' ? parseInt(msg.message.options.percentile, 10) || 50 : null,
+        quantile: msg.message.options.aggregate === 'quantile' ? parseFloat(msg.message.options.quantile) || 0.5 : null,
+        integralUnit: msg.message.options.aggregate === 'integral' ? parseInt(msg.message.options.integralUnit, 10) || 60 : null,
+        integralInterpolation: msg.message.options.aggregate === 'integral' ? msg.message.options.integralInterpolation || 'none' : null,
+        removeBorderValues: msg.message.options.removeBorderValues || false
     };
 
-    adapter.log.debug(`getHistory call: ${JSON.stringify(options)}`);
+    if (!options.start && options.count) {
+        options.returnNewestEntries = true;
+    }
+
+    if (msg.message.options.round !== null && msg.message.options.round !== undefined && msg.message.options.round !== '') {
+        msg.message.options.round = parseInt(msg.message.options.round, 10);
+        if (!isFinite(msg.message.options.round) || msg.message.options.round < 0) {
+            options.round = adapter.config.round;
+        } else {
+            options.round = Math.pow(10, parseInt(msg.message.options.round, 10));
+        }
+    } else {
+        options.round = adapter.config.round;
+    }
+
+    const debugLog = options.debugLog = !!(adapter._influxDPs[options.id] && adapter._influxDPs[options.id][adapter.namespace] && adapter._influxDPs[options.id][adapter.namespace].enableDebugLogs);
+
+    debugLog && adapter.log.debug(`getHistory (InfluxDB2) call: ${JSON.stringify(options)}`);
 
     if (options.id && adapter._aliasMap[options.id]) {
         options.id = adapter._aliasMap[options.id];
     }
-    const fluxQueries = [];
-    let fluxQuery = `from(bucket: "${adapter.config.dbname}") `;
 
-    const valueColumn = adapter.config.usetags ? '_value' : 'value';
+    if (options.aggregate === 'percentile' && options.percentile < 0 || options.percentile > 100) {
+        adapter.log.error(`Invalid percentile value: ${options.percentile}, use 50 as default`);
+        options.percentile = 50;
+    }
 
-    if (!adapter._influxDPs[options.id]) {
+    if (options.aggregate === 'quantile' && options.quantile < 0 || options.quantile > 1) {
+        adapter.log.error(`Invalid quantile value: ${options.quantile}, use 0.5 as default`);
+        options.quantile = 0.5;
+    }
+
+    if (options.aggregate === 'integral' && (typeof options.integralUnit !== 'number' || options.integralUnit <= 0)) {
+        adapter.log.error(`Invalid integralUnit value: ${options.integralUnit}, use 60s as default`);
+        options.integralUnit = 60;
+    }
+
+    if (!adapter._influxDPs[options.id] || !adapter._influxDPs[options.id][adapter.namespace]) {
         return adapter.sendTo(msg.from, msg.command, {
             result: [],
             step:   0,
@@ -1853,186 +2161,247 @@ function getHistoryIflx2(adapter, msg) {
         options.end   = options.start;
         options.start = _end;
     }
-    // if less 2000.01.01 00:00:00
-    if (options.end   && options.end   < 946681200000) options.end   *= 1000;
-    if (options.start && options.start < 946681200000) options.start *= 1000;
 
     if (!options.start && !options.count) {
         options.start = options.end - 86400000; // - 1 day
     }
 
+    const resultsFromInfluxDB = options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax';
+
     // query one timegroup-value more than requested originally at start and end
     // to make sure to have no 0 values because of the way InfluxDB does group by time
-    if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
+    if (resultsFromInfluxDB) {
         if (!options.step) {
             // calculate "step" based on difference between start and end using count
             options.step = Math.round((options.end - options.start) / options.count);
         }
-        if (options.start) options.start -= options.step;
+        if (options.start) {
+            options.start -= options.step;
+        }
         options.end += options.step;
         options.limit += 2;
     }
 
-    fluxQuery += ` |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: -${adapter.config.retention}ms, `}stop: ${new Date(options.end).toISOString()})`;
-    fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${options.id}")`;
-
-    if (adapter.config.usetags)
-        fluxQuery += ' |> duplicate(column: "_value", as: "value")';
-    else
-        fluxQuery += ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
-
-    if ((!options.start && options.count) || (options.aggregate === 'none' && options.count && options.returnNewestEntries) ) {
-        fluxQuery += ` |> sort(columns:["_time"], desc: true)`;
-    } else {
-        fluxQuery += ` |> sort(columns:["_time"], desc: false)`;
-    }
-
-    if (options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax') {
-        if ((options.step !== null) && (options.step > 0))
-            fluxQuery += ` |> window(every: ${options.step}ms)`;
-        fluxQuery += `|> fill(column: "${valueColumn}", usePrevious: true)`;
-    } else if (options.aggregate !== 'minmax') {
-        fluxQuery += ` |> group() |> limit(n: ${options.count})`;
-    }
+    const valueColumn = adapter.config.usetags ? '_value' : 'value';
 
     // Workaround to detect if measurement is of type bool (to skip non-sensual aggregation options)
-    // There seems to be no officially supported way to detect this, so we check it by forcing a type-conflict
+    // There seems to be no officially supported way to detect this, so we check it by forcing a type-conflict;
     const booleanTypeCheckQuery = `
         from(bucket: "${adapter.config.dbname}")
-        |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: -${adapter.config.retention}ms, `}stop: ${new Date(options.end).toISOString()})
+        |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end).toISOString()})
         |> filter(fn: (r) => r["_measurement"] == "${options.id}" and contains(value: r._value, set: [true, false]))
+        ${adapter.config.usetags ? ' |> duplicate(column: "_value", as: "value")' : ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")'}
+        |> group()
     `;
 
-    storeBufferedSeries(adapter, options.id, () => {
-        adapter._client.query(booleanTypeCheckQuery, (error, _rslt) => {
-            let isBoolean;
-            if (error) {
-                if (error.message.includes('type conflict: bool')) {
-                    isBoolean = false;
-                    error = null;
-                } else {
-                    return adapter.sendTo(msg.from, msg.command, {
-                        result:     [],
-                        error:      error,
-                        sessionId:  options.sessionId
-                    }, msg.callback);
-                }
-            } else {
-                isBoolean = true;
-                adapter.log.debug(`Measurement ${options.id} is of type Boolean - skipping aggregation options`);
-            }
-
-            if (options.step && !isBoolean) {
-                switch (options.aggregate) {
-                    case 'average':
-                        fluxQuery += ` |> mean(column: "${valueColumn}")`;
-                        break;
-
-                    case 'max':
-                        fluxQuery += ` |> max(column: "${valueColumn}")`;
-                        break;
-
-                    case 'min':
-                        fluxQuery += ` |> min(column: "${valueColumn}")`;
-                        break;
-
-                    case 'total':
-                        fluxQuery += ` |> sum(column: "${valueColumn}")`;
-                        break;
-
-                    case 'count':
-                        fluxQuery += ` |> count(column: "${valueColumn}")`;
-                        break;
-
-                    default:
-                        fluxQuery += ` |> mean(column: "${valueColumn}")`;
-                        break;
-                }
-            }
-
-            fluxQueries.push(fluxQuery);
-
-            // select one datapoint more than wanted
-            if (options.aggregate === 'minmax' || options.aggregate === 'onchange' || options.aggregate === 'none') {
-                let addFluxQuery = '';
-                if (options.start) {
-                    // get one entry "before" the defined timeframe for displaying purposes
-                    addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
-                    |> range(start: ${new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString()}, stop: ${new Date(options.start).toISOString()}) 
-                    |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
-                    ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
-                    |> sort(columns: ["_time"], desc: true) 
-                    |> group() 
-                    |> limit(n: 1)`;
-
-                    const mainQuery = fluxQueries.pop();
-                    fluxQueries.push(addFluxQuery);
-                    fluxQueries.push(mainQuery);
-                }
-                // get one entry "after" the defined timeframe for displaying purposes
-                addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
-                    |> range(start: ${new Date(options.end).toISOString()}) 
-                    |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
-                    ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
-                    |> sort(columns: ["_time"], desc: false) 
-                    |> group() 
-                    |> limit(n: 1)`;
-                //fluxQuery = fluxQuery + addFluxQuery;
-                fluxQueries.push(addFluxQuery);
-            }
-
-            adapter.log.debug(`History-queries to execute: ${fluxQueries}`);
-
-            // if specific id requested
-            adapter._client.queries(fluxQueries, (err, rows) => {
-                if (err && !rows) {
-                    if (adapter._client.request.getHostsAvailable().length === 0) {
-                        setConnected(adapter, false);
+    storeBufferedSeries(adapter, options.id, (err, storedCount) => {
+        if (err) {
+            adapter.log.info(`Error storing buffered series for ${options.id} before GetHistory: ${err}`);
+        }
+        setTimeout(() => {
+            adapter._client.query(booleanTypeCheckQuery, (error, rslt) => {
+                let supportsAggregates;
+                if (adapter._influxDPs[options.id][adapter.namespace].storageType && adapter._influxDPs[options.id][adapter.namespace].storageType !== 'Number') {
+                    supportsAggregates = false;
+                } else if (error) {
+                    if (error.message.includes('type conflict: bool')) {
+                        adapter.log.debug(`Bool check error: ${error.message}`);
+                        supportsAggregates = true;
+                        error = null;
+                    } else {
+                        return adapter.sendTo(msg.from, msg.command, {
+                            result: [],
+                            error: error,
+                            sessionId: options.sessionId
+                        }, msg.callback);
                     }
-                    adapter.log.error(`getHistory: ${err}`);
                 } else {
-                    setConnected(adapter, true);
+                    adapter.log.debug(`Bool check result: ${JSON.stringify(rslt)}`);
+                    if (rslt.find(r => r.error && r.error.includes('type conflict: bool'))) {
+                        supportsAggregates = true;
+                    } else {
+                        supportsAggregates = false;
+                    }
+                }
+                if (supportsAggregates) {
+                    if (adapter._influxDPs[options.id][adapter.namespace].state && typeof adapter._influxDPs[options.id][adapter.namespace].state.val !== 'number') {
+                        supportsAggregates = false;
+                    } else if (adapter._influxDPs[options.id][adapter.namespace].skipped && typeof adapter._influxDPs[options.id][adapter.namespace].skipped.val !== 'number') {
+                        supportsAggregates = false;
+                    }
+                }
+                if (!supportsAggregates) {
+                    debugLog && adapter.log.debug(`Measurement ${options.id} seems to be no number - skipping aggregation options`);
                 }
 
-                adapter.log.debug(`Parsing retrieved rows:${JSON.stringify(rows)}`);
+                const fluxQueries = [];
+                let fluxQuery = `from(bucket: "${adapter.config.dbname}") `;
 
-                let result = [];
+                fluxQuery += ` |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end).toISOString()})`;
+                fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${options.id}")`;
 
-                if (rows && rows.length) {
-                    for (let qr = 0; qr < rows.length; qr++) {
-                        for (let rr = 0; rr < rows[qr].length; rr++) {
-                            if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
-                                rows[qr][rr].val = rows[qr][rr].value;
-                                delete rows[qr][rr].value;
-                            }
+                if (adapter.config.usetags)
+                    fluxQuery += ' |> duplicate(column: "_value", as: "value")';
+                else
+                    fluxQuery += ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
 
-                            rows[qr][rr].ts = new Date(rows[qr][rr].time).getTime();
+                if (resultsFromInfluxDB && supportsAggregates) {
+                    if ((options.step !== null) && (options.step > 0))
+                        fluxQuery += ` |> window(every: ${options.step}ms)`;
+                    fluxQuery += `|> fill(column: "${valueColumn}", usePrevious: true)`;
+                } else if (options.aggregate !== 'minmax') {
+                    fluxQuery += ` |> group()`;
+                }
 
-                            delete rows[qr][rr].time;
+                if ((!options.start && options.count) || (options.aggregate === 'none' && options.count && options.returnNewestEntries) ) {
+                    fluxQuery += ` |> sort(columns:["_time"], desc: true)`;
+                } else {
+                    fluxQuery += ` |> sort(columns:["_time"], desc: false)`;
+                }
 
-                            if (rows[qr][rr].val !== null) {
-                                const f = parseFloat(rows[qr][rr].val);
-                                if (f == rows[qr][rr].val) {
-                                    rows[qr][rr].val = f;
-                                    if (adapter.config.round) {
-                                        rows[qr][rr].val = Math.round(rows[qr][rr].val * adapter.config.round) / adapter.config.round;
+                if (!(resultsFromInfluxDB && supportsAggregates) && options.aggregate !== 'minmax') {
+                    fluxQuery += ` |> limit(n: ${options.count})`;
+                }
+
+                if (options.step && supportsAggregates) {
+                    options.preAggregated = true;
+                    switch (options.aggregate) {
+                        case 'average':
+                            fluxQuery += ` |> mean(column: "${valueColumn}")`;
+                            break;
+
+                        case 'max':
+                            fluxQuery += ` |> max(column: "${valueColumn}")`;
+                            break;
+
+                        case 'min':
+                            fluxQuery += ` |> min(column: "${valueColumn}")`;
+                            break;
+
+                        case 'percentile':
+                            fluxQuery += ` |> quantile(column: "${valueColumn}", q: ${options.percentile / 100})`;
+                            break;
+
+                        case 'quantile':
+                            fluxQuery += ` |> quantile(column: "${valueColumn}", q: ${options.quantile})`;
+                            break;
+
+                        case 'integral':
+                            fluxQuery += ` |> integral(column: "${valueColumn}", unit: ${options.integralUnit}s, interpolate: ${options.integralInterpolation === 'linear' ? '"linear"' : '""'})`;
+                            break;
+
+                        case 'total':
+                            fluxQuery += ` |> sum(column: "${valueColumn}")`;
+                            break;
+
+                        case 'count':
+                            fluxQuery += ` |> count(column: "${valueColumn}")`;
+                            break;
+
+                        default:
+                            fluxQuery += ` |> mean(column: "${valueColumn}")`;
+                            options.preAggregated = false;
+                            break;
+                    }
+                }
+
+                fluxQueries.push(fluxQuery);
+
+                // select one datapoint more than wanted
+                if (!options.removeBorderValues) {
+                    let addFluxQuery = '';
+                    if (options.start) {
+                        // get one entry "before" the defined timeframe for displaying purposes
+                        addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
+                        |> range(start: ${new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString()}, stop: ${new Date(options.start - 1).toISOString()}) 
+                        |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
+                        ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
+                        |> group() 
+                        |> sort(columns: ["_time"], desc: true) 
+                        |> limit(n: 1)`;
+
+                        const mainQuery = fluxQueries.pop();
+                        fluxQueries.push(addFluxQuery);
+                        fluxQueries.push(mainQuery);
+                    }
+                    // get one entry "after" the defined timeframe for displaying purposes
+                    addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
+                        |> range(start: ${new Date(options.end + 1).toISOString()}) 
+                        |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
+                        ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
+                        |> group() 
+                        |> sort(columns: ["_time"], desc: false) 
+                        |> limit(n: 1)`;
+                    fluxQueries.push(addFluxQuery);
+                }
+
+                debugLog && adapter.log.debug(`History-queries to execute: ${fluxQueries}`);
+
+                // if specific id requested
+                adapter._client.queries(fluxQueries, (err, rows) => {
+                    if (err && !rows) {
+                        if (adapter._client.request.getHostsAvailable().length === 0) {
+                            setConnected(adapter, false);
+                        }
+                        adapter.log.error(`getHistory: ${err}`);
+                    } else {
+                        setConnected(adapter, true);
+                    }
+
+                    debugLog && adapter.log.debug(`Parsing retrieved rows:${JSON.stringify(rows)}`);
+
+                    let result = [];
+
+                    if (rows && rows.length) {
+                        for (let qr = 0; qr < rows.length; qr++) {
+                            for (let rr = 0; rr < rows[qr].length; rr++) {
+                                if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
+                                    rows[qr][rr].val = rows[qr][rr].value;
+                                    delete rows[qr][rr].value;
+                                }
+
+                                if (rows[qr][rr].val !== null) {
+                                    if (isFinite(rows[qr][rr].val)) {
+                                        rows[qr][rr].val = parseFloat(rows[qr][rr].val);
+                                        if (options.round) {
+                                            rows[qr][rr].val = Math.round(rows[qr][rr].val * options.round) / options.round;
+                                        }
                                     }
                                 }
-                            }
 
-                            if (options.addId) {
-                                rows[qr][rr].id = msg.message.id;
-                            }
+                                if (rows[qr][rr].time) {
+                                    rows[qr][rr].ts = new Date(rows[qr][rr].time).getTime();
+                                    delete rows[qr][rr].time;
+                                } else if (rows[qr][rr]._start && rows[qr][rr]._stop) {
+                                    const startTime = new Date(rows[qr][rr]._start).getTime();
+                                    const stopTime = new Date(rows[qr][rr]._stop).getTime();
+                                    rows[qr][rr].ts = startTime + (stopTime - startTime) / 2;
+                                    delete rows[qr][rr]._start;
+                                    delete rows[qr][rr]._stop;
+                                }
 
-                            result.push(rows[qr][rr]);
+                                delete rows[qr][rr].result;
+                                delete rows[qr][rr].table;
+
+                                if (options.addId) {
+                                    rows[qr][rr].id = rows[qr][rr]._measurement || options.id;
+                                }
+                                delete rows[qr][rr]._measurement;
+
+                                result.push(rows[qr][rr]);
+                            }
                         }
+                        result = result.sort(sortByTs);
                     }
-                    result = result.sort(sortByTs);
-                }
 
-                Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
+                    if (options.debugLog) {
+                        options.log = adapter.log.debug;
+                    }
+
+                    Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
+                });
             });
-        });
+        }, storedCount ? 50 : 0);
     });
 }
 
@@ -2072,6 +2441,10 @@ function query(adapter, msg) {
                     if (rows[r][rr].time) {
                         rows[r][rr].ts = new Date(rows[r][rr].time).getTime();
                         delete rows[r][rr].time;
+                    } else if (rows[r][rr]._start && rows[r][rr]._stop) {
+                        const startTime = new Date(rows[r][rr]._start).getTime();
+                        const stopTime = new Date(rows[r][rr]._stop).getTime();
+                        rows[r][rr].ts = startTime + (stopTime - startTime) / 2;
                     }
                 }
             }
@@ -2210,10 +2583,9 @@ function disableHistory(adapter, msg) {
 function getEnabledDPs(adapter, msg) {
     const data = {};
     for (const id in adapter._influxDPs) {
-        if (!adapter._influxDPs.hasOwnProperty(id)) {
-            continue;
+        if (adapter._influxDPs.hasOwnProperty(id) && adapter._influxDPs[id] && adapter._influxDPs[id][adapter.namespace] && adapter._influxDPs[id][adapter.namespace].enabled) {
+            data[adapter._influxDPs[id].realId] = adapter._influxDPs[id][adapter.namespace];
         }
-        data[adapter._influxDPs[id].realId] = adapter._influxDPs[id][adapter.namespace];
     }
 
     adapter.sendTo(msg.from, msg.command, data, msg.callback);

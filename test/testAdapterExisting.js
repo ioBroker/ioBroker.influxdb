@@ -174,7 +174,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
         });
     });
 
-    tests.register(it, expect, sendTo, adapterShortName, false, 0, 3);
+    tests.register(it, expect, sendTo, adapterShortName, false, 1, 3);
 
     it(`Test ${adapterShortName}: Write string value for memHeapUsed into DB to force a type conflict`, function (done) {
         this.timeout(5000);
@@ -209,7 +209,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
                     found ++;
                 }
             }
-            expect(found).to.be.equal(14);
+            expect(found).to.be.equal(28);
 
             done();
         });

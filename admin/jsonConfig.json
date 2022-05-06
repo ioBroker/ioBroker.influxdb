@@ -18,6 +18,18 @@
             "sm": 12,
             "md": 8
         },
+        "protocol": {
+          "newLine": true,
+          "type": "select",
+          "noTranslation": true,
+          "options": [
+            {"label": "http",  "value": "http"},
+            {"label": "https", "value": "https"}
+          ],
+          "label": "Protocol",
+          "sm": 12,
+          "md": 2
+        },
         "host": {
           "type": "text",
           "label": "Host",
@@ -32,16 +44,14 @@
           "sm": 12,
           "md": 2
         },
-        "protocol": {
-          "type": "select",
-          "noTranslation": true,
-          "options": [
-            {"label": "http",  "value": "http"},
-            {"label": "https", "value": "https"}
-          ],
-          "label": "Protocol",
+        "path": {
+          "type": "text",
+          "label": "Path",
+          "help": "only enter when e.g. a reverse proxy is used",
+          "hidden": "data.dbversion === '1.x'",
+          "disabled": "data.dbversion === '1.x'",
           "sm": 12,
-          "md": 2
+          "md": 4
         },
         "user": {
           "newLine": true,
@@ -164,30 +174,45 @@
       "type": "panel",
       "label": "Default settings",
       "items": {
-        "debounce": {
+        "debounceTime": {
+          "newLine": true,
           "type": "number",
           "sm": 12,
-          "md": 6,
+          "md": 4,
           "min": 0,
+          "max": 86400000,
           "label": "De-bounce time",
-          "help": "debounce"
+          "help": "De-bounce interval(ms)"
+        },
+        "blockTime": {
+          "type": "number",
+          "sm": 12,
+          "md": 4,
+          "min": 0,
+          "max": 86400000,
+          "label": "Block time",
+          "defaultFunc": "(data.debounce || data.debounce === '0' || data.debounce === 0) ? parseInt(data.debounce, 10) : 0",
+          "help": "blockTime"
         },
         "changesRelogInterval": {
+          "newLine": true,
           "type": "number",
           "label": "log changes interval(s)",
           "help": "0 = disable",
           "sm": 12,
-          "md": 6
+          "md": 6,
+          "lg": 4
         },
         "changesMinDelta": {
-          "newLine": true,
           "type": "number",
           "label": "log changes minimal delta",
           "help": "0 = disable delta check",
           "sm": 12,
-          "md": 6
+          "md": 6,
+          "lg": 4
         },
         "retention": {
+          "newLine": true,
           "type": "select",
           "label": "retention",
           "options": [
@@ -234,12 +259,26 @@
             {
               "value": 86400,
               "label": "1 day"
+            },
+            {
+              "value": -1,
+              "label": "Custom timeframe"
             }
           ],
           "sm": 12,
           "md": 6
         },
+        "customRetentionDuration": {
+          "type": "number",
+          "label": "Custom retention duration (days)",
+          "min": 1,
+          "sm": 12,
+          "md": 4,
+          "hidden": "(data.retention !== -1)",
+          "help": "Number of days to keep the data."
+        },
         "retentionConfirm": {
+          "newLine": true,
           "type": "checkbox",
           "label": "Apply lower retention",
           "hidden": "(data.retention >= originalData.retention && originalData.retention != 0) || data.retention == 0",
@@ -254,6 +293,40 @@
           "validatorErrorText": "Confirmation required.",
           "validatorNoSaveOnError" : true,
           "doNotSave": true
+        },
+        "round": {
+          "newLine": true,
+          "type": "number",
+          "label": "Round real to",
+          "sm": 12,
+          "md": 4,
+          "lg": 3,
+          "validator": "((data.round || '').toString().length === 0) || isFinite(data.round)",
+          "validatorErrorText": "Enter a number or leave the field empty",
+          "validatorNoSaveOnError": true
+        },
+        "disableSkippedValueLogging": {
+          "newLine": true,
+          "label": "Disable charting optimized logging of skipped values",
+          "type": "checkbox",
+          "sm": 12,
+          "md": 4
+        },
+        "enableDebugLogs": {
+          "newLine": true,
+          "label": "Enable enhanced debug logs for the datapoint",
+          "type": "checkbox",
+          "sm": 12,
+          "md": 4
+        },
+        "debounce": {
+          "type": "number",
+          "sm": 12,
+          "md": 4,
+          "min": 0,
+          "label": "De-bounce time",
+          "help": "debounce",
+          "hidden": "true"
         }
       }
     },

@@ -4,6 +4,7 @@
 /* jshint expr: true */
 const expect = require('chai').expect;
 const setup  = require('./lib/setup');
+const tests = require('./lib/testcases');
 
 let objects = null;
 let states  = null;
@@ -102,7 +103,11 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
 
             config.native.seriesBufferFlushInterval = 30;
             config.native.seriesBufferMax = 5;
+            config.native.retention = -1;
+            config.native.customRetentionDuration = 10;
             config.native.dbname = 'otheriobroker';
+
+            config.native.enableDebugLogs = true;
 
             await setup.setAdapterConfig(config.common, config.native);
 
@@ -110,28 +115,13 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
                 true,
                 (id, obj) => {},
                 (id, state) => onStateChanged && onStateChanged(id, state),
-                (_objects, _states) => {
+                async (_objects, _states) => {
                     objects = _objects;
                     states  = _states;
 
-                    objects.extendObject('influxdb.0.memRss', {
-                        common: {
-                            type: 'number',
-                            role: 'state',
-                            custom: {
-                                'influxdb.0': {
-                                    enabled: true,
-                                    changesOnly:  true,
-                                    debounce:     0,
-                                    retention:    31536000,
-                                    maxLength:    3,
-                                    changesMinDelta: 0.5
-                                }
-                            }
-                        },
-                        type: 'state'
-                    }, () =>
-                        states.setState('influxdb.0.memRss', {val: 0, from: 'test.0'}, _done));
+                    await tests.preInit(objects, states, sendTo, adapterShortName);
+
+                    _done();
                 });
         });
     });
@@ -185,32 +175,8 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
                             expect(result.error).to.be.undefined;
                             expect(result.success).to.be.true;
 
-                            objects.setObject('influxdb.0.testValue2', {
-                                common: {
-                                    type: 'number',
-                                    role: 'state'
-                                },
-                                type: 'state'
-                            },
-                            () => {
-                                sendTo('influxdb.0', 'enableHistory', {
-                                    id: 'influxdb.0.testValue2',
-                                    options: {
-                                        changesOnly:  true,
-                                        debounce:     0,
-                                        retention:    31536000,
-                                        maxLength:    3,
-                                        changesMinDelta: 0.5,
-                                        aliasId: 'influxdb.0.testValue2-alias'
-                                    }
-                                }, result => {
-                                    expect(result.error).to.be.undefined;
-                                    expect(result.success).to.be.true;
-                                    // wait till adapter receives the new settings
-                                    setTimeout(() =>
-                                        done(), 2000);
-                                });
-                            });
+                            setTimeout(() =>
+                                done(), 2000);
                         });
                     });
                 });
@@ -218,166 +184,31 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
         });
     });
 
+    tests.register(it, expect, sendTo, adapterShortName, false, 0, 3);
+
     it(`Test ${adapterShortName}: Write string value for memHeapUsed into DB to force a type conflict`, function (done) {
         this.timeout(5000);
         now = Date.now();
 
         states.setState('system.adapter.influxdb.0.memHeapUsed', {val: 'Blubb', ts: now - 20000, from: 'test.0'}, (err) => {
             err && console.log(err);
-            done();
-        });
-    });
-
-    it(`Test ${adapterShortName}: Check Enabled Points after Enable`, function (done) {
-        this.timeout(5000);
-
-        sendTo('influxdb.0', 'getEnabledDPs', {}, result => {
-            console.log(JSON.stringify(result));
-            expect(Object.keys(result).length).to.be.equal(5);
-            expect(result['influxdb.0.memRss'].enabled).to.be.true;
-            done();
-        });
-    });
-
-    it(`Test ${adapterShortName}: Write values into DB`, function (done) {
-        this.timeout(45000);
-        now = Date.now();
-
-        states.setState('influxdb.0.memRss', {val: 2, ts: now - 20000, from: 'test.0'}, err => {
-            err && console.log(err);
-
             setTimeout(() => {
-                states.setState('influxdb.0.memRss', {val: true, ts: now - 10000, from: 'test.0'}, err => {
-                    err && console.log(err);
-
-                    setTimeout(() => {
-                        states.setState('influxdb.0.memRss', {val: 2, ts: now - 5000, from: 'test.0'}, err => {
-                            err && console.log(err);
-
-                            setTimeout(() => {
-                                states.setState('influxdb.0.memRss', {val: 2.2, ts: now - 4000, from: 'test.0'}, err => {
-                                    err && console.log(err);
-
-                                    setTimeout(() => {
-                                        states.setState('influxdb.0.memRss', {val: 2.3, ts: now - 3500, from: 'test.0'}, err => {
-                                            err && console.log(err);
-
-                                            setTimeout(() => {
-                                                states.setState('influxdb.0.memRss', {val: '2.5', ts: now - 3000, from: 'test.0'}, err => {
-                                                    err && console.log(err);
-
-                                                    setTimeout(() => {
-                                                        states.setState('influxdb.0.memRss', {val: 3, ts: now - 1000, from: 'test.0'}, err => {
-                                                            err && console.log(err);
-
-                                                            setTimeout(() => {
-                                                                states.setState('influxdb.0.memRss', {val: 'Test', ts: now - 500, from: 'test.0'}, err => {
-                                                                    err && console.log(err);
-
-                                                                    setTimeout(() => {
-                                                                        states.setState('influxdb.0.testValue2', {val: 1, ts: now - 2000, from: 'test.0'}, err => {
-                                                                            err && console.log(err);
-
-                                                                            setTimeout(() => {
-                                                                                states.setState('influxdb.0.testValue2', {val: 3, ts: now - 1000, from: 'test.0'}, err => {
-                                                                                    err && console.log(err);
-
-                                                                                    setTimeout(done, 20000);
-                                                                                });
-                                                                            }, 100);
-                                                                        });
-                                                                    }, 100);
-                                                                });
-                                                            }, 100);
-                                                        });
-                                                    }, 100);
-                                                });
-                                            }, 100);
-                                        });
-                                    }, 100);
-                                });
-                            }, 100);
-                        });
-                    }, 100);
+                //sendTo('influxdb.0', 'flushBuffer', {id: 'system.adapter.influxdb.0.memHeapUsed'}, result => {
+                sendTo('influxdb.0', 'flushBuffer', {}, result => {
+                    expect(result.error).to.be.not.ok;
+                    done();
                 });
-            }, 100);
-        });
-    });
-
-    it(`Test ${adapterShortName}: Read values from DB using GetHistory`, function (done) {
-        this.timeout(26000);
-
-        states.setState('influxdb.0.memRss', {val: 5, ts: now - 100, from: 'test.0'}, err => {
-            err && console.log(err);
-
-            setTimeout(() => {
-                sendTo('influxdb.0', 'getHistory', {
-                    id: 'influxdb.0.memRss',
-                    options: {
-                        start:     now - 30000,
-                        count:     50,
-                        aggregate: 'none'
-                    }
-                }, result => {
-                    console.log(JSON.stringify(result.result, null, 2));
-                    expect(result.result.length).to.be.at.least(5);
-                    let found = 0;
-                    let found22 = false;
-                    let found23 = false;
-                    for (let i = 0; i < result.result.length; i++) {
-                        if (result.result[i].val >= 1 && result.result[i].val <= 3) {
-                            found ++;
-                        }
-                        if (result.result[i].val === 2.2) {
-                            found22 = true;
-                        }
-                        if (result.result[i].val === 2.3) {
-                            found23 = true;
-                        }
-                    }
-                    expect(found).to.be.equal(7);
-                    expect(found22).to.be.false;
-                    expect(found23).to.be.true;
-
-                    sendTo('influxdb.0', 'getHistory', {
-                        id: 'influxdb.0.memRss',
-                        options: {
-                            start:     now - 15000,
-                            count:     2,
-                            aggregate: 'none'
-                        }
-                    }, result => {
-                        console.log(JSON.stringify(result.result, null, 2));
-                        expect(result.result.length).to.be.equal(2);
-
-                        const latestTs = result.result[result.result.length - 1].ts;
-
-                        sendTo('influxdb.0', 'getHistory', {
-                            id: 'influxdb.0.memRss',
-                            options: {
-                                start:     now - 15000,
-                                count:     2,
-                                aggregate: 'none',
-                                returnNewestEntries: true
-                            }
-                        }, result => {
-                            console.log(JSON.stringify(result.result, null, 2));
-                            expect(result.result.length).to.be.equal(2);
-                            expect(result.result[0].ts > latestTs).to.be.true;
-                            setTimeout(done, 16000);
-                        });
-                    });
-                });
-            }, 500);
+            }, 1000);
         });
     });
 
     it(`Test ${adapterShortName}: Read values from DB using query`, function (done) {
         this.timeout(10000);
 
-        let query = 'SELECT * FROM "influxdb.0.memRss"';
+        let query = 'SELECT * FROM "influxdb.0.testValue"';
         if (process.env.INFLUXDB2) {
-            query = 'from(bucket: "otheriobroker") |> range(start:-1h) |> filter(fn: (r) => r._measurement == "influxdb.0.memRss") |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
+            const date = Date.now();
+            query = `from(bucket: "iobroker") |> range(start: -2d) |> filter(fn: (r) => r["_measurement"] == "influxdb.0.testValue") |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value") |> group() |> sort(columns:["_time"], desc: false)`;
         }
 
         sendTo('influxdb.0', 'query', query, result => {
@@ -389,7 +220,7 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
                     found ++;
                 }
             }
-            expect(found).to.be.equal(7);
+            expect(found).to.be.equal(14);
 
             done();
         });
@@ -404,7 +235,7 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
         }
 
         setTimeout(function() {
-            sendTo('influxdb.0', 'query', 'SHOW FIELD KEYS FROM "influxdb.0.memRss"', result => {
+            sendTo('influxdb.0', 'query', 'SHOW FIELD KEYS FROM "influxdb.0.testValue"', result => {
                 console.log('result: ' + JSON.stringify(result.result, null, 2));
                 let found = false;
                 for (let i = 0; i < result.result[0].length; i++) {
@@ -448,122 +279,13 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
         }, 60000);
     });
 
-    it(`Test ${adapterShortName}: Read values from DB using GetHistory for aliased testValue2`, function (done) {
-        this.timeout(25000);
-
-        sendTo('influxdb.0', 'getHistory', {
-            id: 'influxdb.0.testValue2',
-            options: {
-                start:     now - 5000,
-                end:       now,
-                count:     50,
-                aggregate: 'none'
-            }
-        }, result => {
-            console.log(JSON.stringify(result.result, null, 2));
-            expect(result.result.length).to.be.equal(2);
-
-            sendTo('influxdb.0', 'getHistory', {
-                id: 'influxdb.0.testValue2-alias',
-                options: {
-                    start:     now - 5000,
-                    end:       now,
-                    count:     50,
-                    aggregate: 'none'
-                }
-            }, result2 => {
-                console.log(JSON.stringify(result2.result, null, 2));
-                expect(result2.result.length).to.be.equal(2);
-                for (let i = 0; i < result2.result.length; i++) {
-                    expect(result2.result[i].val).to.be.equal(result.result[i].val);
-                }
-
-                done();
-            });
-        });
-    });
-
-    it(`Test ${adapterShortName}: Remove Alias-ID`, function (done) {
-        this.timeout(5000);
-
-        sendTo('influxdb.0', 'enableHistory', {
-            id: 'influxdb.0.testValue2',
-            options: {
-                aliasId: ''
-            }
-        }, result => {
-            expect(result.error).to.be.undefined;
-            expect(result.success).to.be.true;
-            // wait till adapter receives the new settings
-            setTimeout(() =>
-                done(), 2000);
-        });
-    });
-
-    it(`Test ${adapterShortName}: Add Alias-ID again`, function (done) {
-        this.timeout(5000);
-
-        sendTo('influxdb.0', 'enableHistory', {
-            id: 'influxdb.0.testValue2',
-            options: {
-                aliasId: 'this.is.a.test-value'
-            }
-        }, result => {
-            expect(result.error).to.be.undefined;
-            expect(result.success).to.be.true;
-            // wait till adapter receives the new settings
-            setTimeout(() =>
-                done(), 2000);
-        });
-    });
-
-    it(`Test ${adapterShortName}: Change Alias-ID`, function (done) {
-        this.timeout(5000);
-
-        sendTo('influxdb.0', 'enableHistory', {
-            id: 'influxdb.0.testValue2',
-            options: {
-                aliasId: 'this.is.another.test-value'
-            }
-        }, result => {
-            expect(result.error).to.be.undefined;
-            expect(result.success).to.be.true;
-            // wait till adapter receives the new settings
-            setTimeout(() =>
-                done(), 2000);
-        });
-    });
-
-    it(`Test ${adapterShortName}: Disable Datapoint again`, function (done) {
-        this.timeout(5000);
-
-        sendTo('influxdb.0', 'disableHistory', {
-            id: 'influxdb.0.memRss',
-        }, result => {
-            expect(result.error).to.be.undefined;
-            expect(result.success).to.be.true;
-            done();
-        });
-    });
-
-    it(`Test ${adapterShortName}: Check Enabled Points after Disable`, function (done) {
-        this.timeout(5000);
-
-        sendTo('influxdb.0', 'getEnabledDPs', {}, result => {
-            console.log(JSON.stringify(result));
-            expect(Object.keys(result).length).to.be.equal(4);
-            done();
-        });
-    });
-
     it(`Test ${adapterShortName}: Check that storageType is set now for memHeapUsed`, function (done) {
         this.timeout(5000);
 
         objects.getObject('system.adapter.influxdb.0.memHeapUsed', (err, obj) => {
-            if (process.env.INFLUXDB2) {
-                expect(obj.common.custom['influxdb.0'].storageType).to.be.equal('String');
-            }
             expect(err).to.be.null;
+            console.log(JSON.stringify(obj, null, 2));
+            expect(obj.common.custom['influxdb.0'].storageType).to.be.equal('Number');
             done();
         });
     });
