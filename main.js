@@ -2190,8 +2190,8 @@ function getHistoryIflx2(adapter, msg) {
     const booleanTypeCheckQuery = `
         from(bucket: "${adapter.config.dbname}")
         |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end).toISOString()})
-        ${adapter.config.usetags ? ' |> duplicate(column: "_value", as: "value")' : ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")'}
         |> filter(fn: (r) => r["_measurement"] == "${options.id}" and contains(value: r._value, set: [true, false]))
+        ${adapter.config.usetags ? ' |> duplicate(column: "_value", as: "value")' : ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")'}
         |> group()
     `;
 
