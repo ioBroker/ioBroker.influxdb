@@ -716,10 +716,11 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                                 expect(result.result[0].val).to.be.within(3700, 3800);
                             }
                         } else {
-                            expect(result.result.length).to.be.equal(2);
                             if (assumeExistingData) {
+                                expect(result.result.length).to.be.equal(3);
                                 expect(result.result[0].val).to.be.within(3700, 3755);
                             } else {
+                                expect(result.result.length).to.be.equal(2);
                                 if (process.env.INFLUXDB2) {
                                     expect((result.result[0].val + result.result[1].val)).to.be.within(2980, 3000);
                                 } else {

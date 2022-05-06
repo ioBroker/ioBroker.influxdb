@@ -209,7 +209,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
                     found ++;
                 }
             }
-            expect(found).to.be.equal(14);
+            expect(found).to.be.equal(28);
 
             done();
         });
