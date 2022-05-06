@@ -309,11 +309,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                 expect(result.result[2].val).to.be.equal(2.57);
                 expect(result.result[3].val).to.be.equal(2.57);
             } else {
-                if (process.env.INFLUXDB2) {
-                    expect(result.result.length).to.be.within(4,5);
-                } else {
-                    expect(result.result.length).to.be.equal(5);
-                }
+                expect(result.result.length).to.be.within(4,5);
                 expect(result.result[1].val).to.be.within(1, 1.5);
                 expect(result.result[2].val).to.be.within(2, 3);
                 expect(result.result[3].val).to.be.within(2, 3);
@@ -725,7 +721,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                             expect(result.result[0].val).to.be.within(3700, 3755);
                         } else {
                             if (process.env.INFLUXDB2) {
-                                expect((result.result[0].val + result.result[1].val)).to.be.within(2980, 2990);
+                                expect((result.result[0].val + result.result[1].val)).to.be.within(2980, 3000);
                             } else {
                                 expect(parseFloat((result.result[0].val + result.result[1].val).toFixed(2))).to.be.equal(3732.66);
                             }
