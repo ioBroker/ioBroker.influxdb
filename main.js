@@ -2183,37 +2183,6 @@ function getHistoryIflx2(adapter, msg) {
         options.limit += 2;
     }
 
-    const fluxQueries = [];
-    let fluxQuery = `from(bucket: "${adapter.config.dbname}") `;
-
-    const valueColumn = adapter.config.usetags ? '_value' : 'value';
-
-    fluxQuery += ` |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end).toISOString()})`;
-    fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${options.id}")`;
-
-    if (adapter.config.usetags)
-        fluxQuery += ' |> duplicate(column: "_value", as: "value")';
-    else
-        fluxQuery += ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
-
-    if (resultsFromInfluxDB) {
-        if ((options.step !== null) && (options.step > 0))
-            fluxQuery += ` |> window(every: ${options.step}ms)`;
-        fluxQuery += `|> fill(column: "${valueColumn}", usePrevious: true)`;
-    } else if (options.aggregate !== 'minmax') {
-        fluxQuery += ` |> group()`;
-    }
-
-    if ((!options.start && options.count) || (options.aggregate === 'none' && options.count && options.returnNewestEntries) ) {
-        fluxQuery += ` |> sort(columns:["_time"], desc: true)`;
-    } else {
-        fluxQuery += ` |> sort(columns:["_time"], desc: false)`;
-    }
-
-    if (!resultsFromInfluxDB && options.aggregate !== 'minmax') {
-        fluxQuery += ` |> limit(n: ${options.count})`;
-    }
-
     // Workaround to detect if measurement is of type bool (to skip non-sensual aggregation options)
     // There seems to be no officially supported way to detect this, so we check it by forcing a type-conflict
     const booleanTypeCheckQuery = `
@@ -2232,6 +2201,7 @@ function getHistoryIflx2(adapter, msg) {
                 let supportsAggregates;
                 if (error) {
                     if (error.message.includes('type conflict: bool')) {
+                        adapter.log.debug(`Bool check error: ${error.message}`);
                         supportsAggregates = true;
                         error = null;
                     } else {
@@ -2242,6 +2212,7 @@ function getHistoryIflx2(adapter, msg) {
                         }, msg.callback);
                     }
                 } else {
+                    adapter.log.debug(`Bool check result: ${JSON.stringify(rslt)}`);
                     if (rslt.find(r => r.error && r.error.includes('type conflict: bool'))) {
                         supportsAggregates = true;
                     } else {
@@ -2259,6 +2230,37 @@ function getHistoryIflx2(adapter, msg) {
                 }
                 if (!supportsAggregates) {
                     debugLog && adapter.log.debug(`Measurement ${options.id} seems to be no number - skipping aggregation options`);
+                }
+
+                const fluxQueries = [];
+                let fluxQuery = `from(bucket: "${adapter.config.dbname}") `;
+
+                const valueColumn = adapter.config.usetags ? '_value' : 'value';
+
+                fluxQuery += ` |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end).toISOString()})`;
+                fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${options.id}")`;
+
+                if (adapter.config.usetags)
+                    fluxQuery += ' |> duplicate(column: "_value", as: "value")';
+                else
+                    fluxQuery += ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
+
+                if (resultsFromInfluxDB && supportsAggregates) {
+                    if ((options.step !== null) && (options.step > 0))
+                        fluxQuery += ` |> window(every: ${options.step}ms)`;
+                    fluxQuery += `|> fill(column: "${valueColumn}", usePrevious: true)`;
+                } else if (options.aggregate !== 'minmax') {
+                    fluxQuery += ` |> group()`;
+                }
+
+                if ((!options.start && options.count) || (options.aggregate === 'none' && options.count && options.returnNewestEntries) ) {
+                    fluxQuery += ` |> sort(columns:["_time"], desc: true)`;
+                } else {
+                    fluxQuery += ` |> sort(columns:["_time"], desc: false)`;
+                }
+
+                if (!(resultsFromInfluxDB && supportsAggregates) && options.aggregate !== 'minmax') {
+                    fluxQuery += ` |> limit(n: ${options.count})`;
                 }
 
                 if (options.step && supportsAggregates) {
