@@ -695,41 +695,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
             }, function (result) {
                 expect(result.success).to.be.true;
 
-                sendTo(instanceName, 'getHistory', {
-                    id: `${instanceName}.testValue`,
-                    options: {
-                        start:     nowSampleI1,
-                        end:       nowSampleI1 + 30 * 60 * 1000,
-                        count:     1,
-                        aggregate: 'integral',
-                        removeBorderValues: true,
-                        integralUnit: 1,
-                        integralInterpolation: 'none'
-                    }
-                }, function (result) {
-                    console.log(`Sample I1-1: ${JSON.stringify(result.result, null, 2)}`);
-                    if (adapterShortName !== 'influxdb') {
-                        expect(result.result.length).to.be.equal(1);
-                        if (assumeExistingData) {
-                            expect(result.result[0].val).to.be.within(3700, 3755);
-                        } else {
-                            expect(result.result[0].val).to.be.within(3700, 3800);
-                        }
-                    } else {
-                        expect(result.result.length).to.be.equal(2);
-                        if (assumeExistingData) {
-                            expect(result.result[0].val).to.be.within(3700, 3755);
-                        } else {
-                            if (process.env.INFLUXDB2) {
-                                expect((result.result[0].val + result.result[1].val)).to.be.within(2980, 3000);
-                            } else {
-                                expect(parseFloat((result.result[0].val + result.result[1].val).toFixed(2))).to.be.equal(3732.66);
-                            }
-                        }
-
-                    }
-                    // Result Influxdb1 Doku = 3732.66
-
+                setTimeout(() => {
                     sendTo(instanceName, 'getHistory', {
                         id: `${instanceName}.testValue`,
                         options: {
@@ -738,59 +704,72 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                             count:     1,
                             aggregate: 'integral',
                             removeBorderValues: true,
-                            integralUnit: 60,
+                            integralUnit: 1,
                             integralInterpolation: 'none'
                         }
                     }, function (result) {
-                        console.log(`Sample I1-60: ${JSON.stringify(result.result, null, 2)}`);
+                        console.log(`Sample I1-1: ${JSON.stringify(result.result, null, 2)}`);
                         if (adapterShortName !== 'influxdb') {
                             expect(result.result.length).to.be.equal(1);
                             if (assumeExistingData) {
-                                expect(result.result[0].val).to.be.lessThan(62.25);
+                                expect(result.result[0].val).to.be.within(3700, 3755);
                             } else {
-                                expect(result.result[0].val).to.be.equal(62.25);
+                                expect(result.result[0].val).to.be.within(3700, 3800);
                             }
                         } else {
                             expect(result.result.length).to.be.equal(2);
                             if (assumeExistingData) {
-                                expect(parseFloat(result.result[0].val.toFixed(2))).to.be.equal(62.21);
+                                expect(result.result[0].val).to.be.within(3700, 3755);
                             } else {
                                 if (process.env.INFLUXDB2) {
-                                    expect(parseFloat((result.result[0].val + result.result[1].val).toFixed(2))).to.be.within(49, 50);
+                                    expect((result.result[0].val + result.result[1].val)).to.be.within(2980, 3000);
                                 } else {
-                                    expect(parseFloat((result.result[0].val + result.result[1].val).toFixed(2))).to.be.equal(62.21);
+                                    expect(parseFloat((result.result[0].val + result.result[1].val).toFixed(2))).to.be.equal(3732.66);
                                 }
                             }
+
                         }
-                        // Result Influxdb1 Doku = 62.211
+                        // Result Influxdb1 Doku = 3732.66
 
                         sendTo(instanceName, 'getHistory', {
                             id: `${instanceName}.testValue`,
                             options: {
-                                start:     nowSampleI21,
-                                end:       nowSampleI21 + 60 * 1000,
+                                start:     nowSampleI1,
+                                end:       nowSampleI1 + 30 * 60 * 1000,
                                 count:     1,
                                 aggregate: 'integral',
                                 removeBorderValues: true,
-                                integralUnit: 10,
+                                integralUnit: 60,
                                 integralInterpolation: 'none'
                             }
                         }, function (result) {
-                            console.log(`Sample I21: ${JSON.stringify(result.result, null, 2)}`);
+                            console.log(`Sample I1-60: ${JSON.stringify(result.result, null, 2)}`);
                             if (adapterShortName !== 'influxdb') {
                                 expect(result.result.length).to.be.equal(1);
-                                expect(result.result[0].val).to.be.equal(51);
+                                if (assumeExistingData) {
+                                    expect(result.result[0].val).to.be.lessThan(62.25);
+                                } else {
+                                    expect(result.result[0].val).to.be.equal(62.25);
+                                }
                             } else {
-                                expect(result.result.length).to.be.within(1, 2);
-                                expect(result.result[0].val + (result.result[1] ? result.result[1].val : 0)).to.be.within(30, 50);
+                                expect(result.result.length).to.be.equal(2);
+                                if (assumeExistingData) {
+                                    expect(parseFloat(result.result[0].val.toFixed(2))).to.be.equal(62.21);
+                                } else {
+                                    if (process.env.INFLUXDB2) {
+                                        expect(parseFloat((result.result[0].val + result.result[1].val).toFixed(2))).to.be.within(49, 50);
+                                    } else {
+                                        expect(parseFloat((result.result[0].val + result.result[1].val).toFixed(2))).to.be.equal(62.21);
+                                    }
+                                }
                             }
-                            // Result Influxdb21 Doku = 50.0
+                            // Result Influxdb1 Doku = 62.211
 
                             sendTo(instanceName, 'getHistory', {
                                 id: `${instanceName}.testValue`,
                                 options: {
-                                    start:     nowSampleI22,
-                                    end:       nowSampleI22 + 60 * 1000,
+                                    start:     nowSampleI21,
+                                    end:       nowSampleI21 + 60 * 1000,
                                     count:     1,
                                     aggregate: 'integral',
                                     removeBorderValues: true,
@@ -798,47 +777,43 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                                     integralInterpolation: 'none'
                                 }
                             }, function (result) {
-                                console.log(`Sample I22: ${JSON.stringify(result.result, null, 2)}`);
+                                console.log(`Sample I21: ${JSON.stringify(result.result, null, 2)}`);
                                 if (adapterShortName !== 'influxdb') {
                                     expect(result.result.length).to.be.equal(1);
-                                    expect(result.result[0].val).to.be.equal(53);
+                                    expect(result.result[0].val).to.be.equal(51);
                                 } else {
-                                    expect(result.result.length).to.be.within(1,2);
-                                    expect(result.result[0].val + (result.result[1] ? result.result[1].val : 0)).to.be.within(27,43);
+                                    expect(result.result.length).to.be.within(1, 2);
+                                    expect(result.result[0].val + (result.result[1] ? result.result[1].val : 0)).to.be.within(30, 50);
                                 }
-                                // Result Influxdb22 Doku = 43
+                                // Result Influxdb21 Doku = 50.0
 
                                 sendTo(instanceName, 'getHistory', {
                                     id: `${instanceName}.testValue`,
                                     options: {
-                                        start:     nowSampleI23,
-                                        end:       nowSampleI23 + 60 * 1000,
+                                        start:     nowSampleI22,
+                                        end:       nowSampleI22 + 60 * 1000,
                                         count:     1,
                                         aggregate: 'integral',
                                         removeBorderValues: true,
                                         integralUnit: 10,
-                                        integralInterpolation: 'linear'
+                                        integralInterpolation: 'none'
                                     }
                                 }, function (result) {
-                                    console.log(`Sample I23: ${JSON.stringify(result.result, null, 2)}`);
+                                    console.log(`Sample I22: ${JSON.stringify(result.result, null, 2)}`);
                                     if (adapterShortName !== 'influxdb') {
                                         expect(result.result.length).to.be.equal(1);
-                                        expect(result.result[0].val).to.be.equal(25.5);
+                                        expect(result.result[0].val).to.be.equal(53);
                                     } else {
                                         expect(result.result.length).to.be.within(1,2);
-                                        if (process.env.INFLUXDB2) {
-                                            //expect(result.result[0].val).to.be.equal(25.5);
-                                        } else {
-                                            expect(result.result[0].val).to.be.equal(34.5);
-                                        }
+                                        expect(result.result[0].val + (result.result[1] ? result.result[1].val : 0)).to.be.within(27,43);
                                     }
-                                    // Result Influxdb23 Doku = 25.0
+                                    // Result Influxdb22 Doku = 43
 
                                     sendTo(instanceName, 'getHistory', {
                                         id: `${instanceName}.testValue`,
                                         options: {
-                                            start:     nowSampleI24,
-                                            end:       nowSampleI24 + 60 * 1000,
+                                            start:     nowSampleI23,
+                                            end:       nowSampleI23 + 60 * 1000,
                                             count:     1,
                                             aggregate: 'integral',
                                             removeBorderValues: true,
@@ -846,55 +821,82 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                                             integralInterpolation: 'linear'
                                         }
                                     }, function (result) {
-                                        console.log(`Sample I24: ${JSON.stringify(result.result, null, 2)}`);
+                                        console.log(`Sample I23: ${JSON.stringify(result.result, null, 2)}`);
                                         if (adapterShortName !== 'influxdb') {
                                             expect(result.result.length).to.be.equal(1);
-                                            if (assumeExistingData) {
-                                                expect(result.result[0].val).to.be.within(31, 32);
-                                            } else {
-                                                expect(result.result[0].val).to.be.within(32, 33.5);
-                                            }
+                                            expect(result.result[0].val).to.be.equal(25.5);
                                         } else {
                                             expect(result.result.length).to.be.within(1,2);
                                             if (process.env.INFLUXDB2) {
                                                 //expect(result.result[0].val).to.be.equal(25.5);
                                             } else {
+                                                expect(result.result[0].val).to.be.equal(34.5);
+                                            }
+                                        }
+                                        // Result Influxdb23 Doku = 25.0
+
+                                        sendTo(instanceName, 'getHistory', {
+                                            id: `${instanceName}.testValue`,
+                                            options: {
+                                                start:     nowSampleI24,
+                                                end:       nowSampleI24 + 60 * 1000,
+                                                count:     1,
+                                                aggregate: 'integral',
+                                                removeBorderValues: true,
+                                                integralUnit: 10,
+                                                integralInterpolation: 'linear'
+                                            }
+                                        }, function (result) {
+                                            console.log(`Sample I24: ${JSON.stringify(result.result, null, 2)}`);
+                                            if (adapterShortName !== 'influxdb') {
+                                                expect(result.result.length).to.be.equal(1);
                                                 if (assumeExistingData) {
                                                     expect(result.result[0].val).to.be.within(31, 32);
                                                 } else {
                                                     expect(result.result[0].val).to.be.within(32, 33.5);
                                                 }
-                                            }
-                                        }
-                                        // Result Influxdb24 Doku = 32.5
-
-                                        sendTo(instanceName, 'getHistory', {
-                                            id: `${instanceName}.testValue`,
-                                            options: {
-                                                start:     nowSampleI22,
-                                                end:       nowSampleI22 + 60 * 1000,
-                                                count:     1,
-                                                aggregate: 'quantile',
-                                                quantile: 0.8
-                                            }
-                                        }, function (result) {
-                                            console.log(`Sample I22-Quantile: ${JSON.stringify(result.result, null, 2)}`);
-                                            if (adapterShortName !== 'influxdb') {
-                                                expect(result.result.length).to.be.equal(3);
-                                                expect(result.result[1].val).to.be.equal(19);
                                             } else {
-                                                expect(result.result.length).to.be.within(3, 4);
-                                                expect(result.result[1].val).to.be.equal(19);
+                                                expect(result.result.length).to.be.within(1,2);
+                                                if (process.env.INFLUXDB2) {
+                                                    //expect(result.result[0].val).to.be.equal(25.5);
+                                                } else {
+                                                    if (assumeExistingData) {
+                                                        expect(result.result[0].val).to.be.within(31, 32);
+                                                    } else {
+                                                        expect(result.result[0].val).to.be.within(32, 33.5);
+                                                    }
+                                                }
                                             }
+                                            // Result Influxdb24 Doku = 32.5
 
-                                            resolve();
+                                            sendTo(instanceName, 'getHistory', {
+                                                id: `${instanceName}.testValue`,
+                                                options: {
+                                                    start:     nowSampleI22,
+                                                    end:       nowSampleI22 + 60 * 1000,
+                                                    count:     1,
+                                                    aggregate: 'quantile',
+                                                    quantile: 0.8
+                                                }
+                                            }, function (result) {
+                                                console.log(`Sample I22-Quantile: ${JSON.stringify(result.result, null, 2)}`);
+                                                if (adapterShortName !== 'influxdb') {
+                                                    expect(result.result.length).to.be.equal(3);
+                                                    expect(result.result[1].val).to.be.equal(19);
+                                                } else {
+                                                    expect(result.result.length).to.be.within(3, 4);
+                                                    expect(result.result[1].val).to.be.equal(19);
+                                                }
+
+                                                resolve();
+                                            });
                                         });
                                     });
                                 });
                             });
                         });
                     });
-                });
+                }, 1000);
             });
         });
     });
