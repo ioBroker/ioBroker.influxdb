@@ -192,13 +192,14 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
 
         states.setState('system.adapter.influxdb.0.memHeapUsed', {val: 'Blubb', ts: now - 20000, from: 'test.0'}, (err) => {
             err && console.log(err);
-            sendTo('influxdb.0', 'flushBuffer', {id: 'system.adapter.influxdb.0.memHeapUsed'}, result => {
-                expect(result.error).to.be.not.ok;
-                done();
-            });
+            setTimeout(() => {
+                sendTo('influxdb.0', 'flushBuffer', {id: 'system.adapter.influxdb.0.memHeapUsed'}, result => {
+                    expect(result.error).to.be.not.ok;
+                    done();
+                });
+            }, 1000);
         });
     });
-
 
     it(`Test ${adapterShortName}: Read values from DB using query`, function (done) {
         this.timeout(10000);
