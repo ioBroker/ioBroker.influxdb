@@ -718,7 +718,11 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                         } else {
                             if (assumeExistingData) {
                                 expect(result.result.length).to.be.equal(3);
-                                expect(result.result[0].val).to.be.within(3700, 3755);
+                                if (process.env.INFLUXDB2) {
+                                    expect((result.result[0].val + result.result[1].val)).to.be.within(3780, 4000);
+                                } else {
+                                    expect(parseFloat((result.result[1].val).toFixed(2))).to.be.equal(3492.12);
+                                }
                             } else {
                                 expect(result.result.length).to.be.equal(2);
                                 if (process.env.INFLUXDB2) {
