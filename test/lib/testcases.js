@@ -303,7 +303,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
             }
         }, function (result) {
             console.log(JSON.stringify(result.result, null, 2));
-            if (adapterShortName !== 'influxdb') {
+            if (instanceName !== 'influxdb.0') {
                 expect(result.result.length).to.be.equal(4);
                 expect(result.result[1].val).to.be.equal(1.5);
                 expect(result.result[2].val).to.be.equal(2.57);
@@ -514,7 +514,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
             }
         }, result => {
             console.log(JSON.stringify(result.result, null, 2));
-            if (adapterShortName !== 'influxdb') {
+            if (instanceName !== 'influxdb.0') {
                 expect(result.result.length).to.be.equal(1);
                 expect(result.result[0].val).to.be.equal(5);
                 expect(result.result[0].id).to.be.equal(`${instanceName}.testValueDebounce alias`);
@@ -541,7 +541,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                 }
             }, result => {
                 console.log(JSON.stringify(result.result, null, 2));
-                if (adapterShortName !== 'influxdb') {
+                if (instanceName !== 'influxdb.0') {
                     expect(result.result.length).to.be.equal(1);
                     expect(result.result[0].val).to.be.equal(7);
                 } else {
@@ -572,7 +572,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
             }
         }, function (result) {
             console.log(JSON.stringify(result.result, null, 2));
-            if (adapterShortName !== 'influxdb') {
+            if (instanceName !== 'influxdb.0') {
                 expect(result.result.length).to.be.equal(5);
             } else {
                 expect(result.result.length).to.be.within(3, 5);
@@ -599,7 +599,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
             }
         }, function (result) {
             console.log(JSON.stringify(result.result, null, 2));
-            if (adapterShortName !== 'influxdb') {
+            if (instanceName !== 'influxdb.0') {
                 expect(result.result.length).to.be.equal(5);
             } else {
                 expect(result.result.length).to.be.within(3, 5);
@@ -708,7 +708,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                         }
                     }, function (result) {
                         console.log(`Sample I1-1: ${JSON.stringify(result.result, null, 2)}`);
-                        if (adapterShortName !== 'influxdb') {
+                        if (instanceName !== 'influxdb.0') {
                             expect(result.result.length).to.be.equal(1);
                             if (assumeExistingData) {
                                 expect(result.result[0].val).to.be.within(3700, 3755);
@@ -743,7 +743,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                             }
                         }, function (result) {
                             console.log(`Sample I1-60: ${JSON.stringify(result.result, null, 2)}`);
-                            if (adapterShortName !== 'influxdb') {
+                            if (instanceName !== 'influxdb.0') {
                                 expect(result.result.length).to.be.equal(1);
                                 if (assumeExistingData) {
                                     expect(result.result[0].val).to.be.lessThan(62.25);
@@ -777,7 +777,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                                 }
                             }, function (result) {
                                 console.log(`Sample I21: ${JSON.stringify(result.result, null, 2)}`);
-                                if (adapterShortName !== 'influxdb') {
+                                if (instanceName !== 'influxdb.0') {
                                     expect(result.result.length).to.be.equal(1);
                                     expect(result.result[0].val).to.be.equal(51);
                                 } else {
@@ -799,7 +799,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                                     }
                                 }, function (result) {
                                     console.log(`Sample I22: ${JSON.stringify(result.result, null, 2)}`);
-                                    if (adapterShortName !== 'influxdb') {
+                                    if (instanceName !== 'influxdb.0') {
                                         expect(result.result.length).to.be.equal(1);
                                         expect(result.result[0].val).to.be.equal(53);
                                     } else {
@@ -821,7 +821,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                                         }
                                     }, function (result) {
                                         console.log(`Sample I23: ${JSON.stringify(result.result, null, 2)}`);
-                                        if (adapterShortName !== 'influxdb') {
+                                        if (instanceName !== 'influxdb.0') {
                                             expect(result.result.length).to.be.equal(1);
                                             expect(result.result[0].val).to.be.equal(25.5);
                                         } else {
@@ -847,7 +847,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                                             }
                                         }, function (result) {
                                             console.log(`Sample I24: ${JSON.stringify(result.result, null, 2)}`);
-                                            if (adapterShortName !== 'influxdb') {
+                                            if (instanceName !== 'influxdb.0') {
                                                 expect(result.result.length).to.be.equal(1);
                                                 if (assumeExistingData) {
                                                     expect(result.result[0].val).to.be.within(31, 32);
@@ -879,7 +879,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                                                 }
                                             }, function (result) {
                                                 console.log(`Sample I22-Quantile: ${JSON.stringify(result.result, null, 2)}`);
-                                                if (adapterShortName !== 'influxdb') {
+                                                if (instanceName !== 'influxdb.0') {
                                                     expect(result.result.length).to.be.equal(3);
                                                     expect(result.result[1].val).to.be.equal(19);
                                                 } else {
