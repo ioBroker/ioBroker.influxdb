@@ -1066,10 +1066,10 @@ function pushHelper(adapter, _id, state, cb) {
     else if (_settings.storageType === 'Boolean' && typeof state.val !== 'boolean') {
         state.val = !!state.val;
     }
-    pushValueIntoDB(adapter, _id, state, () => cb && setImmediate(cb));
+    pushValueIntoDB(adapter, _id, state, false,() => cb && setImmediate(cb));
 }
 
-function pushValueIntoDB(adapter, id, state, cb) {
+function pushValueIntoDB(adapter, id, state, directWrite, cb) {
     if (!adapter._client) {
         adapter.log.warn('No connection to DB');
         return cb && cb('No connection to DB');
@@ -1108,7 +1108,7 @@ function pushValueIntoDB(adapter, id, state, cb) {
         ack:   !!state.ack
     };
 
-    if ((adapter._conflictingPoints[id] || adapter.config.seriesBufferMax === 0) && (adapter._connected && adapter._client.request && adapter._client.request.getHostsAvailable().length > 0)) {
+    if ((adapter._conflictingPoints[id] || adapter.config.seriesBufferMax === 0 || directWrite) && (adapter._connected && adapter._client.request && adapter._client.request.getHostsAvailable().length > 0)) {
         if (adapter.config.seriesBufferMax !== 0) {
             adapter.log.debug(`Direct writePoint("${id} - ${influxFields.value} / ${influxFields.time}")`);
         }
@@ -1627,8 +1627,7 @@ function update(adapter, id, state, cb) {
                             adapter.log.error(`Cannot delete value for ${id}: ${JSON.stringify(state)}`);
                             cb && cb(err);
                         } else {
-                            pushValueIntoDB(adapter, id, stored);
-                            cb && cb();
+                            pushValueIntoDB(adapter, id, stored, true, cb);
                         }
                     });
                 } else {
