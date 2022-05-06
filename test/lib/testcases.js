@@ -804,7 +804,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                                     expect(result.result[0].val).to.be.equal(53);
                                 } else {
                                     expect(result.result.length).to.be.equal(2);
-                                    expect(result.result[0].val + result.result[1].val).to.be.equal(43);
+                                    expect(result.result[0].val + result.result[1].val).to.be.within(27,43);
                                 }
                                 // Result Influxdb22 Doku = 43
 

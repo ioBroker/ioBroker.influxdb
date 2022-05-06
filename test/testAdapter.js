@@ -182,7 +182,10 @@ describe(`Test ${adapterShortName} adapter`, function () {
 
         states.setState('system.adapter.influxdb.0.memHeapUsed', {val: 'Blubb', ts: now - 20000, from: 'test.0'}, err => {
             err && console.log(err);
-            done();
+            sendTo('influxdb.0', 'flushBuffer', {id: 'system.adapter.influxdb.0.memHeapUsed'}, result => {
+                expect(result.error).to.be.not.ok;
+                done();
+            });
         });
     });
 

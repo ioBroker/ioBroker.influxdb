@@ -575,6 +575,14 @@ function processMessage(adapter, msg) {
     else if (msg.command === 'resetConflictingPoints') {
         resetConflictingPoints(adapter, msg);
     }
+    else if (msg.command === 'flushBuffer') {
+        const id = msg.message ? msg.message.id || undefined;
+        storeBufferedSeries(adapter, id, msg, error => {
+            if (msg.callback) {
+                adapter.sendTo(msg.from, msg.command, {error}, msg.callback);
+            }
+        });
+    }
     else if (msg.command === 'enableHistory') {
         enableHistory(adapter, msg);
     }

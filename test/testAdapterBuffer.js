@@ -103,6 +103,8 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
 
             config.native.seriesBufferFlushInterval = 30;
             config.native.seriesBufferMax = 5;
+            config.native.retention = -1;
+            config.native.customRetentionDuration = 10;
             config.native.dbname = 'otheriobroker';
 
             config.native.enableDebugLogs = true;
@@ -190,7 +192,10 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
 
         states.setState('system.adapter.influxdb.0.memHeapUsed', {val: 'Blubb', ts: now - 20000, from: 'test.0'}, (err) => {
             err && console.log(err);
-            done();
+            sendTo('influxdb.0', 'flushBuffer', {id: 'system.adapter.influxdb.0.memHeapUsed'}, result => {
+                expect(result.error).to.be.not.ok;
+                done();
+            });
         });
     });
 
