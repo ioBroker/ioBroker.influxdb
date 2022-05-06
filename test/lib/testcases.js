@@ -717,7 +717,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                             }
                         } else {
                             if (assumeExistingData) {
-                                expect(result.result.length).to.be.equal(3);
+                                expect(result.result.length).to.be.within(2,3);
                                 if (process.env.INFLUXDB2) {
                                     //expect((result.result[0].val + result.result[1].val)).to.be.within(3780, 4000);
                                 } else {
@@ -758,7 +758,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                             } else {
                                 if (assumeExistingData) {
                                     expect(result.result.length).to.be.equal(3);
-                                    expect(result.result[0].val).to.be.within(40, 65);
+                                    expect(result.result[1].val).to.be.within(40, 65);
                                 } else {
                                     expect(result.result.length).to.be.equal(2);
                                     if (process.env.INFLUXDB2) {
