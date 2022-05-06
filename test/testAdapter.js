@@ -193,7 +193,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
         let query = 'SELECT * FROM "influxdb.0.testValue"';
         if (process.env.INFLUXDB2) {
             const date = Date.now();
-            query = `from(bucket: "iobroker") |> range(start:${new Date(date - 24*60*60*1000).toISOString()}, stop: ${new Date(date).toISOString()}) |> filter(fn: (r) => r.["_measurement"] == "influxdb.0.testValue") |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value") |> group()`;
+            query = `from(bucket: "iobroker") |> range(start: ${new Date(date - 24*60*60*1000).toISOString()}, stop: ${new Date(date).toISOString()}) |> filter(fn: (r) => r.["_measurement"] == "influxdb.0.testValue") |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value") |> group() |> sort(columns:["_time"], desc: false)`;
         }
         sendTo('influxdb.0', 'query', query, result => {
             console.log(JSON.stringify(result.result, null, 2));
