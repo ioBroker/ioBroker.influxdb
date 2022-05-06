@@ -782,7 +782,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                                 expect(result.result[0].val).to.be.equal(51);
                             } else {
                                 expect(result.result.length).to.be.within(1, 2);
-                                expect(result.result[0].val + result.result[1] ? result.result[1].val : 0).to.be.within(30, 50);
+                                expect(result.result[0].val + (result.result[1] ? result.result[1].val : 0)).to.be.within(40, 50);
                             }
                             // Result Influxdb21 Doku = 50.0
 
