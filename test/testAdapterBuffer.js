@@ -200,7 +200,8 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
 
         let query = 'SELECT * FROM "influxdb.0.testValue"';
         if (process.env.INFLUXDB2) {
-            query = 'from(bucket: "otheriobroker") |> range(start:-1d) |> filter(fn: (r) => r._measurement == "influxdb.0.testValue") |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value") |> group()';
+            const date = Date.now();
+            query = `from(bucket: "iobroker") |> range(start:${new Date(date - 24*60*60*1000).toISOString()}, stop: ${new Date(date).toISOString()}) |> filter(fn: (r) => r.["_measurement"] == "influxdb.0.testValue") |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value") |> group()`;
         }
 
         sendTo('influxdb.0', 'query', query, result => {

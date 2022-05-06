@@ -549,14 +549,9 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                     expect(result.result.length).to.be.equal(1);
                     expect(result.result[0].val).to.be.equal(7);
                 } else {
-                    if (process.env.INFLUXDB2) {
-                        expect(result.result.length).to.be.equal(2);
-                        expect(result.result[1].val).to.be.equal(7);
-                    } else {
-                        expect(result.result.length).to.be.within(1,2);
-                        result.result.length === 1 && expect(result.result[0].val).to.be.equal(7);
-                        result.result.length === 2 && expect(result.result[1].val).to.be.equal(7);
-                    }
+                    expect(result.result.length).to.be.within(1,2);
+                    result.result.length === 1 && expect(result.result[0].val).to.be.equal(7);
+                    result.result.length === 2 && expect(result.result[1].val).to.be.equal(7);
                     expect(result.result[1].id).to.be.equal(`${instanceName}.testValueDebounce alias`);
                 }
 
@@ -765,7 +760,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                                 expect(parseFloat(result.result[0].val.toFixed(2))).to.be.equal(62.21);
                             } else {
                                 if (process.env.INFLUXDB2) {
-                                    expect(parseFloat((result.result[0].val + result.result[1].val).toFixed(2))).to.be.equal(49.78);
+                                    expect(parseFloat((result.result[0].val + result.result[1].val).toFixed(2))).to.be.within(49.7, 49.8);
                                 } else {
                                     expect(parseFloat((result.result[0].val + result.result[1].val).toFixed(2))).to.be.equal(62.21);
                                 }
