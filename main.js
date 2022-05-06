@@ -2200,7 +2200,7 @@ function getHistoryIflx2(adapter, msg) {
         if ((options.step !== null) && (options.step > 0))
             fluxQuery += ` |> window(every: ${options.step}ms)`;
         fluxQuery += `|> fill(column: "${valueColumn}", usePrevious: true)`;
-    } else if (options.aggregate !== 'minmax' && options.aggregate !== 'integral') {
+    } else if (options.aggregate !== 'minmax') {
         fluxQuery += ` |> group()`;
     }
 
@@ -2210,7 +2210,7 @@ function getHistoryIflx2(adapter, msg) {
         fluxQuery += ` |> sort(columns:["_time"], desc: false)`;
     }
 
-    if (!resultsFromInfluxDB && options.aggregate !== 'minmax' && options.aggregate !== 'integral') {
+    if (!resultsFromInfluxDB && options.aggregate !== 'minmax') {
         fluxQuery += ` |> limit(n: ${options.count})`;
     }
 
