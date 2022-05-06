@@ -521,11 +521,11 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
             } else {
                 expect(result.result.length).to.be.within(1,2);
                 if (process.env.INFLUXDB2) {
-                    expect(result.result[1].val).to.be.within(5, 7);
+                    expect(result.result[1] ? result.result[1].val : result.result[0].val).to.be.within(5, 7);
                 } else {
-                    expect(result.result[1].val).to.be.within(5, 7);
+                    expect(result.result[1] ? result.result[1].val : result.result[0].val).to.be.within(5, 7);
                 }
-                expect(result.result[1].id).to.be.equal(`${instanceName}.testValueDebounce alias`);
+                expect(result.result[0].id).to.be.equal(`${instanceName}.testValueDebounce alias`);
             }
 
             sendTo(instanceName, 'getHistory', {
@@ -546,8 +546,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                     expect(result.result[0].val).to.be.equal(7);
                 } else {
                     expect(result.result.length).to.be.within(1,2);
-                    result.result.length === 1 && expect(result.result[0].val).to.be.equal(7);
-                    result.result.length === 2 && expect(result.result[1].val).to.be.equal(7);
+                    expect(result.result[1] ? result.result[1].val : result.result[0].val).to.be.equal(7);
                     expect(result.result[0].id).to.be.equal(`${instanceName}.testValueDebounce alias`);
                 }
 
