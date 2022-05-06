@@ -2190,8 +2190,8 @@ function getHistoryIflx2(adapter, msg) {
     const booleanTypeCheckQuery = `
         from(bucket: "${adapter.config.dbname}")
         |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end).toISOString()})
-        |> filter(fn: (r) => r["_measurement"] == "${options.id}" and contains(value: r._value, set: [true, false]))
         ${adapter.config.usetags ? ' |> duplicate(column: "_value", as: "value")' : ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")'}
+        |> filter(fn: (r) => r["_measurement"] == "${options.id}" and contains(value: r._value, set: [true, false]))
         |> group()
     `;
 
@@ -2202,7 +2202,9 @@ function getHistoryIflx2(adapter, msg) {
         setTimeout(() => {
             adapter._client.query(booleanTypeCheckQuery, (error, rslt) => {
                 let supportsAggregates;
-                if (error) {
+                if (adapter._influxDPs[options.id][adapter.namespace].storageType && adapter._influxDPs[options.id][adapter.namespace].storageType !== 'Number') {
+                    supportsAggregates = false;
+                } else if (error) {
                     if (error.message.includes('type conflict: bool')) {
                         adapter.log.debug(`Bool check error: ${error.message}`);
                         supportsAggregates = true;
@@ -2223,9 +2225,7 @@ function getHistoryIflx2(adapter, msg) {
                     }
                 }
                 if (supportsAggregates) {
-                    if (adapter._influxDPs[options.id][adapter.namespace].storageType && adapter._influxDPs[options.id][adapter.namespace].storageType !== 'Number') {
-                        supportsAggregates = false;
-                    } else if (adapter._influxDPs[options.id][adapter.namespace].state && typeof adapter._influxDPs[options.id][adapter.namespace].state.val !== 'number') {
+                    if (adapter._influxDPs[options.id][adapter.namespace].state && typeof adapter._influxDPs[options.id][adapter.namespace].state.val !== 'number') {
                         supportsAggregates = false;
                     } else if (adapter._influxDPs[options.id][adapter.namespace].skipped && typeof adapter._influxDPs[options.id][adapter.namespace].skipped.val !== 'number') {
                         supportsAggregates = false;
