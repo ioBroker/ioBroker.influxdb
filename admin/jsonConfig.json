@@ -18,6 +18,18 @@
             "sm": 12,
             "md": 8
         },
+        "protocol": {
+          "newLine": true,
+          "type": "select",
+          "noTranslation": true,
+          "options": [
+            {"label": "http",  "value": "http"},
+            {"label": "https", "value": "https"}
+          ],
+          "label": "Protocol",
+          "sm": 12,
+          "md": 2
+        },
         "host": {
           "type": "text",
           "label": "Host",
@@ -32,16 +44,14 @@
           "sm": 12,
           "md": 2
         },
-        "protocol": {
-          "type": "select",
-          "noTranslation": true,
-          "options": [
-            {"label": "http",  "value": "http"},
-            {"label": "https", "value": "https"}
-          ],
-          "label": "Protocol",
+        "path": {
+          "type": "text",
+          "label": "Path",
+          "help": "only enter when e.g. a reverse proxy is used",
+          "hidden": "data.dbversion === '1.x'",
+          "disabled": "data.dbversion === '1.x'",
           "sm": 12,
-          "md": 2
+          "md": 4
         },
         "user": {
           "newLine": true,
@@ -249,12 +259,26 @@
             {
               "value": 86400,
               "label": "1 day"
+            },
+            {
+              "value": -1,
+              "label": "Custom timeframe"
             }
           ],
           "sm": 12,
           "md": 6
         },
+        "customRetentionDuration": {
+          "type": "number",
+          "label": "Custom retention duration (days)",
+          "min": 1,
+          "sm": 12,
+          "md": 4,
+          "hidden": "(data.retention !== -1)",
+          "help": "Number of days to keep the data."
+        },
         "retentionConfirm": {
+          "newLine": true,
           "type": "checkbox",
           "label": "Apply lower retention",
           "hidden": "(data.retention >= originalData.retention && originalData.retention != 0) || data.retention == 0",

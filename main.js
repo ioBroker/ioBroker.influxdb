@@ -582,7 +582,7 @@ function processMessage(adapter, msg) {
     }
     else if (msg.command === 'flushBuffer') {
         const id = msg.message ? msg.message.id : undefined;
-        adapter.log.debug(`Flushing buffer ${JSON.stringify(msg.message)} -> ${id}`);
+        adapter.log.debug(`Flushing buffer for ${id || 'all'}`);
         storeBufferedSeries(adapter, id, error => {
             if (msg.callback) {
                 adapter.sendTo(msg.from, msg.command, {error}, msg.callback);
@@ -687,6 +687,9 @@ function main(adapter) {
     }
 
     adapter.config.retention = parseInt(adapter.config.retention, 10) || 0;
+    if (adapter.config.retention === -1 ) { // Custom timeframe
+        adapter.config.retention = (parseInt(adapter.config.customRetentionDuration, 10) || 0) * 24 * 60 * 60;
+    }
 
     // analyse if by the last stop the values were cached into file
     try {
@@ -1233,7 +1236,7 @@ function writeAllSeriesPerID(adapter, series, cb, idList) {
 
 function writeSeriesPerID(adapter, seriesId, points, cb) {
     if (!points.length) {
-        return cb && cb();
+        return cb && setImmediate(cb);
     }
     adapter.log.debug(`writePoints ${points.length} for ${seriesId} at once`);
 
