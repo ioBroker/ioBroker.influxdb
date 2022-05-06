@@ -2183,13 +2183,16 @@ function getHistoryIflx2(adapter, msg) {
         options.limit += 2;
     }
 
+    const valueColumn = adapter.config.usetags ? '_value' : 'value';
+
     // Workaround to detect if measurement is of type bool (to skip non-sensual aggregation options)
-    // There seems to be no officially supported way to detect this, so we check it by forcing a type-conflict
+    // There seems to be no officially supported way to detect this, so we check it by forcing a type-conflict;
     const booleanTypeCheckQuery = `
         from(bucket: "${adapter.config.dbname}")
         |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end).toISOString()})
-        |> group()
         |> filter(fn: (r) => r["_measurement"] == "${options.id}" and contains(value: r._value, set: [true, false]))
+        ${adapter.config.usetags ? ' |> duplicate(column: "_value", as: "value")' : ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")'}
+        |> group()
     `;
 
     storeBufferedSeries(adapter, options.id, (err, storedCount) => {
@@ -2234,8 +2237,6 @@ function getHistoryIflx2(adapter, msg) {
 
                 const fluxQueries = [];
                 let fluxQuery = `from(bucket: "${adapter.config.dbname}") `;
-
-                const valueColumn = adapter.config.usetags ? '_value' : 'value';
 
                 fluxQuery += ` |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end).toISOString()})`;
                 fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${options.id}")`;
