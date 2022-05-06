@@ -576,7 +576,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
             if (adapterShortName !== 'influxdb') {
                 expect(result.result.length).to.be.equal(5);
             } else {
-                expect(result.result.length).to.be.within(4, 5);
+                expect(result.result.length).to.be.within(3, 5);
             }
             expect(result.result[0].id).to.be.equal(`${instanceName}.testValueDebounce alias`);
             done();
