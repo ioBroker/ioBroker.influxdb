@@ -462,6 +462,7 @@ function testConnection(adapter, msg) {
                     msg.message.config.host,
                     msg.message.config.port,
                     msg.message.config.protocol,  // optional, default 'http'
+                    msg.message.config.path,    // optional, default '/'
                     msg.message.config.token,
                     msg.message.config.organization,
                     msg.message.config.dbname || appName,
