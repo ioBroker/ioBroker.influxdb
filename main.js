@@ -2212,7 +2212,7 @@ function getHistoryIflx2(adapter, msg) {
                     supportsAggregates = false;
                 } else if (error) {
                     if (error.message.includes('type conflict: bool')) {
-                        adapter.log.debug(`Bool check error: ${error.message}`);
+                        debugLog && adapter.log.debug(`Bool check error: ${error.message}`);
                         supportsAggregates = true;
                         error = null;
                     } else {
@@ -2223,7 +2223,7 @@ function getHistoryIflx2(adapter, msg) {
                         }, msg.callback);
                     }
                 } else {
-                    adapter.log.debug(`Bool check result: ${JSON.stringify(rslt)}`);
+                    debugLog && adapter.log.debug(`Bool check result: ${JSON.stringify(rslt)}`);
                     if (rslt.find(r => r.error && r.error.includes('type conflict: bool'))) {
                         supportsAggregates = true;
                     } else {
