@@ -1861,7 +1861,8 @@ function getHistory(adapter, msg) {
         quantile: msg.message.options.aggregate === 'quantile' ? parseFloat(msg.message.options.quantile) || 0.5 : null,
         integralUnit: msg.message.options.aggregate === 'integral' ? parseInt(msg.message.options.integralUnit, 10) || 60 : null,
         integralInterpolation: msg.message.options.aggregate === 'integral' ? msg.message.options.integralInterpolation || 'none' : null,
-        removeBorderValues: msg.message.options.removeBorderValues || false
+        removeBorderValues: msg.message.options.removeBorderValues || false,
+        logId:     (msg.message.id ? msg.message.id : 'all') + Date.now() + Math.random()
     };
 
     if (!options.start && options.count) {
@@ -1881,7 +1882,7 @@ function getHistory(adapter, msg) {
 
     const debugLog = options.debugLog = !!(adapter._influxDPs[options.id] && adapter._influxDPs[options.id][adapter.namespace] && adapter._influxDPs[options.id][adapter.namespace].enableDebugLogs);
 
-    debugLog && adapter.log.debug(`getHistory (InfluxDB1) call: ${JSON.stringify(options)}`);
+    debugLog && adapter.log.debug(`${options.logId} getHistory (InfluxDB1) call: ${JSON.stringify(options)}`);
 
     if (options.id && adapter._aliasMap[options.id]) {
         options.id = adapter._aliasMap[options.id];
@@ -2034,7 +2035,7 @@ function getHistory(adapter, msg) {
         query = query + addQuery;
     }
 
-    debugLog && adapter.log.debug(query);
+    debugLog && adapter.log.debug(`${options.logId} History-Queries to execute: ${query}`);
 
     storeBufferedSeries(adapter, options.id, (err, storedCount) => {
         if (err) {
@@ -2051,7 +2052,7 @@ function getHistory(adapter, msg) {
                     setConnected(adapter, true);
                 }
 
-                debugLog && adapter.log.debug(`Response rows: ${JSON.stringify(rows)}`);
+                debugLog && adapter.log.debug(`${options.logId} Response rows: ${JSON.stringify(rows)}`);
 
                 let result = [];
 
@@ -2114,7 +2115,8 @@ function getHistoryIflx2(adapter, msg) {
         quantile: msg.message.options.aggregate === 'quantile' ? parseFloat(msg.message.options.quantile) || 0.5 : null,
         integralUnit: msg.message.options.aggregate === 'integral' ? parseInt(msg.message.options.integralUnit, 10) || 60 : null,
         integralInterpolation: msg.message.options.aggregate === 'integral' ? msg.message.options.integralInterpolation || 'none' : null,
-        removeBorderValues: msg.message.options.removeBorderValues || false
+        removeBorderValues: msg.message.options.removeBorderValues || false,
+        logId:     (msg.message.id ? msg.message.id : 'all') + Date.now() + Math.random()
     };
 
     if (!options.start && options.count) {
@@ -2134,7 +2136,7 @@ function getHistoryIflx2(adapter, msg) {
 
     const debugLog = options.debugLog = !!(adapter._influxDPs[options.id] && adapter._influxDPs[options.id][adapter.namespace] && adapter._influxDPs[options.id][adapter.namespace].enableDebugLogs);
 
-    debugLog && adapter.log.debug(`getHistory (InfluxDB2) call: ${JSON.stringify(options)}`);
+    debugLog && adapter.log.debug(`${options.logId} getHistory (InfluxDB2) call: ${JSON.stringify(options)}`);
 
     if (options.id && adapter._aliasMap[options.id]) {
         options.id = adapter._aliasMap[options.id];
@@ -2212,7 +2214,7 @@ function getHistoryIflx2(adapter, msg) {
                     supportsAggregates = false;
                 } else if (error) {
                     if (error.message.includes('type conflict: bool')) {
-                        debugLog && adapter.log.debug(`Bool check error: ${error.message}`);
+                        debugLog && adapter.log.debug(`${options.logId} Bool check error: ${error.message}`);
                         supportsAggregates = true;
                         error = null;
                     } else {
@@ -2223,7 +2225,7 @@ function getHistoryIflx2(adapter, msg) {
                         }, msg.callback);
                     }
                 } else {
-                    debugLog && adapter.log.debug(`Bool check result: ${JSON.stringify(rslt)}`);
+                    debugLog && adapter.log.debug(`${options.logId} Bool check result: ${JSON.stringify(rslt)}`);
                     if (rslt.find(r => r.error && r.error.includes('type conflict: bool'))) {
                         supportsAggregates = true;
                     } else {
@@ -2238,7 +2240,7 @@ function getHistoryIflx2(adapter, msg) {
                     }
                 }
                 if (!supportsAggregates) {
-                    debugLog && adapter.log.debug(`Measurement ${options.id} seems to be no number - skipping aggregation options`);
+                    debugLog && adapter.log.debug(`${options.logId} Measurement ${options.id} seems to be no number - skipping aggregation options`);
                 }
 
                 const fluxQueries = [];
@@ -2340,7 +2342,7 @@ function getHistoryIflx2(adapter, msg) {
                     fluxQueries.push(addFluxQuery);
                 }
 
-                debugLog && adapter.log.debug(`History-queries to execute: ${fluxQueries}`);
+                debugLog && adapter.log.debug(`${options.logId} History-queries to execute: ${fluxQueries}`);
 
                 // if specific id requested
                 adapter._client.queries(fluxQueries, (err, rows) => {
@@ -2353,7 +2355,7 @@ function getHistoryIflx2(adapter, msg) {
                         setConnected(adapter, true);
                     }
 
-                    debugLog && adapter.log.debug(`Parsing retrieved rows:${JSON.stringify(rows)}`);
+                    debugLog && adapter.log.debug(`${options.logId} Parsing retrieved rows:${JSON.stringify(rows)}`);
 
                     let result = [];
 
