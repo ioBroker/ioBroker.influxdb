@@ -2270,7 +2270,7 @@ function getHistoryIflx2(adapter, msg) {
                     fluxQuery += ` |> limit(n: ${options.count})`;
                 }
 
-                if (options.step && supportsAggregates) {
+                if (resultsFromInfluxDB && options.step && supportsAggregates) {
                     options.preAggregated = true;
                     switch (options.aggregate) {
                         case 'average':
@@ -2327,9 +2327,7 @@ function getHistoryIflx2(adapter, msg) {
                         |> sort(columns: ["_time"], desc: true) 
                         |> limit(n: 1)`;
 
-                        const mainQuery = fluxQueries.pop();
-                        fluxQueries.push(addFluxQuery);
-                        fluxQueries.push(mainQuery);
+                        fluxQueries.unshift(addFluxQuery);
                     }
                     // get one entry "after" the defined timeframe for displaying purposes
                     addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
