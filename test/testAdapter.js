@@ -281,7 +281,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
     });
 
     after(`Test ${adapterShortName} adapter: Stop js-controller`, function (done) {
-        this.timeout(12000);
+        this.timeout(15000);
 
         setup.stopController(normalTerminated => {
             console.log(`Adapter normal terminated: ${normalTerminated}`);

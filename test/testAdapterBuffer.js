@@ -291,7 +291,7 @@ describe(`Test ${adapterShortName} adapter with Buffered write`, function () {
     });
 
     after(`Test ${adapterShortName} adapter: Stop js-controller`, function (done) {
-        this.timeout(10000);
+        this.timeout(15000);
 
         setup.stopController(normalTerminated => {
             console.log('Adapter normal terminated: ' + normalTerminated);
