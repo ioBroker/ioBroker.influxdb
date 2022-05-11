@@ -1709,13 +1709,18 @@ function storeState(adapter, msg) {
         }, msg.callback);
     }
 
+    let pushFunc = pushHelper;
+    if (msg.message.rules) {
+        pushFunc = pushHistory;
+    }
+
     let id;
     if (Array.isArray(msg.message)) {
         adapter.log.debug(`storeState ${msg.message.length} items`);
         for (let i = 0; i < msg.message.length; i++) {
             id = adapter._aliasMap[msg.message[i].id] ? adapter._aliasMap[msg.message[i].id] : msg.message[i].id;
             if (msg.message[i].state && typeof msg.message[i].state === 'object') {
-                pushValueIntoDB(adapter, id, msg.message[i].state);
+                pushFunc(adapter, id, msg.message[i].state);
             } else {
                 adapter.log.warn(`Invalid state for ${JSON.stringify(msg.message[i])}`);
             }
@@ -1725,7 +1730,7 @@ function storeState(adapter, msg) {
         id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
         for (let j = 0; j < msg.message.state.length; j++) {
             if (msg.message.state[j] && typeof msg.message.state[j] === 'object') {
-                pushValueIntoDB(adapter, id, msg.message.state[j]);
+                pushFunc(adapter, id, msg.message.state[j]);
             } else {
                 adapter.log.warn(`Invalid state for ${JSON.stringify(msg.message.state[j])}`);
             }
@@ -1733,7 +1738,7 @@ function storeState(adapter, msg) {
     } else if (msg.message.id && msg.message.state && typeof msg.message.state === 'object') {
         adapter.log.debug('storeState 1 item');
         id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
-        pushValueIntoDB(adapter, id, msg.message.state);
+        pushFunc(adapter, id, msg.message.state);
     } else {
         adapter.log.error('storeState called with invalid data');
         return adapter.sendTo(msg.from, msg.command, {
