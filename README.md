@@ -445,8 +445,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
-
-### __WORK IN PROGRESS__
+### 3.0.2 (2022-05-12)
 * (Apollon77) handle an empty Path for InfluxDB 2.0 correctly in all cases
 
 ### 3.0.1 (2022-05-11)

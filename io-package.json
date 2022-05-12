@@ -13,7 +13,7 @@
       "pl": "Logowanie stanów do InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "3.0.1",
+    "version": "3.0.2",
     "title": "Logging data with InfluxDB",
     "titleLang": {
       "en": "Logging data with InfluxDB",
@@ -28,6 +28,18 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "3.0.2": {
+        "en": "handle an empty Path for InfluxDB 2.0 correctly in all cases",
+        "de": "Behandeln Sie einen leeren Pfad für InfluxDB 2.0 in allen Fällen korrekt",
+        "ru": "правильно обрабатывать пустой путь для InfluxDB 2.0 во всех случаях",
+        "pt": "manipular um caminho vazio para o InfluxDB 2.0 corretamente em todos os casos",
+        "nl": "behandel een leeg pad voor InfluxDB 2.0 in alle gevallen correct",
+        "fr": "gérer correctement un chemin vide pour InfluxDB 2.0 dans tous les cas",
+        "it": "gestire correttamente un percorso vuoto per InfluxDB 2.0 in tutti i casi",
+        "es": "manejar una ruta vacía para InfluxDB 2.0 correctamente en todos los casos",
+        "pl": "we wszystkich przypadkach poprawnie obsłużyć pustą ścieżkę dla InfluxDB 2.0",
+        "zh-cn": "在所有情况下正确处理 InfluxDB 2.0 的空路径"
+      },
       "3.0.1": {
         "en": "BREAKING: Configuration is only working in the new Admin 5 UI!\nDid bigger adjustments to the recording logic and added a lot of new Features. Please refer to Changelog and Forum post for details.",
         "de": "BREAKING: Die Konfiguration funktioniert nur in der neuen Admin 5-Benutzeroberfläche!\nGrößere Anpassungen an der Aufnahmelogik vorgenommen und viele neue Features hinzugefügt. Einzelheiten finden Sie im Änderungsprotokoll und im Forumsbeitrag.",
@@ -89,18 +101,6 @@
         "zh-cn": "使请求超时可配置 - 默认为 30 秒\n添加选项以接受 InfluxDB 2.x 的自签名 ssl 证书"
       },
       "2.5.2": {
-        "en": "Marked interpolated data with `i=true`",
-        "de": "Markierte interpolierte Daten mit `i=true`",
-        "ru": "Помеченные интерполированные данные с `i=true`",
-        "pt": "Dados interpolados marcados com `i=true`",
-        "nl": "Gemarkeerde geïnterpoleerde gegevens met `i=true`",
-        "fr": "Données interpolées marquées avec `i=true`",
-        "it": "Dati interpolati contrassegnati con `i=true`",
-        "es": "Datos interpolados marcados con `i=true`",
-        "pl": "Oznaczono dane interpolowane za pomocą `i=true`",
-        "zh-cn": "用 `i=true` 标记插值数据"
-      },
-      "2.5.1": {
         "en": "Marked interpolated data with `i=true`",
         "de": "Markierte interpolierte Daten mit `i=true`",
         "ru": "Помеченные интерполированные данные с `i=true`",
