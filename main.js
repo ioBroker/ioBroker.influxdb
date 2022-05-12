@@ -295,6 +295,9 @@ function ping(adapter) {
 }
 
 function connect(adapter) {
+    if (!adapter.config.path) {
+        adapter.config.path = '';
+    }
     if (adapter.config.path.startsWith('/')) {
         adapter.config.path = adapter.config.path.substring(1);
     }
