@@ -1091,7 +1091,9 @@ function pushValueIntoDB(adapter, id, state, directWrite, cb) {
         return cb && cb(`InfluxDB can not handle non finite values like ${state.val}`);
     }
 
-    state.ts = parseInt(state.ts, 10);
+    if (isFinite(state.ts)) {
+        state.ts = parseInt(state.ts, 10);
+    }
 
     if (typeof state.val === 'object') {
         state.val = JSON.stringify(state.val);
@@ -1722,7 +1724,7 @@ function storeState(adapter, msg) {
         for (let i = 0; i < msg.message.length; i++) {
             id = adapter._aliasMap[msg.message[i].id] ? adapter._aliasMap[msg.message[i].id] : msg.message[i].id;
             if (msg.message[i].state && typeof msg.message[i].state === 'object') {
-                pushFunc(adapter, id, msg.message[i].state);
+                pushFunc(adapter, id, msg.message[i].state, err => err && adapter.log.warning(`Error writing state for ${id}: ${err}, Data: ${msg.message[i].state}`));
             } else {
                 adapter.log.warn(`Invalid state for ${JSON.stringify(msg.message[i])}`);
             }
@@ -1732,7 +1734,7 @@ function storeState(adapter, msg) {
         id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
         for (let j = 0; j < msg.message.state.length; j++) {
             if (msg.message.state[j] && typeof msg.message.state[j] === 'object') {
-                pushFunc(adapter, id, msg.message.state[j]);
+                pushFunc(adapter, id, msg.message.state[j], err => err && adapter.log.warning(`Error writing state for ${id}: ${err}, Data: ${msg.message.state[j]}`));
             } else {
                 adapter.log.warn(`Invalid state for ${JSON.stringify(msg.message.state[j])}`);
             }
@@ -1740,7 +1742,7 @@ function storeState(adapter, msg) {
     } else if (msg.message.id && msg.message.state && typeof msg.message.state === 'object') {
         adapter.log.debug('storeState 1 item');
         id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
-        pushFunc(adapter, id, msg.message.state);
+        pushFunc(adapter, id, msg.message.state, err => err && adapter.log.warning(`Error writing state for ${id}: ${err}, Data: ${msg.message.state}`));
     } else {
         adapter.log.error('storeState called with invalid data');
         return adapter.sendTo(msg.from, msg.command, {
