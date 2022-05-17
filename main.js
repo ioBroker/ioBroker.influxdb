@@ -1029,14 +1029,14 @@ function reLogHelper(adapter, _id) {
 }
 
 function pushHelper(adapter, _id, state, cb) {
-    if (!adapter._influxDPs[_id] || !adapter._influxDPs[_id][adapter.namespace] || (!adapter._influxDPs[_id].state && !state)) {
-        return cb && setImmediate(cb, `ID ${_id} not activated for logging`);
+    if (!state && (!adapter._influxDPs[_id] && !adapter._influxDPs[_id].state)) {
+        return cb && setImmediate(cb, `No state to log for ID ${_id}`);
     }
     if (!state) {
         state = adapter._influxDPs[_id].state;
     }
 
-    const _settings = adapter._influxDPs[_id][adapter.namespace];
+    const _settings = adapter._influxDPs[_id] && adapter._influxDPs[_id][adapter.namespace] || {};
 
     if (state.val === null) { // InfluxDB can not handle null values
         return cb && setImmediate(cb, `null value for ${_id} can not be handled`);
@@ -1092,7 +1092,7 @@ function pushValueIntoDB(adapter, id, state, directWrite, cb) {
     }
 
     if (isFinite(state.ts)) {
-        state.ts = parseInt(state.ts, 10);
+        state.ts = parseInt(state.ts, 10) || 0;
     }
 
     if (typeof state.val === 'object') {
