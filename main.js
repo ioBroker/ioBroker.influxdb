@@ -1036,6 +1036,7 @@ function pushHelper(adapter, _id, state, cb) {
         state = adapter._influxDPs[_id].state;
     }
 
+    // Important: We allow also to store "unknown" states, so use fallback here
     const _settings = adapter._influxDPs[_id] && adapter._influxDPs[_id][adapter.namespace] || {};
 
     if (state.val === null) { // InfluxDB can not handle null values
