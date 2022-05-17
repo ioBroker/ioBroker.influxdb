@@ -445,6 +445,10 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
+
+### __WORK IN PROGRESS__
+* (Apollon77) Data are not converted to numbers if they are none on getHistory to respect the saved data formats as defined in the datapoint settings for storage.
+
 ### 3.0.2 (2022-05-12)
 * (Apollon77) handle an empty Path for InfluxDB 2.0 correctly in all cases
 

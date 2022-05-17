@@ -2075,13 +2075,8 @@ function getHistory(adapter, msg) {
                             rows[qr][rr].ts  = new Date(rows[qr][rr].time).getTime();
                             delete rows[qr][rr].time;
 
-                            if (rows[qr][rr].val !== null) {
-                                if (isFinite(rows[qr][rr].val)) {
-                                    rows[qr][rr].val = parseFloat(rows[qr][rr].val);
-                                    if (options.round) {
-                                        rows[qr][rr].val = Math.round(rows[qr][rr].val * options.round) / options.round;
-                                    }
-                                }
+                            if (typeof rows[qr][rr].val === 'number' && options.round) {
+                                rows[qr][rr].val = Math.round(rows[qr][rr].val * options.round) / options.round;
                             }
 
                             if (options.addId) {
@@ -2376,13 +2371,8 @@ function getHistoryIflx2(adapter, msg) {
                                     delete rows[qr][rr].value;
                                 }
 
-                                if (rows[qr][rr].val !== null) {
-                                    if (isFinite(rows[qr][rr].val)) {
-                                        rows[qr][rr].val = parseFloat(rows[qr][rr].val);
-                                        if (options.round) {
-                                            rows[qr][rr].val = Math.round(rows[qr][rr].val * options.round) / options.round;
-                                        }
-                                    }
+                                if (typeof rows[qr][rr].val === 'number' && options.round) {
+                                    rows[qr][rr].val = Math.round(rows[qr][rr].val * options.round) / options.round;
                                 }
 
                                 if (rows[qr][rr].time) {
