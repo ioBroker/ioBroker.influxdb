@@ -288,8 +288,8 @@
           "newLine": true,
           "type": "checkbox",
           "label": "Apply lower retention",
-          "hidden": "(data.retention >= originalData.retention && originalData.retention != 0) || data.retention == 0",
-          "disabled": "(data.retention >= originalData.retention && originalData.retention != 0) || data.retention == 0",
+          "hidden": "((originalData.retention >= 0 && data.retention >= 0 && ((data.retention >= originalData.retention && originalData.retention != 0) || data.retention == 0)) || (originalData.retention === -1 && data.retention >= 0 && ((data.retention >= parseInt(originalData.customRetentionDuration, 10) * 24 * 60) || data.retention == 0)) || (originalData.retention > 0 && data.retention === -1 && (parseInt(data.customRetentionDuration, 10) * 24 * 60 >= originalData.retention)))",
+          "disabled": "((originalData.retention >= 0 && data.retention >= 0 && ((data.retention >= originalData.retention && originalData.retention != 0) || data.retention == 0)) || (originalData.retention === -1 && data.retention >= 0 && ((data.retention >= parseInt(originalData.customRetentionDuration, 10) * 24 * 60) || data.retention == 0)) || (originalData.retention > 0 && data.retention === -1 && (parseInt(data.customRetentionDuration, 10) * 24 * 60 >= originalData.retention)))",
           "confirm": {
             "text": "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.",
             "condition": "data.retentionConfirm && data.retentionConfirm != originalData.retentionConfirm",
