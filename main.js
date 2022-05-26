@@ -1875,6 +1875,26 @@ function getHistory(adapter, msg) {
         logId:     (msg.message.id ? msg.message.id : 'all') + Date.now() + Math.random()
     };
 
+    try {
+        if (options.start && typeof options.start !== 'number') {
+            options.start = new Date(options.start).getTime();
+        }
+    } catch (err) {
+        return adapter.sendTo(msg.from, msg.command, {
+            error:  'Invalid call. Start date ' + JSON.stringify(options.start) + ' is not a valid date'
+        }, msg.callback);
+    }
+
+    try {
+        if (options.end && typeof options.end !== 'number') {
+            options.end = new Date(options.end).getTime();
+        }
+    } catch (err) {
+        return adapter.sendTo(msg.from, msg.command, {
+            error:  'Invalid call. End date ' + JSON.stringify(options.end) + ' is not a valid date'
+        }, msg.callback);
+    }
+
     if (!options.start && options.count) {
         options.returnNewestEntries = true;
     }
@@ -2052,6 +2072,9 @@ function getHistory(adapter, msg) {
             adapter.log.info(`Error storing buffered series for ${options.id} before GetHistory: ${err}`);
         }
         setTimeout(() => {
+            if (!adapter._client) {
+                return Aggregate.sendResponse(adapter, msg, options, 'Database no longer connected', startTime);
+            }
             adapter._client.query(query, (error, rows) => {
                 if (error) {
                     if (adapter._client.request.getHostsAvailable().length === 0) {
@@ -2123,6 +2146,26 @@ function getHistoryIflx2(adapter, msg) {
         removeBorderValues: msg.message.options.removeBorderValues || false,
         logId:     (msg.message.id ? msg.message.id : 'all') + Date.now() + Math.random()
     };
+
+    try {
+        if (options.start && typeof options.start !== 'number') {
+            options.start = new Date(options.start).getTime();
+        }
+    } catch (err) {
+        return adapter.sendTo(msg.from, msg.command, {
+            error:  'Invalid call. Start date ' + JSON.stringify(options.start) + ' is not a valid date'
+        }, msg.callback);
+    }
+
+    try {
+        if (options.end && typeof options.end !== 'number') {
+            options.end = new Date(options.end).getTime();
+        }
+    } catch (err) {
+        return adapter.sendTo(msg.from, msg.command, {
+            error:  'Invalid call. End date ' + JSON.stringify(options.end) + ' is not a valid date'
+        }, msg.callback);
+    }
 
     if (!options.start && options.count) {
         options.returnNewestEntries = true;
@@ -2214,6 +2257,13 @@ function getHistoryIflx2(adapter, msg) {
         }
         setTimeout(() => {
             adapter._client.query(booleanTypeCheckQuery, (error, rslt) => {
+                if (!adapter._influxDPs[options.id] || !adapter._influxDPs[options.id][adapter.namespace]) {
+                    return adapter.sendTo(msg.from, msg.command, {
+                        result: [],
+                        step:   0,
+                        error:  `Logging not activated for ${options.id}`
+                    }, msg.callback);
+                }
                 let supportsAggregates;
                 if (adapter._influxDPs[options.id][adapter.namespace].storageType && adapter._influxDPs[options.id][adapter.namespace].storageType !== 'Number') {
                     supportsAggregates = false;

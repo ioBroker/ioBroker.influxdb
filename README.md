@@ -183,7 +183,7 @@ Possible options:
 - **ignoreNull** - if null values should be included (false), replaced by last not null value (true) or replaced with 0 (0)
 - **removeBorderValues** - By default additional border values are returned to optimize charting. Set this option to true if this is not wanted (e.g. for script data processing)
 - **returnNewestEntries** - The returned data are always sorted by timestamp ascending. When using aggregate "none" and also providing "count" or "limit" this means that normally the oldest entries are returned (unless no start data is provided). Set this option to true to get the newest entries instead.
-- **aggregate** - aggregate method:
+- **aggregate** - aggregate method (Default: 'average'):
   - *minmax* - used special algorithm. Splice the whole time range in small intervals and find for every interval max, min, start and end values.
   - *max* - Splice the whole time range in small intervals and find for every interval max value and use it for this interval (nulls will be ignored).
   - *min* - Same as max, but take minimal value.
@@ -450,6 +450,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 * (Apollon77) Data are not converted to numbers if they are none on getHistory to respect the saved data formats as defined in the datapoint settings for storage.
 * (Apollon77) Fix retention change to lower checkbox in UI
 * (Apollon77) Allow storeState again to write to InfluxDB for "unknown state ids" - "rules" usage is not supported in for this and storeState would be silently discarded in this case!
+* (Apollon77) Fix several crash cases reported by Sentry
 
 ### 3.0.2 (2022-05-12)
 * (Apollon77) handle an empty Path for InfluxDB 2.0 correctly in all cases
