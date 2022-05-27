@@ -1739,7 +1739,7 @@ async function storeState(adapter, msg) {
                 errors.push(err.message);
             }
         }
-    } else if (msg.message.state && Array.isArray(msg.message.state)) {
+    } else if (msg.message.id && Array.isArray(msg.message.state)) {
         adapter.log.debug(`storeState ${msg.message.state.length} items`);
         const id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
         for (let j = 0; j < msg.message.state.length; j++) {
@@ -1750,11 +1750,11 @@ async function storeState(adapter, msg) {
                 errors.push(err.message);
             }
         }
-    } else if (msg.message.id && msg.message.state && typeof msg.message.state === 'object') {
+    } else if (msg.message.id && msg.message.state) {
         adapter.log.debug('storeState 1 item');
         const id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
         try {
-            storeStatePushData(adapter, id, msg.message.state, msg.message.rules);
+            await storeStatePushData(adapter, id, msg.message.state, msg.message.rules);
             successCount++;
         } catch (err) {
             errors.push(err.message);
@@ -1765,7 +1765,7 @@ async function storeState(adapter, msg) {
             error: `Invalid call: ${JSON.stringify(msg)}`
         }, msg.callback);
     }
-    if (error.length) {
+    if (errors.length) {
         adapter.log.warn(`storeState executed with ${errors.length} errors: ${errors.join(', ')}`);
         return adapter.sendTo(msg.from, msg.command, {
             error:  `${errors.length} errors happened while storing data`,
