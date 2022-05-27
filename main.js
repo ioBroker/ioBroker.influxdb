@@ -2271,7 +2271,7 @@ function getHistoryIflx2(adapter, msg) {
                     return;
                 }
                 let supportsAggregates;
-                if (adapter._influxDPs[options.id][adapter.namespace].storageType && adapter._influxDPs[options.id][adapter.namespace].storageType !== 'Number') {
+                if (adapter._influxDPs[options.id] && adapter._influxDPs[options.id][adapter.namespace] && adapter._influxDPs[options.id][adapter.namespace].storageType && adapter._influxDPs[options.id][adapter.namespace].storageType !== 'Number') {
                     supportsAggregates = false;
                 } else if (error) {
                     if (error.message.includes('type conflict: bool')) {
@@ -2294,9 +2294,9 @@ function getHistoryIflx2(adapter, msg) {
                     }
                 }
                 if (supportsAggregates) {
-                    if (adapter._influxDPs[options.id][adapter.namespace].state && typeof adapter._influxDPs[options.id][adapter.namespace].state.val !== 'number') {
+                    if (adapter._influxDPs[options.id] && adapter._influxDPs[options.id][adapter.namespace] && adapter._influxDPs[options.id][adapter.namespace].state && typeof adapter._influxDPs[options.id][adapter.namespace].state.val !== 'number') {
                         supportsAggregates = false;
-                    } else if (adapter._influxDPs[options.id][adapter.namespace].skipped && typeof adapter._influxDPs[options.id][adapter.namespace].skipped.val !== 'number') {
+                    } else if (adapter._influxDPs[options.id] && adapter._influxDPs[options.id][adapter.namespace] && adapter._influxDPs[options.id][adapter.namespace].skipped && typeof adapter._influxDPs[options.id][adapter.namespace].skipped.val !== 'number') {
                         supportsAggregates = false;
                     }
                 }
