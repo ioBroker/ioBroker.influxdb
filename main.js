@@ -984,7 +984,7 @@ function pushHistory(adapter, id, state, timerRelog) {
                 adapter._influxDPs[id].lastLogTime = state.ts;
                 settings.enableDebugLogs && adapter.log.debug(`Value logged ${id}, value=${adapter._influxDPs[id].state.val}, ts=${adapter._influxDPs[id].state.ts}`);
                 pushHelper(adapter, id);
-                if (settings.changesRelogInterval > 0) {
+                if (settings.changesOnly && settings.changesRelogInterval > 0) {
                     adapter._influxDPs[id].relogTimeout = setTimeout(reLogHelper, settings.changesRelogInterval * 1000, adapter, id);
                 }
             }, settings.debounceTime, id, state);
@@ -996,7 +996,7 @@ function pushHistory(adapter, id, state, timerRelog) {
 
             settings.enableDebugLogs && adapter.log.debug(`Value logged ${id}, value=${adapter._influxDPs[id].state.val}, ts=${adapter._influxDPs[id].state.ts}`);
             pushHelper(adapter, id, state);
-            if (settings.changesRelogInterval > 0) {
+            if (settings.changesOnly && settings.changesRelogInterval > 0) {
                 adapter._influxDPs[id].relogTimeout = setTimeout(reLogHelper, settings.changesRelogInterval * 1000, adapter, id);
             }
         }
@@ -1009,12 +1009,12 @@ function reLogHelper(adapter, _id) {
         return;
     }
     adapter._influxDPs[_id].relogTimeout = null;
-    adapter._influxDPs[_id].relogTimeout = null;
     if (adapter._influxDPs[_id].skipped) {
         pushHistory(adapter, _id, adapter._influxDPs[_id].skipped, true);
     } else if (adapter._influxDPs[_id].state) {
         pushHistory(adapter, _id, adapter._influxDPs[_id].state, true);
-    } else {        adapter.getForeignState(adapter._influxDPs[_id].realId, (err, state) => {
+    } else {
+        adapter.getForeignState(adapter._influxDPs[_id].realId, (err, state) => {
             if (err) {
                 adapter.log.info(`init timed Relog: can not get State for ${_id}: ${err}`);
             } else if (!state) {
@@ -1099,17 +1099,6 @@ function pushValueIntoDB(adapter, id, state, directWrite, cb) {
     if (typeof state.val === 'object') {
         state.val = JSON.stringify(state.val);
     }
-
-    /*
-    if (state.val === 'true') {
-        state.val = true;
-    } else if (state.val === 'false') {
-        state.val = false;
-    } else {
-        // try to convert to float
-        const f = parseFloat(state.val);
-        if (f == state.val) state.val = f;
-    }*/
 
     //adapter.log.debug('write value ' + state.val + ' for ' + id);
     const influxFields = {
@@ -1706,7 +1695,30 @@ function updateState(adapter, msg) {
     }
 }
 
-function storeState(adapter, msg) {
+function storeStatePushData(adapter, id, state, applyRules) {
+    if (!state || typeof state !== 'object') {
+        throw new Error(`State ${JSON.stringify(state)} for ${id} is not valid`);
+    }
+
+    let pushFunc = applyRules ? pushHistory : pushHelper;
+    if (!adapter._influxDPs[id] || !adapter._influxDPs[id][adapter.namespace]) {
+        if (applyRules) {
+            throw new Error(`history not enabled for ${id}, so can not apply the rules as requested`);
+        }
+        adapter._influxDPs[id] = adapter._influxDPs[id] || {};
+    }
+    return new Promise((resolve, reject) => {
+        pushFunc(adapter, id, state , err => {
+            if (err) {
+                reject(new Error(`Error writing state for ${id}: ${err.message}, Data: ${JSON.stringify(state)}`));
+            } else {
+                resolve(true);
+            }
+        });
+    });
+}
+
+async function storeState(adapter, msg) {
     if (!msg.message) {
         adapter.log.error('storeState called with invalid data');
         return adapter.sendTo(msg.from, msg.command, {
@@ -1714,45 +1726,58 @@ function storeState(adapter, msg) {
         }, msg.callback);
     }
 
-    let pushFunc = pushHelper;
-    if (msg.message.rules) {
-        pushFunc = pushHistory;
-    }
-
-    let id;
+    let errors = [];
+    let successCount = 0;
     if (Array.isArray(msg.message)) {
         adapter.log.debug(`storeState ${msg.message.length} items`);
         for (let i = 0; i < msg.message.length; i++) {
-            id = adapter._aliasMap[msg.message[i].id] ? adapter._aliasMap[msg.message[i].id] : msg.message[i].id;
-            if (msg.message[i].state && typeof msg.message[i].state === 'object') {
-                pushFunc(adapter, id, msg.message[i].state, err => err && adapter.log.warn(`Error writing state for ${id}: ${err}, Data: ${msg.message[i].state}`));
-            } else {
-                adapter.log.warn(`Invalid state for ${JSON.stringify(msg.message[i])}`);
+            const id = adapter._aliasMap[msg.message[i].id] ? adapter._aliasMap[msg.message[i].id] : msg.message[i].id;
+            try {
+                await storeStatePushData(adapter, id, msg.message[i].state, msg.message.rules);
+                successCount++;
+            } catch (err) {
+                errors.push(err.message);
             }
         }
     } else if (msg.message.state && Array.isArray(msg.message.state)) {
         adapter.log.debug(`storeState ${msg.message.state.length} items`);
-        id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
+        const id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
         for (let j = 0; j < msg.message.state.length; j++) {
-            if (msg.message.state[j] && typeof msg.message.state[j] === 'object') {
-                pushFunc(adapter, id, msg.message.state[j], err => err && adapter.log.warn(`Error writing state for ${id}: ${err}, Data: ${msg.message.state[j]}`));
-            } else {
-                adapter.log.warn(`Invalid state for ${JSON.stringify(msg.message.state[j])}`);
+            try {
+                await storeStatePushData(adapter, id, msg.message.state[j], msg.message.rules);
+                successCount++;
+            } catch (err) {
+                errors.push(err.message);
             }
         }
     } else if (msg.message.id && msg.message.state && typeof msg.message.state === 'object') {
         adapter.log.debug('storeState 1 item');
-        id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
-        pushFunc(adapter, id, msg.message.state, err => err && adapter.log.warn(`Error writing state for ${id}: ${err}, Data: ${msg.message.state}`));
+        const id = adapter._aliasMap[msg.message.id] ? adapter._aliasMap[msg.message.id] : msg.message.id;
+        try {
+            storeStatePushData(adapter, id, msg.message.state, msg.message.rules);
+            successCount++;
+        } catch (err) {
+            errors.push(err.message);
+        }
     } else {
         adapter.log.error('storeState called with invalid data');
         return adapter.sendTo(msg.from, msg.command, {
             error: `Invalid call: ${JSON.stringify(msg)}`
         }, msg.callback);
     }
+    if (error.length) {
+        adapter.log.warn(`storeState executed with ${errors.length} errors: ${errors.join(', ')}`);
+        return adapter.sendTo(msg.from, msg.command, {
+            error:  `${errors.length} errors happened while storing data`,
+            errors: errors,
+            successCount
+        }, msg.callback);
+    }
 
+    adapter.log.debug(`storeState executed with ${successCount} states successfully`);
     adapter.sendTo(msg.from, msg.command, {
         success:    true,
+        successCount,
         connected: !!adapter._connected,
         seriesBufferCounter:      adapter._seriesBufferCounter,
         seriesBufferFlushPlanned: adapter._seriesBufferFlushPlanned
