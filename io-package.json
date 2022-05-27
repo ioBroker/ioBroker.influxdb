@@ -1,325 +1,325 @@
 {
-    "common": {
-        "name": "influxdb",
-        "desc": {
-            "en": "Logging of states into InfluxDB",
-            "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
-            "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB",
-            "pt": "Registro de estados no InfluxDB",
-            "nl": "Loggen van staten in InfluxDB",
-            "fr": "Journalisation des états dans InfluxDB",
-            "it": "Registrazione degli stati in InfluxDB",
-            "es": "Registro de estados en InfluxDB",
-            "pl": "Logowanie stanów do InfluxDB",
-            "zh-cn": "将状态记录到InfluxDB中"
+  "common": {
+    "name": "influxdb",
+    "desc": {
+      "en": "Logging of states into InfluxDB",
+      "de": "Loggt die Historie von einzelnen Zuständen in einer InfluxDB",
+      "ru": "Сохраняет историю событий для отдельных состояний в InfluxDB",
+      "pt": "Registro de estados no InfluxDB",
+      "nl": "Loggen van staten in InfluxDB",
+      "fr": "Journalisation des états dans InfluxDB",
+      "it": "Registrazione degli stati in InfluxDB",
+      "es": "Registro de estados en InfluxDB",
+      "pl": "Logowanie stanów do InfluxDB",
+      "zh-cn": "将状态记录到InfluxDB中"
+    },
+    "version": "3.1.0",
+    "title": "Logging data with InfluxDB",
+    "titleLang": {
+      "en": "Logging data with InfluxDB",
+      "de": "Daten mit InfluxDB protokollieren",
+      "ru": "Запись данных с помощью InfluxDB",
+      "pt": "Registro de dados com InfluxDB",
+      "nl": "Loggen van gegevens met InfluxDB",
+      "fr": "Consignation des données avec InfluxDB",
+      "it": "Registrazione dei dati con InfluxDB",
+      "es": "Datos de registro con InfluxDB",
+      "pl": "Rejestrowanie danych za pomocą InfluxDB",
+      "zh-cn": "使用InfluxDB记录数据"
+    },
+    "news": {
+      "3.1.0": {
+        "en": "Data are not converted to numbers if they are other datatypes on getHistory to respect the saved data formats as defined in the datapoint settings for storage.\nFix retention change to lower checkbox in UI\nAllow storeState again to write to InfluxDB for \"unknown state ids\" - \"rules\" usage is not supported in for this and storeState would be silently discarded in this case!\nFix several crash cases reported by Sentry\nMake sure disabling \"Log changes only\" also really do not log the changes anymore\nAllow storeState and GetHistory also to be called for \"unknown ids\"",
+        "de": "Daten werden nicht in Zahlen konvertiert, wenn es sich um andere Datentypen auf getHistory handelt, um die gespeicherten Datenformate zu respektieren, wie sie in den Datenpunkteinstellungen für die Speicherung definiert sind.\nKorrektur der Aufbewahrungsänderung am unteren Kontrollkästchen in der Benutzeroberfläche\nStoreState erneut erlauben, in InfluxDB für \"unbekannte Zustands-IDs\" zu schreiben - die Verwendung von \"Regeln\" wird dafür nicht unterstützt und storeState würde in diesem Fall stillschweigend verworfen!\nMehrere von Sentry gemeldete Absturzfälle behoben\nStellen Sie sicher, dass durch Deaktivieren von \"Nur Änderungen protokollieren\" die Änderungen auch wirklich nicht mehr protokolliert werden\nAufruf von storeState und GetHistory auch für \"unbekannte IDs\" zulassen",
+        "ru": "Данные не преобразуются в числа, если они относятся к другим типам данных в getHistory, чтобы соблюдать форматы сохраненных данных, определенные в настройках точки данных для хранения.\nИсправьте изменение сохранения, чтобы опустить флажок в пользовательском интерфейсе.\nРазрешить storeState снова записывать в InfluxDB для «неизвестных идентификаторов состояния» — использование «правил» не поддерживается для этого, и в этом случае storeState будет молча отброшен!\nИсправьте несколько случаев сбоев, о которых сообщил Sentry.\nУбедитесь, что отключение «Только журнал изменений» также действительно больше не регистрирует изменения.\nРазрешить также вызывать storeState и GetHistory для «неизвестных идентификаторов».",
+        "pt": "Os dados não são convertidos em números se forem outros tipos de dados em getHistory para respeitar os formatos de dados salvos conforme definido nas configurações do ponto de dados para armazenamento.\nCorrigir a alteração de retenção na caixa de seleção inferior na interface do usuário\nPermitir que storeState grave novamente no InfluxDB para \"ids de estado desconhecidos\" - o uso de \"regras\" não é suportado para isso e storeState seria descartado silenciosamente neste caso!\nCorrija vários casos de travamento relatados pelo Sentinela\nCertifique-se de desativar \"Somente alterações de log\" também não registra mais as alterações\nPermitir que storeState e GetHistory também sejam chamados para \"ids desconhecidos\"",
+        "nl": "Gegevens worden niet geconverteerd naar getallen als het andere gegevenstypen op getHistory zijn om de opgeslagen gegevensindelingen te respecteren zoals gedefinieerd in de gegevenspuntinstellingen voor opslag.\nRetentiewijziging repareren om het selectievakje in de gebruikersinterface te verlagen\nSta storeState opnieuw toe om naar InfluxDB te schrijven voor \"onbekende status-ID's\" - het gebruik van \"regels\" wordt hiervoor niet ondersteund en storeState zou in dit geval stil worden weggegooid!\nHerstel verschillende crashgevallen gemeld door Sentry\nZorg ervoor dat het uitschakelen van \"Alleen wijzigingen loggen\" ook echt de wijzigingen niet meer logt\nToestaan dat storeState en GetHistory ook worden aangeroepen voor \"onbekende id's\"",
+        "fr": "Les données ne sont pas converties en nombres s'il s'agit d'autres types de données sur getHistory afin de respecter les formats de données enregistrés tels que définis dans les paramètres de point de données pour le stockage.\nCorrection du changement de rétention pour abaisser la case à cocher dans l'interface utilisateur\nAutoriser à nouveau storeState à écrire dans InfluxDB pour les \"identifiants d'état inconnus\" - l'utilisation des \"règles\" n'est pas prise en charge dans ce cas et storeState serait supprimé en silence dans ce cas !\nCorrection de plusieurs cas de crash signalés par Sentry\nAssurez-vous que la désactivation de \"Log changes only\" n'enregistre plus vraiment les modifications\nAutoriser storeState et GetHistory à être également appelés pour les \"identifiants inconnus\"",
+        "it": "I dati non vengono convertiti in numeri se sono altri tipi di dati su getHistory per rispettare i formati dei dati salvati come definito nelle impostazioni del punto dati per l'archiviazione.\nCorreggi la modifica della conservazione nella casella di controllo inferiore nell'interfaccia utente\nConsenti a storeState di scrivere nuovamente su InfluxDB per \"ID stato sconosciuto\" - l'utilizzo di \"regole\" non è supportato in questo caso e storeState verrebbe automaticamente eliminato in questo caso!\nRisolvi diversi casi di crash segnalati da Sentry\nAssicurati che la disabilitazione di \"Registra solo modifiche\" non registri più le modifiche\nConsenti anche a storeState e GetHistory di essere chiamati per \"ID sconosciuti\"",
+        "es": "Los datos no se convierten en números si son otros tipos de datos en getHistory para respetar los formatos de datos guardados como se define en la configuración del punto de datos para el almacenamiento.\nArreglar el cambio de retención para bajar la casilla de verificación en la interfaz de usuario\nPermita que storeState vuelva a escribir en InfluxDB para \"identificadores de estado desconocidos\": el uso de \"reglas\" no es compatible con esto y storeState se descartaría silenciosamente en este caso.\nSolucione varios casos de bloqueo informados por Sentry\nAsegúrese de deshabilitar \"Registrar solo cambios\" y realmente no registre más los cambios\nPermitir que storeState y GetHistory también se llamen para \"identificadores desconocidos\"",
+        "pl": "Dane nie są konwertowane na liczby, jeśli są to inne typy danych w getHistory, aby przestrzegać zapisanych formatów danych zdefiniowanych w ustawieniach punktu danych dla przechowywania.\nNapraw zmianę przechowywania w dolnym polu wyboru w interfejsie użytkownika\nZezwól storeState ponownie na zapis do InfluxDB dla \"nieznanych identyfikatorów stanu\" - użycie \"reguł\" nie jest w tym przypadku obsługiwane, a storeState zostanie w tym przypadku po cichu odrzucone!\nNapraw kilka przypadków awarii zgłoszonych przez Sentry\nUpewnij się, że wyłączenie opcji „Zapisuj tylko zmiany” również naprawdę nie powoduje już rejestrowania zmian\nZezwalaj na wywoływanie storeState i GetHistory również dla „nieznanych identyfikatorów”",
+        "zh-cn": "如果数据是 getHistory 上的其他数据类型，则数据不会转换为数字，以尊重数据点设置中定义的已保存数据格式以进行存储。\n将保留更改修复为 UI 中的较低复选框\n再次允许 storeState 为“未知状态 id”写入 InfluxDB - 不支持使用“规则”，在这种情况下 storeState 将被静默丢弃！\n修复 Sentry 报告的几个崩溃案例\n确保禁用“仅记录更改”也确实不再记录更改\n还允许为“未知 ID”调用 storeState 和 GetHistory"
+      },
+      "3.0.2": {
+        "en": "handle an empty Path for InfluxDB 2.0 correctly in all cases",
+        "de": "Behandeln Sie einen leeren Pfad für InfluxDB 2.0 in allen Fällen korrekt",
+        "ru": "правильно обрабатывать пустой путь для InfluxDB 2.0 во всех случаях",
+        "pt": "manipular um caminho vazio para o InfluxDB 2.0 corretamente em todos os casos",
+        "nl": "behandel een leeg pad voor InfluxDB 2.0 in alle gevallen correct",
+        "fr": "gérer correctement un chemin vide pour InfluxDB 2.0 dans tous les cas",
+        "it": "gestire correttamente un percorso vuoto per InfluxDB 2.0 in tutti i casi",
+        "es": "manejar una ruta vacía para InfluxDB 2.0 correctamente en todos los casos",
+        "pl": "we wszystkich przypadkach poprawnie obsłużyć pustą ścieżkę dla InfluxDB 2.0",
+        "zh-cn": "在所有情况下正确处理 InfluxDB 2.0 的空路径"
+      },
+      "3.0.1": {
+        "en": "BREAKING: Configuration is only working in the new Admin 5 UI!\nDid bigger adjustments to the recording logic and added a lot of new Features. Please refer to Changelog and Forum post for details.",
+        "de": "BREAKING: Die Konfiguration funktioniert nur in der neuen Admin 5-Benutzeroberfläche!\nGrößere Anpassungen an der Aufnahmelogik vorgenommen und viele neue Features hinzugefügt. Einzelheiten finden Sie im Änderungsprotokoll und im Forumsbeitrag.",
+        "ru": "НАРУШЕНИЕ: Конфигурация работает только в новом пользовательском интерфейсе Admin 5!\nВнесены большие коррективы в логику записи и добавлено много новых функций. Пожалуйста, обратитесь к журналу изменений и сообщению на форуме для получения подробной информации.",
+        "pt": "URGENTE: a configuração está funcionando apenas na nova interface do usuário do Admin 5!\nFez ajustes maiores na lógica de gravação e adicionou muitos novos recursos. Consulte o Changelog e a postagem do fórum para obter detalhes.",
+        "nl": "BREAKING: Configuratie werkt alleen in de nieuwe Admin 5 UI!\nHeeft grotere aanpassingen gedaan aan de opnamelogica en veel nieuwe functies toegevoegd. Raadpleeg de Changelog en Forumpost voor details.",
+        "fr": "RUPTURE : La configuration ne fonctionne que dans la nouvelle interface utilisateur d'Admin 5 !\nA apporté de plus grands ajustements à la logique d'enregistrement et ajouté de nombreuses nouvelles fonctionnalités. Veuillez vous référer au changelog et au post du forum pour plus de détails.",
+        "it": "ROTTURA: la configurazione funziona solo nella nuova interfaccia utente di Admin 5!\nHa apportato maggiori modifiche alla logica di registrazione e aggiunto molte nuove funzionalità. Si prega di fare riferimento a Changelog e post sul forum per i dettagli.",
+        "es": "ÚLTIMA HORA: ¡La configuración solo funciona en la nueva interfaz de usuario de Admin 5!\nHizo ajustes más grandes a la lógica de grabación y agregó muchas características nuevas. Consulte el registro de cambios y la publicación del foro para obtener más detalles.",
+        "pl": "ŁAMANIE: Konfiguracja działa tylko w nowym interfejsie użytkownika Admin 5!\nWprowadziłem większe poprawki w logice nagrywania i dodałem wiele nowych funkcji. Więcej informacji można znaleźć w dzienniku zmian i poście na forum.",
+        "zh-cn": "突破：配置仅在新的 Admin 5 UI 中有效！\n对录制逻辑进行了更大的调整，并添加了许多新功能。有关详细信息，请参阅变更日志和论坛帖子。"
+      },
+      "2.6.3": {
+        "en": "Fix potential crash cases (Sentry IOBROKER-INFLUXDB-4Q)",
+        "de": "Mögliche Absturzfälle beheben (Sentry IOBROKER-INFLUXDB-4Q)",
+        "ru": "Исправление возможных случаев сбоя (Sentry IOBROKER-INFLUXDB-4Q)",
+        "pt": "Corrigir possíveis casos de travamento (Sentry IOBROKER-INFLUXDB-4Q)",
+        "nl": "Mogelijke crashgevallen oplossen (Sentry IOBROKER-INFLUXDB-4Q)",
+        "fr": "Correction des cas de plantage potentiels (Sentry IOBROKER-INFLUXDB-4Q)",
+        "it": "Risolvi potenziali casi di crash (Sentry IOBROKER-INFLUXDB-4Q)",
+        "es": "Solucionar posibles casos de bloqueo (Sentry IOBROKER-INFLUXDB-4Q)",
+        "pl": "Napraw potencjalne przypadki awarii (Sentry IOBROKER-INFLUXDB-4Q)",
+        "zh-cn": "修复潜在的崩溃案例 (Sentry IOBROKER-INFLUXDB-4Q)"
+      },
+      "2.6.2": {
+        "en": "Correctly handle db names with hyphens for InfluxDB 1\nFix getHistory for non boolean fields\nAdjust shard group duration to influxdb proposals",
+        "de": "Behandeln Sie DB-Namen mit Bindestrichen für InfluxDB 1 korrekt\nGetHistory für nicht boolesche Felder korrigiert\nPassen Sie die Dauer der Shard-Gruppe an die Vorschläge von influxdb an",
+        "ru": "Правильно обрабатывать имена баз данных с дефисами для InfluxDB 1\nИсправление getHistory для нелогических полей\nОтрегулируйте продолжительность группы сегментов для предложений influxdb",
+        "pt": "Manipule corretamente nomes de banco de dados com hífens para InfluxDB 1\nCorrige getHistory para campos não booleanos\nAjustar a duração do grupo de fragmentos para propostas influxdb",
+        "nl": "Correct omgaan met db-namen met koppeltekens voor InfluxDB 1\nGetHistory repareren voor niet-booleaanse velden\nPas de duur van de shardgroep aan voor influxdb-voorstellen",
+        "fr": "Gérer correctement les noms de base de données avec des traits d'union pour InfluxDB 1\nCorrection de getHistory pour les champs non booléens\nAjuster la durée du groupe de fragments aux propositions influxdb",
+        "it": "Gestire correttamente i nomi db con trattini per InfluxDB 1\nRisolto il problema con getHistory per i campi non booleani\nRegola la durata del gruppo di shard alle proposte influxdb",
+        "es": "Manejar correctamente los nombres de bases de datos con guiones para InfluxDB 1\nArreglar getHistory para campos no booleanos\nAjuste la duración del grupo de fragmentos a las propuestas de influxdb",
+        "pl": "Prawidłowo obsługuj nazwy baz danych z myślnikami dla InfluxDB 1\nNapraw getHistory dla pól innych niż logiczne\nDostosuj czas trwania grupy shard do propozycji influxdb",
+        "zh-cn": "正确处理带有连字符的数据库名称，用于 InfluxDB 1\n修复非布尔字段的 getHistory\n调整分片组持续时间以适应 influxdb 提案"
+      },
+      "2.6.1": {
+        "en": "Address issue with updating retention policy for influxDB 1",
+        "de": "Beheben Sie ein Problem mit der Aktualisierung der Aufbewahrungsrichtlinie für influxDB 1",
+        "ru": "Устранить проблему с обновлением политики хранения для influxDB 1.",
+        "pt": "Resolva o problema com a atualização da política de retenção para o influxDB 1",
+        "nl": "Probleem oplossen met het bijwerken van het bewaarbeleid voor influxDB 1",
+        "fr": "Résoudre le problème de mise à jour de la stratégie de rétention pour influxDB 1",
+        "it": "Risoluzione del problema con l'aggiornamento del criterio di conservazione per influxDB 1",
+        "es": "Solucionar el problema con la actualización de la política de retención para influxDB 1",
+        "pl": "Rozwiąż problem z aktualizacją zasad przechowywania dla influxDB 1",
+        "zh-cn": "解决更新 influxDB 1 保留策略的问题"
+      },
+      "2.6.0": {
+        "en": "Make request timeout configurable - defaults to 30s\nAdd option to also accept self signed ssl certificates for InfluxDB 2.x",
+        "de": "Anforderungs-Timeout konfigurierbar machen – standardmäßig 30 Sekunden\nOption hinzugefügt, um auch selbstsignierte SSL-Zertifikate für InfluxDB 2.x zu akzeptieren",
+        "ru": "Сделать время ожидания запроса настраиваемым — по умолчанию 30 с.\nДобавить возможность также принимать самозаверяющие ssl-сертификаты для InfluxDB 2.x.",
+        "pt": "Tornar o tempo limite de solicitação configurável - o padrão é 30s\nAdicionar opção para também aceitar certificados SSL autoassinados para InfluxDB 2.x",
+        "nl": "Verzoek time-out configureerbaar maken - standaard ingesteld op 30s\nOptie toevoegen om ook zelfondertekende SSL-certificaten te accepteren voor InfluxDB 2.x",
+        "fr": "Faire en sorte que le délai d'attente de la demande soit configurable - par défaut à 30 s\nAjouter une option pour accepter également les certificats SSL auto-signés pour InfluxDB 2.x",
+        "it": "Rendi configurabile il timeout della richiesta: il valore predefinito è 30 secondi\nAggiungi l'opzione per accettare anche certificati SSL autofirmati per InfluxDB 2.x",
+        "es": "Hacer que el tiempo de espera de la solicitud sea configurable: el valor predeterminado es 30 s\nAgregue la opción para aceptar también certificados SSL autofirmados para InfluxDB 2.x",
+        "pl": "Ustaw limit czasu żądania konfigurowalny - domyślnie 30s\nDodaj opcję akceptowania również samopodpisanych certyfikatów ssl dla InfluxDB 2.x",
+        "zh-cn": "使请求超时可配置 - 默认为 30 秒\n添加选项以接受 InfluxDB 2.x 的自签名 ssl 证书"
+      }
+    },
+    "mode": "daemon",
+    "platform": "Javascript/Node.js",
+    "loglevel": "info",
+    "messagebox": true,
+    "subscribe": "messagebox",
+    "keywords": [
+      "charts",
+      "logging",
+      "influxdb"
+    ],
+    "preserveSettings": "custom",
+    "supportCustoms": true,
+    "getHistory": true,
+    "enabled": true,
+    "compact": true,
+    "dependencies": [
+      {
+        "js-controller": ">=3.3.0"
+      }
+    ],
+    "globalDependencies": [
+      {
+        "admin": ">=5.1.28"
+      }
+    ],
+    "supportStopInstance": 10000,
+    "stopTimeout": 10000,
+    "authors": [
+      "Bluefox <dogafox@gmail.com>",
+      "Apollon77 <ingo@fischer-ka.de>",
+      "Excodibur"
+    ],
+    "license": "MIT",
+    "readme": "https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md",
+    "icon": "influxdb.png",
+    "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.influxdb/master/admin/influxdb.png",
+    "type": "storage",
+    "docs": {
+      "de": [
+        "docs/de/influxdb.md"
+      ]
+    },
+    "plugins": {
+      "sentry": {
+        "dsn": "https://29eecf4e8c954f2ea78110d47a9b122d@sentry.iobroker.net/54"
+      }
+    },
+    "adminUI": {
+      "config": "json",
+      "custom": "json"
+    },
+    "connectionType": "local",
+    "dataSource": "push",
+    "tier": 1,
+    "messages": [
+      {
+        "condition": {
+          "operand": "and",
+          "rules": [
+            "oldVersion<2.1.1",
+            "newVersion>=2.1.1"
+          ]
         },
-        "version": "3.0.2",
-        "title": "Logging data with InfluxDB",
-        "titleLang": {
-            "en": "Logging data with InfluxDB",
-            "de": "Daten mit InfluxDB protokollieren",
-            "ru": "Запись данных с помощью InfluxDB",
-            "pt": "Registro de dados com InfluxDB",
-            "nl": "Loggen van gegevens met InfluxDB",
-            "fr": "Consignation des données avec InfluxDB",
-            "it": "Registrazione dei dati con InfluxDB",
-            "es": "Datos de registro con InfluxDB",
-            "pl": "Rejestrowanie danych za pomocą InfluxDB",
-            "zh-cn": "使用InfluxDB记录数据"
+        "title": {
+          "en": "Password needs to re re-entered after upgrade and other changes",
+          "de": "Das Passwort muss nach dem Upgrade erneut eingegeben werden",
+          "ru": "Пароль необходимо повторно ввести после обновления",
+          "pt": "A senha precisa ser reinserida após a atualização",
+          "nl": "Wachtwoord moet opnieuw worden ingevoerd na upgrade",
+          "fr": "Le mot de passe doit être ressaisi après la mise à niveau",
+          "it": "La password deve essere reinserita dopo l'aggiornamento",
+          "es": "La contraseña debe volver a ingresarse después de la actualización",
+          "pl": "Hasło musi zostać ponownie wprowadzone po aktualizacji",
+          "zh-cn": "升级后需要重新输入密码"
         },
-        "news": {
-            "3.0.2": {
-                "en": "handle an empty Path for InfluxDB 2.0 correctly in all cases",
-                "de": "Behandeln Sie einen leeren Pfad für InfluxDB 2.0 in allen Fällen korrekt",
-                "ru": "правильно обрабатывать пустой путь для InfluxDB 2.0 во всех случаях",
-                "pt": "manipular um caminho vazio para o InfluxDB 2.0 corretamente em todos os casos",
-                "nl": "behandel een leeg pad voor InfluxDB 2.0 in alle gevallen correct",
-                "fr": "gérer correctement un chemin vide pour InfluxDB 2.0 dans tous les cas",
-                "it": "gestire correttamente un percorso vuoto per InfluxDB 2.0 in tutti i casi",
-                "es": "manejar una ruta vacía para InfluxDB 2.0 correctamente en todos los casos",
-                "pl": "we wszystkich przypadkach poprawnie obsłużyć pustą ścieżkę dla InfluxDB 2.0",
-                "zh-cn": "在所有情况下正确处理 InfluxDB 2.0 的空路径"
-            },
-            "3.0.1": {
-                "en": "BREAKING: Configuration is only working in the new Admin 5 UI!\nDid bigger adjustments to the recording logic and added a lot of new Features. Please refer to Changelog and Forum post for details.",
-                "de": "BREAKING: Die Konfiguration funktioniert nur in der neuen Admin 5-Benutzeroberfläche!\nGrößere Anpassungen an der Aufnahmelogik vorgenommen und viele neue Features hinzugefügt. Einzelheiten finden Sie im Änderungsprotokoll und im Forumsbeitrag.",
-                "ru": "НАРУШЕНИЕ: Конфигурация работает только в новом пользовательском интерфейсе Admin 5!\nВнесены большие коррективы в логику записи и добавлено много новых функций. Пожалуйста, обратитесь к журналу изменений и сообщению на форуме для получения подробной информации.",
-                "pt": "URGENTE: a configuração está funcionando apenas na nova interface do usuário do Admin 5!\nFez ajustes maiores na lógica de gravação e adicionou muitos novos recursos. Consulte o Changelog e a postagem do fórum para obter detalhes.",
-                "nl": "BREAKING: Configuratie werkt alleen in de nieuwe Admin 5 UI!\nHeeft grotere aanpassingen gedaan aan de opnamelogica en veel nieuwe functies toegevoegd. Raadpleeg de Changelog en Forumpost voor details.",
-                "fr": "RUPTURE : La configuration ne fonctionne que dans la nouvelle interface utilisateur d'Admin 5 !\nA apporté de plus grands ajustements à la logique d'enregistrement et ajouté de nombreuses nouvelles fonctionnalités. Veuillez vous référer au changelog et au post du forum pour plus de détails.",
-                "it": "ROTTURA: la configurazione funziona solo nella nuova interfaccia utente di Admin 5!\nHa apportato maggiori modifiche alla logica di registrazione e aggiunto molte nuove funzionalità. Si prega di fare riferimento a Changelog e post sul forum per i dettagli.",
-                "es": "ÚLTIMA HORA: ¡La configuración solo funciona en la nueva interfaz de usuario de Admin 5!\nHizo ajustes más grandes a la lógica de grabación y agregó muchas características nuevas. Consulte el registro de cambios y la publicación del foro para obtener más detalles.",
-                "pl": "ŁAMANIE: Konfiguracja działa tylko w nowym interfejsie użytkownika Admin 5!\nWprowadziłem większe poprawki w logice nagrywania i dodałem wiele nowych funkcji. Więcej informacji można znaleźć w dzienniku zmian i poście na forum.",
-                "zh-cn": "突破：配置仅在新的 Admin 5 UI 中有效！\n对录制逻辑进行了更大的调整，并添加了许多新功能。有关详细信息，请参阅变更日志和论坛帖子。"
-            },
-            "2.6.3": {
-                "en": "Fix potential crash cases (Sentry IOBROKER-INFLUXDB-4Q)",
-                "de": "Mögliche Absturzfälle beheben (Sentry IOBROKER-INFLUXDB-4Q)",
-                "ru": "Исправление возможных случаев сбоя (Sentry IOBROKER-INFLUXDB-4Q)",
-                "pt": "Corrigir possíveis casos de travamento (Sentry IOBROKER-INFLUXDB-4Q)",
-                "nl": "Mogelijke crashgevallen oplossen (Sentry IOBROKER-INFLUXDB-4Q)",
-                "fr": "Correction des cas de plantage potentiels (Sentry IOBROKER-INFLUXDB-4Q)",
-                "it": "Risolvi potenziali casi di crash (Sentry IOBROKER-INFLUXDB-4Q)",
-                "es": "Solucionar posibles casos de bloqueo (Sentry IOBROKER-INFLUXDB-4Q)",
-                "pl": "Napraw potencjalne przypadki awarii (Sentry IOBROKER-INFLUXDB-4Q)",
-                "zh-cn": "修复潜在的崩溃案例 (Sentry IOBROKER-INFLUXDB-4Q)"
-            },
-            "2.6.2": {
-                "en": "Correctly handle db names with hyphens for InfluxDB 1\nFix getHistory for non boolean fields\nAdjust shard group duration to influxdb proposals",
-                "de": "Behandeln Sie DB-Namen mit Bindestrichen für InfluxDB 1 korrekt\nGetHistory für nicht boolesche Felder korrigiert\nPassen Sie die Dauer der Shard-Gruppe an die Vorschläge von influxdb an",
-                "ru": "Правильно обрабатывать имена баз данных с дефисами для InfluxDB 1\nИсправление getHistory для нелогических полей\nОтрегулируйте продолжительность группы сегментов для предложений influxdb",
-                "pt": "Manipule corretamente nomes de banco de dados com hífens para InfluxDB 1\nCorrige getHistory para campos não booleanos\nAjustar a duração do grupo de fragmentos para propostas influxdb",
-                "nl": "Correct omgaan met db-namen met koppeltekens voor InfluxDB 1\nGetHistory repareren voor niet-booleaanse velden\nPas de duur van de shardgroep aan voor influxdb-voorstellen",
-                "fr": "Gérer correctement les noms de base de données avec des traits d'union pour InfluxDB 1\nCorrection de getHistory pour les champs non booléens\nAjuster la durée du groupe de fragments aux propositions influxdb",
-                "it": "Gestire correttamente i nomi db con trattini per InfluxDB 1\nRisolto il problema con getHistory per i campi non booleani\nRegola la durata del gruppo di shard alle proposte influxdb",
-                "es": "Manejar correctamente los nombres de bases de datos con guiones para InfluxDB 1\nArreglar getHistory para campos no booleanos\nAjuste la duración del grupo de fragmentos a las propuestas de influxdb",
-                "pl": "Prawidłowo obsługuj nazwy baz danych z myślnikami dla InfluxDB 1\nNapraw getHistory dla pól innych niż logiczne\nDostosuj czas trwania grupy shard do propozycji influxdb",
-                "zh-cn": "正确处理带有连字符的数据库名称，用于 InfluxDB 1\n修复非布尔字段的 getHistory\n调整分片组持续时间以适应 influxdb 提案"
-            },
-            "2.6.1": {
-                "en": "Address issue with updating retention policy for influxDB 1",
-                "de": "Beheben Sie ein Problem mit der Aktualisierung der Aufbewahrungsrichtlinie für influxDB 1",
-                "ru": "Устранить проблему с обновлением политики хранения для influxDB 1.",
-                "pt": "Resolva o problema com a atualização da política de retenção para o influxDB 1",
-                "nl": "Probleem oplossen met het bijwerken van het bewaarbeleid voor influxDB 1",
-                "fr": "Résoudre le problème de mise à jour de la stratégie de rétention pour influxDB 1",
-                "it": "Risoluzione del problema con l'aggiornamento del criterio di conservazione per influxDB 1",
-                "es": "Solucionar el problema con la actualización de la política de retención para influxDB 1",
-                "pl": "Rozwiąż problem z aktualizacją zasad przechowywania dla influxDB 1",
-                "zh-cn": "解决更新 influxDB 1 保留策略的问题"
-            },
-            "2.6.0": {
-                "en": "Make request timeout configurable - defaults to 30s\nAdd option to also accept self signed ssl certificates for InfluxDB 2.x",
-                "de": "Anforderungs-Timeout konfigurierbar machen – standardmäßig 30 Sekunden\nOption hinzugefügt, um auch selbstsignierte SSL-Zertifikate für InfluxDB 2.x zu akzeptieren",
-                "ru": "Сделать время ожидания запроса настраиваемым — по умолчанию 30 с.\nДобавить возможность также принимать самозаверяющие ssl-сертификаты для InfluxDB 2.x.",
-                "pt": "Tornar o tempo limite de solicitação configurável - o padrão é 30s\nAdicionar opção para também aceitar certificados SSL autoassinados para InfluxDB 2.x",
-                "nl": "Verzoek time-out configureerbaar maken - standaard ingesteld op 30s\nOptie toevoegen om ook zelfondertekende SSL-certificaten te accepteren voor InfluxDB 2.x",
-                "fr": "Faire en sorte que le délai d'attente de la demande soit configurable - par défaut à 30 s\nAjouter une option pour accepter également les certificats SSL auto-signés pour InfluxDB 2.x",
-                "it": "Rendi configurabile il timeout della richiesta: il valore predefinito è 30 secondi\nAggiungi l'opzione per accettare anche certificati SSL autofirmati per InfluxDB 2.x",
-                "es": "Hacer que el tiempo de espera de la solicitud sea configurable: el valor predeterminado es 30 s\nAgregue la opción para aceptar también certificados SSL autofirmados para InfluxDB 2.x",
-                "pl": "Ustaw limit czasu żądania konfigurowalny - domyślnie 30s\nDodaj opcję akceptowania również samopodpisanych certyfikatów ssl dla InfluxDB 2.x",
-                "zh-cn": "使请求超时可配置 - 默认为 30 秒\n添加选项以接受 InfluxDB 2.x 的自签名 ssl 证书"
-            },
-            "2.5.2": {
-                "en": "Marked interpolated data with `i=true`",
-                "de": "Markierte interpolierte Daten mit `i=true`",
-                "ru": "Помеченные интерполированные данные с `i=true`",
-                "pt": "Dados interpolados marcados com `i=true`",
-                "nl": "Gemarkeerde geïnterpoleerde gegevens met `i=true`",
-                "fr": "Données interpolées marquées avec `i=true`",
-                "it": "Dati interpolati contrassegnati con `i=true`",
-                "es": "Datos interpolados marcados con `i=true`",
-                "pl": "Oznaczono dane interpolowane za pomocą `i=true`",
-                "zh-cn": "用 `i=true` 标记插值数据"
-            }
+        "text": {
+          "en": "After upgrading to Version 2.1.1 or later you need to re-entr your passwort/token for the access to the InfluxDB in the instance configuration.",
+          "de": "Nach dem Upgrade auf Version 2.1.1 oder höher müssen Sie Ihr Passwort/Token für den Zugriff auf die InfluxDB in der Instanzkonfiguration erneut eingeben.",
+          "ru": "После обновления до версии 2.1.1 или более поздней вам необходимо повторно ввести свой пароль/токен для доступа к InfluxDB в конфигурации экземпляра.",
+          "pt": "Após atualizar para a Versão 2.1.1 ou posterior, você precisa reinserir sua senha/token para acesso ao InfluxDB na configuração da instância.",
+          "nl": "Na het upgraden naar versie 2.1.1 of hoger moet u uw wachtwoord/token opnieuw invoeren voor toegang tot de InfluxDB in de instantieconfiguratie.",
+          "fr": "Après la mise à niveau vers la version 2.1.1 ou ultérieure, vous devez ressaisir votre mot de passe/token pour l'accès à InfluxDB dans la configuration de l'instance.",
+          "it": "Dopo l'aggiornamento alla versione 2.1.1 o successiva è necessario reinserire la password/token per l'accesso a InfluxDB nella configurazione dell'istanza.",
+          "es": "Después de actualizar a la versión 2.1.1 o posterior, debe volver a ingresar su contraseña/token para acceder a InfluxDB en la configuración de la instancia.",
+          "pl": "Po aktualizacji do wersji 2.1.1 lub nowszej należy ponownie wprowadzić hasło/token, aby uzyskać dostęp do bazy danych InfluxDB w konfiguracji instancji.",
+          "zh-cn": "升级到 2.1.1 或更高版本后，您需要重新输入密码/令牌才能在实例配置中访问 InfluxDB。"
         },
-        "mode": "daemon",
-        "platform": "Javascript/Node.js",
-        "loglevel": "info",
-        "messagebox": true,
-        "subscribe": "messagebox",
-        "keywords": [
-            "charts",
-            "logging",
-            "influxdb"
-        ],
-        "preserveSettings": "custom",
-        "supportCustoms": true,
-        "getHistory": true,
-        "enabled": true,
-        "compact": true,
-        "dependencies": [
-            {
-                "js-controller": ">=3.3.0"
-            }
-        ],
-        "globalDependencies": [
-            {
-                "admin": ">=5.1.28"
-            }
-        ],
-        "supportStopInstance": 10000,
-        "stopTimeout": 10000,
-        "authors": [
-            "Bluefox <dogafox@gmail.com>",
-            "Apollon77 <ingo@fischer-ka.de>",
-            "Excodibur"
-        ],
-        "license": "MIT",
-        "readme": "https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md",
-        "icon": "influxdb.png",
-        "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.influxdb/master/admin/influxdb.png",
-        "type": "storage",
-        "docs": {
-            "de": [
-                "docs/de/influxdb.md"
-            ]
-        },
-        "plugins": {
-            "sentry": {
-                "dsn": "https://29eecf4e8c954f2ea78110d47a9b122d@sentry.iobroker.net/54"
-            }
-        },
-        "adminUI": {
-            "config": "json",
-            "custom": "json"
-        },
-        "connectionType": "local",
-        "dataSource": "push",
-        "tier": 1,
-        "messages": [
-            {
-                "condition": {
-                    "operand": "and",
-                    "rules": [
-                        "oldVersion<2.1.1",
-                        "newVersion>=2.1.1"
-                    ]
-                },
-                "title": {
-                    "en": "Password needs to re re-entered after upgrade and other changes",
-                    "de": "Das Passwort muss nach dem Upgrade erneut eingegeben werden",
-                    "ru": "Пароль необходимо повторно ввести после обновления",
-                    "pt": "A senha precisa ser reinserida após a atualização",
-                    "nl": "Wachtwoord moet opnieuw worden ingevoerd na upgrade",
-                    "fr": "Le mot de passe doit être ressaisi après la mise à niveau",
-                    "it": "La password deve essere reinserita dopo l'aggiornamento",
-                    "es": "La contraseña debe volver a ingresarse después de la actualización",
-                    "pl": "Hasło musi zostać ponownie wprowadzone po aktualizacji",
-                    "zh-cn": "升级后需要重新输入密码"
-                },
-                "text": {
-                    "en": "After upgrading to Version 2.1.1 or later you need to re-entr your passwort/token for the access to the InfluxDB in the instance configuration.",
-                    "de": "Nach dem Upgrade auf Version 2.1.1 oder höher müssen Sie Ihr Passwort/Token für den Zugriff auf die InfluxDB in der Instanzkonfiguration erneut eingeben.",
-                    "ru": "После обновления до версии 2.1.1 или более поздней вам необходимо повторно ввести свой пароль/токен для доступа к InfluxDB в конфигурации экземпляра.",
-                    "pt": "Após atualizar para a Versão 2.1.1 ou posterior, você precisa reinserir sua senha/token para acesso ao InfluxDB na configuração da instância.",
-                    "nl": "Na het upgraden naar versie 2.1.1 of hoger moet u uw wachtwoord/token opnieuw invoeren voor toegang tot de InfluxDB in de instantieconfiguratie.",
-                    "fr": "Après la mise à niveau vers la version 2.1.1 ou ultérieure, vous devez ressaisir votre mot de passe/token pour l'accès à InfluxDB dans la configuration de l'instance.",
-                    "it": "Dopo l'aggiornamento alla versione 2.1.1 o successiva è necessario reinserire la password/token per l'accesso a InfluxDB nella configurazione dell'istanza.",
-                    "es": "Después de actualizar a la versión 2.1.1 o posterior, debe volver a ingresar su contraseña/token para acceder a InfluxDB en la configuración de la instancia.",
-                    "pl": "Po aktualizacji do wersji 2.1.1 lub nowszej należy ponownie wprowadzić hasło/token, aby uzyskać dostęp do bazy danych InfluxDB w konfiguracji instancji.",
-                    "zh-cn": "升级到 2.1.1 或更高版本后，您需要重新输入密码/令牌才能在实例配置中访问 InfluxDB。"
-                },
-                "level": "warn",
-                "buttons": [
-                    "agree",
-                    "cancel"
-                ]
-            },
-            {
-                "condition": {
-                    "operand": "and",
-                    "rules": [
-                        "oldVersion<3.0.0",
-                        "newVersion>=3.0.0"
-                    ]
-                },
-                "title": {
-                    "en": "Important notice!",
-                    "de": "Wichtiger Hinweis!",
-                    "ru": "Важное замечание!",
-                    "pt": "Notícia importante!",
-                    "nl": "Belangrijke mededeling!",
-                    "fr": "Avis important!",
-                    "it": "Avviso IMPORTANTE!",
-                    "es": "Noticia importante!",
-                    "pl": "Ważna uwaga!",
-                    "zh-cn": "重要通知!"
-                },
-                "text": {
-                    "en": "This new version introduces several changes how values are logged because we fixed several issues and added new features. Please especially check the defined \"debounce\" and \"block time\" settings in your datapoints if values are not logged as expected and make sure the settings make sense. For more details please refer to the changelog and Readme.",
-                    "de": "Diese neue Version führt mehrere Änderungen ein, wie Werte protokolliert werden, da wir mehrere Probleme behoben und neue Funktionen hinzugefügt haben. Bitte überprüfen Sie insbesondere die definierten „Entprellen“- und „Sperrzeit“-Einstellungen in Ihren Datenpunkten, wenn Werte nicht wie erwartet protokolliert werden, und stellen Sie sicher, dass die Einstellungen sinnvoll sind. Weitere Details finden Sie im Changelog und in der Readme.",
-                    "ru": "В этой новой версии внесено несколько изменений в регистрацию значений, поскольку мы исправили несколько проблем и добавили новые функции. Пожалуйста, особенно проверьте определенные настройки «debounce» и «block time» в ваших точках данных, если значения не регистрируются должным образом, и убедитесь, что настройки имеют смысл. Для получения более подробной информации, пожалуйста, обратитесь к журналу изменений и Readme.",
-                    "pt": "Esta nova versão apresenta várias alterações na forma como os valores são registrados, pois corrigimos vários problemas e adicionamos novos recursos. Verifique especialmente as configurações definidas de \"debounce\" e \"block time\" em seus pontos de dados se os valores não forem registrados conforme o esperado e verifique se as configurações fazem sentido. Para obter mais detalhes, consulte o log de alterações e o Leiame.",
-                    "nl": "Deze nieuwe versie introduceert verschillende wijzigingen in de manier waarop waarden worden geregistreerd, omdat we verschillende problemen hebben opgelost en nieuwe functies hebben toegevoegd. Controleer vooral de gedefinieerde \"debounce\" en \"block time\" instellingen in uw datapunten als de waarden niet zijn vastgelegd zoals verwacht en zorg ervoor dat de instellingen kloppen. Raadpleeg de changelog en Readme voor meer informatie.",
-                    "fr": "Cette nouvelle version introduit plusieurs changements dans la journalisation des valeurs car nous avons corrigé plusieurs problèmes et ajouté de nouvelles fonctionnalités. Veuillez vérifier en particulier les paramètres \"anti-rebond\" et \"temps de blocage\" définis dans vos points de données si les valeurs ne sont pas enregistrées comme prévu et assurez-vous que les paramètres ont un sens. Pour plus de détails, veuillez consulter le journal des modifications et le fichier Lisez-moi.",
-                    "it": "Questa nuova versione introduce diverse modifiche al modo in cui i valori vengono registrati perché abbiamo risolto diversi problemi e aggiunto nuove funzionalità. Controllare in particolare le impostazioni definite \"debounce\" e \"block time\" nei propri datapoint se i valori non sono registrati come previsto e assicurarsi che le impostazioni abbiano un senso. Per maggiori dettagli, fare riferimento al log delle modifiche e al Leggimi.",
-                    "es": "Esta nueva versión introduce varios cambios en la forma en que se registran los valores porque solucionamos varios problemas y agregamos nuevas funciones. Verifique especialmente la configuración definida de \"antirrebote\" y \"tiempo de bloqueo\" en sus puntos de datos si los valores no se registran como se esperaba y asegúrese de que la configuración tenga sentido. Para obtener más detalles, consulte el registro de cambios y el archivo Léame.",
-                    "pl": "Ta nowa wersja wprowadza kilka zmian w sposobie rejestrowania wartości, ponieważ naprawiliśmy kilka problemów i dodaliśmy nowe funkcje. W szczególności sprawdź zdefiniowane ustawienia „odbicia” i „czasu blokowania” w punktach danych, jeśli wartości nie są rejestrowane zgodnie z oczekiwaniami i upewnij się, że ustawienia mają sens. Aby uzyskać więcej informacji, zapoznaj się z dziennikiem zmian i Readme.",
-                    "zh-cn": "这个新版本引入了一些更改值的记录方式，因为我们修复了几个问题并添加了新功能。如果未按预期记录值，请特别检查数据点中定义的“去抖动”和“阻塞时间”设置，并确保设置有意义。有关更多详细信息，请参阅更改日志和自述文件。"
-                },
-                "link": "https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#default-settings",
-                "level": "warn",
-                "linkText": {
-                    "en": "Readme",
-                    "de": "Liesmich",
-                    "ru": "Прочти меня",
-                    "pt": "Leia-me",
-                    "nl": "Leesmij",
-                    "fr": "Lisez-moi",
-                    "it": "Leggimi",
-                    "es": "Léame",
-                    "pl": "Readme",
-                    "zh-cn": "自述文件"
-                },
-                "buttons": [
-                    "agree",
-                    "cancel"
-                ]
-            }
+        "level": "warn",
+        "buttons": [
+          "agree",
+          "cancel"
         ]
-    },
-    "native": {
-        "debounce": 1000,
-        "retention": 31536000,
-        "dbname": "iobroker",
-        "host": "localhost",
-        "protocol": "http",
-        "path": "",
-        "port": 8086,
-        "user": "",
-        "password": "",
-        "token": "",
-        "organization": "",
-        "round": 4,
-        "seriesBufferMax": 0,
-        "seriesBufferFlushInterval": 600,
-        "changesRelogInterval": 0,
-        "changesMinDelta": 0,
-        "reconnectInterval": 10000,
-        "pingInterval": 15000,
-        "requestTimeout": 30000,
-        "validateSSL": true,
-        "dbversion": "1.x",
-        "usetags": false,
-        "pingserver": true,
-        "blockTime": 0,
-        "debounceTime": 0,
-        "disableSkippedValueLogging": false,
-        "enableLogging": false,
-        "customRetentionDuration": 365,
-        "relogLastValueOnStart": true
-    },
-    "protectedNative": [
-        "password",
-        "token"
-    ],
-    "encryptedNative": [
-        "password",
-        "token"
-    ],
-    "instanceObjects": [
-        {
-            "_id": "info",
-            "type": "channel",
-            "common": {
-                "name": "Information"
-            },
-            "native": {}
+      },
+      {
+        "condition": {
+          "operand": "and",
+          "rules": [
+            "oldVersion<3.0.0",
+            "newVersion>=3.0.0"
+          ]
         },
-        {
-            "_id": "info.connection",
-            "type": "state",
-            "common": {
-                "role": "indicator.connected",
-                "name": "If connected to InfluxDB",
-                "type": "boolean",
-                "read": true,
-                "write": false,
-                "def": false
-            },
-            "native": {}
-        }
-    ],
-    "objects": []
+        "title": {
+          "en": "Important notice!",
+          "de": "Wichtiger Hinweis!",
+          "ru": "Важное замечание!",
+          "pt": "Notícia importante!",
+          "nl": "Belangrijke mededeling!",
+          "fr": "Avis important!",
+          "it": "Avviso IMPORTANTE!",
+          "es": "Noticia importante!",
+          "pl": "Ważna uwaga!",
+          "zh-cn": "重要通知!"
+        },
+        "text": {
+          "en": "This new version introduces several changes how values are logged because we fixed several issues and added new features. Please especially check the defined \"debounce\" and \"block time\" settings in your datapoints if values are not logged as expected and make sure the settings make sense. For more details please refer to the changelog and Readme.",
+          "de": "Diese neue Version führt mehrere Änderungen ein, wie Werte protokolliert werden, da wir mehrere Probleme behoben und neue Funktionen hinzugefügt haben. Bitte überprüfen Sie insbesondere die definierten „Entprellen“- und „Sperrzeit“-Einstellungen in Ihren Datenpunkten, wenn Werte nicht wie erwartet protokolliert werden, und stellen Sie sicher, dass die Einstellungen sinnvoll sind. Weitere Details finden Sie im Changelog und in der Readme.",
+          "ru": "В этой новой версии внесено несколько изменений в регистрацию значений, поскольку мы исправили несколько проблем и добавили новые функции. Пожалуйста, особенно проверьте определенные настройки «debounce» и «block time» в ваших точках данных, если значения не регистрируются должным образом, и убедитесь, что настройки имеют смысл. Для получения более подробной информации, пожалуйста, обратитесь к журналу изменений и Readme.",
+          "pt": "Esta nova versão apresenta várias alterações na forma como os valores são registrados, pois corrigimos vários problemas e adicionamos novos recursos. Verifique especialmente as configurações definidas de \"debounce\" e \"block time\" em seus pontos de dados se os valores não forem registrados conforme o esperado e verifique se as configurações fazem sentido. Para obter mais detalhes, consulte o log de alterações e o Leiame.",
+          "nl": "Deze nieuwe versie introduceert verschillende wijzigingen in de manier waarop waarden worden geregistreerd, omdat we verschillende problemen hebben opgelost en nieuwe functies hebben toegevoegd. Controleer vooral de gedefinieerde \"debounce\" en \"block time\" instellingen in uw datapunten als de waarden niet zijn vastgelegd zoals verwacht en zorg ervoor dat de instellingen kloppen. Raadpleeg de changelog en Readme voor meer informatie.",
+          "fr": "Cette nouvelle version introduit plusieurs changements dans la journalisation des valeurs car nous avons corrigé plusieurs problèmes et ajouté de nouvelles fonctionnalités. Veuillez vérifier en particulier les paramètres \"anti-rebond\" et \"temps de blocage\" définis dans vos points de données si les valeurs ne sont pas enregistrées comme prévu et assurez-vous que les paramètres ont un sens. Pour plus de détails, veuillez consulter le journal des modifications et le fichier Lisez-moi.",
+          "it": "Questa nuova versione introduce diverse modifiche al modo in cui i valori vengono registrati perché abbiamo risolto diversi problemi e aggiunto nuove funzionalità. Controllare in particolare le impostazioni definite \"debounce\" e \"block time\" nei propri datapoint se i valori non sono registrati come previsto e assicurarsi che le impostazioni abbiano un senso. Per maggiori dettagli, fare riferimento al log delle modifiche e al Leggimi.",
+          "es": "Esta nueva versión introduce varios cambios en la forma en que se registran los valores porque solucionamos varios problemas y agregamos nuevas funciones. Verifique especialmente la configuración definida de \"antirrebote\" y \"tiempo de bloqueo\" en sus puntos de datos si los valores no se registran como se esperaba y asegúrese de que la configuración tenga sentido. Para obtener más detalles, consulte el registro de cambios y el archivo Léame.",
+          "pl": "Ta nowa wersja wprowadza kilka zmian w sposobie rejestrowania wartości, ponieważ naprawiliśmy kilka problemów i dodaliśmy nowe funkcje. W szczególności sprawdź zdefiniowane ustawienia „odbicia” i „czasu blokowania” w punktach danych, jeśli wartości nie są rejestrowane zgodnie z oczekiwaniami i upewnij się, że ustawienia mają sens. Aby uzyskać więcej informacji, zapoznaj się z dziennikiem zmian i Readme.",
+          "zh-cn": "这个新版本引入了一些更改值的记录方式，因为我们修复了几个问题并添加了新功能。如果未按预期记录值，请特别检查数据点中定义的“去抖动”和“阻塞时间”设置，并确保设置有意义。有关更多详细信息，请参阅更改日志和自述文件。"
+        },
+        "link": "https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#default-settings",
+        "level": "warn",
+        "linkText": {
+          "en": "Readme",
+          "de": "Liesmich",
+          "ru": "Прочти меня",
+          "pt": "Leia-me",
+          "nl": "Leesmij",
+          "fr": "Lisez-moi",
+          "it": "Leggimi",
+          "es": "Léame",
+          "pl": "Readme",
+          "zh-cn": "自述文件"
+        },
+        "buttons": [
+          "agree",
+          "cancel"
+        ]
+      }
+    ]
+  },
+  "native": {
+    "debounce": 1000,
+    "retention": 31536000,
+    "dbname": "iobroker",
+    "host": "localhost",
+    "protocol": "http",
+    "path": "",
+    "port": 8086,
+    "user": "",
+    "password": "",
+    "token": "",
+    "organization": "",
+    "round": 4,
+    "seriesBufferMax": 0,
+    "seriesBufferFlushInterval": 600,
+    "changesRelogInterval": 0,
+    "changesMinDelta": 0,
+    "reconnectInterval": 10000,
+    "pingInterval": 15000,
+    "requestTimeout": 30000,
+    "validateSSL": true,
+    "dbversion": "1.x",
+    "usetags": false,
+    "pingserver": true,
+    "blockTime": 0,
+    "debounceTime": 0,
+    "disableSkippedValueLogging": false,
+    "enableLogging": false,
+    "customRetentionDuration": 365,
+    "relogLastValueOnStart": true
+  },
+  "protectedNative": [
+    "password",
+    "token"
+  ],
+  "encryptedNative": [
+    "password",
+    "token"
+  ],
+  "instanceObjects": [
+    {
+      "_id": "info",
+      "type": "channel",
+      "common": {
+        "name": "Information"
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.connection",
+      "type": "state",
+      "common": {
+        "role": "indicator.connected",
+        "name": "If connected to InfluxDB",
+        "type": "boolean",
+        "read": true,
+        "write": false,
+        "def": false
+      },
+      "native": {}
+    }
+  ],
+  "objects": []
 }

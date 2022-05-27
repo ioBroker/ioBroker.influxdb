@@ -450,8 +450,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
-
-### __WORK IN PROGRESS__
+### 3.1.0 (2022-05-27)
 * (Apollon77) Data are not converted to numbers if they are other datatypes on getHistory to respect the saved data formats as defined in the datapoint settings for storage.
 * (Apollon77) Fix retention change to lower checkbox in UI
 * (Apollon77) Allow storeState again to write to InfluxDB for "unknown state ids" - "rules" usage is not supported in for this and storeState would be silently discarded in this case!
