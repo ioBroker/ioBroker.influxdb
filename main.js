@@ -1935,6 +1935,7 @@ function getHistory(adapter, msg) {
         options.round = adapter.config.round;
     }
 
+    adapter._influxDPs[options.id] = adapter._influxDPs[options.id] || {};
     const debugLog = options.debugLog = !!(adapter._influxDPs[options.id] && adapter._influxDPs[options.id][adapter.namespace] && adapter._influxDPs[options.id][adapter.namespace].enableDebugLogs);
 
     debugLog && adapter.log.debug(`${options.logId} getHistory (InfluxDB1) call: ${JSON.stringify(options)}`);
@@ -1956,15 +1957,6 @@ function getHistory(adapter, msg) {
     if (options.aggregate === 'integral' && (typeof options.integralUnit !== 'number' || options.integralUnit <= 0)) {
         adapter.log.error(`Invalid integralUnit value: ${options.integralUnit}, use 60s as default`);
         options.integralUnit = 60;
-    }
-
-    if (!adapter._influxDPs[options.id]) {
-        adapter.sendTo(msg.from, msg.command, {
-            result: [],
-            step:   0,
-            error:  `Logging not activated for ${options.id}`
-        }, msg.callback);
-        return;
     }
 
     if (options.start > options.end) {
@@ -2207,6 +2199,7 @@ function getHistoryIflx2(adapter, msg) {
         options.round = adapter.config.round;
     }
 
+    adapter._influxDPs[options.id] = adapter._influxDPs[options.id] || {};
     const debugLog = options.debugLog = !!(adapter._influxDPs[options.id] && adapter._influxDPs[options.id][adapter.namespace] && adapter._influxDPs[options.id][adapter.namespace].enableDebugLogs);
 
     debugLog && adapter.log.debug(`${options.logId} getHistory (InfluxDB2) call: ${JSON.stringify(options)}`);
@@ -2228,14 +2221,6 @@ function getHistoryIflx2(adapter, msg) {
     if (options.aggregate === 'integral' && (typeof options.integralUnit !== 'number' || options.integralUnit <= 0)) {
         adapter.log.error(`Invalid integralUnit value: ${options.integralUnit}, use 60s as default`);
         options.integralUnit = 60;
-    }
-
-    if (!adapter._influxDPs[options.id] || !adapter._influxDPs[options.id][adapter.namespace]) {
-        return adapter.sendTo(msg.from, msg.command, {
-            result: [],
-            step:   0,
-            error:  `Logging not activated for ${options.id}`
-        }, msg.callback);
     }
 
     if (options.start > options.end) {
@@ -2282,12 +2267,8 @@ function getHistoryIflx2(adapter, msg) {
         }
         setTimeout(() => {
             adapter._client.query(booleanTypeCheckQuery, (error, rslt) => {
-                if (!adapter._influxDPs[options.id] || !adapter._influxDPs[options.id][adapter.namespace]) {
-                    return adapter.sendTo(msg.from, msg.command, {
-                        result: [],
-                        step:   0,
-                        error:  `Logging not activated for ${options.id}`
-                    }, msg.callback);
+                if (!adapter._influxDPs[options.id]) {
+                    return;
                 }
                 let supportsAggregates;
                 if (adapter._influxDPs[options.id][adapter.namespace].storageType && adapter._influxDPs[options.id][adapter.namespace].storageType !== 'Number') {
