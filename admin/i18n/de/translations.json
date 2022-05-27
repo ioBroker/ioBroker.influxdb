@@ -73,7 +73,7 @@
     "debounce": "Änderungen ignorieren, bis der Wert für X Millisekunden unverändert bleibt",
     "health-check help": "Regelmäßige Verfügbarkeits-Anfragen werden an den DB-Server gesendet, um zu überprüfen, ob er noch aktiv ist.",
     "ignore values above x": "Ignoriere Werte größer als",
-    "ignore values below x": "Ignorieren Sie die folgenden Werte",
+    "ignore values below x": "Ignoriere Werte kleiner als",
     "ignore values below zero": "Ignoriere Werte unter Null (<0)",
     "ignore zero or null values": "Ignoriere 0 oder Nullwerte (==0)",
     "keep forever": "keine automatische Löschung",
