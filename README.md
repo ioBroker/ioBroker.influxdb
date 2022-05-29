@@ -21,7 +21,7 @@ This adapter saves state history into InfluxDB.
 If you have an InfluxDB 1.x installation (preferably 1.8.x or 1.9.x) then you choose " 1.x" in the adapter configuration and enter the Host-IP and Port together with Username and Password for the Access.
 You can also define a database name. The default is "iobroker". On first adapter start this database is created.
 
-When doing custom queries via the "query" message you can use InfluxQL to select the data you want.
+When doing custom queries via the "query" message you can use InfluxQL to select the data you want. FluxQL with InfluxDB 1.x is not supported (and will also not be added).
 
 ### InfluxDB 2.x
 Since 2.0 of the adapter also InfluxDB 2.x is supported which works a bit different.
