@@ -13,7 +13,14 @@ const [appName, adapterName] = require('./package.json').name.split('.');
 const Aggregate   = require('./lib/aggregate.js');
 const dataDir     = path.normalize(`${utils.controllerDir}/${require(`${utils.controllerDir}/lib/tools`).getDefaultDataDir()}`);
 const cacheFile   = `${dataDir}influxdata.json`;
-const { isObject } = require('./lib/tools.js');
+
+function isObject(it) {
+    // This is necessary because:
+    // typeof null === 'object'
+    // typeof [] === 'object'
+    // [] instanceof Object === true
+    return Object.prototype.toString.call(it) === '[object Object]';
+}
 
 let adapter;
 
