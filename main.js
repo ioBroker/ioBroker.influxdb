@@ -445,13 +445,6 @@ function getRetention(adapter, msg) {
 
 function testConnection(adapter, msg) {
     adapter.log.debug(`testConnection msg-object: ${JSON.stringify(msg)}`);
-    if (msg && msg.message && typeof msg.message.config === 'string') {
-        try {
-            msg.message.config = JSON.parse(msg.message.config);
-        } catch (err) {
-            return adapter.sendTo(msg.from, msg.command, {error: `Could not parse test configuration: ${err.message}`}, msg.callback);
-        }
-    }
     if (!msg || !msg.message || !isObject(msg.message.config)) {
         return adapter.sendTo(msg.from, msg.command, {error: 'Invalid test configuration.'}, msg.callback);
     }
