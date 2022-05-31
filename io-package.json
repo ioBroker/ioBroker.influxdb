@@ -13,7 +13,7 @@
       "pl": "Logowanie stanów do InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "3.1.1",
+    "version": "3.1.2",
     "title": "Logging data with InfluxDB",
     "titleLang": {
       "en": "Logging data with InfluxDB",
@@ -28,6 +28,18 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "3.1.2": {
+        "en": "Workaround an admin issue when testing connection to InfluxDB",
+        "de": "Umgehung eines Administratorproblems beim Testen der Verbindung zu InfluxDB",
+        "ru": "Обход проблемы администратора при тестировании подключения к InfluxDB",
+        "pt": "Solução alternativa de um problema de administrador ao testar a conexão com o InfluxDB",
+        "nl": "Tijdelijke oplossing voor een beheerdersprobleem bij het testen van de verbinding met InfluxDB",
+        "fr": "Contournement d'un problème d'administration lors du test de connexion à InfluxDB",
+        "it": "Soluzione alternativa a un problema di amministrazione durante il test della connessione a InfluxDB",
+        "es": "Solución de un problema de administración al probar la conexión a InfluxDB",
+        "pl": "Obejście problemu administratora podczas testowania połączenia z InfluxDB",
+        "zh-cn": "在测试与 InfluxDB 的连接时解决管理问题"
+      },
       "3.1.0": {
         "en": "Data are not converted to numbers if they are other datatypes on getHistory to respect the saved data formats as defined in the datapoint settings for storage.\nFix retention change to lower checkbox in UI\nAllow storeState again to write to InfluxDB for \"unknown state ids\" - \"rules\" usage is not supported in for this and storeState would be silently discarded in this case!\nFix several crash cases reported by Sentry\nMake sure disabling \"Log changes only\" also really do not log the changes anymore\nAllow storeState and GetHistory also to be called for \"unknown ids\"",
         "de": "Daten werden nicht in Zahlen konvertiert, wenn es sich um andere Datentypen auf getHistory handelt, um die gespeicherten Datenformate zu respektieren, wie sie in den Datenpunkteinstellungen für die Speicherung definiert sind.\nKorrektur der Aufbewahrungsänderung am unteren Kontrollkästchen in der Benutzeroberfläche\nStoreState erneut erlauben, in InfluxDB für \"unbekannte Zustands-IDs\" zu schreiben - die Verwendung von \"Regeln\" wird dafür nicht unterstützt und storeState würde in diesem Fall stillschweigend verworfen!\nMehrere von Sentry gemeldete Absturzfälle behoben\nStellen Sie sicher, dass durch Deaktivieren von \"Nur Änderungen protokollieren\" die Änderungen auch wirklich nicht mehr protokolliert werden\nAufruf von storeState und GetHistory auch für \"unbekannte IDs\" zulassen",
