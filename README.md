@@ -450,8 +450,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
-
-### __WORK IN PROGRESS__
+### 3.1.1 (2022-05-31)
 * (Apollon77) Workaround an admin issue when testing connection to InfluxDB
 
 ### 3.1.0 (2022-05-27)
