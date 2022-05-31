@@ -13,7 +13,7 @@ const [appName, adapterName] = require('./package.json').name.split('.');
 const Aggregate   = require('./lib/aggregate.js');
 const dataDir     = path.normalize(`${utils.controllerDir}/${require(`${utils.controllerDir}/lib/tools`).getDefaultDataDir()}`);
 const cacheFile   = `${dataDir}influxdata.json`;
-const { isObject } = require('lib/tools.js');
+const { isObject } = require('./lib/tools.js');
 
 let adapter;
 
