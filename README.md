@@ -446,15 +446,18 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 <!--
 	Placeholder for the next version (at the beginning of the line):
-	### __WORK IN PROGRESS__
+	### **WORK IN PROGRESS**
 -->
 
 ## Changelog
+### **WORK IN PROGRESS**
+* (Apollon77) Corrected issue when testing connection to InfluxDBv1 with weird passwords
+
 ### 3.1.2 (2022-05-31)
 * (Apollon77) Workaround an admin issue when testing connection to InfluxDB
 
 ### 3.1.0 (2022-05-27)
-* (Apollon77) Data are not converted to numbers if they are other datatypes on getHistory to respect the saved data formats as defined in the datapoint settings for storage.
+* (Apollon77) Data are not converted to number if they are other data types on getHistory to respect the saved data formats as defined in the datapoint settings for storage.
 * (Apollon77) Fix retention change to lower checkbox in UI
 * (Apollon77) Allow storeState again to write to InfluxDB for "unknown state ids" - "rules" usage is not supported in for this and storeState would be silently discarded in this case!
 * (Apollon77) Fix several crash cases reported by Sentry

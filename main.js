@@ -490,7 +490,7 @@ function testConnection(adapter, msg) {
                     msg.message.config.port,
                     msg.message.config.protocol,  // optional, default 'http'
                     msg.message.config.user,
-                    msg.message.config.password,
+                    decodeURIComponent(msg.message.config.password || ''),
                     msg.message.config.dbname || appName,
                     msg.message.config.requestTimeout
                 );
