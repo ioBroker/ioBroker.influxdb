@@ -13,7 +13,7 @@
       "pl": "Logowanie stanów do InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "3.1.2",
+    "version": "3.1.3",
     "title": "Logging data with InfluxDB",
     "titleLang": {
       "en": "Logging data with InfluxDB",
@@ -28,6 +28,18 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "3.1.3": {
+        "en": "Corrected issue when testing connection to InfluxDBv1 with weird passwords",
+        "de": "Problem beim Testen der Verbindung zu InfluxDBv1 mit seltsamen Passwörtern behoben",
+        "ru": "Исправлена ошибка при тестировании подключения к InfluxDBv1 со странными паролями.",
+        "pt": "Corrigido o problema ao testar a conexão com o InfluxDBv1 com senhas estranhas",
+        "nl": "Probleem opgelost bij het testen van de verbinding met InfluxDBv1 met rare wachtwoorden",
+        "fr": "Correction d'un problème lors du test de connexion à InfluxDBv1 avec des mots de passe étranges",
+        "it": "Risolto problema durante il test della connessione a InfluxDBv1 con password strane",
+        "es": "Problema corregido al probar la conexión a InfluxDBv1 con contraseñas extrañas",
+        "pl": "Naprawiono problem podczas testowania połączenia z InfluxDBv1 za pomocą dziwnych haseł",
+        "zh-cn": "更正了使用奇怪密码测试与 InfluxDBv1 的连接时出现的问题"
+      },
       "3.1.2": {
         "en": "Workaround an admin issue when testing connection to InfluxDB",
         "de": "Umgehung eines Administratorproblems beim Testen der Verbindung zu InfluxDB",
@@ -99,18 +111,6 @@
         "es": "Manejar correctamente los nombres de bases de datos con guiones para InfluxDB 1\nArreglar getHistory para campos no booleanos\nAjuste la duración del grupo de fragmentos a las propuestas de influxdb",
         "pl": "Prawidłowo obsługuj nazwy baz danych z myślnikami dla InfluxDB 1\nNapraw getHistory dla pól innych niż logiczne\nDostosuj czas trwania grupy shard do propozycji influxdb",
         "zh-cn": "正确处理带有连字符的数据库名称，用于 InfluxDB 1\n修复非布尔字段的 getHistory\n调整分片组持续时间以适应 influxdb 提案"
-      },
-      "2.6.1": {
-        "en": "Address issue with updating retention policy for influxDB 1",
-        "de": "Beheben Sie ein Problem mit der Aktualisierung der Aufbewahrungsrichtlinie für influxDB 1",
-        "ru": "Устранить проблему с обновлением политики хранения для influxDB 1.",
-        "pt": "Resolva o problema com a atualização da política de retenção para o influxDB 1",
-        "nl": "Probleem oplossen met het bijwerken van het bewaarbeleid voor influxDB 1",
-        "fr": "Résoudre le problème de mise à jour de la stratégie de rétention pour influxDB 1",
-        "it": "Risoluzione del problema con l'aggiornamento del criterio di conservazione per influxDB 1",
-        "es": "Solucionar el problema con la actualización de la política de retención para influxDB 1",
-        "pl": "Rozwiąż problem z aktualizacją zasad przechowywania dla influxDB 1",
-        "zh-cn": "解决更新 influxDB 1 保留策略的问题"
       }
     },
     "mode": "daemon",

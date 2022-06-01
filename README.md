@@ -450,7 +450,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 3.1.3 (2022-06-01)
 * (Apollon77) Corrected issue when testing connection to InfluxDBv1 with weird passwords
 
 ### 3.1.2 (2022-05-31)
