@@ -2277,7 +2277,7 @@ function getHistoryIflx2(adapter, msg) {
             adapter.log.info(`Error storing buffered series for ${options.id} before GetHistory: ${err}`);
         }
         setTimeout(() => {
-            adapter._client.query(booleanTypeCheckQuery, (error, rslt) => {
+            adapter._client && adapter._client.query(booleanTypeCheckQuery, (error, rslt) => {
                 if (!adapter._influxDPs[options.id]) {
                     return;
                 }
@@ -2417,7 +2417,7 @@ function getHistoryIflx2(adapter, msg) {
                 debugLog && adapter.log.debug(`${options.logId} History-queries to execute: ${fluxQueries}`);
 
                 // if specific id requested
-                adapter._client.queries(fluxQueries, (err, rows) => {
+                adapter._client && adapter._client.queries(fluxQueries, (err, rows) => {
                     if (err && !rows) {
                         if (adapter._client.request.getHostsAvailable().length === 0) {
                             setConnected(adapter, false);

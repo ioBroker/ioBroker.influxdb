@@ -167,6 +167,7 @@
     "connectionType": "local",
     "dataSource": "push",
     "tier": 1,
+    "eraseOnUpload": true,
     "messages": [
       {
         "condition": {
