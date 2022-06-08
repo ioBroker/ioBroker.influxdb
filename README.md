@@ -450,7 +450,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
-### __WORK IN PROGRESS__
+### 3.1.4 (2022-06-08)
 * (Apollon77) Performance optimizations for GetHistory calls, especially for "minmax" aggregate method
 * (Apollon77) Prevent crash case reported by Sentry
 
