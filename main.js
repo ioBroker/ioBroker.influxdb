@@ -2449,7 +2449,7 @@ function getHistoryIflx2(adapter, msg) {
                                 } else if (rows[qr][rr]._start && rows[qr][rr]._stop) {
                                     const startTime = new Date(rows[qr][rr]._start).getTime();
                                     const stopTime = new Date(rows[qr][rr]._stop).getTime();
-                                    rows[qr][rr].ts = startTime + (stopTime - startTime) / 2;
+                                    rows[qr][rr].ts = Math.round(startTime + (stopTime - startTime) / 2);
                                     delete rows[qr][rr]._start;
                                     delete rows[qr][rr]._stop;
                                 }
