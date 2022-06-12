@@ -2211,7 +2211,7 @@ function getHistoryIflx2(adapter, msg) {
     }
 
     adapter._influxDPs[options.id] = adapter._influxDPs[options.id] || {};
-    const debugLog = options.debugLog = !!(adapter._influxDPs[options.id] && adapter._influxDPs[options.id][adapter.namespace] && adapter._influxDPs[options.id][adapter.namespace].enableDebugLogs);
+    const debugLog = options.debugLog = !!((adapter._influxDPs[options.id] && adapter._influxDPs[options.id][adapter.namespace] && adapter._influxDPs[options.id][adapter.namespace].enableDebugLogs) || adapter.config.enableDebugLogs);
 
     debugLog && adapter.log.debug(`${options.logId} getHistory (InfluxDB2) call: ${JSON.stringify(options)}`);
 
@@ -2321,10 +2321,9 @@ function getHistoryIflx2(adapter, msg) {
                 fluxQuery += ` |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end).toISOString()})`;
                 fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${options.id}")`;
 
-                if (adapter.config.usetags)
-                    fluxQuery += ' |> duplicate(column: "_value", as: "value")';
-                else
+                if (!adapter.config.usetags) {
                     fluxQuery += ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
+                }
 
                 if (resultsFromInfluxDB && supportsAggregates) {
                     if ((options.step !== null) && (options.step > 0))
@@ -2386,6 +2385,10 @@ function getHistoryIflx2(adapter, msg) {
                     }
                 }
 
+                if (adapter.config.usetags) {
+                    fluxQuery += ' |> duplicate(column: "_value", as: "value")';
+                }
+
                 fluxQueries.push(fluxQuery);
 
                 // select one datapoint more than wanted
@@ -2438,6 +2441,12 @@ function getHistoryIflx2(adapter, msg) {
                                     rows[qr][rr].val = rows[qr][rr].value;
                                     delete rows[qr][rr].value;
                                 }
+                                if (rows[qr][rr]._value !== undefined) {
+                                    delete rows[qr][rr]._value;
+                                }
+                                if (rows[qr][rr]._field !== undefined) {
+                                    delete rows[qr][rr]._field;
+                                }
 
                                 if (typeof rows[qr][rr].val === 'number' && options.round) {
                                     rows[qr][rr].val = Math.round(rows[qr][rr].val * options.round) / options.round;
@@ -2449,7 +2458,7 @@ function getHistoryIflx2(adapter, msg) {
                                 } else if (rows[qr][rr]._start && rows[qr][rr]._stop) {
                                     const startTime = new Date(rows[qr][rr]._start).getTime();
                                     const stopTime = new Date(rows[qr][rr]._stop).getTime();
-                                    rows[qr][rr].ts = startTime + (stopTime - startTime) / 2;
+                                    rows[qr][rr].ts = Math.round(startTime + (stopTime - startTime) / 2);
                                     delete rows[qr][rr]._start;
                                     delete rows[qr][rr]._stop;
                                 }
