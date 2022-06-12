@@ -547,7 +547,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                     expect(result.result[0].val).to.be.equal(7);
                 } else {
                     expect(result.result.length).to.be.within(1,3);
-                    expect(result.result[1] ? result.result[1].val : result.result[0].val).to.be.equal(7);
+                    expect(result.result[result.result.length - 1].val).to.be.equal(7);
                     expect(result.result[0].id).to.be.equal(`${instanceName}.testValueDebounce alias`);
                 }
 
