@@ -2321,10 +2321,9 @@ function getHistoryIflx2(adapter, msg) {
                 fluxQuery += ` |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end).toISOString()})`;
                 fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${options.id}")`;
 
-                if (adapter.config.usetags)
-                    fluxQuery += ' |> duplicate(column: "_value", as: "value")';
-                else
+                if (!adapter.config.usetags) {
                     fluxQuery += ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
+                }
 
                 if (resultsFromInfluxDB && supportsAggregates) {
                     if ((options.step !== null) && (options.step > 0))
@@ -2384,6 +2383,10 @@ function getHistoryIflx2(adapter, msg) {
                             options.preAggregated = false;
                             break;
                     }
+                }
+
+                if (adapter.config.usetags) {
+                    fluxQuery += ' |> duplicate(column: "_value", as: "value")';
                 }
 
                 fluxQueries.push(fluxQuery);
