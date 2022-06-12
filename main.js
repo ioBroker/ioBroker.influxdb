@@ -2211,7 +2211,7 @@ function getHistoryIflx2(adapter, msg) {
     }
 
     adapter._influxDPs[options.id] = adapter._influxDPs[options.id] || {};
-    const debugLog = options.debugLog = !!(adapter._influxDPs[options.id] && adapter._influxDPs[options.id][adapter.namespace] && adapter._influxDPs[options.id][adapter.namespace].enableDebugLogs);
+    const debugLog = options.debugLog = !!((adapter._influxDPs[options.id] && adapter._influxDPs[options.id][adapter.namespace] && adapter._influxDPs[options.id][adapter.namespace].enableDebugLogs) || adapter.config.enableDebugLogs);
 
     debugLog && adapter.log.debug(`${options.logId} getHistory (InfluxDB2) call: ${JSON.stringify(options)}`);
 
@@ -2440,6 +2440,12 @@ function getHistoryIflx2(adapter, msg) {
                                 if ((rows[qr][rr].val === undefined) && (rows[qr][rr].value !== undefined)) {
                                     rows[qr][rr].val = rows[qr][rr].value;
                                     delete rows[qr][rr].value;
+                                }
+                                if (rows[qr][rr]._value !== undefined) {
+                                    delete rows[qr][rr]._value;
+                                }
+                                if (rows[qr][rr]._field !== undefined) {
+                                    delete rows[qr][rr]._field;
                                 }
 
                                 if (typeof rows[qr][rr].val === 'number' && options.round) {
