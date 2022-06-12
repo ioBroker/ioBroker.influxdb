@@ -450,8 +450,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
-
-### __WORK IN PROGRESS__
+### 3.1.5 (2022-06-12)
 * (Apollon77) Make sure debug log is active according to the settings
 
 ### 3.1.4 (2022-06-08)

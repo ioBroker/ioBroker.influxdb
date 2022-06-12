@@ -13,7 +13,7 @@
       "pl": "Logowanie stanów do InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "3.1.4",
+    "version": "3.1.5",
     "title": "Logging data with InfluxDB",
     "titleLang": {
       "en": "Logging data with InfluxDB",
@@ -28,6 +28,18 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "3.1.5": {
+        "en": "Make sure debug log is active according to the settings",
+        "de": "Stellen Sie sicher, dass das Debug-Log gemäß den Einstellungen aktiv ist",
+        "ru": "Убедитесь, что журнал debug активен в соответствии с настройками",
+        "pt": "Certifique-se de que o log de depuração está ativo de acordo com as configurações",
+        "nl": "Zorg ervoor dat het logboek actief is volgens de instellingen",
+        "fr": "Assurez-vous que le journal debug est actif selon les paramètres",
+        "it": "Assicurarsi che il registro di debug sia attivo in base alle impostazioni",
+        "es": "Asegúrese de que el registro de depuración está activo según la configuración",
+        "pl": "Umożliwia to, że log debug jest aktywny zgodnie z ustawieniami",
+        "zh-cn": "B. 根据环境,确保有色色逻辑积极。"
+      },
       "3.1.4": {
         "en": "Performance optimizations for GetHistory calls, especially for \"minmax\" aggregate method\nPrevent crash case reported by Sentry",
         "de": "Leistungsoptimierungen für GetHistory-Anrufe, insbesondere für minmax-Aggregatmethode\nVerhindern Crashfall berichtet von Sentry",
@@ -99,18 +111,6 @@
         "es": "ÚLTIMA HORA: ¡La configuración solo funciona en la nueva interfaz de usuario de Admin 5!\nHizo ajustes más grandes a la lógica de grabación y agregó muchas características nuevas. Consulte el registro de cambios y la publicación del foro para obtener más detalles.",
         "pl": "ŁAMANIE: Konfiguracja działa tylko w nowym interfejsie użytkownika Admin 5!\nWprowadziłem większe poprawki w logice nagrywania i dodałem wiele nowych funkcji. Więcej informacji można znaleźć w dzienniku zmian i poście na forum.",
         "zh-cn": "突破：配置仅在新的 Admin 5 UI 中有效！\n对录制逻辑进行了更大的调整，并添加了许多新功能。有关详细信息，请参阅变更日志和论坛帖子。"
-      },
-      "2.6.3": {
-        "en": "Fix potential crash cases (Sentry IOBROKER-INFLUXDB-4Q)",
-        "de": "Mögliche Absturzfälle beheben (Sentry IOBROKER-INFLUXDB-4Q)",
-        "ru": "Исправление возможных случаев сбоя (Sentry IOBROKER-INFLUXDB-4Q)",
-        "pt": "Corrigir possíveis casos de travamento (Sentry IOBROKER-INFLUXDB-4Q)",
-        "nl": "Mogelijke crashgevallen oplossen (Sentry IOBROKER-INFLUXDB-4Q)",
-        "fr": "Correction des cas de plantage potentiels (Sentry IOBROKER-INFLUXDB-4Q)",
-        "it": "Risolvi potenziali casi di crash (Sentry IOBROKER-INFLUXDB-4Q)",
-        "es": "Solucionar posibles casos de bloqueo (Sentry IOBROKER-INFLUXDB-4Q)",
-        "pl": "Napraw potencjalne przypadki awarii (Sentry IOBROKER-INFLUXDB-4Q)",
-        "zh-cn": "修复潜在的崩溃案例 (Sentry IOBROKER-INFLUXDB-4Q)"
       }
     },
     "mode": "daemon",
