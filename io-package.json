@@ -13,7 +13,7 @@
       "pl": "Logowanie stanów do InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "3.1.6",
+    "version": "3.1.7",
     "title": "Logging data with InfluxDB",
     "titleLang": {
       "en": "Logging data with InfluxDB",
@@ -28,6 +28,18 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "3.1.7": {
+        "en": "Allow to remove a configuration value for \"round\" in config again",
+        "de": "Lassen Sie einen Konfigurationswert für Runde in config wieder entfernen",
+        "ru": "Разрешить удалить конфигурационную ценность для раунда в config снова",
+        "pt": "Permitir remover um valor de configuração para round em config novamente",
+        "nl": "Sta toe om weer een configuratiewaarde te verwijderen voor ronde in het leger",
+        "fr": "Permettre de supprimer une valeur de configuration pour round in config à nouveau",
+        "it": "Permette di rimuovere un valore di configurazione per round in config di nuovo",
+        "es": "Permitir eliminar de nuevo un valor de configuración para redondear en configuración",
+        "pl": "Allow, aby usunąć wartość konfiguracyjna w zakręcie ponownie w konfigunie",
+        "zh-cn": "允许再次取消一轮谈判的组合价值"
+      },
       "3.1.6": {
         "en": "When not count is provided for aggregate \"none\" or \"onchange\" then the limit (default 2000) is used as count to define the number of data to return.",
         "de": "Wenn für die Aggregate keine oder Onchange keine Zählung vorgesehen ist, wird die Grenze (Standard 2000) als Zählung verwendet, um die Anzahl der Daten zu definieren, um zurückzukehren.",
@@ -99,18 +111,6 @@
         "es": "Los datos no se convierten en números si son otros tipos de datos en getHistory para respetar los formatos de datos guardados como se define en la configuración del punto de datos para el almacenamiento.\nArreglar el cambio de retención para bajar la casilla de verificación en la interfaz de usuario\nPermita que storeState vuelva a escribir en InfluxDB para \"identificadores de estado desconocidos\": el uso de \"reglas\" no es compatible con esto y storeState se descartaría silenciosamente en este caso.\nSolucione varios casos de bloqueo informados por Sentry\nAsegúrese de deshabilitar \"Registrar solo cambios\" y realmente no registre más los cambios\nPermitir que storeState y GetHistory también se llamen para \"identificadores desconocidos\"",
         "pl": "Dane nie są konwertowane na liczby, jeśli są to inne typy danych w getHistory, aby przestrzegać zapisanych formatów danych zdefiniowanych w ustawieniach punktu danych dla przechowywania.\nNapraw zmianę przechowywania w dolnym polu wyboru w interfejsie użytkownika\nZezwól storeState ponownie na zapis do InfluxDB dla \"nieznanych identyfikatorów stanu\" - użycie \"reguł\" nie jest w tym przypadku obsługiwane, a storeState zostanie w tym przypadku po cichu odrzucone!\nNapraw kilka przypadków awarii zgłoszonych przez Sentry\nUpewnij się, że wyłączenie opcji „Zapisuj tylko zmiany” również naprawdę nie powoduje już rejestrowania zmian\nZezwalaj na wywoływanie storeState i GetHistory również dla „nieznanych identyfikatorów”",
         "zh-cn": "如果数据是 getHistory 上的其他数据类型，则数据不会转换为数字，以尊重数据点设置中定义的已保存数据格式以进行存储。\n将保留更改修复为 UI 中的较低复选框\n再次允许 storeState 为“未知状态 id”写入 InfluxDB - 不支持使用“规则”，在这种情况下 storeState 将被静默丢弃！\n修复 Sentry 报告的几个崩溃案例\n确保禁用“仅记录更改”也确实不再记录更改\n还允许为“未知 ID”调用 storeState 和 GetHistory"
-      },
-      "3.0.2": {
-        "en": "handle an empty Path for InfluxDB 2.0 correctly in all cases",
-        "de": "Behandeln Sie einen leeren Pfad für InfluxDB 2.0 in allen Fällen korrekt",
-        "ru": "правильно обрабатывать пустой путь для InfluxDB 2.0 во всех случаях",
-        "pt": "manipular um caminho vazio para o InfluxDB 2.0 corretamente em todos os casos",
-        "nl": "behandel een leeg pad voor InfluxDB 2.0 in alle gevallen correct",
-        "fr": "gérer correctement un chemin vide pour InfluxDB 2.0 dans tous les cas",
-        "it": "gestire correttamente un percorso vuoto per InfluxDB 2.0 in tutti i casi",
-        "es": "manejar una ruta vacía para InfluxDB 2.0 correctamente en todos los casos",
-        "pl": "we wszystkich przypadkach poprawnie obsłużyć pustą ścieżkę dla InfluxDB 2.0",
-        "zh-cn": "在所有情况下正确处理 InfluxDB 2.0 的空路径"
       }
     },
     "mode": "daemon",

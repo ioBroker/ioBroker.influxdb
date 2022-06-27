@@ -450,9 +450,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
-
-
-### __WORK IN PROGRESS__
+### 3.1.7 (2022-06-27)
 * (Apollon77) Allow to remove a configuration value for "round" in config again
 
 ### 3.1.6 (2022-06-27)
