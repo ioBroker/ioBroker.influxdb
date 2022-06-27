@@ -1911,6 +1911,16 @@ function getHistory(adapter, msg) {
         logId:     (msg.message.id ? msg.message.id : 'all') + Date.now() + Math.random()
     };
 
+    adapter.log.debug(`${options.logId} getHistory message: ${JSON.stringify(msg.message)}`);
+
+    if (!options.count || isNaN(options.count)) {
+        if (options.aggregate === 'none' || options.aggregate === 'onchange') {
+            options.count = options.limit;
+        } else {
+            options.count = 500;
+        }
+    }
+
     try {
         if (options.start && typeof options.start !== 'number') {
             options.start = new Date(options.start).getTime();
@@ -1949,8 +1959,6 @@ function getHistory(adapter, msg) {
     adapter._influxDPs[options.id] = adapter._influxDPs[options.id] || {};
     const debugLog = options.debugLog = !!(adapter._influxDPs[options.id] && adapter._influxDPs[options.id][adapter.namespace] && adapter._influxDPs[options.id][adapter.namespace].enableDebugLogs);
 
-    debugLog && adapter.log.debug(`${options.logId} getHistory (InfluxDB1) call: ${JSON.stringify(options)}`);
-
     if (options.id && adapter._aliasMap[options.id]) {
         options.id = adapter._aliasMap[options.id];
     }
@@ -1979,6 +1987,8 @@ function getHistory(adapter, msg) {
     if (!options.start && !options.count) {
         options.start = options.end - 86400000; // - 1 day
     }
+
+    debugLog && adapter.log.debug(`${options.logId} getHistory (InfluxDB1) call: ${JSON.stringify(options)}`);
 
     let resultsFromInfluxDB = options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax';
     if (options.aggregate === 'integral' && options.integralInterpolation === 'linear') {
@@ -2175,6 +2185,16 @@ function getHistoryIflx2(adapter, msg) {
         logId:     (msg.message.id ? msg.message.id : 'all') + Date.now() + Math.random()
     };
 
+    adapter.log.debug(`${options.logId} getHistory message: ${JSON.stringify(msg.message)}`);
+
+    if (!options.count || isNaN(options.count)) {
+        if (options.aggregate === 'none' || options.aggregate === 'onchange') {
+            options.count = options.limit;
+        } else {
+            options.count = 500;
+        }
+    }
+
     try {
         if (options.start && typeof options.start !== 'number') {
             options.start = new Date(options.start).getTime();
@@ -2213,8 +2233,6 @@ function getHistoryIflx2(adapter, msg) {
     adapter._influxDPs[options.id] = adapter._influxDPs[options.id] || {};
     const debugLog = options.debugLog = !!((adapter._influxDPs[options.id] && adapter._influxDPs[options.id][adapter.namespace] && adapter._influxDPs[options.id][adapter.namespace].enableDebugLogs) || adapter.config.enableDebugLogs);
 
-    debugLog && adapter.log.debug(`${options.logId} getHistory (InfluxDB2) call: ${JSON.stringify(options)}`);
-
     if (options.id && adapter._aliasMap[options.id]) {
         options.id = adapter._aliasMap[options.id];
     }
@@ -2243,6 +2261,8 @@ function getHistoryIflx2(adapter, msg) {
     if (!options.start && !options.count) {
         options.start = options.end - 86400000; // - 1 day
     }
+
+    debugLog && adapter.log.debug(`${options.logId} getHistory (InfluxDB2) options final: ${JSON.stringify(options)}`);
 
     const resultsFromInfluxDB = options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax';
 
