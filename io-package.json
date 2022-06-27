@@ -13,7 +13,7 @@
       "pl": "Logowanie stanów do InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "3.1.5",
+    "version": "3.1.6",
     "title": "Logging data with InfluxDB",
     "titleLang": {
       "en": "Logging data with InfluxDB",
@@ -28,6 +28,18 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "3.1.6": {
+        "en": "When not count is provided for aggregate \"none\" or \"onchange\" then the limit (default 2000) is used as count to define the number of data to return.",
+        "de": "Wenn für die Aggregate keine oder Onchange keine Zählung vorgesehen ist, wird die Grenze (Standard 2000) als Zählung verwendet, um die Anzahl der Daten zu definieren, um zurückzukehren.",
+        "ru": "Когда не считать предоставляется для агрегата ни один или онмен, то предел (по умолчанию 2000) используется как считать, чтобы определить количество данных для возврата.",
+        "pt": "Quando não a contagem é fornecida para agregar nenhum ou onchange, então o limite (padrão 2000) é usado como contagem para definir o número de dados para retornar.",
+        "nl": "Als de tel niet wordt toegewezen voor aggregate noch onchange, dan wordt de limiet 2000 gebruikt om het aantal data te definiëren om terug te keren.",
+        "fr": "Lorsqu'il n'y a pas de comptage pour l'agrégat ou le changement, la limite (par défaut 2000) est utilisée pour définir le nombre de données à retourner.",
+        "it": "Quando il conteggio non viene fornito per aggregato nessuno o cambio, il limite (default 2000) viene utilizzato come conteggio per definire il numero di dati da restituire.",
+        "es": "Cuando no se cuenta se proporciona para agregado ninguno o cambio entonces el límite (por defecto 2000) se utiliza como cuenta para definir el número de datos para regresar.",
+        "pl": "Jeśli nieliczanie jest dostarczane dla agregacji ani zmian, to limit (default 2000) jest używany jako określenie liczby danych do powrotu.",
+        "zh-cn": "当没有计算总额时,或当时的汇率(2000年)用来确定返回的数据数量。."
+      },
       "3.1.5": {
         "en": "Make sure debug log is active according to the settings",
         "de": "Stellen Sie sicher, dass das Debug-Log gemäß den Einstellungen aktiv ist",
@@ -99,18 +111,6 @@
         "es": "manejar una ruta vacía para InfluxDB 2.0 correctamente en todos los casos",
         "pl": "we wszystkich przypadkach poprawnie obsłużyć pustą ścieżkę dla InfluxDB 2.0",
         "zh-cn": "在所有情况下正确处理 InfluxDB 2.0 的空路径"
-      },
-      "3.0.1": {
-        "en": "BREAKING: Configuration is only working in the new Admin 5 UI!\nDid bigger adjustments to the recording logic and added a lot of new Features. Please refer to Changelog and Forum post for details.",
-        "de": "BREAKING: Die Konfiguration funktioniert nur in der neuen Admin 5-Benutzeroberfläche!\nGrößere Anpassungen an der Aufnahmelogik vorgenommen und viele neue Features hinzugefügt. Einzelheiten finden Sie im Änderungsprotokoll und im Forumsbeitrag.",
-        "ru": "НАРУШЕНИЕ: Конфигурация работает только в новом пользовательском интерфейсе Admin 5!\nВнесены большие коррективы в логику записи и добавлено много новых функций. Пожалуйста, обратитесь к журналу изменений и сообщению на форуме для получения подробной информации.",
-        "pt": "URGENTE: a configuração está funcionando apenas na nova interface do usuário do Admin 5!\nFez ajustes maiores na lógica de gravação e adicionou muitos novos recursos. Consulte o Changelog e a postagem do fórum para obter detalhes.",
-        "nl": "BREAKING: Configuratie werkt alleen in de nieuwe Admin 5 UI!\nHeeft grotere aanpassingen gedaan aan de opnamelogica en veel nieuwe functies toegevoegd. Raadpleeg de Changelog en Forumpost voor details.",
-        "fr": "RUPTURE : La configuration ne fonctionne que dans la nouvelle interface utilisateur d'Admin 5 !\nA apporté de plus grands ajustements à la logique d'enregistrement et ajouté de nombreuses nouvelles fonctionnalités. Veuillez vous référer au changelog et au post du forum pour plus de détails.",
-        "it": "ROTTURA: la configurazione funziona solo nella nuova interfaccia utente di Admin 5!\nHa apportato maggiori modifiche alla logica di registrazione e aggiunto molte nuove funzionalità. Si prega di fare riferimento a Changelog e post sul forum per i dettagli.",
-        "es": "ÚLTIMA HORA: ¡La configuración solo funciona en la nueva interfaz de usuario de Admin 5!\nHizo ajustes más grandes a la lógica de grabación y agregó muchas características nuevas. Consulte el registro de cambios y la publicación del foro para obtener más detalles.",
-        "pl": "ŁAMANIE: Konfiguracja działa tylko w nowym interfejsie użytkownika Admin 5!\nWprowadziłem większe poprawki w logice nagrywania i dodałem wiele nowych funkcji. Więcej informacji można znaleźć w dzienniku zmian i poście na forum.",
-        "zh-cn": "突破：配置仅在新的 Admin 5 UI 中有效！\n对录制逻辑进行了更大的调整，并添加了许多新功能。有关详细信息，请参阅变更日志和论坛帖子。"
       }
     },
     "mode": "daemon",
