@@ -2150,7 +2150,11 @@ function getHistory(adapter, msg) {
                     result = result.sort(sortByTs);
                 }
 
-                Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
+                try {
+                    Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
+                } catch (e) {
+                    Aggregate.sendResponse(adapter, msg, options, e.toString(), startTime);
+                }
             });
         }, storedCount ? 50 : 0);
     });
@@ -2501,7 +2505,11 @@ function getHistoryIflx2(adapter, msg) {
                         options.log = adapter.log.debug;
                     }
 
-                    Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
+                    try {
+                        Aggregate.sendResponse(adapter, msg, options, (error ? error.toString() : null) || result, startTime);
+                    } catch (e) {
+                        Aggregate.sendResponse(adapter, msg, options, e.toString(), startTime);
+                    }
                 });
             });
         }, storedCount ? 50 : 0);
