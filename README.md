@@ -67,6 +67,8 @@ InfluxDB is very strict on data types. The datatype for a measurement value is d
 The adapter tries to write with the correct value, but if the datatype changes for the same state then there may be the write
 errors in the InfluxDB. The adapter detects this and will write these potential conflicting data points always directly, but write errors mean that the value is not written into the DB at all. So make sure to check the logs for such cases.
 
+**In Version 1.x and 2.x of the adapter it could also be that some values were converted wrong when no datatype was defined. E.g. a String like "37.5;foo bar" was converted to a number 37.5 in older versions. The version 3 odf the adapter will detect that this is not a valid number and will not convert this value. This could lead to type conflicts after the update. Please check these values and think if you need to store it and how (for the future).**
+
 Additionally, InfluxDB do not support "null" values, so these are not written at all into the DB.
 
 ## Installation of InfluxDB
