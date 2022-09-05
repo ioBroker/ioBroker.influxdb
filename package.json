@@ -20,7 +20,7 @@
   ],
   "optionalDependencies": {},
   "dependencies": {
-    "@influxdata/influxdb-client": "^1.28.0",
+    "@influxdata/influxdb-client": "^1.29.0",
     "@influxdata/influxdb-client-apis": "^1.29.0",
     "@iobroker/adapter-core": "^2.6.0",
     "influx": "^4.2.3"
@@ -29,7 +29,7 @@
     "@alcalzone/release-script": "^3.5.9",
     "@alcalzone/release-script-plugin-iobroker": "^3.5.9",
     "@alcalzone/release-script-plugin-license": "^3.5.9",
-    "@iobroker/adapter-dev": "^1.0.0",
+    "@iobroker/adapter-dev": "^1.0.1",
     "mocha": "^9.2.2",
     "chai": "^4.3.6"
   },
