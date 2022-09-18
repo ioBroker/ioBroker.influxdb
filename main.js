@@ -1714,9 +1714,10 @@ function storeStatePushData(adapter, id, state, applyRules) {
     let pushFunc = applyRules ? pushHistory : pushHelper;
     if (!adapter._influxDPs[id] || !adapter._influxDPs[id][adapter.namespace]) {
         if (applyRules) {
-            throw new Error(`history not enabled for ${id}, so can not apply the rules as requested`);
+            throw new Error(`influxdb not enabled for ${id}, so can not apply the rules as requested`);
         }
         adapter._influxDPs[id] = adapter._influxDPs[id] || {};
+        adapter._influxDPs[id].realId = id;
     }
     return new Promise((resolve, reject) => {
         pushFunc(adapter, id, state , err => {
