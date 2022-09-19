@@ -13,7 +13,7 @@
       "pl": "Logowanie stanów do InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "3.1.8",
+    "version": "3.2.0",
     "title": "Logging data with InfluxDB",
     "titleLang": {
       "en": "Logging data with InfluxDB",
@@ -28,6 +28,18 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "3.2.0": {
+        "en": "Adjust cache file to be different per instance when having multiple instances",
+        "de": "Bestimmen Sie die Cache-Datei, um unterschiedlich zu sein pro Instanz, wenn mehrere Instanzen haben",
+        "ru": "Отрегулируйте файл кэша для того чтобы быть различным в случае если иметь несколько экземпляров",
+        "pt": "Ajuste o arquivo de cache para ser diferente por instância quando tiver várias instâncias",
+        "nl": "Geef cachedo aan om anders te zijn als je meerdere instanties hebt",
+        "fr": "Ajuster le fichier cache pour être différent par instance lorsqu'il existe plusieurs instances",
+        "it": "Regolare il file della cache per essere diverso per istanza quando hanno più istanze",
+        "es": "Ajuste el archivo de caché para ser diferente por ejemplo al tener múltiples instancias",
+        "pl": "Plik Adjust cache może być różny na przykład, gdy posiada wiele instancji",
+        "zh-cn": "当发生多种情况时,独立的理由档案各不相同。"
+      },
       "3.1.8": {
         "en": "Fix crash cases reported by Sentry",
         "de": "Reparieren Crashfälle gemeldet von Sentry",
@@ -99,18 +111,6 @@
         "es": "Problema corregido al probar la conexión a InfluxDBv1 con contraseñas extrañas",
         "pl": "Naprawiono problem podczas testowania połączenia z InfluxDBv1 za pomocą dziwnych haseł",
         "zh-cn": "更正了使用奇怪密码测试与 InfluxDBv1 的连接时出现的问题"
-      },
-      "3.1.2": {
-        "en": "Workaround an admin issue when testing connection to InfluxDB",
-        "de": "Umgehung eines Administratorproblems beim Testen der Verbindung zu InfluxDB",
-        "ru": "Обход проблемы администратора при тестировании подключения к InfluxDB",
-        "pt": "Solução alternativa de um problema de administrador ao testar a conexão com o InfluxDB",
-        "nl": "Tijdelijke oplossing voor een beheerdersprobleem bij het testen van de verbinding met InfluxDB",
-        "fr": "Contournement d'un problème d'administration lors du test de connexion à InfluxDB",
-        "it": "Soluzione alternativa a un problema di amministrazione durante il test della connessione a InfluxDB",
-        "es": "Solución de un problema de administración al probar la conexión a InfluxDB",
-        "pl": "Obejście problemu administratora podczas testowania połączenia z InfluxDB",
-        "zh-cn": "在测试与 InfluxDB 的连接时解决管理问题"
       }
     },
     "mode": "daemon",
