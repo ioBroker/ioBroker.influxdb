@@ -11,8 +11,8 @@ const fs          = require('fs');
 const path        = require('path');
 const [appName, adapterName] = require('./package.json').name.split('.');
 const Aggregate   = require('./lib/aggregate.js');
-const dataDir     = path.normalize(`${utils.controllerDir}/${require(`${utils.controllerDir}/lib/tools`).getDefaultDataDir()}`);
-const cacheFile   = `${dataDir}influxdata.json`;
+const dataDir     = utils.getAbsoluteDefaultDataDir();
+let cacheFile   = path.join(dataDir, 'influxdata.json');
 
 function isObject(it) {
     // This is necessary because:
@@ -709,6 +709,9 @@ function main(adapter) {
         adapter.config.retention = (parseInt(adapter.config.customRetentionDuration, 10) || 0) * 24 * 60 * 60;
     }
 
+    if (adapter.instance !== 0) {
+        cacheFile = cacheFile.replace(/\.json$/, `_${adapter.instance}.json`);
+    }
     // analyse if by the last stop the values were cached into file
     try {
         if (fs.statSync(cacheFile).isFile()) {

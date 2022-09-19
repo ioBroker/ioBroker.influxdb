@@ -452,6 +452,10 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
+
+### __WORK IN PROGRESS__
+* (Apollon77) Adjust cache file to be different per instance when having multiple instances
+
 ### 3.1.8 (2022-08-13)
 * (Apollon77) Fix crash cases reported by Sentry
 
