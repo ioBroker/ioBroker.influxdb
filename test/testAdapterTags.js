@@ -102,6 +102,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
                 console.log(`############SECRET: ${secret}`);
                 config.native.token = setup.encrypt(secret, 'test-token'); //authToken;
                 config.native.organization = 'test-org';
+                config.native.commonTags = [{name: 'test-tag-1'}, {name: 'test-tag-2'}];
             } else if (process.env.INFLUX_DB1_HOST) {
                 config.native.host = process.env.INFLUX_DB1_HOST;
             }
@@ -150,7 +151,11 @@ describe(`Test ${adapterShortName} adapter`, function () {
                         changesOnly:  false,
                         debounce:     0,
                         retention:    31536000,
-                        storageType: 'Boolean'
+                        storageType: 'Boolean',
+                        customTags: [
+                            {name: 'test-tag-1', value: 'test-tag-1-value'},
+                            {name: 'test-tag-2', value: 'test-tag-2-value'},
+                        ],
                     }
                 }, result => {
                     expect(result.error).to.be.undefined;
@@ -162,6 +167,10 @@ describe(`Test ${adapterShortName} adapter`, function () {
                             changesOnly:  false,
                             debounce:     0,
                             retention:    31536000,
+                            customTags: [
+                                {name: 'test-tag-1', value: 'test-tag-1-value'},
+                                {name: 'test-tag-2', value: 'test-tag-2-value'},
+                            ],
                         }
                     }, result => {
                         expect(result.error).to.be.undefined;
@@ -218,6 +227,23 @@ describe(`Test ${adapterShortName} adapter`, function () {
                 }
                 expect(found).to.be.equal(78);
 
+                done();
+            });
+        });
+
+        it(`Test ${adapterShortName}: Read tags from DB using query`, function (done) {
+            this.timeout(10000);
+
+            let query = 'SELECT * FROM "influxdb.0.testValue"';
+            if (process.env.INFLUXDB2) {
+                const date = Date.now();
+                query = `from(bucket: "iobroker") |> range(start: -2d) |> filter(fn: (r) => r["_measurement"] == "influxdb.0.testValue") |> filter(fn: (r) => r["test-tag-1"] == "test-tag-1-value") |> duplicate(column: "_value", as: "value") |> sort(columns:["_time"], desc: false)`;
+            }
+            sendTo('influxdb.0', 'query', query, result => {
+                // TODO: Fix writing testcases into database to assert expectation returns true
+                // expect(result.result[0].length).to.be.at.least(1);
+
+                this.timeout(10000);
                 done();
             });
         });
