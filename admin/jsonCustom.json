@@ -116,6 +116,31 @@
       "sm": 12,
       "help": "Alias Info"
     },
+    "customTags": {
+      "type": "table",
+      "items": [
+        {
+          "type": "selectSendTo",
+          "command": "getCommonTags",
+          "attr": "name",
+          "width": "50%",
+          "title": "Tag name",
+          "filter": false,
+          "sort": false
+        },
+        {
+          "type": "text",
+          "attr": "value",
+          "width": "50%",
+          "title": "Tag value",
+          "filter": false,
+          "sort": false
+        }
+      ],
+      "sm": 12,
+      "label": "Custom Tags",
+      "help": "custom-tags help"
+    },
     "round": {
       "newLine": true,
       "type": "text",

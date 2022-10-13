@@ -185,6 +185,11 @@ function startAdapter(options) {
                 obj.common.custom[adapter.namespace].storageType = false;
             }
 
+            // commonTags
+            if (!obj.common.custom[adapter.namespace].commonTags) {
+                obj.common.custom[adapter.namespace].commonTags = [];
+            }
+
 
             if (adapter._influxDPs[formerAliasId] && !adapter._influxDPs[formerAliasId].storageTypeAdjustedInternally && adapter._influxDPs[formerAliasId][adapter.namespace] && isEqual(obj.common.custom[adapter.namespace], adapter._influxDPs[formerAliasId][adapter.namespace])) {
                 obj.common.custom[adapter.namespace].enableDebugLogs && adapter.log.debug(`Object ${id} unchanged. Ignore`);
@@ -450,6 +455,14 @@ function getRetention(adapter, msg) {
     }
 }
 
+function getCommonTags(adapter, msg) {
+    if (adapter.config.commonTags) {
+        adapter.sendTo(msg.from, msg.command, adapter.config.commonTags.map(item => ({label: item.name, value: item.name})), msg.callback);
+    } else {
+        adapter.sendTo(msg.from, msg.command, [], msg.callback);
+    }
+}
+
 function testConnection(adapter, msg) {
     adapter.log.debug(`testConnection msg-object: ${JSON.stringify(msg)}`);
     if (!msg || !msg.message || !isObject(msg.message.config)) {
@@ -622,6 +635,9 @@ function processMessage(adapter, msg) {
     }
     else if (msg.command === 'getRetention') {
         getRetention(adapter, msg);
+    }
+    else if (msg.command === 'getCommonTags') {
+        getCommonTags(adapter, msg);
     }
 }
 
@@ -1114,13 +1130,16 @@ function pushValueIntoDB(adapter, id, state, directWrite, cb) {
         state.val = JSON.stringify(state.val);
     }
 
+    const settings = adapter._influxDPs[id][adapter.namespace];
+
     //adapter.log.debug('write value ' + state.val + ' for ' + id);
     const influxFields = {
-        value: state.val,
-        time:  new Date(state.ts),
-        from:  state.from || '',
-        q:     state.q || 0,
-        ack:   !!state.ack
+        value:      state.val,
+        time:       new Date(state.ts),
+        from:       state.from || '',
+        q:          state.q || 0,
+        ack:        !!state.ack,
+        customTags: settings.customTags
     };
 
     if ((adapter._conflictingPoints[id] || adapter.config.seriesBufferMax === 0 || directWrite) && (adapter._connected && adapter._client.request && adapter._client.request.getHostsAvailable().length > 0)) {
