@@ -335,7 +335,7 @@ function connect(adapter) {
                 adapter.config.dbname,
                 adapter.config.requestTimeout,
                 adapter.config.validateSSL,
-                adapter.config.usetags
+                adapter.config.metaDataStorage
             )
             break;
         case '1.x':
@@ -405,15 +405,15 @@ function connect(adapter) {
 }
 
 function checkMetaDataStorageType(adapter) {
-    adapter._client.getMetaDataStorageType((error,storageType) => {
+    adapter._client.getMetaDataStorageType((error,metaDataStorage) => {
         if (error)
             adapter.log.error(`Error checking for metadata storage type: ${error}`);
         else {
-            adapter.log.debug(`Storage type for metadata found in DB: ${storageType}`);
-            if ((storageType === 'tags' && !adapter.config.usetags) || (storageType === 'fields' && adapter.config.usetags)) {
-                adapter.log.error(`Cannot use ${adapter.config.usetags ? 'tags' : 'fields'} for metadata (q, ack, from) since ` +
-                    `the selected DB already uses ${storageType} instead. Please change your adapter configuration, or choose a DB ` +
-                    `that already uses ${adapter.config.usetags ? 'tags' : 'fields'}, or is empty.`);
+            adapter.log.debug(`Storage type for metadata found in DB: ${metaDataStorage}`);
+            if (metaDataStorage !== 'none' && metaDataStorage !== adapter.config.metaDataStorage) {
+                adapter.log.error(`Cannot use ${adapter.config.metaDataStorage} for metadata (q, ack, from) since ` +
+                    `the selected DB already uses ${metaDataStorage} instead. Please change your adapter configuration, or choose a DB ` +
+                    `that already uses ${adapter.config.metaDataStorage}, or is empty.`);
                 setConnected(adapter, false);
                 finish(adapter, null);
             } else {
@@ -2288,7 +2288,7 @@ function getHistoryIflx2(adapter, msg) {
         options.limit += 2;
     }
 
-    const valueColumn = adapter.config.usetags ? '_value' : 'value';
+    const valueColumn = adapter.config.metaDataStorage === 'fields' ? 'value' : '_value';
 
     // Workaround to detect if measurement is of type bool (to skip non-sensual aggregation options)
     // There seems to be no officially supported way to detect this, so we check it by forcing a type-conflict;
@@ -2296,7 +2296,7 @@ function getHistoryIflx2(adapter, msg) {
         from(bucket: "${adapter.config.dbname}")
         |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end).toISOString()})
         |> filter(fn: (r) => r["_measurement"] == "${options.id}" and contains(value: r._value, set: [true, false]))
-        ${adapter.config.usetags ? ' |> duplicate(column: "_value", as: "value")' : ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")'}
+        ${adapter.config.metaDataStorage === 'tags' ? ' |> duplicate(column: "_value", as: "value")' : ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")'}
         |> group()
     `;
 
@@ -2349,7 +2349,7 @@ function getHistoryIflx2(adapter, msg) {
                 fluxQuery += ` |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end).toISOString()})`;
                 fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${options.id}")`;
 
-                if (!adapter.config.usetags) {
+                if (adapter.config.metaDataStorage === 'fields') {
                     fluxQuery += ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
                 }
 
@@ -2413,7 +2413,7 @@ function getHistoryIflx2(adapter, msg) {
                     }
                 }
 
-                if (adapter.config.usetags) {
+                if (adapter.config.metaDataStorage !== 'fields') {
                     fluxQuery += ' |> duplicate(column: "_value", as: "value")';
                 }
 
@@ -2427,7 +2427,7 @@ function getHistoryIflx2(adapter, msg) {
                         addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
                         |> range(start: ${new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString()}, stop: ${new Date(options.start - 1).toISOString()}) 
                         |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
-                        ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
+                        ${adapter.config.metaDataStorage === 'fields' ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
                         |> group() 
                         |> sort(columns: ["_time"], desc: true) 
                         |> limit(n: 1)`;
@@ -2438,7 +2438,7 @@ function getHistoryIflx2(adapter, msg) {
                     addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
                         |> range(start: ${new Date(options.end + 1).toISOString()}) 
                         |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
-                        ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
+                        ${adapter.config.metaDataStorage === 'fields' ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
                         |> group() 
                         |> sort(columns: ["_time"], desc: false) 
                         |> limit(n: 1)`;

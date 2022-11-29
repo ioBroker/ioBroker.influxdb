@@ -282,7 +282,7 @@
     "requestTimeout": 30000,
     "validateSSL": true,
     "dbversion": "1.x",
-    "usetags": false,
+    "metaDataStorage": "fields",
     "pingserver": true,
     "blockTime": 0,
     "debounceTime": 0,
