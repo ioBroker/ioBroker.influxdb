@@ -335,7 +335,8 @@ function connect(adapter) {
                 adapter.config.dbname,
                 adapter.config.requestTimeout,
                 adapter.config.validateSSL,
-                adapter.config.metaDataStorage
+                adapter.config.metaDataStorage,
+                adapter.config.dbname // TODO: Provide a setting for this.
             )
             break;
         case '1.x':
@@ -2289,13 +2290,15 @@ function getHistoryIflx2(adapter, msg) {
     }
 
     const valueColumn = adapter.config.metaDataStorage === 'fields' ? 'value' : '_value';
+    const [measurement, fieldName] = adapter._client.getMeasurementAndFieldName(options.id)
 
     // Workaround to detect if measurement is of type bool (to skip non-sensual aggregation options)
     // There seems to be no officially supported way to detect this, so we check it by forcing a type-conflict;
     const booleanTypeCheckQuery = `
         from(bucket: "${adapter.config.dbname}")
         |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end).toISOString()})
-        |> filter(fn: (r) => r["_measurement"] == "${options.id}" and contains(value: r._value, set: [true, false]))
+        |> filter(fn: (r) => r["_measurement"] == "${measurement}" and contains(value: r._value, set: [true, false]))
+        ${adapter.config.metaDataStorage === 'plain' ? `|> filter(fn: (r) => r["_field"] == "${fieldName}")` : ''}
         ${adapter.config.metaDataStorage === 'tags' ? ' |> duplicate(column: "_value", as: "value")' : ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")'}
         |> group()
     `;
@@ -2347,10 +2350,12 @@ function getHistoryIflx2(adapter, msg) {
                 let fluxQuery = `from(bucket: "${adapter.config.dbname}") `;
 
                 fluxQuery += ` |> range(${(options.start) ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end - (adapter.config.retention || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end).toISOString()})`;
-                fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${options.id}")`;
+                fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${measurement}")`;
 
                 if (adapter.config.metaDataStorage === 'fields') {
                     fluxQuery += ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
+                } else if (adapter.config.metaDataStorage === 'plain') {
+                    fluxQuery += ` |> filter(fn: (r) => r["_field"] == "${fieldName}")`;
                 }
 
                 if (resultsFromInfluxDB && supportsAggregates) {
@@ -2426,7 +2431,8 @@ function getHistoryIflx2(adapter, msg) {
                         // get one entry "before" the defined timeframe for displaying purposes
                         addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
                         |> range(start: ${new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString()}, stop: ${new Date(options.start - 1).toISOString()}) 
-                        |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
+                        |> filter(fn: (r) => r["_measurement"] == "${measurement}")
+                        ${adapter.config.metaDataStorage === 'plain' ? `|> filter(fn: (r) => r["_field"] == "${fieldName}")` : ''}
                         ${adapter.config.metaDataStorage === 'fields' ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
                         |> group() 
                         |> sort(columns: ["_time"], desc: true) 
@@ -2437,7 +2443,8 @@ function getHistoryIflx2(adapter, msg) {
                     // get one entry "after" the defined timeframe for displaying purposes
                     addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
                         |> range(start: ${new Date(options.end + 1).toISOString()}) 
-                        |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
+                        |> filter(fn: (r) => r["_measurement"] == "${measurement}")
+                        ${adapter.config.metaDataStorage === 'plain' ? `|> filter(fn: (r) => r["_field"] == "${fieldName}")` : ''}
                         ${adapter.config.metaDataStorage === 'fields' ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
                         |> group() 
                         |> sort(columns: ["_time"], desc: false) 
@@ -2495,7 +2502,7 @@ function getHistoryIflx2(adapter, msg) {
                                 delete rows[qr][rr].table;
 
                                 if (options.addId) {
-                                    rows[qr][rr].id = rows[qr][rr]._measurement || options.id;
+                                    rows[qr][rr].id = rows[qr][rr]._measurement || measurement;
                                 }
                                 delete rows[qr][rr]._measurement;
 

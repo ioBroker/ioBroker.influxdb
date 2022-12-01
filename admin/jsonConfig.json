@@ -347,7 +347,8 @@
           "md": 6,
           "options": [
             {"label": "Fields", "value": "fields"},
-            {"label": "Tags", "value": "tags"}
+            {"label": "Tags", "value": "tags"},
+            {"label": "Plain (store only values)", "value": "plain"}
           ],
           "label": "Use tags to store metadata information, instead of fields",
           "help": "usetags help",
