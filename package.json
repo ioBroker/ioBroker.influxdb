@@ -22,7 +22,7 @@
   "dependencies": {
     "@influxdata/influxdb-client": "^1.29.0",
     "@influxdata/influxdb-client-apis": "^1.29.0",
-    "@iobroker/adapter-core": "^2.6.6",
+    "@iobroker/adapter-core": "^2.6.7",
     "influx": "^4.2.3"
   },
   "devDependencies": {
