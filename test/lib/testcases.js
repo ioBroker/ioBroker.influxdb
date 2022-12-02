@@ -97,6 +97,27 @@ async function preInit(_objects, _states, sendTo, adapterShortName) {
         ignoreAboveNumber: 100
     };
     await objects.setObjectAsync(`${instanceName}.testValueBlocked`, obj);
+    obj = {
+        common: {
+            type: 'number',
+            role: 'state',
+            custom: {}
+        },
+        type: 'state'
+    };
+    obj.common.custom[instanceName] = {
+        enabled: true,
+        changesOnly:  true,
+        debounce:     0,
+        retention:    31536000,
+        maxLength:    3,
+        changesMinDelta: 0.5,
+        customTags: [
+            {name: 'test-tag-1', value: 'test-tag-1-value'},
+            {name: 'test-tag-2', value: 'test-tag-2-value'},
+        ],
+    };
+    await objects.setObjectAsync(`${instanceName}.testValueTagged`, obj);
 
     await objects.setObjectAsync('system.adapter.test.0', {
         common: {
@@ -971,6 +992,44 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
             id: `${instanceName}.testValue2`,
             options: {
                 aliasId: 'this.is.another.test-value'
+            }
+        }, function (result) {
+            expect(result.error).to.be.undefined;
+            expect(result.success).to.be.true;
+            // wait till adapter receives the new settings
+            setTimeout(function () {
+                done();
+            }, 2000);
+        });
+    });
+
+    it(`Test ${adapterShortName}: Add Custom Tags`, function (done) {
+        this.timeout(5000);
+
+        sendTo(instanceName, 'enableHistory', {
+            id: `${instanceName}.testValue2`,
+            options: {
+                customTags: [
+                    {name: 'test-tag-1', value: 'test-tag-1-value'},
+                    {name: 'test-tag-2', value: 'test-tag-2-value'},
+                ]
+            }
+        }, function (result) {
+            expect(result.error).to.be.undefined;
+            expect(result.success).to.be.true;
+            // wait till adapter receives the new settings
+            setTimeout(function () {
+                done();
+            }, 2000);
+        });
+    });
+    it(`Test ${adapterShortName}: Remove Custom Tags again`, function (done) {
+        this.timeout(5000);
+
+        sendTo(instanceName, 'enableHistory', {
+            id: `${instanceName}.testValue2`,
+            options: {
+                customTags: []
             }
         }, function (result) {
             expect(result.error).to.be.undefined;

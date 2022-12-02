@@ -366,7 +366,27 @@
             "help": "health-check help",
             "hidden": "data.dbversion === '1.x'",
             "disabled": "data.dbversion === '1.x'"
-          }
+        },
+        "commonTags": {
+          "type": "table",
+          "items": [
+            {
+              "type": "text",
+              "attr": "name",
+              "width": "auto",
+              "title": "Tag name",
+              "filter": false,
+              "sort": false
+            }
+          ],
+          "newLine": true,
+          "sm": 12,
+          "md": 9,
+          "label": "Definition of common tags",
+          "help": "common-tags help",
+          "hidden": "data.dbversion === '1.x' || data.usetags !== true",
+          "disabled": "data.dbversion === '1.x' || data.usetags !== true"
+        }
       }
     }
   }
