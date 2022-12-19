@@ -61,7 +61,7 @@
     "Start or enable adapter first": "Adapter muss zuerst aktiviert werden",
     "Storage retention": "Aufbewahrungsdauer",
     "Store as": "Speichern als",
-    "String": "Zeichenfolge",
+    "String": "Text",
     "Test connection": "Verbindung testen",
     "This feature can only be used on databases that are empty, or already were setup with this feature enabled. Otherwise it will cause errors (see logs).": "Diese Funktion kann nur für Datenbanken verwendet werden, die leer sind oder bereits mit aktivierter Funktion eingerichtet wurden. Andernfalls kommt es zu Fehlern (siehe Protokolle).",
     "Token": "Token",
