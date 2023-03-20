@@ -20,8 +20,8 @@
   ],
   "optionalDependencies": {},
   "dependencies": {
-    "@influxdata/influxdb-client": "^1.32.0",
-    "@influxdata/influxdb-client-apis": "^1.32.0",
+    "@influxdata/influxdb-client": "^1.33.2",
+    "@influxdata/influxdb-client-apis": "^1.33.2",
     "@iobroker/adapter-core": "^2.6.7",
     "influx": "^4.2.3"
   },
@@ -30,8 +30,8 @@
     "@alcalzone/release-script-plugin-iobroker": "^3.5.9",
     "@alcalzone/release-script-plugin-license": "^3.5.9",
     "@iobroker/adapter-dev": "^1.2.0",
-    "mocha": "^10.1.0",
-    "chai": "^4.3.6"
+    "mocha": "^10.2.0",
+    "chai": "^4.3.7"
   },
   "bugs": {
     "url": "https://github.com/ioBroker/ioBroker.influxdb/issues"
