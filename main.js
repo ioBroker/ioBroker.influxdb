@@ -553,8 +553,7 @@ function processMessage(adapter, msg) {
         if (adapter.config.dbversion === '1.x') {
             adapter.sendTo(msg.from, msg.command, {supportedFeatures: ['update', 'delete', 'deleteRange', 'deleteAll', 'storeState']}, msg.callback);
         } else {
-            // not yet implemented
-            adapter.sendTo(msg.from, msg.command, {supportedFeatures: ['storeState']}, msg.callback);
+            adapter.sendTo(msg.from, msg.command, {supportedFeatures: ['delete', 'deleteRange', 'deleteAll', 'storeState']}, msg.callback);
         }
     }
     else if (msg.command === 'update') {
@@ -1459,6 +1458,31 @@ function _delete(adapter, id, state, cb) {
             }
             cb && cb();
         });
+    } else if (adapter.config.dbversion === '2.x'){
+        let start;
+        let stop;
+        if (state.ts) {
+            start=state.ts;
+            stop=state.ts;
+        } else if (state.start) {//deletes from "state.start" until ...
+            start=state.start;
+            if (state.end) {
+                stop=state.end;     // ... "state.end"
+            } else {
+                stop=new Date();    // ... now
+            }
+        } else if (state.end) { //deletes from 01.01.1970 until "state.end"
+            start=new Date(0);
+            stop=state.end;
+        } else {                //deletes from 01.01.1970 until now
+            start=new Date(0);
+            stop=new Date();
+        }
+        adapter._client.deleteData(start, stop, adapter.config.organization, adapter.config.dbname, `_measurement="${id}"`, err => {
+            if (err) {
+                adapter.log.error(err);
+            }
+        })
     } else {
         cb && cb('not implemented');
     }
@@ -1650,6 +1674,35 @@ function update(adapter, id, state, cb) {
                     cb && cb('not found');
                 }
             }
+        });
+    { else if (adapter.config.dbversion === '2.x'){
+        let fluxQuery = `from(bucket: "${adapter.config.dbname}") `;
+        fluxQuery += ` |> range(start: ${new Date(state.ts).toISOString()}, stop: ${new Date(state.ts).toISOString()})`;
+        fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${id}")`;
+        adapter._client.query(fluxQuery, (err, rows) => {
+            if (err) {
+                adapter.log.error(`query: ${err}`);
+            } else {
+                adapter.log.debug(`Query erfolgreich: ${fluxQuery}`);
+            }
+            for (let r = 0, l = rows.length; r < l; r++) {
+                for (let rr = 0, ll = rows[r].length; rr < ll; rr++) {
+                    if (rows[r][rr].time) {
+                        rows[r][rr].ts = new Date(rows[r][rr].time).getTime();
+                        delete rows[r][rr].time;
+                    } else if (rows[r][rr]._start && rows[r][rr]._stop) {
+                        const startTime = new Date(rows[r][rr]._start).getTime();
+                        const stopTime = new Date(rows[r][rr]._stop).getTime();
+                        rows[r][rr].ts = startTime + (stopTime - startTime) / 2;
+                    }
+                }
+            }
+
+            adapter.sendTo(msg.from, msg.command, {
+                result: rows,
+                ts:     Date.now(),
+                error:  err
+            }, msg.callback);
         });
     } else {
         cb && cb('not implemented');
