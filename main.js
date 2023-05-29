@@ -553,7 +553,7 @@ function processMessage(adapter, msg) {
         if (adapter.config.dbversion === '1.x') {
             adapter.sendTo(msg.from, msg.command, {supportedFeatures: ['update', 'delete', 'deleteRange', 'deleteAll', 'storeState']}, msg.callback);
         } else {
-            adapter.sendTo(msg.from, msg.command, {supportedFeatures: ['delete', 'deleteRange', 'deleteAll', 'storeState']}, msg.callback);
+            adapter.sendTo(msg.from, msg.command, {supportedFeatures: ['update', 'delete', 'deleteRange', 'deleteAll', 'storeState']}, msg.callback);
         }
     }
     else if (msg.command === 'update') {
@@ -1458,7 +1458,7 @@ function _delete(adapter, id, state, cb) {
             }
             cb && cb();
         });
-    } else if (adapter.config.dbversion === '2.x'){
+    } else if (adapter.config.dbversion === '2.x') {
         let start;
         let stop;
         if (state.ts) {
@@ -1480,8 +1480,12 @@ function _delete(adapter, id, state, cb) {
         }
         adapter._client.deleteData(start, stop, adapter.config.organization, adapter.config.dbname, `_measurement="${id}"`, err => {
             if (err) {
-                adapter.log.error(err);
+                adapter.log.warn(`Error on delete("${err} / ${JSON.stringify(err.message)}"`);
+                cb && cb(err);
+            } else {
+                setConnected(adapter, true);
             }
+            cb && cb();
         })
     } else {
         cb && cb('not implemented');
@@ -1661,20 +1665,69 @@ function update(adapter, id, state, cb) {
                     stored.ts = state.ts;
                     delete stored.time;
 
-                    _delete(adapter, id, {ts: stored.ts}, error => {
-                        if (error) {
-                            adapter.log.error(`Cannot delete value for ${id}: ${JSON.stringify(state)}`);
-                            cb && cb(err);
-                        } else {
+//                    _delete(adapter, id, {ts: stored.ts}, error => {
+//                        if (error) {
+//                            adapter.log.error(`Cannot delete value for ${id}: ${JSON.stringify(state)}`);
+//                            cb && cb(err);
+//                        } else {
+    adapter.log.warn(`PUSH1`);
                             pushValueIntoDB(adapter, id, stored, true, cb);
-                        }
-                    });
+//                        }
+//                    });
                 } else {
                     adapter.log.error(`Cannot find value to delete for ${id}: ${JSON.stringify(state)}`);
                     cb && cb('not found');
                 }
             }
         });
+    } else if (adapter.config.dbversion === '2.x'){
+        let fluxQuery = `from(bucket: "${adapter.config.dbname}") `;
+        //using identical start/stops values leads to a 'empty range' error, therefore we add a microsecond
+        fluxQuery += ` |> range(start:time(v:${state.ts*1000000}), stop:time(v:${state.ts*1000000+1000}))`;
+        fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${id}")`;
+        fluxQuery += ` |> pivot(rowKey:["_time"], valueColumn: "_value", columnKey: `
+        fluxQuery += ` ${(adapter.config.usetags) ? '["tag"])' : '["_field"])'}`;
+        adapter.log.debug(`fluxquery= ${fluxQuery}`);
+        
+        adapter._client.query(fluxQuery, (err, result) => {
+            if (err) {
+                adapter.log.warn(`Error on update("${query}): ${err} / ${JSON.stringify(err.message)}"`);
+                cb && cb(err);
+            } else {
+                setConnected(adapter, true);
+                if (result && result.length) {
+                    const stored = result[0];
+                    if (state.val !== undefined) {
+                        stored.val = state.val;
+                    }
+                    if (state.ack !== undefined) {
+                        stored.ack = state.ack;
+                    }
+                    if (state.q !== undefined) {
+                        stored.q = state.q;
+                    }
+                    if (state.from) {
+                        stored.from = state.from;
+                    }
+                    stored.ts = state.ts;
+                    delete stored.time;
+
+//                    _delete(adapter, id, {ts: stored.ts}, error => {
+//                        if (error) {
+//                            adapter.log.error(`Cannot delete value for ${id}: ${JSON.stringify(state)}`);
+//                            cb && cb(err);
+//                        } else {
+//                            adapter.log.debug(`VAL2: ${stored.val}`);
+                            pushValueIntoDB(adapter, id, stored, true, cb);
+//                        }
+//                    });
+                } else {
+                     adapter.log.error(`Cannot find value to delete for ${id}: ${JSON.stringify(state)}`);
+                    cb && cb('not found');
+                }
+            }
+        });
+
     } else {
         cb && cb('not implemented');
     }
