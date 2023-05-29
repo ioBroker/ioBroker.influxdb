@@ -1685,7 +1685,6 @@ function update(adapter, id, state, cb) {
         fluxQuery += ` |> range(start:time(v:${state.ts*1000000}), stop:time(v:${state.ts*1000000+1000}))`;
         fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${id}")`;
         fluxQuery += ` ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}`;
-        adapter.log.debug(`fluxquery= ${fluxQuery}`);
         
         adapter._client.query(fluxQuery, (err, result) => {
             if (err) {
@@ -1698,20 +1697,16 @@ function update(adapter, id, state, cb) {
                     if (state.val !== undefined) {
                         stored.val = state.val;
                     }
-                    adapter.log.debug(`stored.val= ${stored.val}`);
                     if (state.ack !== undefined) {
                         stored.ack = state.ack;
                     }
-                    adapter.log.debug(`stored.ack= ${stored.ack}`);
                     if (state.q !== undefined) {
                         stored.q = state.q;
                     }
                     if (state.from) {
                         stored.from = state.from;
                     }
-                    adapter.log.debug(`stored.from= ${stored.from}`);
                     stored.ts = state.ts;
-                    adapter.log.debug(`stored.ts= ${stored.ts}`);
                     delete stored.time;
 
                     _delete(adapter, id, {ts: stored.ts}, error => {
