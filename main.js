@@ -1670,7 +1670,6 @@ function update(adapter, id, state, cb) {
 //                            adapter.log.error(`Cannot delete value for ${id}: ${JSON.stringify(state)}`);
 //                            cb && cb(err);
 //                        } else {
-    adapter.log.warn(`PUSH1`);
                             pushValueIntoDB(adapter, id, stored, true, cb);
 //                        }
 //                    });
