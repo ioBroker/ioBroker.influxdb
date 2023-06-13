@@ -479,7 +479,8 @@ function testConnection(adapter, msg) {
                     msg.message.config.token,
                     msg.message.config.organization,
                     msg.message.config.dbname || appName,
-                    msg.message.config.requestTimeout
+                    msg.message.config.requestTimeout,
+                    msg.message.config.validateSSL
                 )
                 break;
             default:
