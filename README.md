@@ -429,17 +429,17 @@ The message has no parameters.
 
 ```
 sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
-    //result is object like:
+    // result is sn object like:
     {
         "system.adapter.influxdb.0.memRss": {
-            "changesOnly":true,
-            "debounce":0,
-            "retention":31536000,
-            "maxLength":3,
-            "changesMinDelta":0.5,
-            "enabled":true,
-            "changesRelogInterval":0,
-            "aliasId":""
+            "changesOnly": true,
+            "debounce": 0,
+            "retention": 31536000,
+            "maxLength": 3,
+            "changesMinDelta": 0.5,
+            "enabled": true,
+            "changesRelogInterval": 0,
+            "aliasId": ""
         }
         ...
     }
@@ -452,6 +452,10 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
+### **WORK IN PROGRESS**
+* (Marc-Berg) Allowed the self signed certificates using "test connection" button
+* (Marc-Berg) The deletion of data from DB was ipmlemented for V2
+
 ### 3.2.0 (2022-09-19)
 * (Apollon77) Adjust cache file to be different per instance when having multiple instances
 
