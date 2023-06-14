@@ -1463,22 +1463,23 @@ function _delete(adapter, id, state, cb) {
         let start;
         let stop;
         if (state.ts) {
-            start=state.ts;
-            stop=state.ts;
-        } else if (state.start) {//deletes from "state.start" until ...
-            start=state.start;
+            start = state.ts;
+            stop = state.ts;
+        } else if (state.start) { // deletes from "state.start" until ...
+            start = state.start;
             if (state.end) {
-                stop=state.end;     // ... "state.end"
+                stop = state.end;     // ... "state.end"
             } else {
-                stop=new Date();    // ... now
+                stop = new Date();    // ... now
             }
-        } else if (state.end) { //deletes from 01.01.1970 until "state.end"
-            start=new Date(0);
-            stop=state.end;
-        } else {                //deletes from 01.01.1970 until now
-            start=new Date(0);
-            stop=new Date();
+        } else if (state.end) { // deletes from 01.01.1970 until "state.end"
+            start = new Date(0);
+            stop = state.end;
+        } else {                // deletes from 01.01.1970 until now
+            start = new Date(0);
+            stop = new Date();
         }
+        
         adapter._client.deleteData(start, stop, adapter.config.organization, adapter.config.dbname, `_measurement="${id}"`, err => {
             if (err) {
                 adapter.log.warn(`Error on delete("${err} / ${JSON.stringify(err.message)}"`);
@@ -1487,7 +1488,7 @@ function _delete(adapter, id, state, cb) {
                 setConnected(adapter, true);
             }
             cb && cb();
-        })
+        });
     } else {
         cb && cb('not implemented');
     }
@@ -1680,10 +1681,10 @@ function update(adapter, id, state, cb) {
                 }
             }
         });
-    } else if (adapter.config.dbversion === '2.x'){
+    } else if (adapter.config.dbversion === '2.x') {
         let fluxQuery = `from(bucket: "${adapter.config.dbname}") `;
         //using identical start/stops values leads to a 'empty range' error, therefore we add a microsecond
-        fluxQuery += ` |> range(start:time(v:${state.ts*1000000}), stop:time(v:${state.ts*1000000+1000}))`;
+        fluxQuery += ` |> range(start:time(v:${state.ts*1000000}), stop:time(v:${state.ts * 1000000 + 1000}))`;
         fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${id}")`;
         fluxQuery += ` ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}`;
         
