@@ -75,7 +75,7 @@ Additionally, InfluxDB does not support "null" values, so these are not written 
 Please refer to the official InfluxDB pages for installation instructions depending on your OS.
 
 * InfluxDB 1.x: https://docs.influxdata.com/influxdb/v1.8/introduction/install/
-* InfluxDB 2.x: https://docs.influxdata.com/influxdb/v2.0/install/
+* InfluxDB 2.x: https://docs.influxdata.com/influxdb/v2.2/install/
 
 ### Setup authentication for InfluxDB 1.x (optional)
 **NOTE:** Influx DB V2.x relies on organization/token login, instead of username/password! This is only applicable for InfluxDB 1.x
@@ -228,7 +228,7 @@ That's why the result is always an array with one numbered index for each query.
 ### Influx 1.x
 Example with one query:
 
-```
+```javascript
 sendTo('influxdb.0', 'query', 'SELECT * FROM iobroker.global."system.adapter.admin.0.memRss" LIMIT 100', function (result) {
     if (result.error) {
         console.error(result.error);
@@ -240,7 +240,7 @@ sendTo('influxdb.0', 'query', 'SELECT * FROM iobroker.global."system.adapter.adm
 ```
 Two queries:
 
-```
+```javascript
 sendTo('influxdb.0', 'query', 'SELECT * FROM iobroker.global."system.adapter.admin.0.memRss" LIMIT 100; SELECT * FROM iobroker.global."system.adapter.admin.0.memHeapUsed" LIMIT 100', function (result) {
     if (result.error) {
         console.error(result.error);
@@ -258,7 +258,7 @@ In InfluxDB v2.0 onwards, the SQL-based query language *InfluxQL* is deprecated 
 
 Example with one query:
 
-```
+```javascript
 sendTo('influxdb.0', 'query', 'from(bucket: "iobroker") |> range(start: -3h)', function (result) {
     if (result.error) {
         console.error(result.error);
@@ -271,19 +271,18 @@ sendTo('influxdb.0', 'query', 'from(bucket: "iobroker") |> range(start: -3h)', f
 Two queries:
 **NOTE:** By default, you cannot execute 2 queries at once via Flux-language, as there is no delimiter available. This adapter emulates this behaviour by defining `;` as delimiter, so you can still run two queries in one statement.
 
-```
+```javascript
 sendTo('influxdb.0', 'query', 'from(bucket: "iobroker") |> range(start: -3h); from(bucket: "iobroker") |> range(start: -1h)" LIMIT 100', function (result) {
     if (result.error) {
         console.error(result.error);
     } else {
         // show result
-        console.log('Rows First: ' + JSON.stringify(result.result[0])); //Values from last 3 hours
-        console.log('Rows Second: ' + JSON.stringify(result.result[1])); //Values from last hour
+        console.log('Rows First: ' + JSON.stringify(result.result[0])); // Values from last 3 hours
+        console.log('Rows Second: ' + JSON.stringify(result.result[1])); // Values from last hour
     }
 });
 ```
 **NOTE:** The values are coming back in the result array in filename "value" (instead of "val" as normal in ioBroker)
-
 
 ## storeState
 If you want to write other data into the InfluxDB, you can use the build in system function **storeState**.
@@ -296,17 +295,17 @@ The given ids are not checked against the ioBroker database and do not need to b
 The Message can have one of the following three formats:
 * one ID and one state object
 
-```
-sendTo('history.0', 'storeState', [
+```javascript
+sendTo('influxdb.0', 'storeState', {
     id: 'mbus.0.counter.xxx',
     state: {ts: 1589458809352, val: 123, ack: false, from: 'system.adapter.whatever.0', ...}
-], result => console.log('added'));
+}, result => console.log('added'));
 ```
 
 * one ID and array of state objects
 
-```
-sendTo('history.0', 'storeState', {
+```javascript
+sendTo('influxdb.0', 'storeState', {
     id: 'mbus.0.counter.xxx',
     state: [
       {ts: 1589458809352, val: 123, ack: false, from: 'system.adapter.whatever.0', ...}, 
@@ -317,8 +316,8 @@ sendTo('history.0', 'storeState', {
 
 * array of multiple IDs with one state object each
 
-```
-sendTo('history.0', 'storeState', [
+```javascript
+sendTo('influxdb.0', 'storeState', [
     {id: 'mbus.0.counter.xxx', state: {ts: 1589458809352, val: 123, ack: false, from: 'system.adapter.whatever.0', ...}}, 
     {id: 'mbus.0.counter.yyy', state: {ts: 1589458809353, val: 123, ack: false, from: 'system.adapter.whatever.0', ...}}
 ], result => console.log('added'));
@@ -331,7 +330,7 @@ In case of errors, an array with all single error messages is returned and also 
 ## delete state
 If you want to delete entry from the Database, you can use the build in system function `delete`:
 
-```
+```javascript
 sendTo('influxdb.0', 'delete', [
     {id: 'mbus.0.counter.xxx', state: {ts: 1589458809352}}, 
     {id: 'mbus.0.counter.yyy', state: {ts: 1589458809353}}
@@ -340,7 +339,7 @@ sendTo('influxdb.0', 'delete', [
 
 To delete ALL history data for some data point execute:
 
-```
+```javascript
 sendTo('influxdb.0', 'deleteAll', [
     {id: 'mbus.0.counter.xxx'}, 
     {id: 'mbus.0.counter.yyy'}
@@ -349,7 +348,7 @@ sendTo('influxdb.0', 'deleteAll', [
 
 To delete history data for some data point and for some range, execute:
 
-```
+```javascript
 sendTo('influxdb.0', 'deleteRange', [
     {id: 'mbus.0.counter.xxx', start: '2019-01-01T00:00:00.000Z', end: '2019-12-31T23:59:59.999'}, 
     {id: 'mbus.0.counter.yyy', start: 1589458809352, end: 1589458809353}
@@ -363,7 +362,7 @@ Values will be deleted including defined limits. `ts >= start AND ts <= end`
 ## change state
 If you want to change entry's value, quality or acknowledge flag in the database, you can use the build in system function `update`:
 
-```
+```javascript
 sendTo('influxdb.0', 'update', [
     {id: 'mbus.0.counter.xxx', state: {ts: 1589458809352, val: 15, ack: true, q: 0}}, 
     {id: 'mbus.0.counter.yyy', state: {ts: 1589458809353, val: 16, ack: true, q: 0}}
@@ -375,7 +374,7 @@ sendTo('influxdb.0', 'update', [
 ## Flush Buffers
 If you want to flush the buffers for one or all datapoints to the Database, you can use the build in system function `flushBuffer`:
 
-```
+```javascript
 sendTo('influxdb.0', 'flushBuffer', {id: 'mbus.0.counter.xxx'
 , result => console.log('deleted, error: ' + result.error));
 ```
@@ -387,7 +386,7 @@ The adapter supports enabling and disabling of history logging via JavaScript an
 ### enable
 The message requires to have the `id` of the datapoint. Additionally, optional `options` to define the datapoint specific settings:
 
-```
+```javascript
 sendTo('influxdb.0', 'enableHistory', {
     id: 'system.adapter.influxdb.0.memRss',
     options: {
@@ -411,7 +410,7 @@ sendTo('influxdb.0', 'enableHistory', {
 ### disable
 The message requires to have the `id` of the datapoint.
 
-```
+```javascript
 sendTo('influxdb.0', 'disableHistory', {
     id: 'system.adapter.influxdb.0.memRss',
 }, function (result) {
@@ -427,19 +426,19 @@ sendTo('influxdb.0', 'disableHistory', {
 ### get List
 The message has no parameters.
 
-```
+```javascript
 sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
-    // result is sn object like:
+    //result is object like:
     {
-        "system.adapter.influxdb.0.memRss": {
-            "changesOnly": true,
-            "debounce": 0,
-            "retention": 31536000,
-            "maxLength": 3,
-            "changesMinDelta": 0.5,
-            "enabled": true,
-            "changesRelogInterval": 0,
-            "aliasId": ""
+        'system.adapter.influxdb.0.memRss': {
+            changesOnly: true,
+            debounce: 0,
+            retention: 31536000,
+            maxLength: 3,
+            changesMinDelta: 0.5,
+            enabled: true,
+            changesRelogInterval: 0,
+            aliasId: ''
         }
         ...
     }
@@ -454,7 +453,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 ## Changelog
 ### **WORK IN PROGRESS**
 * (Marc-Berg) Allowed the self signed certificates using "test connection" button
-* (Marc-Berg) The deletion of data from DB was ipmlemented for V2
+* (Marc-Berg) The deletion of data from DB was implemented for V2
 
 ### 3.2.0 (2022-09-19)
 * (Apollon77) Adjust cache file to be different per instance when having multiple instances
