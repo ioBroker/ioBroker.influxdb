@@ -107,7 +107,7 @@ describe(`Test ${adapterShortName} adapter`, function () {
             }
             config.native.enableDebugLogs = true;
             config.native.dbname = 'tagsiobroker';
-            config.native.usetags = true;
+            config.native.metaDataStorage = 'tags';
 
             await setup.setAdapterConfig(config.common, config.native);
 

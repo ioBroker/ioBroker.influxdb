@@ -341,18 +341,22 @@
       "type": "panel",
       "label": "Expert Settings",
       "items": {
-        "usetags": {
-          "type": "checkbox",
+        "metaDataStorage": {
+          "type": "select",
           "sm": 12,
           "md": 6,
-          "min": 0,
+          "options": [
+            {"label": "Fields", "value": "fields"},
+            {"label": "Tags", "value": "tags"},
+            {"label": "Plain (store only values)", "value": "plain"}
+          ],
           "label": "Use tags to store metadata information, instead of fields",
           "help": "usetags help",
           "hidden": "data.dbversion === '1.x'",
           "disabled": "data.dbversion === '1.x'",
           "confirm": {
             "text": "This feature can only be used on databases that are empty, or already were setup with this feature enabled. Otherwise it will cause errors (see logs).",
-            "condition": "data.usetags && data.usetags != originalData.usetags",
+            "condition": "data.metaDataStorage && data.metaDataStorage != originalData.metaDataStorage",
             "title": "Please confirm!",
             "type": "warning"
           }
