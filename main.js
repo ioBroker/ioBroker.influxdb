@@ -2502,10 +2502,8 @@ function getHistoryIflx2(adapter, msg) {
                         addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
                         |> range(start: ${new Date(options.start - (adapter.config.retention || 31536000) * 1000).toISOString()}, stop: ${new Date(options.start - 1).toISOString()}) 
                         |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
-                        ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
-                        |> group() 
-                        |> sort(columns: ["_time"], desc: true) 
-                        |> limit(n: 1)`;
+                        |> last()
+                        ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}`;
 
                         fluxQueries.unshift(addFluxQuery);
                     }
@@ -2513,10 +2511,8 @@ function getHistoryIflx2(adapter, msg) {
                     addFluxQuery = `from(bucket: "${adapter.config.dbname}") 
                         |> range(start: ${new Date(options.end + 1).toISOString()}) 
                         |> filter(fn: (r) => r["_measurement"] == "${options.id}") 
-                        ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}
-                        |> group() 
-                        |> sort(columns: ["_time"], desc: false) 
-                        |> limit(n: 1)`;
+                        |> first()
+                        ${(!adapter.config.usetags) ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}`;
                     fluxQueries.push(addFluxQuery);
                 }
 
