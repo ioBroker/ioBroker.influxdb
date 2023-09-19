@@ -13,7 +13,7 @@
       "pl": "Logowanie stanów do InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "3.2.0",
+    "version": "4.0.0",
     "title": "Logging data with InfluxDB",
     "titleLang": {
       "en": "Logging data with InfluxDB",
@@ -28,6 +28,19 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "4.0.0": {
+        "en": "Allowed the self-signed certificates using \"test connection\" button\nThe deletion of data from DB was implemented for V2\nAdded support for `count` aggregate type on getHistory\nminimal supported node.js version is 16 now",
+        "de": "Erlaubt die selbstsignierten Zertifikate mit \"Test-Verbindung\" Taste\nDie Löschung von Daten aus DB wurde für V2 implementiert\nUnterstützung für Grafit-Aggregat-Typ auf getHistory\nminimal unterstützt node.js version ist jetzt 16",
+        "ru": "Разрешены самоподписанные сертификаты с помощью кнопки \"test connection\"\nУдаление данных от DB было реализовано для V2\nДобавлена поддержка подсчета агрегатного типа на getHistory\nминимальная поддерживаемая версия node.js 16 сейчас",
+        "pt": "Permitiram os certificados auto-assinados usando o botão \"conexão de teste\"\nA exclusão de dados da DB foi implementada para V2\nAdicionado suporte para contar o tipo agregado em getHistory\nversão node.js suportada mínima é 16 agora",
+        "nl": "De zelf toegewezen certificaten met \"teest verbinding\" knop\nDe deletie van de gegevens van DB werd geïnformeerd voor V2\nVermeldde steun voor het tel aggregate type\nminimaal ondersteunde node",
+        "fr": "Autorisé les certificats autosignés à l'aide du bouton \"test connection\"\nLa suppression des données du DB a été mise en œuvre pour V2\nAjout du support pour compter le type agrégé sur getHistory\nla version node.js supportée est 16 maintenant",
+        "it": "Consentito i certificati autofirmati utilizzando il pulsante \"Connessione di prova\"\nLa cancellazione dei dati da DB è stata implementata per V2\nAggiunto supporto per conteggio tipo aggregato su getHistory\nversione minima supportato node.js è 16 ora",
+        "es": "Permitió los certificados auto-firmados usando el botón \"prueba de conexión\"\nLa eliminación de los datos del DB se llevó a cabo para V2\nSoporte añadido para el tipo de cuenta agregado en getHistory\nversión mínima soportado node.js es 16 ahora",
+        "pl": "Uzyskał on certyfikaty za pomocą przycisku \"test connection\"\nDetekcja danych z DB została zaimplementowana dla V2\nWsparcie dla liczby zbitych typów\nminimalna wersja węzła jest obecnie 16",
+        "uk": "Дозволені сертифікати самопризначені за допомогою кнопки \"test Connection\"\nВидалення даних з DB реалізовано для V2\nДодано підтримку підрахунку агрегатного типу на getHistory\nмінімальний підтриманий вузол.js версія 16 тепер",
+        "zh-cn": "允许使用“试验联系”的自发证书\n第五2行删除数据\n增加对准礼品总值的支持\n最低支持无误的版本现在是16个。"
+      },
       "3.2.0": {
         "en": "Adjust cache file to be different per instance when having multiple instances",
         "de": "Bestimmen Sie die Cache-Datei, um unterschiedlich zu sein pro Instanz, wenn mehrere Instanzen haben",
@@ -99,18 +112,6 @@
         "es": "Optimizaciones de rendimiento para llamadas GetHistory, especialmente para minmax método agregado\nCaso de emergencia reportado por Sentry",
         "pl": "Optymalizacja wydajności dla wezwań GetHistory, zwłaszcza dla metody Minmax\nPrzygotowania do wypadku Sentry",
         "zh-cn": "GetHistory呼呼声的表现,特别是总括法\nSentry所报告的预防事故"
-      },
-      "3.1.3": {
-        "en": "Corrected issue when testing connection to InfluxDBv1 with weird passwords",
-        "de": "Problem beim Testen der Verbindung zu InfluxDBv1 mit seltsamen Passwörtern behoben",
-        "ru": "Исправлена ошибка при тестировании подключения к InfluxDBv1 со странными паролями.",
-        "pt": "Corrigido o problema ao testar a conexão com o InfluxDBv1 com senhas estranhas",
-        "nl": "Probleem opgelost bij het testen van de verbinding met InfluxDBv1 met rare wachtwoorden",
-        "fr": "Correction d'un problème lors du test de connexion à InfluxDBv1 avec des mots de passe étranges",
-        "it": "Risolto problema durante il test della connessione a InfluxDBv1 con password strane",
-        "es": "Problema corregido al probar la conexión a InfluxDBv1 con contraseñas extrañas",
-        "pl": "Naprawiono problem podczas testowania połączenia z InfluxDBv1 za pomocą dziwnych haseł",
-        "zh-cn": "更正了使用奇怪密码测试与 InfluxDBv1 的连接时出现的问题"
       }
     },
     "mode": "daemon",
