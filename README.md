@@ -451,6 +451,9 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
+### **WORK IN PROGRESS**
+* (bluefox) Corrected JSON config
+
 ### 4.0.0 (2023-09-19)
 * (Marc-Berg) Allowed the self-signed certificates using "test connection" button
 * (Marc-Berg) The deletion of data from DB was implemented for V2

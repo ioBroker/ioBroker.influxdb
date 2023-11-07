@@ -25,7 +25,7 @@
   "dependencies": {
     "@influxdata/influxdb-client": "^1.33.2",
     "@influxdata/influxdb-client-apis": "^1.33.2",
-    "@iobroker/adapter-core": "^3.0.3",
+    "@iobroker/adapter-core": "^3.0.4",
     "influx": "^4.2.3"
   },
   "devDependencies": {
@@ -34,7 +34,7 @@
     "@alcalzone/release-script-plugin-license": "^3.5.9",
     "@iobroker/adapter-dev": "^1.2.0",
     "mocha": "^10.2.0",
-    "chai": "^4.3.8"
+    "chai": "^4.3.10"
   },
   "bugs": {
     "url": "https://github.com/ioBroker/ioBroker.influxdb/issues"
