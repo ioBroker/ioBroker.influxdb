@@ -13,7 +13,7 @@
       "pl": "Logowanie stanów do InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "4.0.0",
+    "version": "4.0.1",
     "title": "Logging data with InfluxDB",
     "titleLang": {
       "en": "Logging data with InfluxDB",
@@ -28,6 +28,19 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "4.0.1": {
+        "en": "Corrected JSON config",
+        "de": "JSON config korrigiert",
+        "ru": "Правильный конфиг JSON",
+        "pt": "Configuração JSON corrigida",
+        "nl": "Quality over Quantity (QoQ) Releases Vertaling:",
+        "fr": "Correction de la configuration JSON",
+        "it": "Corretto JSON config",
+        "es": "Corregido JSON config",
+        "pl": "Zgoda JSON",
+        "uk": "Виправлено налаштування JSON",
+        "zh-cn": "惩教所"
+      },
       "4.0.0": {
         "en": "Allowed the self-signed certificates using \"test connection\" button\nThe deletion of data from DB was implemented for V2\nAdded support for `count` aggregate type on getHistory\nminimal supported node.js version is 16 now",
         "de": "Erlaubt die selbstsignierten Zertifikate mit \"Test-Verbindung\" Taste\nDie Löschung von Daten aus DB wurde für V2 implementiert\nUnterstützung für Grafit-Aggregat-Typ auf getHistory\nminimal unterstützt node.js version ist jetzt 16",
@@ -100,18 +113,6 @@
         "es": "Asegúrese de que el registro de depuración está activo según la configuración",
         "pl": "Umożliwia to, że log debug jest aktywny zgodnie z ustawieniami",
         "zh-cn": "B. 根据环境,确保有色色逻辑积极。"
-      },
-      "3.1.4": {
-        "en": "Performance optimizations for GetHistory calls, especially for \"minmax\" aggregate method\nPrevent crash case reported by Sentry",
-        "de": "Leistungsoptimierungen für GetHistory-Anrufe, insbesondere für minmax-Aggregatmethode\nVerhindern Crashfall berichtet von Sentry",
-        "ru": "Оптимизация производительности для звонков GetHistory, особенно для метода minmax агрегата\nПредотвратить случай аварии, сообщается в Sentry",
-        "pt": "Otimizações de desempenho para chamadas GetHistory, especialmente para método agregado minmax\nImpedir caso de acidente relatado por Sentry",
-        "nl": "Performance optimisatie voor GetHistory calls, vooral voor minmax aggregate methode\nVertaling:",
-        "fr": "Optimisations de performance pour les appels GetHistory, en particulier pour la méthode globale minmax\nPrévenir l ' accident signalé par Sentry",
-        "it": "Ottimizzazione delle prestazioni per le chiamate GetHistory, in particolare per il metodo aggregato minmax\nPrevenire caso crash segnalato da Sentry",
-        "es": "Optimizaciones de rendimiento para llamadas GetHistory, especialmente para minmax método agregado\nCaso de emergencia reportado por Sentry",
-        "pl": "Optymalizacja wydajności dla wezwań GetHistory, zwłaszcza dla metody Minmax\nPrzygotowania do wypadku Sentry",
-        "zh-cn": "GetHistory呼呼声的表现,特别是总括法\nSentry所报告的预防事故"
       }
     },
     "mode": "daemon",
