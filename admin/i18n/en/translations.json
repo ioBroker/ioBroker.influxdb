@@ -32,7 +32,7 @@
     "De-bounce time": "Debounce Time",
     "Default settings": "Default settings",
     "Disable charting optimized logging of skipped values": "Disable charting optimized logging of skipped values",
-    "Enable enhanced debug logs for the datapoint": "Enable enhanced debug logs for the datapoint",
+    "Enable enhanced debug logs for the datapoint": "Enable enhanced debug logs for the state",
     "Encrypt": "Encrypt Database connection",
     "Encrypt:": "",
     "Enter a number or leave the field empty": "Enter a number or leave the field empty to not limit the recorded values",
