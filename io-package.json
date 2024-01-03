@@ -13,7 +13,7 @@
       "pl": "Logowanie stanów do InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "4.0.1",
+    "version": "4.0.2",
     "title": "Logging data with InfluxDB",
     "titleLang": {
       "en": "Logging data with InfluxDB",
@@ -28,6 +28,19 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "4.0.2": {
+        "en": "Corrected JSON config\nCorrected filter function in booleanTypeCheckQuery\nAllowed the self-signed certificates using \"test connection\" button\nThe deletion of data from DB was implemented for V2\nAdded support for `count` aggregate type on getHistory\nminimal supported node.js version is 16 now",
+        "de": "JSON config korrigiert\nKorrigierte Filterfunktion in booleanTypeCheckQuery\nErlaubt die selbstsignierten Zertifikate mit \"Test-Verbindung\" Taste\nDie Löschung von Daten aus DB wurde für V2 implementiert\nUnterstützung für Grafit-Aggregat-Typ auf getHistory\nminimal unterstützt node.js version ist jetzt 16",
+        "ru": "Правильный конфиг JSON\nИсправлена функция фильтра в booleanTypeCheckQuery\nРазрешены самоподписанные сертификаты с помощью кнопки \"test connection\"\nУдаление данных от DB было реализовано для V2\nДобавлена поддержка подсчета агрегатного типа на getHistory\nминимальная поддерживаемая версия node.js 16 сейчас",
+        "pt": "Configuração JSON corrigida\nFunção de filtro corrigida em booleanTypeCheckQuery\nPermitiram os certificados auto-assinados usando o botão \"conexão de teste\"\nA exclusão de dados da DB foi implementada para V2\nAdicionado suporte para contar o tipo agregado em getHistory\nversão node.js suportada mínima é 16 agora",
+        "nl": "Quality over Quantity (QoQ) Releases Vertaling:\nVertaling:\nDe zelf toegewezen certificaten met \"teest verbinding\" knop\nDe deletie van de gegevens van DB werd geïnformeerd voor V2\nVermeldde steun voor het tel aggregate type\nminimaal ondersteunde node",
+        "fr": "Correction de la configuration JSON\nFonction de filtre corrigée dans booleanTypeCheckQuery\nAutorisé les certificats autosignés à l'aide du bouton \"test connection\"\nLa suppression des données du DB a été mise en œuvre pour V2\nAjout du support pour compter le type agrégé sur getHistory\nla version node.js supportée est 16 maintenant",
+        "it": "Corretto JSON config\nFunzione di filtro corretto in booleanTypeCheckQuery\nConsentito i certificati autofirmati utilizzando il pulsante \"Connessione di prova\"\nLa cancellazione dei dati da DB è stata implementata per V2\nAggiunto supporto per conteggio tipo aggregato su getHistory\nversione minima supportato node.js è 16 ora",
+        "es": "Corregido JSON config\nFunción de filtro corregida en booleanTypeCheckQuery\nPermitió los certificados auto-firmados usando el botón \"prueba de conexión\"\nLa eliminación de los datos del DB se llevó a cabo para V2\nSoporte añadido para el tipo de cuenta agregado en getHistory\nversión mínima soportado node.js es 16 ahora",
+        "pl": "Zgoda JSON\nFunkcja filtrów w booleanTypeCheckQuery\nUzyskał on certyfikaty za pomocą przycisku \"test connection\"\nDetekcja danych z DB została zaimplementowana dla V2\nWsparcie dla liczby zbitych typów\nminimalna wersja węzła jest obecnie 16",
+        "uk": "Виправлено налаштування JSON\nВиправлена функція фільтра в booleanTypeCheckQuery\nДозволені сертифікати самопризначені за допомогою кнопки \"test Connection\"\nВидалення даних з DB реалізовано для V2\nДодано підтримку підрахунку агрегатного типу на getHistory\nмінімальний підтриманий вузол.js версія 16 тепер",
+        "zh-cn": "惩教所\n善良Type CheckQuery的过滤功能\n允许使用“试验联系”的自发证书\n第五2行删除数据\n增加对准礼品总值的支持\n最低支持无误的版本现在是16个。"
+      },
       "4.0.1": {
         "en": "Corrected JSON config",
         "de": "JSON config korrigiert",
@@ -101,18 +114,6 @@
         "es": "Cuando no se cuenta se proporciona para agregado ninguno o cambio entonces el límite (por defecto 2000) se utiliza como cuenta para definir el número de datos para regresar.",
         "pl": "Jeśli nieliczanie jest dostarczane dla agregacji ani zmian, to limit (default 2000) jest używany jako określenie liczby danych do powrotu.",
         "zh-cn": "当没有计算总额时,或当时的汇率(2000年)用来确定返回的数据数量。."
-      },
-      "3.1.5": {
-        "en": "Make sure debug log is active according to the settings",
-        "de": "Stellen Sie sicher, dass das Debug-Log gemäß den Einstellungen aktiv ist",
-        "ru": "Убедитесь, что журнал debug активен в соответствии с настройками",
-        "pt": "Certifique-se de que o log de depuração está ativo de acordo com as configurações",
-        "nl": "Zorg ervoor dat het logboek actief is volgens de instellingen",
-        "fr": "Assurez-vous que le journal debug est actif selon les paramètres",
-        "it": "Assicurarsi che il registro di debug sia attivo in base alle impostazioni",
-        "es": "Asegúrese de que el registro de depuración está activo según la configuración",
-        "pl": "Umożliwia to, że log debug jest aktywny zgodnie z ustawieniami",
-        "zh-cn": "B. 根据环境,确保有色色逻辑积极。"
       }
     },
     "mode": "daemon",

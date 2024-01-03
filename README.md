@@ -451,7 +451,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
-### __WORK IN PROGRESS__
+### 4.0.2 (2024-01-03)
 * (bluefox) Corrected JSON config
 * (Marc-Berg) Corrected filter function in booleanTypeCheckQuery
 * (Marc-Berg) Allowed the self-signed certificates using "test connection" button
