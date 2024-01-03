@@ -2167,7 +2167,7 @@ function getHistory(adapter, msg) {
 
     if (resultsFromInfluxDB) {
         query += ` LIMIT ${options.limit}`;
-    } else if (options.aggregate !== 'minmax' && (options.aggregate !== 'integral')) {
+    } else if (options.aggregate !== 'minmax' && options.aggregate !== 'integral') {
         query += ` LIMIT ${options.count}`;
     }
 
