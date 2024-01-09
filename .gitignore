@@ -5,3 +5,7 @@ node_modules
 .idea
 exe
 /tmp
+
+
+# ioBroker dev-server
+.dev-server/
