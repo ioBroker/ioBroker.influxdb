@@ -1,7 +1,0 @@
-admin/i18n/flat.txt
-admin/i18n/*/flat.txt
-iob_npm.done
-node_modules
-.idea
-exe
-/tmp
