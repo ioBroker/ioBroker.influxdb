@@ -142,12 +142,20 @@ function startAdapter(options) {
 
             // ignoreAboveNumber
             if (obj.common.custom[adapter.namespace].ignoreAboveNumber !== undefined && obj.common.custom[adapter.namespace].ignoreAboveNumber !== null && obj.common.custom[adapter.namespace].ignoreAboveNumber !== '') {
+                if (obj.common.custom[adapter.namespace].ignoreAboveNumber === '0') {
+                    obj.common.custom[adapter.namespace].ignoreAboveNumber = 0;
+                }
+            } else {
                 obj.common.custom[adapter.namespace].ignoreAboveNumber = parseFloat(obj.common.custom[adapter.namespace].ignoreAboveNumber) || null;
             }
 
             // ignoreBelowNumber incl. ignoreBelowZero compatibility handling
             if (obj.common.custom[adapter.namespace].ignoreBelowNumber !== undefined && obj.common.custom[adapter.namespace].ignoreBelowNumber !== null && obj.common.custom[adapter.namespace].ignoreBelowNumber !== '') {
-                obj.common.custom[adapter.namespace].ignoreBelowNumber = parseFloat(obj.common.custom[adapter.namespace].ignoreBelowNumber) || null;
+                if (obj.common.custom[adapter.namespace].ignoreBelowNumber === '0') {
+                    obj.common.custom[adapter.namespace].ignoreBelowNumber = 0;
+                } else {
+                    obj.common.custom[adapter.namespace].ignoreBelowNumber = parseFloat(obj.common.custom[adapter.namespace].ignoreBelowNumber) || null;
+                }
             } else if (obj.common.custom[adapter.namespace].ignoreBelowZero === 'true' || obj.common.custom[adapter.namespace].ignoreBelowZero === true) {
                 obj.common.custom[adapter.namespace].ignoreBelowNumber = 0;
             }
@@ -785,12 +793,20 @@ function main(adapter) {
 
                         // ignoreAboveNumber
                         if (adapter._influxDPs[id][adapter.namespace].ignoreAboveNumber !== undefined && adapter._influxDPs[id][adapter.namespace].ignoreAboveNumber !== null && adapter._influxDPs[id][adapter.namespace].ignoreAboveNumber !== '') {
+                            if (adapter._influxDPs[id][adapter.namespace].ignoreAboveNumber === '0') {
+                                adapter._influxDPs[id][adapter.namespace].ignoreAboveNumber = 0;
+                            }
+                        } else {
                             adapter._influxDPs[id][adapter.namespace].ignoreAboveNumber = parseFloat(adapter._influxDPs[id][adapter.namespace].ignoreAboveNumber) || null;
                         }
 
                         // ignoreBelowNumber and ignoreBelowZero compatibility handling
                         if (adapter._influxDPs[id][adapter.namespace].ignoreBelowNumber !== undefined && adapter._influxDPs[id][adapter.namespace].ignoreBelowNumber !== null && adapter._influxDPs[id][adapter.namespace].ignoreBelowNumber !== '') {
-                            adapter._influxDPs[id][adapter.namespace].ignoreBelowNumber = parseFloat(adapter._influxDPs[id][adapter.namespace].ignoreBelowNumber) || null;
+                            if (adapter._influxDPs[id][adapter.namespace].ignoreBelowNumber === '0') {
+                                adapter._influxDPs[id][adapter.namespace].ignoreBelowNumber = 0;
+                            } else {
+                                adapter._influxDPs[id][adapter.namespace].ignoreBelowNumber = parseFloat(adapter._influxDPs[id][adapter.namespace].ignoreBelowNumber) || null;
+                            }
                         } else if (adapter._influxDPs[id][adapter.namespace].ignoreBelowZero === 'true' || adapter._influxDPs[id][adapter.namespace].ignoreBelowZero === true) {
                             adapter._influxDPs[id][adapter.namespace].ignoreBelowNumber = 0;
                         }
@@ -908,7 +924,6 @@ function pushHistory(adapter, id, state, timerRelog) {
                 settings.enableDebugLogs && adapter.log.debug(`value ignored blockTime ${id}, value=${state.val}, ts=${state.ts}, lastState.ts=${adapter._influxDPs[id].state.ts}, blockTime=${settings.blockTime}`);
                 return;
             }
-
             if (settings.ignoreZero && (state.val === undefined || state.val === null || state.val === 0)) {
                 settings.enableDebugLogs && adapter.log.debug(`value ignore because zero or null ${id}, new-value=${state.val}, ts=${state.ts}`);
                 return;
