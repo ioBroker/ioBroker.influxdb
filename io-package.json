@@ -11,6 +11,7 @@
       "it": "Registrazione degli stati in InfluxDB",
       "es": "Registro de estados en InfluxDB",
       "pl": "Logowanie stanów do InfluxDB",
+      "uk": "Збереження історії подій для окремих станів в InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
     "version": "4.0.2",
@@ -25,6 +26,7 @@
       "it": "Registrazione dei dati con InfluxDB",
       "es": "Datos de registro con InfluxDB",
       "pl": "Rejestrowanie danych za pomocą InfluxDB",
+      "uk": "Запис даних за допомогою InfluxDB",
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
@@ -171,6 +173,10 @@
     "dataSource": "push",
     "tier": 1,
     "eraseOnUpload": true,
+    "licenseInformation": {
+      "license": "MIT",
+      "type": "free"
+    },
     "messages": [
       {
         "condition": {
@@ -190,6 +196,7 @@
           "it": "La password deve essere reinserita dopo l'aggiornamento",
           "es": "La contraseña debe volver a ingresarse después de la actualización",
           "pl": "Hasło musi zostać ponownie wprowadzone po aktualizacji",
+          "uk": "Пароль потрібно повторно ввести після оновлення",
           "zh-cn": "升级后需要重新输入密码"
         },
         "text": {
@@ -202,6 +209,7 @@
           "it": "Dopo l'aggiornamento alla versione 2.1.1 o successiva è necessario reinserire la password/token per l'accesso a InfluxDB nella configurazione dell'istanza.",
           "es": "Después de actualizar a la versión 2.1.1 o posterior, debe volver a ingresar su contraseña/token para acceder a InfluxDB en la configuración de la instancia.",
           "pl": "Po aktualizacji do wersji 2.1.1 lub nowszej należy ponownie wprowadzić hasło/token, aby uzyskać dostęp do bazy danych InfluxDB w konfiguracji instancji.",
+          "uk": "Після оновлення до версії 2.1.1 або пізніше вам необхідно повторно ввести свій пароль/токен для доступу до InfluxDB в конфігурації екземпляра.",
           "zh-cn": "升级到 2.1.1 或更高版本后，您需要重新输入密码/令牌才能在实例配置中访问 InfluxDB。"
         },
         "level": "warn",
@@ -228,6 +236,7 @@
           "it": "Avviso IMPORTANTE!",
           "es": "Noticia importante!",
           "pl": "Ważna uwaga!",
+          "uk": "Важливе повідомлення!",
           "zh-cn": "重要通知!"
         },
         "text": {
@@ -240,6 +249,7 @@
           "it": "Questa nuova versione introduce diverse modifiche al modo in cui i valori vengono registrati perché abbiamo risolto diversi problemi e aggiunto nuove funzionalità. Controllare in particolare le impostazioni definite \"debounce\" e \"block time\" nei propri datapoint se i valori non sono registrati come previsto e assicurarsi che le impostazioni abbiano un senso. Per maggiori dettagli, fare riferimento al log delle modifiche e al Leggimi.",
           "es": "Esta nueva versión introduce varios cambios en la forma en que se registran los valores porque solucionamos varios problemas y agregamos nuevas funciones. Verifique especialmente la configuración definida de \"antirrebote\" y \"tiempo de bloqueo\" en sus puntos de datos si los valores no se registran como se esperaba y asegúrese de que la configuración tenga sentido. Para obtener más detalles, consulte el registro de cambios y el archivo Léame.",
           "pl": "Ta nowa wersja wprowadza kilka zmian w sposobie rejestrowania wartości, ponieważ naprawiliśmy kilka problemów i dodaliśmy nowe funkcje. W szczególności sprawdź zdefiniowane ustawienia „odbicia” i „czasu blokowania” w punktach danych, jeśli wartości nie są rejestrowane zgodnie z oczekiwaniami i upewnij się, że ustawienia mają sens. Aby uzyskać więcej informacji, zapoznaj się z dziennikiem zmian i Readme.",
+          "uk": "Ця нова версія вносить кілька змін у реєстрацію значень, оскільки ми виправили кілька проблем і додали нові функції. Будь ласка, особливо перевірте визначені налаштування «затримки» та «часу блокування» в ваших точках даних, якщо значення не реєструються так, як очікувалося, і переконайтеся, що налаштування мають сенс. Для отримання додаткової інформації див. Журнал змін та Readme.",
           "zh-cn": "这个新版本引入了一些更改值的记录方式，因为我们修复了几个问题并添加了新功能。如果未按预期记录值，请特别检查数据点中定义的“去抖动”和“阻塞时间”设置，并确保设置有意义。有关更多详细信息，请参阅更改日志和自述文件。"
         },
         "link": "https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#default-settings",
@@ -254,6 +264,7 @@
           "it": "Leggimi",
           "es": "Léame",
           "pl": "Readme",
+          "uk": "Прочитай мене",
           "zh-cn": "自述文件"
         },
         "buttons": [
