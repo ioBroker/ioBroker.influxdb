@@ -14,7 +14,7 @@
       "uk": "Збереження історії подій для окремих станів в InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "4.0.2",
+    "version": "4.0.3",
     "title": "Logging data with InfluxDB",
     "titleLang": {
       "en": "Logging data with InfluxDB",
@@ -30,6 +30,19 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "4.0.3": {
+        "en": "Some packages were updated",
+        "de": "Einige Pakete wurden aktualisiert",
+        "ru": "Некоторые пакеты были обновлены",
+        "pt": "Alguns pacotes foram atualizados",
+        "nl": "Sommige pakketten werden bijgewerkt",
+        "fr": "Certains paquets ont été mis à jour",
+        "it": "Alcuni pacchetti sono stati aggiornati",
+        "es": "Algunos paquetes se actualizaron",
+        "pl": "Niektóre pakiety zostały zaktualizowane",
+        "uk": "Деякі пакети були оновлено",
+        "zh-cn": "一些软件包已更新"
+      },
       "4.0.2": {
         "en": "Corrected JSON config\nCorrected filter function in booleanTypeCheckQuery\nAllowed the self-signed certificates using \"test connection\" button\nThe deletion of data from DB was implemented for V2\nAdded support for `count` aggregate type on getHistory\nminimal supported node.js version is 16 now",
         "de": "JSON config korrigiert\nKorrigierte Filterfunktion in booleanTypeCheckQuery\nErlaubt die selbstsignierten Zertifikate mit \"Test-Verbindung\" Taste\nDie Löschung von Daten aus DB wurde für V2 implementiert\nUnterstützung für Grafit-Aggregat-Typ auf getHistory\nminimal unterstützt node.js version ist jetzt 16",
@@ -104,18 +117,6 @@
         "es": "Permitir eliminar de nuevo un valor de configuración para redondear en configuración",
         "pl": "Allow, aby usunąć wartość konfiguracyjna w zakręcie ponownie w konfigunie",
         "zh-cn": "允许再次取消一轮谈判的组合价值"
-      },
-      "3.1.6": {
-        "en": "When not count is provided for aggregate \"none\" or \"onchange\" then the limit (default 2000) is used as count to define the number of data to return.",
-        "de": "Wenn für die Aggregate keine oder Onchange keine Zählung vorgesehen ist, wird die Grenze (Standard 2000) als Zählung verwendet, um die Anzahl der Daten zu definieren, um zurückzukehren.",
-        "ru": "Когда не считать предоставляется для агрегата ни один или онмен, то предел (по умолчанию 2000) используется как считать, чтобы определить количество данных для возврата.",
-        "pt": "Quando não a contagem é fornecida para agregar nenhum ou onchange, então o limite (padrão 2000) é usado como contagem para definir o número de dados para retornar.",
-        "nl": "Als de tel niet wordt toegewezen voor aggregate noch onchange, dan wordt de limiet 2000 gebruikt om het aantal data te definiëren om terug te keren.",
-        "fr": "Lorsqu'il n'y a pas de comptage pour l'agrégat ou le changement, la limite (par défaut 2000) est utilisée pour définir le nombre de données à retourner.",
-        "it": "Quando il conteggio non viene fornito per aggregato nessuno o cambio, il limite (default 2000) viene utilizzato come conteggio per definire il numero di dati da restituire.",
-        "es": "Cuando no se cuenta se proporciona para agregado ninguno o cambio entonces el límite (por defecto 2000) se utiliza como cuenta para definir el número de datos para regresar.",
-        "pl": "Jeśli nieliczanie jest dostarczane dla agregacji ani zmian, to limit (default 2000) jest używany jako określenie liczby danych do powrotu.",
-        "zh-cn": "当没有计算总额时,或当时的汇率(2000年)用来确定返回的数据数量。."
       }
     },
     "mode": "daemon",

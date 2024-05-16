@@ -451,7 +451,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 4.0.3 (2024-05-16)
 * (bluefox) Some packages were updated
 
 ### 4.0.2 (2024-01-03)
