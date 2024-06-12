@@ -208,7 +208,9 @@
           "help": "0 = disable",
           "sm": 12,
           "md": 6,
-          "lg": 4
+          "lg": 4,
+          "min": 0,
+          "max": 2147483
         },
         "changesMinDelta": {
           "type": "number",
