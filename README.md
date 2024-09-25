@@ -451,6 +451,9 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
+### **WORK IN PROGRESS**
+* (simatec) Responsive Design added
+
 ### 4.0.3 (2024-05-16)
 * (bluefox) Some packages were updated
 
