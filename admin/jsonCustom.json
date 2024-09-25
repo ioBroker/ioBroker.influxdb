@@ -33,7 +33,7 @@
       "type": "number",
       "label": "log changes interval(s)",
       "min": 0,
-      "max": 86400000,
+      "max": 2147483,
       "help": "0 = disabled",
       "defaultFunc": "instanceObj.native.changesRelogInterval",
       "sm": 6,

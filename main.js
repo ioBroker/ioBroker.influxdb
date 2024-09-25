@@ -674,6 +674,10 @@ function main(adapter) {
     }
     if (adapter.config.changesRelogInterval !== null && adapter.config.changesRelogInterval !== undefined) {
         adapter.config.changesRelogInterval = parseInt(adapter.config.changesRelogInterval, 10);
+        if (adapter.config.changesRelogInterval > 2147483) {
+            adapter.log.warn('changesRelogInterval was configured too high. Please correct this in the settings. Set to 2147483 seconds (max. value).');
+            adapter.config.changesRelogInterval = 2147483;
+        }
     } else {
         adapter.config.changesRelogInterval = 0;
     }
@@ -891,6 +895,13 @@ function pushHistory(adapter, id, state, timerRelog) {
         settings.enableDebugLogs && adapter.log.debug(`new value received for ${id} (storageType ${settings.storageType}), new-value=${state.val}, ts=${state.ts}, relog=${timerRelog}`);
 
         let ignoreDebonce = false;
+
+        if (settings.changesRelogInterval !== null && settings.changesRelogInterval !== undefined) {
+            if (settings.changesRelogInterval > 2147483) {
+                adapter.log.warn(`changesRelogInterval was configured too high. Please correct this in the settings of '${id}'. Set to 2147483 seconds (max. value).`);
+                settings.changesRelogInterval = 2147483;
+            }
+        }
 
         if (!timerRelog) {
             const valueUnstable = !!adapter._influxDPs[id].timeout;
