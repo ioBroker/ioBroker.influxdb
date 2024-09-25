@@ -15,6 +15,7 @@
                 {"label": "1.x", "value": "1.x"},
                 {"label": "2.x", "value": "2.x"}
             ],
+            "xs": 12,
             "sm": 12,
             "md": 8
         },
@@ -27,12 +28,14 @@
             {"label": "https", "value": "https"}
           ],
           "label": "Protocol",
+          "xs": 12,
           "sm": 12,
           "md": 2
         },
         "host": {
           "type": "text",
           "label": "Host",
+          "xs": 12,
           "sm": 12,
           "md": 8
         },
@@ -41,6 +44,7 @@
           "label": "Port",
           "min": 1,
           "max": 65565,
+          "xs": 12,
           "sm": 12,
           "md": 2
         },
@@ -50,6 +54,7 @@
           "help": "only enter when e.g. a reverse proxy is used",
           "hidden": "data.dbversion === '1.x'",
           "disabled": "data.dbversion === '1.x'",
+          "xs": 12,
           "sm": 12,
           "md": 4
         },
@@ -59,6 +64,7 @@
           "label": "User",
           "hidden": "data.dbversion === '2.x'",
           "disabled": "data.dbversion === '2.x'",
+          "xs": 12,
           "sm": 12,
           "md": 4
         },
@@ -68,6 +74,7 @@
           "hidden": "data.dbversion === '2.x'",
           "disabled": "data.dbversion === '2.x'",
           "repeat": true,
+          "xs": 12,
           "sm": 12,
           "md": 8
         },
@@ -77,6 +84,7 @@
           "label": "Organization",
           "hidden": "data.dbversion === '1.x'",
           "disabled": "data.dbversion === '1.x'",
+          "xs": 12,
           "sm": 12,
           "md": 4
         },
@@ -85,6 +93,7 @@
           "label": "Token",
           "hidden": "data.dbversion === '1.x'",
           "disabled": "data.dbversion === '1.x'",
+          "xs": 12,
           "sm": 12,
           "md": 8
         },
@@ -92,6 +101,7 @@
           "newLine": true,
           "type": "text",
           "label": "DB Name",
+          "xs": 12,
           "sm": 12,
           "md": 8
         },
@@ -100,6 +110,7 @@
           "type": "number",
           "label": "Request timeout",
           "help": "Milliseconds",
+          "xs": 12,
           "sm": 12,
           "md": 2
         },
@@ -109,6 +120,7 @@
           "label": "Validate SSL certificate",
           "hidden": "data.dbversion === '1.x'",
           "disabled": "data.dbversion === '1.x'",
+          "xs": 12,
           "sm": 12,
           "md": 4
         },
@@ -116,12 +128,14 @@
           "newLine": true,
           "type": "number",
           "label": "Round real to",
+          "xs": 12,
           "sm": 12,
           "md": 4
         },
         "relogLastValueOnStart": {
           "type": "checkbox",
           "label": "Log the last value again on startup",
+          "xs": 12,
           "sm": 12,
           "md": 4
         },
@@ -130,6 +144,7 @@
           "type": "number",
           "label": "Buffer Datapoints",
           "help": "use 0 to not buffer at all",
+          "xs": 12,
           "sm": 12,
           "md": 4
         },
@@ -137,6 +152,7 @@
           "type": "number",
           "label": "Buffer Flush Interval",
           "help": "Seconds",
+          "xs": 12,
           "sm": 12,
           "md": 4,
           "lg": 3
@@ -184,6 +200,7 @@
         "debounceTime": {
           "newLine": true,
           "type": "number",
+          "xs": 12,
           "sm": 12,
           "md": 4,
           "min": 0,
@@ -193,6 +210,7 @@
         },
         "blockTime": {
           "type": "number",
+          "xs": 12,
           "sm": 12,
           "md": 4,
           "min": 0,
@@ -206,6 +224,7 @@
           "type": "number",
           "label": "log changes interval(s)",
           "help": "0 = disable",
+          "xs": 12,
           "sm": 12,
           "md": 6,
           "lg": 4
@@ -214,6 +233,7 @@
           "type": "number",
           "label": "log changes minimal delta",
           "help": "0 = disable delta check",
+          "xs": 12,
           "sm": 12,
           "md": 6,
           "lg": 4
@@ -272,6 +292,7 @@
               "label": "Custom timeframe"
             }
           ],
+          "xs": 12,
           "sm": 12,
           "md": 6
         },
@@ -279,6 +300,7 @@
           "type": "number",
           "label": "Custom retention duration (days)",
           "min": 1,
+          "xs": 12,
           "sm": 12,
           "md": 4,
           "hidden": "(data.retention !== -1)",
@@ -305,6 +327,7 @@
           "newLine": true,
           "type": "text",
           "label": "Round real to",
+          "xs": 12,
           "sm": 12,
           "md": 4,
           "lg": 3,
@@ -316,6 +339,7 @@
           "newLine": true,
           "label": "Disable charting optimized logging of skipped values",
           "type": "checkbox",
+          "xs": 12,
           "sm": 12,
           "md": 4
         },
@@ -323,11 +347,13 @@
           "newLine": true,
           "label": "Enable enhanced debug logs for the datapoint",
           "type": "checkbox",
+          "xs": 12,
           "sm": 12,
           "md": 4
         },
         "debounce": {
           "type": "number",
+          "xs": 12,
           "sm": 12,
           "md": 4,
           "min": 0,
@@ -343,6 +369,7 @@
       "items": {
         "usetags": {
           "type": "checkbox",
+          "xs": 12,
           "sm": 12,
           "md": 6,
           "label": "Use tags to store metadata information, instead of fields",
@@ -358,6 +385,7 @@
         },
         "pingserver": {
             "type": "checkbox",
+            "xs": 12,
             "sm": 12,
             "md": 6,
             "label": "Send health-check pings to database",
