@@ -38,7 +38,7 @@
         "@iobroker/eslint-config": "^2.2.0",
         "@iobroker/testing": "^5.1.1",
         "@types/dockerode": "^3.3.45",
-        "chai": "^4.5.0",
+        "chai": "^6.2.2",
         "mocha": "^11.7.4",
         "@types/tar-fs": "^2.0.4"
     },
