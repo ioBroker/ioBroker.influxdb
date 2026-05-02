@@ -458,6 +458,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 ## Changelog
 ### **WORK IN PROGRESS**
+- (copilot) Adapter requires node.js >= 22 now
 * (bluefox) Completely refactored the code to TypeScript and ES6
 * (bluefox) Added possibility to start docker containers directly from the adapter
 * (mcm1957) Adapter requires admin >= 7.7.2 now
