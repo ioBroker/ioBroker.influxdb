@@ -136,7 +136,7 @@
     "compact": true,
     "dependencies": [
       {
-        "js-controller": ">=3.3.0"
+        "js-controller": ">=6.0.11"
       }
     ],
     "globalDependencies": [
@@ -165,7 +165,9 @@
         "dsn": "https://29eecf4e8c954f2ea78110d47a9b122d@sentry.iobroker.net/54"
       },
       "docker": {
-        "iobDockerComposeFiles": ["docker-compose.yaml"]
+        "iobDockerComposeFiles": [
+          "docker-compose.yaml"
+        ]
       }
     },
     "adminUI": {

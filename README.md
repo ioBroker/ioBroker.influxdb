@@ -458,6 +458,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 ## Changelog
 ### **WORK IN PROGRESS**
+- (ioBroker-Bot) Adapter requires js-controller >= 6.0.11 now.
 * (bluefox) Completely refactored the code to TypeScript and ES6
 * (bluefox) Added possibility to start docker containers directly from the adapter
 * (mcm1957) Adapter requires admin >= 7.7.2 now
