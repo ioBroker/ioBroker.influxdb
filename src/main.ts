@@ -15,7 +15,6 @@ import type {
 } from './types';
 import { DockerManagerOfOwnContainers, type ContainerConfig } from '@iobroker/plugin-docker';
 const dataDir = getAbsoluteDefaultDataDir();
-let cacheFile = join(dataDir, 'influxdata.json');
 
 const dockerDefaultToken = Buffer.from('iobroker86645638546565652656').toString('base64');
 
@@ -167,6 +166,8 @@ export class InfluxDBAdapter extends Adapter {
     private _finished = false;
     // mapping from ioBroker ID to Alias ID
     private readonly _aliasMap: { [ioBrokerId: string]: string } = {};
+    // Per-instance cache file (must NOT be a module global, otherwise instances collide in compact mode)
+    private _cacheFile = join(dataDir, 'influxdata.json');
 
     public constructor(options: Partial<AdapterOptions> = {}) {
         super({
@@ -416,29 +417,27 @@ export class InfluxDBAdapter extends Adapter {
             this.setConnected(true); // ??? to early, move down?
             if (!dbNames.includes(this.config.dbname)) {
                 await this._client.createDatabase(this.config.dbname);
-                // Check and potentially update retention policy
-                try {
-                    await this._client.applyRetentionPolicyToDB(this.config.dbname, this.config.retention as number);
-                } catch (error) {
-                    // Ignore issues with creating/altering retention policy, as it might be due to insufficient permissions
-                    this.log.warn(extractError(error));
-                }
+            }
 
-                if (this.config.dbversion === '2.x') {
-                    await this.checkMetaDataStorageType();
-                }
+            // Check and potentially update retention policy
+            try {
+                await this._client.applyRetentionPolicyToDB(this.config.dbname, this.config.retention as number);
+            } catch (error) {
+                // Ignore issues with creating/altering retention policy, as it might be due to insufficient permissions
+                this.log.warn(extractError(error));
+            }
+
+            if (this.config.dbversion === '2.x') {
+                // For 2.x the connection is finalized inside checkMetaDataStorageType (after the
+                // tags/fields compatibility check), so it can abort the start on a conflict.
+                await this.checkMetaDataStorageType();
             } else {
-                // Check and potentially update retention policy
-                try {
-                    await this._client.applyRetentionPolicyToDB(this.config.dbname, this.config.retention as number);
-                } catch (error) {
-                    // Ignore issues with creating/altering retention policy, as it might be due to insufficient permissions
-                    this.log.warn(extractError(error));
-                }
-
-                if (this.config.dbversion === '2.x') {
-                    await this.checkMetaDataStorageType();
-                }
+                // For 1.x there is no metadata storage type check, so finalize the connection here.
+                // (Previously startPing/processStartValues/"Connected!" only ran for 2.x.)
+                this.setConnected(true);
+                await this.processStartValues();
+                this.log.info('Connected!');
+                this.startPing();
             }
         } catch (error) {
             this.log.error(extractError(error));
@@ -721,22 +720,13 @@ export class InfluxDBAdapter extends Adapter {
         this.config.dbname ||= 'iobroker';
         try {
             if (msg.command === 'features') {
-                // influxdb 1
-                if (this.config.dbversion === '1.x') {
-                    this.sendTo(
-                        msg.from,
-                        msg.command,
-                        { supportedFeatures: ['update', 'delete', 'deleteRange', 'deleteAll', 'storeState'] },
-                        msg.callback,
-                    );
-                } else {
-                    this.sendTo(
-                        msg.from,
-                        msg.command,
-                        { supportedFeatures: ['update', 'delete', 'deleteRange', 'deleteAll', 'storeState'] },
-                        msg.callback,
-                    );
-                }
+                // Currently the supported features are identical for InfluxDB 1.x and 2.x
+                this.sendTo(
+                    msg.from,
+                    msg.command,
+                    { supportedFeatures: ['update', 'delete', 'deleteRange', 'deleteAll', 'storeState'] },
+                    msg.callback,
+                );
             } else if (msg.command === 'update') {
                 await this.updateState(msg);
             } else if (msg.command === 'delete') {
@@ -888,12 +878,12 @@ export class InfluxDBAdapter extends Adapter {
         }
 
         if (this.instance !== 0) {
-            cacheFile = cacheFile.replace(/\.json$/, `_${this.instance}.json`);
+            this._cacheFile = this._cacheFile.replace(/\.json$/, `_${this.instance}.json`);
         }
         // analyse if by the last stop the values were cached into file
         try {
-            if (statSync(cacheFile).isFile()) {
-                const fileContent = readFileSync(cacheFile, 'utf-8');
+            if (statSync(this._cacheFile).isFile()) {
+                const fileContent = readFileSync(this._cacheFile, 'utf-8');
                 const tempData = JSON.parse(fileContent, (key, value) => (key === 'time' ? new Date(value) : value));
 
                 if (tempData.seriesBufferCounter) {
@@ -908,7 +898,7 @@ export class InfluxDBAdapter extends Adapter {
                 this.log.info(
                     `Buffer initialized with data for ${this._seriesBufferCounter} points and ${Object.keys(this._conflictingPoints).length} conflicts from last exit`,
                 );
-                unlinkSync(cacheFile);
+                unlinkSync(this._cacheFile);
             }
         } catch {
             this.log.info('No stored data from last exit found');
@@ -1381,8 +1371,10 @@ datasources:
             throw new Error(`InfluxDB can not handle non finite values like ${state.val}`);
         }
 
-        if (isFinite(state.ts)) {
-            state.ts = parseInt(state.ts as unknown as string, 10) || 0;
+        // Ensure the timestamp is an integer (ms). Fall back to current time for invalid timestamps.
+        state.ts = parseInt(state.ts as unknown as string, 10);
+        if (!isFinite(state.ts)) {
+            state.ts = Date.now();
         }
 
         if (typeof state.val === 'object') {
@@ -1424,6 +1416,10 @@ datasources:
                 this.log.debug(`Direct writePoint("${id} - ${stateObj.value} / ${stateObj.time.toLocaleString()}")`);
             }
             await this.writeOnePointForID(id, stateObj, true);
+            // The point was written directly, so it must NOT also be added to the buffer,
+            // otherwise it would be written a second time on the next flush.
+            // (On write failure writeOnePointForID re-adds the point to the buffer itself.)
+            return;
         }
 
         this._seriesBuffer[id] ||= [];
@@ -1475,19 +1471,25 @@ datasources:
             this._seriesBufferChecker = null;
         }
 
-        this.log.info(`Store ${this._seriesBufferCounter} buffered influxDB history points`);
+        const result = this._seriesBufferCounter;
+        this.log.info(`Store ${result} buffered influxDB history points`);
 
+        // Snapshot the buffer and reset it BEFORE awaiting the write. Otherwise points that are
+        // pushed via addPointToSeriesBuffer() while the (async) write is in flight would be
+        // discarded by the reset afterwards (data loss). On write failure the write helpers
+        // re-add the failed points into the (now fresh) this._seriesBuffer, where they correctly
+        // merge with the newly arrived points.
         const currentBuffer = this._seriesBuffer;
-        if (this._seriesBufferCounter > 15000) {
+        this._seriesBuffer = {};
+        this._seriesBufferCounter = 0;
+
+        if (result > 15000) {
             // if we have too many data points in buffer, we better writer them per id
-            this.log.info(`Too many data points (${this._seriesBufferCounter}) to write at once; write per ID`);
+            this.log.info(`Too many data points (${result}) to write at once; write per ID`);
             await this.writeAllSeriesPerID(currentBuffer);
         } else {
             await this.writeAllSeriesAtOnce(currentBuffer);
         }
-        const result = this._seriesBufferCounter;
-        this._seriesBuffer = {};
-        this._seriesBufferCounter = 0;
         this._seriesBufferFlushPlanned = false;
         this._seriesBufferChecker = setInterval(
             () => this.storeBufferedSeries(),
@@ -1606,6 +1608,11 @@ datasources:
         try {
             await this._client?.writePoint(pointId, point);
             this.setConnected(true);
+            // Successful write: reset the error counter so a previously flaky point can recover
+            // instead of accumulating errors across unrelated transient failures.
+            if (this._errorPoints[pointId]) {
+                this._errorPoints[pointId] = 0;
+            }
         } catch (error) {
             this.log.warn(`Error on writePoint("${JSON.stringify(point)}): ${extractError(error)}"`);
             const errorText = extractError(error);
@@ -1730,7 +1737,7 @@ datasources:
             };
 
             try {
-                writeFileSync(cacheFile, JSON.stringify(fileData), 'utf-8');
+                writeFileSync(this._cacheFile, JSON.stringify(fileData), 'utf-8');
                 this.log.warn(
                     `Store data for ${fileData.seriesBufferCounter} points and ${Object.keys(fileData.conflictingPoints).length} conflicts`,
                 );

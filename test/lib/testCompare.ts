@@ -1,4 +1,4 @@
-import { ContainerConfig } from '../../src/lib/dockerManager.types';
+import type { ContainerConfig } from '@iobroker/plugin-docker';
 
 const desiredConfig: ContainerConfig = {
     iobEnabled: true,
