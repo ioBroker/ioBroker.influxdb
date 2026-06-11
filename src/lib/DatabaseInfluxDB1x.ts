@@ -4,6 +4,7 @@ import { Database, type ValuesForInflux } from './Database';
 export default class DatabaseInfluxDB1x extends Database {
     private readonly username: string;
     private readonly password: string;
+    private readonly validateSSL: boolean;
     private connection: InfluxDB | null = null;
 
     constructor(
@@ -18,11 +19,13 @@ export default class DatabaseInfluxDB1x extends Database {
         db1xOptions: {
             username: string;
             password: string;
+            validateSSL?: boolean;
         },
     ) {
         super(options);
         this.username = db1xOptions.username;
         this.password = db1xOptions.password;
+        this.validateSSL = db1xOptions.validateSSL !== undefined ? db1xOptions.validateSSL : true;
 
         this.connect();
     }
@@ -37,6 +40,10 @@ export default class DatabaseInfluxDB1x extends Database {
             username: this.username,
             password: this.password,
             database: this.database,
+            // Honor the configured request timeout (otherwise requests could hang indefinitely)
+            pool: this.requestTimeout ? { requestTimeout: this.requestTimeout } : undefined,
+            // Honor SSL validation setting for https connections
+            options: this.protocol === 'https' ? { rejectUnauthorized: this.validateSSL } : undefined,
         });
     }
 
