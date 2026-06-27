@@ -462,7 +462,7 @@
                 },
                 "dockerGrafana.serverRootUrl": {
                     "newLine": true,
-                    "type": "string",
+                    "type": "text",
                     "label": "Server root URL",
                     "help": "Defines the root URL, useful when Grafana is behind a reverse proxy.",
                     "xs": 12
