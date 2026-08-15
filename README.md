@@ -457,7 +457,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
-### 5.0.0 (2026-08-15)
+### **WORK IN PROGRESS**
 * (@GermanBluefox) Completely refactored the code to TypeScript and ES6
 * (@GermanBluefox) Added possibility to start docker containers directly from the adapter
 * (mcm1957) Adapter requires admin >= 7.7.2 now
