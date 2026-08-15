@@ -7,3 +7,6 @@ exe
 /tmp
 /build/
 *.tgz
+
+#ignore .commitinfo created by ioBroker release script
+.commitinfo
