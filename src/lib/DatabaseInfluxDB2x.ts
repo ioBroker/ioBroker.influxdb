@@ -131,6 +131,13 @@ export default class DatabaseInfluxDB2x extends Database {
     }
 
     async applyRetentionPolicyToDB(dbName: string, retention: number): Promise<void> {
+        // Skip the PATCH request if the retention is already as desired (avoids an API call on every connect)
+        const currentRetention = await this.getRetentionPolicyForDB(dbName);
+        if (currentRetention && currentRetention.time === retention) {
+            this.log.debug(`Retention policy for ${dbName} remains unchanged.`);
+            return;
+        }
+
         const shardGroupDuration = this.calculateShardGroupDuration(retention);
         this.log.info(
             `Applying retention policy for ${dbName} to ${!retention ? 'infinity' : `${retention} seconds`}. Shard Group Duration (calculated): ${shardGroupDuration} seconds`,

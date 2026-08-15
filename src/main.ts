@@ -15,7 +15,6 @@ import type {
 } from './types';
 import { DockerManagerOfOwnContainers, type ContainerConfig } from '@iobroker/plugin-docker';
 const dataDir = getAbsoluteDefaultDataDir();
-let cacheFile = join(dataDir, 'influxdata.json');
 
 const dockerDefaultToken = Buffer.from('iobroker86645638546565652656').toString('base64');
 
@@ -42,6 +41,22 @@ function extractError(error: any): string {
     }
 
     return error.toString();
+}
+
+/**
+ * Escape an InfluxQL identifier (e.g. a measurement name) that is placed inside double quotes
+ * in a query, to prevent InfluxQL injection via the ioBroker state id.
+ */
+function escapeInfluxQLIdentifier(id: string | undefined): string {
+    return String(id).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+/**
+ * Escape a value that is placed inside a Flux double-quoted string literal, to prevent Flux
+ * injection (incl. Flux string interpolation via ${...}) via the ioBroker state id or db name.
+ */
+function escapeFluxString(value: string | undefined): string {
+    return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\$\{/g, '\\${');
 }
 
 function sortByTs(
@@ -167,6 +182,8 @@ export class InfluxDBAdapter extends Adapter {
     private _finished = false;
     // mapping from ioBroker ID to Alias ID
     private readonly _aliasMap: { [ioBrokerId: string]: string } = {};
+    // Per-instance cache file (must NOT be a module global, otherwise instances collide in compact mode)
+    private _cacheFile = join(dataDir, 'influxdata.json');
 
     public constructor(options: Partial<AdapterOptions> = {}) {
         super({
@@ -380,10 +397,18 @@ export class InfluxDBAdapter extends Adapter {
                 );
                 break;
             case '1.x':
-            default:
+            default: {
                 // eslint-disable-next-line no-control-regex
                 if (/[\x00-\x08\x0E-\x1F\x80-\xFF]/.test(this.config.password)) {
                     return this.log.error('Password error: Please re-enter the password in Admin. Stopping');
+                }
+
+                let decodedPassword: string;
+                try {
+                    decodedPassword = decodeURIComponent(this.config.password || '');
+                } catch {
+                    this.log.error('Password error: Please re-enter the password in Admin. Stopping');
+                    return;
                 }
 
                 this._client = new DatabaseInfluxDB1x(
@@ -397,10 +422,12 @@ export class InfluxDBAdapter extends Adapter {
                     },
                     {
                         username: this.config.user,
-                        password: decodeURIComponent(this.config.password || ''),
+                        password: decodedPassword,
+                        validateSSL: this.config.validateSSL,
                     },
                 );
                 break;
+            }
         }
 
         if (this.config.pingserver === false) {
@@ -416,29 +443,27 @@ export class InfluxDBAdapter extends Adapter {
             this.setConnected(true); // ??? to early, move down?
             if (!dbNames.includes(this.config.dbname)) {
                 await this._client.createDatabase(this.config.dbname);
-                // Check and potentially update retention policy
-                try {
-                    await this._client.applyRetentionPolicyToDB(this.config.dbname, this.config.retention as number);
-                } catch (error) {
-                    // Ignore issues with creating/altering retention policy, as it might be due to insufficient permissions
-                    this.log.warn(extractError(error));
-                }
+            }
 
-                if (this.config.dbversion === '2.x') {
-                    await this.checkMetaDataStorageType();
-                }
+            // Check and potentially update retention policy
+            try {
+                await this._client.applyRetentionPolicyToDB(this.config.dbname, this.config.retention as number);
+            } catch (error) {
+                // Ignore issues with creating/altering retention policy, as it might be due to insufficient permissions
+                this.log.warn(extractError(error));
+            }
+
+            if (this.config.dbversion === '2.x') {
+                // For 2.x the connection is finalized inside checkMetaDataStorageType (after the
+                // tags/fields compatibility check), so it can abort the start on a conflict.
+                await this.checkMetaDataStorageType();
             } else {
-                // Check and potentially update retention policy
-                try {
-                    await this._client.applyRetentionPolicyToDB(this.config.dbname, this.config.retention as number);
-                } catch (error) {
-                    // Ignore issues with creating/altering retention policy, as it might be due to insufficient permissions
-                    this.log.warn(extractError(error));
-                }
-
-                if (this.config.dbversion === '2.x') {
-                    await this.checkMetaDataStorageType();
-                }
+                // For 1.x there is no metadata storage type check, so finalize the connection here.
+                // (Previously startPing/processStartValues/"Connected!" only ran for 2.x.)
+                this.setConnected(true);
+                await this.processStartValues();
+                this.log.info('Connected!');
+                this.startPing();
             }
         } catch (error) {
             this.log.error(extractError(error));
@@ -548,11 +573,14 @@ export class InfluxDBAdapter extends Adapter {
     }
 
     async testConnection(msg: ioBroker.Message): Promise<void> {
-        this.log.debug(`testConnection msg-object: ${JSON.stringify(msg)}`);
         if (!msg?.message || !isObject(msg.message.config)) {
             return this.sendTo(msg.from, msg.command, { error: 'Invalid test configuration.' }, msg.callback);
         }
         const config: InfluxDBAdapterConfig = msg.message.config;
+        // Do NOT log the full message: msg.message.config contains the DB password/token in clear text.
+        this.log.debug(
+            `testConnection: dbversion=${config.dbversion} ${config.protocol}://${config.host}:${config.port} db=${config.dbname} (credentials redacted)`,
+        );
         config.port = parseInt(config.port as string, 10) || 0;
         config.requestTimeout = parseInt(config.requestTimeout as string) || 30000;
 
@@ -628,6 +656,7 @@ export class InfluxDBAdapter extends Adapter {
                         {
                             username: config.user,
                             password: decodeURIComponent(config.password || ''),
+                            validateSSL: config.validateSSL,
                         },
                     );
                     break;
@@ -721,22 +750,13 @@ export class InfluxDBAdapter extends Adapter {
         this.config.dbname ||= 'iobroker';
         try {
             if (msg.command === 'features') {
-                // influxdb 1
-                if (this.config.dbversion === '1.x') {
-                    this.sendTo(
-                        msg.from,
-                        msg.command,
-                        { supportedFeatures: ['update', 'delete', 'deleteRange', 'deleteAll', 'storeState'] },
-                        msg.callback,
-                    );
-                } else {
-                    this.sendTo(
-                        msg.from,
-                        msg.command,
-                        { supportedFeatures: ['update', 'delete', 'deleteRange', 'deleteAll', 'storeState'] },
-                        msg.callback,
-                    );
-                }
+                // Currently the supported features are identical for InfluxDB 1.x and 2.x
+                this.sendTo(
+                    msg.from,
+                    msg.command,
+                    { supportedFeatures: ['update', 'delete', 'deleteRange', 'deleteAll', 'storeState'] },
+                    msg.callback,
+                );
             } else if (msg.command === 'update') {
                 await this.updateState(msg);
             } else if (msg.command === 'delete') {
@@ -888,12 +908,12 @@ export class InfluxDBAdapter extends Adapter {
         }
 
         if (this.instance !== 0) {
-            cacheFile = cacheFile.replace(/\.json$/, `_${this.instance}.json`);
+            this._cacheFile = this._cacheFile.replace(/\.json$/, `_${this.instance}.json`);
         }
         // analyse if by the last stop the values were cached into file
         try {
-            if (statSync(cacheFile).isFile()) {
-                const fileContent = readFileSync(cacheFile, 'utf-8');
+            if (statSync(this._cacheFile).isFile()) {
+                const fileContent = readFileSync(this._cacheFile, 'utf-8');
                 const tempData = JSON.parse(fileContent, (key, value) => (key === 'time' ? new Date(value) : value));
 
                 if (tempData.seriesBufferCounter) {
@@ -908,7 +928,7 @@ export class InfluxDBAdapter extends Adapter {
                 this.log.info(
                     `Buffer initialized with data for ${this._seriesBufferCounter} points and ${Object.keys(this._conflictingPoints).length} conflicts from last exit`,
                 );
-                unlinkSync(cacheFile);
+                unlinkSync(this._cacheFile);
             }
         } catch {
             this.log.info('No stored data from last exit found');
@@ -1381,8 +1401,10 @@ datasources:
             throw new Error(`InfluxDB can not handle non finite values like ${state.val}`);
         }
 
-        if (isFinite(state.ts)) {
-            state.ts = parseInt(state.ts as unknown as string, 10) || 0;
+        // Ensure the timestamp is an integer (ms). Fall back to current time for invalid timestamps.
+        state.ts = parseInt(state.ts as unknown as string, 10);
+        if (!isFinite(state.ts)) {
+            state.ts = Date.now();
         }
 
         if (typeof state.val === 'object') {
@@ -1424,6 +1446,10 @@ datasources:
                 this.log.debug(`Direct writePoint("${id} - ${stateObj.value} / ${stateObj.time.toLocaleString()}")`);
             }
             await this.writeOnePointForID(id, stateObj, true);
+            // The point was written directly, so it must NOT also be added to the buffer,
+            // otherwise it would be written a second time on the next flush.
+            // (On write failure writeOnePointForID re-adds the point to the buffer itself.)
+            return;
         }
 
         this._seriesBuffer[id] ||= [];
@@ -1475,19 +1501,25 @@ datasources:
             this._seriesBufferChecker = null;
         }
 
-        this.log.info(`Store ${this._seriesBufferCounter} buffered influxDB history points`);
+        const result = this._seriesBufferCounter;
+        this.log.info(`Store ${result} buffered influxDB history points`);
 
+        // Snapshot the buffer and reset it BEFORE awaiting the write. Otherwise points that are
+        // pushed via addPointToSeriesBuffer() while the (async) write is in flight would be
+        // discarded by the reset afterwards (data loss). On write failure the write helpers
+        // re-add the failed points into the (now fresh) this._seriesBuffer, where they correctly
+        // merge with the newly arrived points.
         const currentBuffer = this._seriesBuffer;
-        if (this._seriesBufferCounter > 15000) {
+        this._seriesBuffer = {};
+        this._seriesBufferCounter = 0;
+
+        if (result > 15000) {
             // if we have too many data points in buffer, we better writer them per id
-            this.log.info(`Too many data points (${this._seriesBufferCounter}) to write at once; write per ID`);
+            this.log.info(`Too many data points (${result}) to write at once; write per ID`);
             await this.writeAllSeriesPerID(currentBuffer);
         } else {
             await this.writeAllSeriesAtOnce(currentBuffer);
         }
-        const result = this._seriesBufferCounter;
-        this._seriesBuffer = {};
-        this._seriesBufferCounter = 0;
         this._seriesBufferFlushPlanned = false;
         this._seriesBufferChecker = setInterval(
             () => this.storeBufferedSeries(),
@@ -1606,6 +1638,11 @@ datasources:
         try {
             await this._client?.writePoint(pointId, point);
             this.setConnected(true);
+            // Successful write: reset the error counter so a previously flaky point can recover
+            // instead of accumulating errors across unrelated transient failures.
+            if (this._errorPoints[pointId]) {
+                this._errorPoints[pointId] = 0;
+            }
         } catch (error) {
             this.log.warn(`Error on writePoint("${JSON.stringify(point)}): ${extractError(error)}"`);
             const errorText = extractError(error);
@@ -1730,7 +1767,7 @@ datasources:
             };
 
             try {
-                writeFileSync(cacheFile, JSON.stringify(fileData), 'utf-8');
+                writeFileSync(this._cacheFile, JSON.stringify(fileData), 'utf-8');
                 this.log.warn(
                     `Store data for ${fileData.seriesBufferCounter} points and ${Object.keys(fileData.conflictingPoints).length} conflicts`,
                 );
@@ -1754,15 +1791,16 @@ datasources:
         }
 
         if (this.config.dbversion === '1.x') {
+            const safeId = escapeInfluxQLIdentifier(id);
             let query;
             if (state.ts) {
-                query = `DELETE FROM "${id}" WHERE time = '${new Date(state.ts).toISOString()}'`;
+                query = `DELETE FROM "${safeId}" WHERE time = '${new Date(state.ts).toISOString()}'`;
             } else if (state.start) {
-                query = `DELETE FROM "${id}" WHERE time >= '${new Date(state.start).toISOString()}'${state.end ? ` AND time <= '${new Date(state.end).toISOString()}'` : ''}`;
+                query = `DELETE FROM "${safeId}" WHERE time >= '${new Date(state.start).toISOString()}'${state.end ? ` AND time <= '${new Date(state.end).toISOString()}'` : ''}`;
             } else if (state.end) {
-                query = `DELETE FROM "${id}" WHERE time <= '${new Date(state.end).toISOString()}'`;
+                query = `DELETE FROM "${safeId}" WHERE time <= '${new Date(state.end).toISOString()}'`;
             } else {
-                query = `DELETE FROM "${id}" WHERE time >= '2000-01-01T00:00:00.000Z'`; // delete all
+                query = `DELETE FROM "${safeId}" WHERE time >= '2000-01-01T00:00:00.000Z'`; // delete all
             }
 
             try {
@@ -1802,7 +1840,7 @@ datasources:
                     stop,
                     this.config.organization,
                     this.config.dbname,
-                    `_measurement="${id}"`,
+                    `_measurement="${escapeInfluxQLIdentifier(id)}"`,
                 );
                 if (this._client) {
                     this.setConnected(true);
@@ -2057,7 +2095,7 @@ datasources:
         }
 
         if (this.config.dbversion === '1.x') {
-            const query = `SELECT * FROM "${id}" WHERE time = '${new Date(state.ts).toISOString()}'`;
+            const query = `SELECT * FROM "${escapeInfluxQLIdentifier(id)}" WHERE time = '${new Date(state.ts).toISOString()}'`;
 
             try {
                 const result = await this._client?.query<
@@ -2110,10 +2148,10 @@ datasources:
                 throw error;
             }
         } else if (this.config.dbversion === '2.x') {
-            let fluxQuery = `from(bucket: "${this.config.dbname}") `;
+            let fluxQuery = `from(bucket: "${escapeFluxString(this.config.dbname)}") `;
             //using identical start/stops values leads to an 'empty range' error, therefore we add a microsecond
             fluxQuery += ` |> range(start:time(v:${state.ts * 1000000}), stop:time(v:${state.ts * 1000000 + 1000}))`;
-            fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${id}")`;
+            fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${escapeFluxString(id)}")`;
             fluxQuery += ` ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}`;
 
             try {
@@ -2678,7 +2716,8 @@ datasources:
             options.preAggregated = false;
         }
 
-        query += ` from "${id}"`;
+        const safeId = escapeInfluxQLIdentifier(id);
+        query += ` from "${safeId}"`;
 
         query += ` WHERE `;
         if (options.start) {
@@ -2709,10 +2748,10 @@ datasources:
         if (!options.removeBorderValues) {
             let addQuery = '';
             if (options.start) {
-                addQuery = `SELECT value from "${id}" WHERE time <= '${new Date(options.start).toISOString()}' ORDER BY time DESC LIMIT 1;`;
+                addQuery = `SELECT value from "${safeId}" WHERE time <= '${new Date(options.start).toISOString()}' ORDER BY time DESC LIMIT 1;`;
                 query = addQuery + query;
             }
-            addQuery = `;SELECT value from "${id}" WHERE time >= '${new Date(options.end!).toISOString()}' LIMIT 1`;
+            addQuery = `;SELECT value from "${safeId}" WHERE time >= '${new Date(options.end!).toISOString()}' LIMIT 1`;
             query += addQuery;
         }
 
@@ -3035,12 +3074,16 @@ datasources:
 
         const valueColumn = this.config.usetags ? '_value' : 'value';
 
+        // Escape id and bucket name to prevent Flux injection (incl. Flux string interpolation)
+        const safeId = escapeFluxString(id);
+        const safeBucket = escapeFluxString(this.config.dbname);
+
         // Workaround to detect if measurement is of type bool (to skip non-sensual aggregation options)
         // There seems to be no officially supported way to detect this, so we check it by forcing a type-conflict;
         const booleanTypeCheckQuery = `
-        from(bucket: "${this.config.dbname}")
+        from(bucket: "${safeBucket}")
 |> range(${options.start ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end! - ((this.config.retention as number) || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end!).toISOString()})
-|> filter(fn: (r) => r["_field"] == "value" and r["_measurement"] == "${id}" and contains(value: r._value, set: [true, false]))
+|> filter(fn: (r) => r["_field"] == "value" and r["_measurement"] == "${safeId}" and contains(value: r._value, set: [true, false]))
 ${this.config.usetags ? ' |> duplicate(column: "_value", as: "value")' : ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")'}
 |> group()`;
 
@@ -3101,10 +3144,10 @@ ${this.config.usetags ? ' |> duplicate(column: "_value", as: "value")' : ' |> pi
                     }
 
                     const fluxQueries: string[] = [];
-                    let fluxQuery = `from(bucket: "${this.config.dbname}") `;
+                    let fluxQuery = `from(bucket: "${safeBucket}") `;
 
                     fluxQuery += ` |> range(${options.start ? `start: ${new Date(options.start).toISOString()}, ` : `start: ${new Date(options.end! - ((this.config.retention as number) || 31536000) * 1000).toISOString()}, `}stop: ${new Date(options.end!).toISOString()})`;
-                    fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${id}"${resultsFromInfluxDB && supportsAggregates ? ` and r["_field"] == "value"` : ''})`; // we cannot aggregate ack or from
+                    fluxQuery += ` |> filter(fn: (r) => r["_measurement"] == "${safeId}"${resultsFromInfluxDB && supportsAggregates ? ` and r["_field"] == "value"` : ''})`; // we cannot aggregate ack or from
 
                     if (!this.config.usetags) {
                         fluxQuery += ' |> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")';
@@ -3185,18 +3228,18 @@ ${this.config.usetags ? ' |> duplicate(column: "_value", as: "value")' : ' |> pi
                         let addFluxQuery = '';
                         if (options.start) {
                             // get one entry "before" the defined timeframe for displaying purposes
-                            addFluxQuery = `from(bucket: "${this.config.dbname}") 
-|> range(start: ${new Date(options.start - ((this.config.retention as number) || 31536000) * 1000).toISOString()}, stop: ${new Date(options.start - 1).toISOString()}) 
-|> filter(fn: (r) => r["_measurement"] == "${id}"${resultsFromInfluxDB && supportsAggregates ? ` and r["_field"] == "value"` : ''}) 
+                            addFluxQuery = `from(bucket: "${safeBucket}")
+|> range(start: ${new Date(options.start - ((this.config.retention as number) || 31536000) * 1000).toISOString()}, stop: ${new Date(options.start - 1).toISOString()})
+|> filter(fn: (r) => r["_measurement"] == "${safeId}"${resultsFromInfluxDB && supportsAggregates ? ` and r["_field"] == "value"` : ''})
 |> last()
 ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}`;
 
                             fluxQueries.unshift(addFluxQuery);
                         }
                         // get one entry "after" the defined timeframe for displaying purposes
-                        addFluxQuery = `from(bucket: "${this.config.dbname}") 
-|> range(start: ${new Date(options.end! + 1).toISOString()}) 
-|> filter(fn: (r) => r["_measurement"] == "${id}"${resultsFromInfluxDB && supportsAggregates ? ` and r["_field"] == "value"` : ''}) 
+                        addFluxQuery = `from(bucket: "${safeBucket}")
+|> range(start: ${new Date(options.end! + 1).toISOString()})
+|> filter(fn: (r) => r["_measurement"] == "${safeId}"${resultsFromInfluxDB && supportsAggregates ? ` and r["_field"] == "value"` : ''})
 |> first()
 ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valueColumn: "_value")' : ''}`;
                         fluxQueries.push(addFluxQuery);
