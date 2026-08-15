@@ -4,7 +4,7 @@ import { Adapter, type AdapterOptions, getAbsoluteDefaultDataDir } from '@iobrok
 
 import DatabaseInfluxDB1x from './lib/DatabaseInfluxDB1x';
 import DatabaseInfluxDB2x from './lib/DatabaseInfluxDB2x';
-import type { Database, ValuesForInflux } from './lib/Database';
+import { escapeFluxString, escapeInfluxQLIdentifier, type Database, type ValuesForInflux } from './lib/Database';
 import * as Aggregate from './lib/aggregate';
 import type {
     GetHistoryOptions,
@@ -41,22 +41,6 @@ function extractError(error: any): string {
     }
 
     return error.toString();
-}
-
-/**
- * Escape an InfluxQL identifier (e.g. a measurement name) that is placed inside double quotes
- * in a query, to prevent InfluxQL injection via the ioBroker state id.
- */
-function escapeInfluxQLIdentifier(id: string | undefined): string {
-    return String(id).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-}
-
-/**
- * Escape a value that is placed inside a Flux double-quoted string literal, to prevent Flux
- * injection (incl. Flux string interpolation via ${...}) via the ioBroker state id or db name.
- */
-function escapeFluxString(value: string | undefined): string {
-    return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\$\{/g, '\\${');
 }
 
 function sortByTs(
@@ -1401,11 +1385,14 @@ datasources:
             throw new Error(`InfluxDB can not handle non finite values like ${state.val}`);
         }
 
-        // Ensure the timestamp is an integer (ms). Fall back to current time for invalid timestamps.
-        state.ts = parseInt(state.ts as unknown as string, 10);
-        if (!isFinite(state.ts)) {
-            state.ts = Date.now();
+        // Ensure the timestamp is an integer (ms). Never invent one: writing a point with "now"
+        // instead of its real time would silently corrupt the time series, so an invalid
+        // timestamp is rejected like null/non finite values above.
+        const ts = parseInt(state.ts as unknown as string, 10);
+        if (!isFinite(ts)) {
+            throw new Error(`InfluxDB can not handle the invalid timestamp "${state.ts}"`);
         }
+        state.ts = ts;
 
         if (typeof state.val === 'object') {
             state.val = JSON.stringify(state.val);
@@ -1840,7 +1827,7 @@ datasources:
                     stop,
                     this.config.organization,
                     this.config.dbname,
-                    `_measurement="${escapeInfluxQLIdentifier(id)}"`,
+                    `_measurement="${escapeFluxString(id)}"`,
                 );
                 if (this._client) {
                     this.setConnected(true);

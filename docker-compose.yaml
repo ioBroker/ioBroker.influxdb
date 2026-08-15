@@ -4,7 +4,7 @@ services:
     influx:
         image: influxdb:2
         labels:
-            - 'iobEnabled=${config.dockerInflux.enabled:-true}'
+            - 'iobEnabled=${config.dockerInflux.enabled:-false}'
             - 'iobStopOnUnload=${config.dockerInflux.stopIfInstanceStopped:-false}'
             - 'iobAutoImageUpdate=${config.dockerInflux.autoImageUpdate:-true}'
             - 'iobBackup=grafana_data'

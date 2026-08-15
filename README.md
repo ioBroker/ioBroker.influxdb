@@ -458,10 +458,18 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 ## Changelog
 ### **WORK IN PROGRESS**
-* (bluefox) Completely refactored the code to TypeScript and ES6
-* (bluefox) Added possibility to start docker containers directly from the adapter
+* (@GermanBluefox) Completely refactored the code to TypeScript and ES6
+* (@GermanBluefox) Added possibility to start docker containers directly from the adapter
 * (mcm1957) Adapter requires admin >= 7.7.2 now
-* (arteck) smart optimization
+* (arteck) Fixed the connection handling for InfluxDB 1.x: the health check (ping) and the automatic reconnect were never started
+* (arteck) Fixed the loss of buffered values if the writing was running while new values arrived or if the write failed
+* (arteck) Values are no longer written twice if they are written directly (buffer size 0 or conflicting points)
+* (arteck) State IDs and database names are now escaped in the queries
+* (arteck) The password/token is no longer written into the log by the connection test
+* (arteck) The settings "request timeout" and "validate SSL" are now used for InfluxDB 1.x too
+* (arteck) Fixed the cache file name if more than one instance runs in the compact mode
+* (arteck) Fixed the aggregation for `percentile: 100`/`quantile: 1` and the last value of `integralTotal`
+* (@GermanBluefox) Minimal node.js version is 22
 
 ### 4.0.3 (2024-05-16)
 * (bluefox) Some packages were updated
