@@ -26,7 +26,7 @@
         "@influxdata/influxdb-client": "^1.35.0",
         "@influxdata/influxdb-client-apis": "^1.35.0",
         "@iobroker/adapter-core": "^3.4.1",
-        "@iobroker/plugin-docker": "^1.0.3",
+        "@iobroker/plugin-docker": "^1.0.4",
         "influx": "^5.12.0",
         "tar-fs": "^3.1.3"
     },
