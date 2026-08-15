@@ -6,6 +6,22 @@ export type ValuesForInflux = {
     ack: boolean;
 };
 
+/**
+ * Escape an InfluxQL identifier (e.g. a measurement or database name) that is placed inside
+ * double quotes in a query, to prevent InfluxQL injection via the ioBroker state id.
+ */
+export function escapeInfluxQLIdentifier(id: string | undefined): string {
+    return String(id).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+}
+
+/**
+ * Escape a value that is placed inside a Flux double-quoted string literal, to prevent Flux
+ * injection (incl. Flux string interpolation via ${...}) via the ioBroker state id or db name.
+ */
+export function escapeFluxString(value: string | undefined): string {
+    return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\$\{/g, '\\${');
+}
+
 export abstract class Database {
     protected log: ioBroker.Logger;
     protected readonly host: string;

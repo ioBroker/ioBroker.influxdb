@@ -1,4 +1,4 @@
-import { Database, type ValuesForInflux } from './Database';
+import { Database, escapeFluxString, type ValuesForInflux } from './Database';
 import { InfluxDB, type QueryApi, type WriteApi, Point } from '@influxdata/influxdb-client';
 import { BucketsAPI, OrgsAPI, HealthAPI, DeleteAPI } from '@influxdata/influxdb-client-apis';
 
@@ -122,10 +122,12 @@ export default class DatabaseInfluxDB2x extends Database {
         this.log.debug(`Getting retention policy for ${dbName}`);
         try {
             const bucketData = await this.bucketsApi.getBucketsID({ bucketID: this.bucketIds[dbName] });
-            this.log.debug(`Found retention policy: ${bucketData.retentionRules[0].everySeconds} seconds`);
-            return { time: bucketData.retentionRules[0].everySeconds, name: dbName };
+            // A bucket without any retention rule keeps the data forever, which is "0" for us
+            const everySeconds = bucketData.retentionRules?.[0]?.everySeconds ?? 0;
+            this.log.debug(`Found retention policy: ${everySeconds} seconds`);
+            return { time: everySeconds, name: dbName };
         } catch (error) {
-            this.log.error(error);
+            this.log.error(`Cannot read the retention policy for ${dbName}: ${error}`);
             return null;
         }
     }
@@ -273,9 +275,10 @@ export default class DatabaseInfluxDB2x extends Database {
     }
 
     async getMetaDataStorageType(): Promise<'tags' | 'fields' | 'none'> {
+        const bucket = escapeFluxString(this.database);
         const queries = [
-            `import "influxdata/influxdb/schema" schema.tagKeys(bucket: "${this.database}")`,
-            `import "influxdata/influxdb/schema" schema.fieldKeys(bucket: "${this.database}")`,
+            `import "influxdata/influxdb/schema" schema.tagKeys(bucket: "${bucket}")`,
+            `import "influxdata/influxdb/schema" schema.fieldKeys(bucket: "${bucket}")`,
         ];
 
         const result = await this.queries<{ _value: string }>(queries);
