@@ -1,68 +1,68 @@
 {
-    "name": "iobroker.influxdb",
-    "description": "Log states in InfluxDB",
-    "version": "4.0.3",
-    "author": "bluefox <dogafox@gmail.com>",
-    "contributors": [
-        "bluefox <dogafox@gmail.com>",
-        "Apollon77",
-        "Excodibur"
-    ],
-    "homepage": "https://github.com/ioBroker/ioBroker.influxdb",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/ioBroker/ioBroker.influxdb"
-    },
-    "engines": {
-        "node": ">=22"
-    },
-    "keywords": [
-        "ioBroker",
-        "log data",
-        "home automation"
-    ],
-    "optionalDependencies": {},
-    "dependencies": {
-        "@influxdata/influxdb-client": "^1.35.0",
-        "@influxdata/influxdb-client-apis": "^1.35.0",
-        "@iobroker/adapter-core": "^3.4.3",
-        "@iobroker/plugin-docker": "^1.1.2",
-        "influx": "^5.12.0",
-        "tar-fs": "^3.1.3"
-    },
-    "devDependencies": {
-        "@alcalzone/release-script": "^5.2.1",
-        "@alcalzone/release-script-plugin-iobroker": "^5.2.0",
-        "@alcalzone/release-script-plugin-license": "^5.2.2",
-        "@iobroker/adapter-dev": "^1.5.0",
-        "@iobroker/eslint-config": "^2.3.4",
-        "@iobroker/testing": "^5.3.0",
-        "@types/tar-fs": "^2.0.4",
-        "typescript": "^6.0.3"
-    },
-    "bugs": {
-        "url": "https://github.com/ioBroker/ioBroker.influxdb/issues"
-    },
-    "main": "build/main.js",
-    "files": [
-        "admin/",
-        "docs/",
-        "build/",
-        "io-package.json",
-        "docker-compose.yaml",
-        "LICENSE",
-        "RetentionPolicies.md"
-    ],
-    "scripts": {
-        "prepublishOnly": "npm run build",
-        "test": "mocha --exit",
-        "release": "release-script",
-        "release-patch": "release-script patch --yes",
-        "release-minor": "release-script minor --yes",
-        "release-major": "release-script major --yes",
-        "translate": "translate-adapter",
-        "build": "tsc -p tsconfig.build.json",
-        "build:pack": "npm run build && npm pack"
-    },
-    "license": "MIT"
+  "name": "iobroker.influxdb",
+  "description": "Log states in InfluxDB",
+  "version": "5.0.0",
+  "author": "bluefox <dogafox@gmail.com>",
+  "contributors": [
+    "bluefox <dogafox@gmail.com>",
+    "Apollon77",
+    "Excodibur"
+  ],
+  "homepage": "https://github.com/ioBroker/ioBroker.influxdb",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ioBroker/ioBroker.influxdb"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "keywords": [
+    "ioBroker",
+    "log data",
+    "home automation"
+  ],
+  "optionalDependencies": {},
+  "dependencies": {
+    "@influxdata/influxdb-client": "^1.35.0",
+    "@influxdata/influxdb-client-apis": "^1.35.0",
+    "@iobroker/adapter-core": "^3.4.3",
+    "@iobroker/plugin-docker": "^1.1.2",
+    "influx": "^5.12.0",
+    "tar-fs": "^3.1.3"
+  },
+  "devDependencies": {
+    "@alcalzone/release-script": "^5.2.1",
+    "@alcalzone/release-script-plugin-iobroker": "^5.2.0",
+    "@alcalzone/release-script-plugin-license": "^5.2.2",
+    "@iobroker/adapter-dev": "^1.5.0",
+    "@iobroker/eslint-config": "^2.3.4",
+    "@iobroker/testing": "^5.3.0",
+    "@types/tar-fs": "^2.0.4",
+    "typescript": "^6.0.3"
+  },
+  "bugs": {
+    "url": "https://github.com/ioBroker/ioBroker.influxdb/issues"
+  },
+  "main": "build/main.js",
+  "files": [
+    "admin/",
+    "docs/",
+    "build/",
+    "io-package.json",
+    "docker-compose.yaml",
+    "LICENSE",
+    "RetentionPolicies.md"
+  ],
+  "scripts": {
+    "prepublishOnly": "npm run build",
+    "test": "mocha --exit",
+    "release": "release-script",
+    "release-patch": "release-script patch --yes",
+    "release-minor": "release-script minor --yes",
+    "release-major": "release-script major --yes",
+    "translate": "translate-adapter",
+    "build": "tsc -p tsconfig.build.json",
+    "build:pack": "npm run build && npm pack"
+  },
+  "license": "MIT"
 }
