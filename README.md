@@ -469,6 +469,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 * (arteck) The settings "request timeout" and "validate SSL" are now used for InfluxDB 1.x too
 * (arteck) Fixed the cache file name if more than one instance runs in the compact mode
 * (arteck) Fixed the aggregation for `percentile: 100`/`quantile: 1` and the last value of `integralTotal`
+* (bluefox) Fixed empty charts for the aggregation `onchange` ("raw" in e-charts): it was run through the interval aggregation and returned only `null` values
 * (@GermanBluefox) Minimal node.js version is 22
 
 ### 4.0.3 (2024-05-16)

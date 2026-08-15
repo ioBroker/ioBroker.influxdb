@@ -12,26 +12,17 @@ import type { GetHistoryOptions, InternalHistoryOptions, IobDataEntry, TimeInter
  * +----o---------------n--->time
  * Square is the #, deltaT = x2 - x1, DeltaY = y2 - y1
  */
-export function calcDiff(
-    oldVal: IobDataEntry,
-    newVal: IobDataEntry,
-): { square: number; deltaT: number; deltaY: number } {
-    // Ynew - Yold (threat null as zero)
-    const diff = (newVal.val || 0) - (oldVal.val || 0);
+export function calcDiff(oldVal: IobDataEntry, newVal: IobDataEntry): { square: number; deltaT: number } {
     // (Xnew - Xold) / 3600000 (to hours)
-    const deltaT = (newVal.ts - oldVal.ts) / 3600000; // ms => hours
+    const deltaT = (newVal.ts - oldVal.ts) / 3_600_000; // ms => hours
 
     // if deltaT is negative, we have a problem as the time cannot go back
     if (deltaT < 0) {
-        return { square: 0, deltaT: 0, deltaY: 0 };
+        return { square: 0, deltaT: 0 };
     }
+    const square = ((newVal.val || 0) + (oldVal.val || 0)) * (deltaT * 0.5);
 
-    // Yold * (Xnew - Xold) / 3600000
-    let square = (oldVal.val || 0) * deltaT;
-
-    // Yold * (Xnew - Xold) / 3600000 + (Ynew - Yold) * (Xnew - Xold) / 2
-    square += (diff * deltaT) / 2;
-    return { square, deltaT, deltaY: diff };
+    return { square, deltaT };
 }
 
 function interpolate2points(p1: IobDataEntry, p2: IobDataEntry, ts: number): number {
@@ -50,7 +41,7 @@ export function initAggregate(
     timeIntervals?: TimeInterval[],
     log?: (text: string) => void,
 ): InternalHistoryOptions {
-    const options: InternalHistoryOptions = initialOptions as InternalHistoryOptions;
+    const options: InternalHistoryOptions = initialOptions;
     options.log = log;
     options.id = id; // id is needed for because of addId option
     if (!options.log) {
@@ -395,9 +386,10 @@ function finishAggregationForIntegralEx(options: InternalHistoryOptions): void {
     // Fill all intervals with 0
     for (let i = 0; i < options.timeIntervals!.length; i++) {
         const oneInterval: IobDataEntry = {
+            // compute midpoint deterministically: start + round((end - start) / 2)
             ts:
                 options.timeIntervals![i].start +
-                Math.round(options.timeIntervals![i].end - options.timeIntervals![i].start) / 2,
+                Math.round((options.timeIntervals![i].end - options.timeIntervals![i].start) / 2),
             val: 0,
         };
         oneInterval.time = new Date(oneInterval.ts).toISOString();
@@ -1342,7 +1334,15 @@ export function sendResponse(
 
         let step = initialOptions.step || 0;
         const sourceLength = data.length;
-        if (!initialOptions.aggregate || initialOptions.aggregate === 'none' || initialOptions.preAggregated) {
+        // "onchange" means "return the raw values" - there is no bucket logic for it in aggregationLogic(),
+        // so it must be passed through here together with "none". Aggregating it would produce one entry per
+        // interval with val === null, i.e. an empty chart.
+        if (
+            !initialOptions.aggregate ||
+            initialOptions.aggregate === 'onchange' ||
+            initialOptions.aggregate === 'none' ||
+            initialOptions.preAggregated
+        ) {
             const options: InternalHistoryOptions = initAggregate(initialOptions, id, undefined, log);
             options.result = data;
             step = 0;
