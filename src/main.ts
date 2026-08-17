@@ -166,6 +166,7 @@ export class InfluxDBAdapter extends Adapter {
     private _finished = false;
     // mapping from ioBroker ID to Alias ID
     private readonly _aliasMap: { [ioBrokerId: string]: string } = {};
+    private readonly _warnedValueIDs: Set<string> = new Set();
     // Per-instance cache file (must NOT be a module global, otherwise instances collide in compact mode)
     private _cacheFile = join(dataDir, 'influxdata.json');
 
@@ -1333,12 +1334,18 @@ datasources:
         const _settings = this._influxDPs[_id] || ({} as SavedInfluxDbCustomConfig);
 
         if (state.val === null) {
-            // InfluxDB can not handle null values
-            throw new Error(`null value for ${_id} can not be handled`);
+            if (!this._warnedValueIDs.has(`null:${_id}`)) {
+                this._warnedValueIDs.add(`null:${_id}`);
+                this.log.info(`Skipping null value for ${_id} - InfluxDB cannot store null (this message appears only once per datapoint)`);
+            }
+            return;
         }
         if (typeof state.val === 'number' && !isFinite(state.val)) {
-            // InfluxDB can not handle Infinite values
-            throw new Error(`Non Finite value ${state.val} for ${_id} can not be handled`);
+            if (!this._warnedValueIDs.has(`nan:${_id}`)) {
+                this._warnedValueIDs.add(`nan:${_id}`);
+                this.log.info(`Skipping non-finite value (${state.val}) for ${_id} - InfluxDB cannot store NaN/Infinity (this message appears only once per datapoint)`);
+            }
+            return;
         }
 
         if (state.val !== null && (typeof state.val === 'object' || typeof state.val === 'undefined')) {
@@ -1363,8 +1370,11 @@ datasources:
             if (typeof state.val === 'boolean') {
                 state.val = state.val ? 1 : 0;
             } else {
-                this.log.info(`Do not store value "${state.val}" for ${_id} because no number`);
-                throw new Error(`do not store value for ${_id} because no number`);
+                if (!this._warnedValueIDs.has(`type:${_id}`)) {
+                    this._warnedValueIDs.add(`type:${_id}`);
+                    this.log.info(`Skipping value "${state.val}" for ${_id} - not a number but storageType is Number (this message appears only once per datapoint)`);
+                }
+                return;
             }
         } else if (_settings.storageType === 'Boolean' && typeof state.val !== 'boolean') {
             state.val = !!state.val;
