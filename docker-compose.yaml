@@ -7,7 +7,7 @@ services:
             - 'iobEnabled=${config.dockerInflux.enabled:-false}'
             - 'iobStopOnUnload=${config.dockerInflux.stopIfInstanceStopped:-false}'
             - 'iobAutoImageUpdate=${config.dockerInflux.autoImageUpdate:-true}'
-            - 'iobBackup=grafana_data'
+            - 'iobBackup=flux_data,flux_config'
         container_name: flux_data
         ports:
             - '${config.dockerInflux.bind:-127.0.0.1}:${config_dockerInflux_port:-8086}:8086'
@@ -33,7 +33,7 @@ services:
             # `(force)` means that the content of the source is copied to the target by every start of the adapter
             - 'iobCopyVolumes=./build/grafana-provisioning->grafana_provisioning(force)'
             - 'iobWaitForReady=true'
-            - 'iobBackup=grafana_data'
+            - 'iobBackup=grafana_data,grafana_provisioning'
         container_name: grafana
         depends_on:
             - influx
