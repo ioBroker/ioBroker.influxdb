@@ -41,7 +41,7 @@
     "@iobroker/testing": "^5.3.0",
     "@types/tar-fs": "^2.0.4",
     "tsx": "^4.23.1",
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   },
   "bugs": {
     "url": "https://github.com/ioBroker/ioBroker.influxdb/issues"
