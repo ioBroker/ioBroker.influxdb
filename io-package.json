@@ -14,7 +14,7 @@
       "uk": "Збереження історії подій для окремих станів в InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "5.0.4",
+    "version": "5.0.5",
     "titleLang": {
       "en": "Logging data with InfluxDB",
       "de": "Daten mit InfluxDB protokollieren",
@@ -29,6 +29,19 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "5.0.5": {
+        "en": "Corrected boolean aggregation",
+        "de": "Boolesche Aggregation korrigiert",
+        "ru": "Исправленное булевое агрегирование",
+        "pt": "Agregação booleana corrigida",
+        "nl": "Gecorrigeerde booleaanse aggregatie",
+        "fr": "Agrégation booléenne corrigée",
+        "it": "Aggregazione booleana corretta",
+        "es": "Agregación booleana corregida",
+        "pl": "Poprawiona agregacja logiczna",
+        "uk": "Виправлена булева агрегація",
+        "zh-cn": "更正了布尔聚合"
+      },
       "5.0.4": {
         "en": "Fixed Grafana not finding the InfluxDB running next to it in Docker: the provisioned data source pointed at `iob_influxdb_<instance>`, while the container was named `iob_influxdb_<instance>_flux_data` because the compose file gave it a name of its own. Inside the shared network only the container name resolves, so the data source could not connect. The influx service uses the default name of the instance now - the name the data source and `testConnection()` both expect\nFixed the port of that data source: it used the port published on the host, although Grafana reaches InfluxDB inside the docker network, where the container port 8086 applies. The data source broke as soon as the port was changed in the settings\nFixed the Grafana container never being started when Grafana is enabled and InfluxDB is not: the plugin waits for the readiness signal of the adapter before it starts any container of the instance, and that signal was only sent when both were switched on. That state is reachable by switching InfluxDB off afterwards - the Grafana checkbox is hidden then, but its stored value stays\nThe \"automatic image update\" setting of Grafana had no effect: the compose file never passed it on to the plugin\n**Existing installations with InfluxDB in Docker have to remove the old container once**, because it is renamed by the first fix: `docker rm -f iob_influxdb_<instance>_flux_data`. It still holds the published port, so the correctly named container cannot start next to it. The data is not affected - it lives in the volumes, which keep their names",
         "de": "Grafana fand die im Docker-Container laufende InfluxDB nicht: Die bereitgestellte Datenquelle verwies auf `iob_influxdb_<instance>`, während der Container den Namen `iob_influxdb_<instance>_flux_data` trug, da er in der Compose-Datei einen eigenen Namen erhielt. Innerhalb des gemeinsamen Netzwerks wurde nur der Containername aufgelöst, weshalb die Datenquelle keine Verbindung herstellen konnte. Der InfluxDB-Dienst verwendet nun den Standardnamen der Instanz – den Namen, den sowohl die Datenquelle als auch `testConnection()` erwarten.\nDer Port der Datenquelle wurde korrigiert: Er verwendete den auf dem Host veröffentlichten Port, obwohl Grafana InfluxDB innerhalb des Docker-Netzwerks erreicht, wo der Container-Port 8086 gilt. Die Datenquelle funktionierte nicht mehr, sobald der Port in den Einstellungen geändert wurde.\nDas Problem, dass der Grafana-Container nicht gestartet wurde, wenn Grafana aktiviert, InfluxDB aber deaktiviert war, wurde behoben: Das Plugin wartet auf das Bereitschaftssignal des Adapters, bevor es einen Container der Instanz startet. Dieses Signal wurde jedoch nur gesendet, wenn beides aktiviert war. Dieser Zustand kann erreicht werden, indem InfluxDB anschließend deaktiviert wird – die Grafana-Checkbox ist dann zwar ausgeblendet, ihr gespeicherter Wert bleibt aber erhalten.\nDie Einstellung „Automatische Bildaktualisierung“ in Grafana hatte keine Wirkung: Die Compose-Datei übergab die Aktualisierung nie an das Plugin.\n**Bestehende InfluxDB-Installationen in Docker müssen den alten Container einmalig entfernen, da er durch den ersten Fix umbenannt wird: `docker rm -f iob_influxdb_<instance>_flux_data`. Er belegt weiterhin den veröffentlichten Port, sodass der korrekt benannte Container nicht daneben starten kann. Die Daten sind davon nicht betroffen – sie befinden sich in den Volumes, die ihre Namen behalten.",
@@ -106,19 +119,6 @@
         "pl": "Niektóre pakiety zostały zaktualizowane",
         "uk": "Деякі пакети були оновлено",
         "zh-cn": "一些软件包已更新"
-      },
-      "4.0.2": {
-        "en": "Corrected JSON config\nCorrected filter function in booleanTypeCheckQuery\nAllowed the self-signed certificates using \"test connection\" button\nThe deletion of data from DB was implemented for V2\nAdded support for `count` aggregate type on getHistory\nminimal supported node.js version is 16 now",
-        "de": "JSON config korrigiert\nKorrigierte Filterfunktion in booleanTypeCheckQuery\nErlaubt die selbstsignierten Zertifikate mit \"Test-Verbindung\" Taste\nDie Löschung von Daten aus DB wurde für V2 implementiert\nUnterstützung für Grafit-Aggregat-Typ auf getHistory\nminimal unterstützt node.js version ist jetzt 16",
-        "ru": "Правильный конфиг JSON\nИсправлена функция фильтра в booleanTypeCheckQuery\nРазрешены самоподписанные сертификаты с помощью кнопки \"test connection\"\nУдаление данных от DB было реализовано для V2\nДобавлена поддержка подсчета агрегатного типа на getHistory\nминимальная поддерживаемая версия node.js 16 сейчас",
-        "pt": "Configuração JSON corrigida\nFunção de filtro corrigida em booleanTypeCheckQuery\nPermitiram os certificados auto-assinados usando o botão \"conexão de teste\"\nA exclusão de dados da DB foi implementada para V2\nAdicionado suporte para contar o tipo agregado em getHistory\nversão node.js suportada mínima é 16 agora",
-        "nl": "Quality over Quantity (QoQ) Releases Vertaling:\nVertaling:\nDe zelf toegewezen certificaten met \"teest verbinding\" knop\nDe deletie van de gegevens van DB werd geïnformeerd voor V2\nVermeldde steun voor het tel aggregate type\nminimaal ondersteunde node",
-        "fr": "Correction de la configuration JSON\nFonction de filtre corrigée dans booleanTypeCheckQuery\nAutorisé les certificats autosignés à l'aide du bouton \"test connection\"\nLa suppression des données du DB a été mise en œuvre pour V2\nAjout du support pour compter le type agrégé sur getHistory\nla version node.js supportée est 16 maintenant",
-        "it": "Corretto JSON config\nFunzione di filtro corretto in booleanTypeCheckQuery\nConsentito i certificati autofirmati utilizzando il pulsante \"Connessione di prova\"\nLa cancellazione dei dati da DB è stata implementata per V2\nAggiunto supporto per conteggio tipo aggregato su getHistory\nversione minima supportato node.js è 16 ora",
-        "es": "Corregido JSON config\nFunción de filtro corregida en booleanTypeCheckQuery\nPermitió los certificados auto-firmados usando el botón \"prueba de conexión\"\nLa eliminación de los datos del DB se llevó a cabo para V2\nSoporte añadido para el tipo de cuenta agregado en getHistory\nversión mínima soportado node.js es 16 ahora",
-        "pl": "Zgoda JSON\nFunkcja filtrów w booleanTypeCheckQuery\nUzyskał on certyfikaty za pomocą przycisku \"test connection\"\nDetekcja danych z DB została zaimplementowana dla V2\nWsparcie dla liczby zbitych typów\nminimalna wersja węzła jest obecnie 16",
-        "uk": "Виправлено налаштування JSON\nВиправлена функція фільтра в booleanTypeCheckQuery\nДозволені сертифікати самопризначені за допомогою кнопки \"test Connection\"\nВидалення даних з DB реалізовано для V2\nДодано підтримку підрахунку агрегатного типу на getHistory\nмінімальний підтриманий вузол.js версія 16 тепер",
-        "zh-cn": "惩教所\n善良Type CheckQuery的过滤功能\n允许使用“试验联系”的自发证书\n第五2行删除数据\n增加对准礼品总值的支持\n最低支持无误的版本现在是16个。"
       }
     },
     "mode": "daemon",

@@ -1,4 +1,7 @@
 # Older changes
+## 4.0.3 (2024-05-16)
+* (bluefox) Some packages were updated
+
 ## 4.0.2 (2024-01-03)
 * (bluefox) Corrected JSON config
 * (Marc-Berg) Corrected filter function in booleanTypeCheckQuery

@@ -457,7 +457,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 -->
 
 ## Changelog
-### **WORK IN PROGRESS**
+### 5.0.5 (2026-10-01)
 * (@GermanBluefox) Corrected boolean aggregation
 
 ### 5.0.4 (2026-08-28)
@@ -495,9 +495,6 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 * (arteck) Fixed the aggregation for `percentile: 100`/`quantile: 1` and the last value of `integralTotal`
 * (bluefox) Fixed empty charts for the aggregation `onchange` ("raw" in e-charts): it was run through the interval aggregation and returned only `null` values
 * (@GermanBluefox) Minimal node.js version is 22
-
-### 4.0.3 (2024-05-16)
-* (bluefox) Some packages were updated
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 
