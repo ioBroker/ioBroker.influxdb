@@ -1,1 +1,0 @@
-import{t as e}from"./virtual_mf-exposes___mfe_internal__InfluxDBComponentsSet__customComponents_js-CrlugMXf.js";export{e as default};
