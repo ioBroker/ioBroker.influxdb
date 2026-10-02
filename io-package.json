@@ -125,7 +125,6 @@
     "platform": "Javascript/Node.js",
     "loglevel": "info",
     "messagebox": true,
-    "subscribe": "messagebox",
     "keywords": [
       "charts",
       "logging",
@@ -158,6 +157,9 @@
     "extIcon": "https://raw.githubusercontent.com/ioBroker/ioBroker.influxdb/master/admin/influxdb.png",
     "type": "storage",
     "docs": {
+      "en": [
+        "README.md"
+      ],
       "de": [
         "docs/de/influxdb.md"
       ]
