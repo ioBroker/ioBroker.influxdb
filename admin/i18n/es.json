@@ -104,5 +104,11 @@
     "path": "Sendero",
     "retention": "Retención de almacenamiento",
     "use 0 to not buffer at all": "Use 0 para no almacenar el búfer en absoluto",
-    "usetags help": "Para obtener más información, consulte la documentación: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields"
+    "usetags help": "Para obtener más información, consulte la documentación: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields",
+    "Custom tags": "Etiquetas personalizadas",
+    "custom-tags help": "Etiquetas adicionales de InfluxDB escritas con cada valor de este punto de datos. Cambiarlas inicia una nueva serie en InfluxDB.",
+    "Tag name": "Nombre de la etiqueta",
+    "Tag value": "Valor de la etiqueta",
+    "Tag name invalid": "Nombre obligatorio. No permitidos: value, q, ack, from, time y nombres que empiezan por _",
+    "Tag value required": "Valor obligatorio"
 }

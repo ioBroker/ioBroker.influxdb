@@ -104,5 +104,11 @@
     "path": "小路",
     "retention": "储存保留",
     "use 0 to not buffer at all": "使用0根本不缓冲",
-    "usetags help": "有关更多信息，请参阅文档："
+    "usetags help": "有关更多信息，请参阅文档：",
+    "Custom tags": "自定义标签",
+    "custom-tags help": "随该数据点每个值一起写入的附加 InfluxDB 标签。更改它们会在 InfluxDB 中开始一个新的序列。",
+    "Tag name": "标签名称",
+    "Tag value": "标签值",
+    "Tag name invalid": "名称为必填项。不允许：value、q、ack、from、time 以及以 _ 开头的名称",
+    "Tag value required": "值为必填项"
 }

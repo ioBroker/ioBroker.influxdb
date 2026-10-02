@@ -116,6 +116,43 @@
       "sm": 12,
       "help": "Alias Info"
     },
+    "customTags": {
+      "newLine": true,
+      "type": "table",
+      "label": "Custom tags",
+      "help": "custom-tags help",
+      "sm": 12,
+      "default": [],
+      "uniqueColumns": ["name"],
+      "items": [
+        {
+          "type": "text",
+          "attr": "name",
+          "width": "50%",
+          "title": "Tag name",
+          "filter": false,
+          "sort": false,
+          "default": "",
+          "maxLength": 255,
+          "validator": "!(data.name || '').trim() ? !(data.value || '').trim() : (!['value', 'q', 'ack', 'from', 'time'].includes(data.name.trim().toLowerCase()) && !data.name.trim().startsWith('_'))",
+          "validatorErrorText": "Tag name invalid",
+          "validatorNoSaveOnError": true
+        },
+        {
+          "type": "text",
+          "attr": "value",
+          "width": "50%",
+          "title": "Tag value",
+          "filter": false,
+          "sort": false,
+          "default": "",
+          "maxLength": 255,
+          "validator": "!(data.value || '').trim() ? !(data.name || '').trim() : true",
+          "validatorErrorText": "Tag value required",
+          "validatorNoSaveOnError": true
+        }
+      ]
+    },
     "round": {
       "newLine": true,
       "type": "text",

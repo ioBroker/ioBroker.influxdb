@@ -104,5 +104,11 @@
     "path": "Pfad",
     "retention": "Storage Vorhaltezeit",
     "use 0 to not buffer at all": "Wert 0 schreibt Werte direkt",
-    "usetags help": "Weitere Informationen sind in der Dokumentation: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields zu finden."
+    "usetags help": "Weitere Informationen sind in der Dokumentation: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields zu finden.",
+    "Custom tags": "Benutzerdefinierte Tags",
+    "custom-tags help": "Zusätzliche InfluxDB-Tags, die mit jedem Wert dieses Datenpunkts geschrieben werden. Eine Änderung beginnt eine neue Serie in InfluxDB.",
+    "Tag name": "Tag-Name",
+    "Tag value": "Tag-Wert",
+    "Tag name invalid": "Name erforderlich. Nicht erlaubt: value, q, ack, from, time und Namen, die mit _ beginnen",
+    "Tag value required": "Wert erforderlich"
 }

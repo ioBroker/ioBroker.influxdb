@@ -104,5 +104,11 @@
     "path": "Дорожка",
     "retention": "Время хранения в базе",
     "use 0 to not buffer at all": "Для деактвации буферизации введите 0",
-    "usetags help": "Для получения дополнительной информации обратитесь к документации: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields"
+    "usetags help": "Для получения дополнительной информации обратитесь к документации: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields",
+    "Custom tags": "Пользовательские теги",
+    "custom-tags help": "Дополнительные теги InfluxDB, записываемые с каждым значением этой точки данных. Их изменение начинает новую серию в InfluxDB.",
+    "Tag name": "Имя тега",
+    "Tag value": "Значение тега",
+    "Tag name invalid": "Требуется имя. Не допускаются: value, q, ack, from, time и имена, начинающиеся с _",
+    "Tag value required": "Требуется значение"
 }
