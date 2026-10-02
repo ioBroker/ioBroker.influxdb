@@ -162,13 +162,13 @@ export default class DatabaseInfluxDB1x extends Database {
         await this.connection.dropDatabase(dbname);
     }
 
-    /** Convert a value into a point of the `influx` package: everything except the time is a field */
+    /** Convert a value into a point of the `influx` package: everything except time and tags is a field */
     private static toPoint(seriesId: string, pointToSend: ValuesForInflux): IPoint {
         const fields: {
             [name: string]: any;
         } = {};
         Object.keys(pointToSend).forEach(key => {
-            if (key === 'time') {
+            if (key === 'time' || key === 'tags') {
                 return;
             }
             if (key === 'from' && !pointToSend[key as keyof ValuesForInflux]) {
@@ -177,11 +177,15 @@ export default class DatabaseInfluxDB1x extends Database {
             fields[key] = pointToSend[key as keyof ValuesForInflux];
         });
 
-        return {
+        const point: IPoint = {
             measurement: escape.measurement(seriesId),
             fields,
             timestamp: new Date(pointToSend.time),
         };
+        if (pointToSend.tags && Object.keys(pointToSend.tags).length) {
+            point.tags = pointToSend.tags;
+        }
+        return point;
     }
 
     async writeSeries(series: { [id: string]: ValuesForInflux[] }): Promise<void> {

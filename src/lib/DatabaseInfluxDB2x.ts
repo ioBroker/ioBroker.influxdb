@@ -223,6 +223,13 @@ export default class DatabaseInfluxDB2x extends Database {
                 .stringField('from', stateValue.from);
         }
 
+        // custom tags are independent of `useTags`: they never collide with q/ack/from (reserved names)
+        if (stateValue.tags) {
+            for (const [name, value] of Object.entries(stateValue.tags)) {
+                point.tag(name, value);
+            }
+        }
+
         switch (typeof stateValue.value) {
             case 'boolean':
                 point.booleanField('value', stateValue.value);
