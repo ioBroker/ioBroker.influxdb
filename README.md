@@ -43,6 +43,37 @@ With `Influx 2.x` it is now also possible, to store this metadata-information be
   - This also is valid the other way: Once you start using the Tag-feature in a new database, you cannot switch back to using fields for this database.
 - This feature is currently only available if you use Influx 2.x. And only if you use the new responsive GUI of Admin 5.
 
+### Custom tags
+Every datapoint can carry additional, static InfluxDB tags. They are defined in the datapoint settings (`Custom tags`) as a list of name/value pairs and are written with every value of this datapoint - for both InfluxDB 1.x and 2.x and independent of the setting [Store metadata information as tags instead of fields](#store-metadata-information-as-tags-instead-of-fields).
+
+This allows selecting and grouping the values of different datapoints by their meaning instead of by their IDs, e.g. give all datapoints of the kitchen the tag `room=kitchen` and all temperature sensors the tag `type=temperature`. In Grafana, the values can then be filtered or grouped by these tags:
+
+```
+from(bucket: "iobroker")
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+  |> filter(fn: (r) => r._field == "value" and r.type == "temperature")
+  |> group(columns: ["room"])
+```
+
+Please note:
+- The names `value`, `q`, `ack`, `from` and `time` as well as names starting with `_` are reserved and can not be used. Rows without name or value are ignored. Ignored tags are reported as warning in the log.
+- InfluxDB identifies a series by the measurement and all of its tags. Changing the tags of a datapoint therefore starts a new series, the values written before keep their old tags.
+- Every datapoint is still written into a measurement of its own (its ID or its `Alias-ID`). Using the same `Alias-ID` for several active datapoints is not supported.
+
+Custom tags can also be set via JavaScript with the `enableHistory` message (see [below](#enable)):
+
+```javascript
+sendTo('influxdb.0', 'enableHistory', {
+    id: 'hm-rpc.0.ABC123.1.TEMPERATURE',
+    options: {
+        customTags: [
+            { name: 'room', value: 'kitchen' },
+            { name: 'type', value: 'temperature' },
+        ],
+    },
+});
+```
+
 ### Migration from InfluxDB 1 to 2
 
 Please refer to the [official guides on how to migrate](https://docs.influxdata.com/influxdb/v2.0/upgrade/v1-to-v2/) from InfluxDB 1.x to 2.x. Especially the [migration instructions for time series data](https://docs.influxdata.com/influxdb/v2.0/upgrade/v1-to-v2/manual-upgrade/#migrate-time-series-data) have been verified to work during adapter testing. Please always create a backup of your data before performing the migration.
@@ -455,6 +486,9 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+
+### **WORK IN PROGRESS**
+* (@jb-io) Added custom tags per datapoint, written with every value to InfluxDB 1.x and 2.x (#32)
 
 ## Changelog
 ### 5.0.5 (2026-10-01)
