@@ -3702,7 +3702,7 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
             }
             obj.common.custom[this.namespace].enabled = true;
         }
-        this.extendForeignObject(msg.message.id, obj, error => {
+        const done = (error?: Error | null): void => {
             if (error) {
                 this.log.error(`enableHistory: ${error}`);
                 this.sendTo(msg.from, msg.command, { error }, msg.callback);
@@ -3710,7 +3710,29 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
                 this.log.info(JSON.stringify(obj));
                 this.sendTo(msg.from, msg.command, { success: true }, msg.callback);
             }
-        });
+        };
+
+        if (Array.isArray(msg.message.options?.customTags)) {
+            // extendObject merges arrays element by element, so an empty or shorter list of tags would keep
+            // the old rows. The custom config of this instance is replaced as a whole instead
+            void this.replaceCustomConfig(msg.message.id, obj.common.custom![this.namespace]).then(
+                () => done(),
+                error => done(error),
+            );
+        } else {
+            this.extendForeignObject(msg.message.id, obj, error => done(error));
+        }
+    }
+
+    /** Merge `options` into the custom config of this instance and write the object, without merging arrays */
+    async replaceCustomConfig(id: string, options: Record<string, any>): Promise<void> {
+        const obj = await this.getForeignObjectAsync(id);
+        if (!obj) {
+            throw new Error(`Object ${id} not found`);
+        }
+        obj.common.custom ||= {};
+        obj.common.custom[this.namespace] = { ...obj.common.custom[this.namespace], ...options };
+        await this.setForeignObjectAsync(id, obj);
     }
 
     disableHistory(msg: ioBroker.Message): void {
