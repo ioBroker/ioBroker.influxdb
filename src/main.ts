@@ -7,6 +7,7 @@ import DatabaseInfluxDB1x from './lib/DatabaseInfluxDB1x';
 import DatabaseInfluxDB2x from './lib/DatabaseInfluxDB2x';
 import { escapeFluxString, escapeInfluxQLIdentifier, type Database, type ValuesForInflux } from './lib/Database';
 import { formatError, HostUnavailableError, isConnectionError, UnstorableValueError } from './lib/errors';
+import { normalizeCustomTags } from './lib/customTags';
 import type {
     GetHistoryOptions,
     InfluxDBAdapterConfig,
@@ -109,6 +110,8 @@ function parseNumberWithNull(value: any): number | null {
 function normalizeStateConfig(
     customConfig: InfluxDbCustomConfig,
     defaultConfig: InfluxDBAdapterConfig,
+    log?: ioBroker.Logger,
+    id?: string,
 ): InfluxDbCustomConfigTyped {
     // debounceTime and debounce compatibility handling
     if (!customConfig.blockTime && customConfig.blockTime !== '0' && customConfig.blockTime !== 0) {
@@ -155,7 +158,14 @@ function normalizeStateConfig(
     customConfig.changesMinDelta = parseNumber(customConfig.changesMinDelta, defaultConfig.changesMinDelta);
 
     customConfig.storageType ||= false;
-    return customConfig as InfluxDbCustomConfigTyped;
+
+    const { tags, invalid } = normalizeCustomTags(customConfig.customTags);
+    if (invalid.length) {
+        log?.warn(`Ignoring invalid custom tags of ${id}: ${invalid.join(', ')}`);
+    }
+    (customConfig as unknown as InfluxDbCustomConfigTyped).customTags = tags;
+
+    return customConfig as unknown as InfluxDbCustomConfigTyped;
 }
 
 interface SavedInfluxDbCustomConfig extends InfluxDbCustomConfigTyped {
@@ -252,9 +262,11 @@ export class InfluxDBAdapter extends Adapter {
                         }
                     }
 
-                    const customSettings: InfluxDbCustomConfig = normalizeStateConfig(
+                    const customSettings: InfluxDbCustomConfigTyped = normalizeStateConfig(
                         obj.common.custom[this.namespace],
                         this.config,
+                        this.log,
+                        realId,
                     );
 
                     if (
@@ -622,7 +634,7 @@ export class InfluxDBAdapter extends Adapter {
             const result = await this._client?.getRetentionPolicyForDB(this.config.dbname);
             this.sendTo(msg.from, msg.command, { result }, msg.callback);
         } catch (error) {
-            this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
+            this.sendTo(msg.from, msg.command, { error }, msg.callback);
         }
     }
 
@@ -787,7 +799,7 @@ export class InfluxDBAdapter extends Adapter {
                 if (timeout) {
                     clearTimeout(timeout);
                     timeout = null;
-                    return this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
+                    return this.sendTo(msg.from, msg.command, { error }, msg.callback);
                 }
             }
             if (dockerCreated && dockerManager) {
@@ -813,7 +825,7 @@ export class InfluxDBAdapter extends Adapter {
                 );
                 return;
             }
-            this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
+            this.sendTo(msg.from, msg.command, { error }, msg.callback);
         }
     }
 
@@ -857,7 +869,7 @@ export class InfluxDBAdapter extends Adapter {
                 this.sendTo(msg.from, msg.command, { error: null }, msg.callback);
             }
         } catch (error) {
-            this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
+            this.sendTo(msg.from, msg.command, { error }, msg.callback);
         }
     }
 
@@ -929,7 +941,7 @@ export class InfluxDBAdapter extends Adapter {
                     }
                 } catch (error) {
                     if (msg.callback) {
-                        this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
+                        this.sendTo(msg.from, msg.command, { error }, msg.callback);
                     }
                 }
             } else if (msg.command === 'enableHistory') {
@@ -955,7 +967,7 @@ export class InfluxDBAdapter extends Adapter {
         } catch (error) {
             this.log.error(`Cannot process message ${msg.command}: ${formatError(error)}`);
             if (msg.callback) {
-                this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
+                this.sendTo(msg.from, msg.command, { error }, msg.callback);
             }
         }
     }
@@ -1088,8 +1100,10 @@ export class InfluxDBAdapter extends Adapter {
                         id = this._aliasMap[id];
                     }
                     this._influxDPs[id] = normalizeStateConfig(
-                        item.value[this.namespace],
+                        item.value[this.namespace] as unknown as InfluxDbCustomConfig,
                         this.config,
+                        this.log,
+                        realId,
                     ) as SavedInfluxDbCustomConfig;
                     this._influxDPs[id].config = JSON.stringify(item.value[this.namespace]);
                     this.log.debug(`enabled logging of ${id}, Alias=${id !== realId} points now activated`);
@@ -1578,6 +1592,10 @@ datasources:
             q: state.q || 0,
             ack: !!state.ack,
         };
+        const customTags = this._influxDPs[id]?.customTags;
+        if (customTags && Object.keys(customTags).length) {
+            influxFields.tags = customTags;
+        }
 
         if (
             (this._conflictingPoints[id] || this.config.seriesBufferMax === 0 || directWrite) &&
@@ -3804,7 +3822,7 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
             measurements = await this.readMeasurements();
         } catch (error) {
             this.log.error(`getDatapoints: ${formatError(error)}`);
-            return this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
+            return this.sendTo(msg.from, msg.command, { error }, msg.callback);
         }
 
         const result: { id: string; type: StorageType | null }[] = [];
@@ -3935,7 +3953,7 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
                 this.setConnected(false);
             }
             this.log.error(`getRawEntries: ${formatError(error)}`);
-            this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
+            this.sendTo(msg.from, msg.command, { error }, msg.callback);
         }
     }
 }

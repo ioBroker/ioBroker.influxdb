@@ -1,5 +1,7 @@
 // The types of the `getHistory` contract and of the aggregation are shared with the history and sql
 // adapters, so they live in `@iobroker/aggregate` and are only re-exported here.
+import type { CustomTagRow, CustomTags } from './lib/customTags';
+
 export type {
     AggregateMethod,
     DataEntry,
@@ -99,6 +101,8 @@ export interface InfluxDbCustomConfig {
     enableDebugLogs: boolean | 'true' | 'false' | '';
     debounce: number | string;
     ignoreBelowZero: boolean | 'true' | 'false';
+    /** Additional tags written with every point of this datapoint, as rows of the admin table */
+    customTags?: CustomTagRow[] | null;
 }
 
 export interface InfluxDbCustomConfigTyped {
@@ -118,4 +122,6 @@ export interface InfluxDbCustomConfigTyped {
     enableDebugLogs: boolean;
     debounce: number;
     ignoreBelowZero: boolean;
+    /** Additional tags written with every point of this datapoint (validated, name -> value) */
+    customTags: CustomTags;
 }
