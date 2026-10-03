@@ -104,5 +104,11 @@
     "path": "Pad",
     "retention": "Opslag retentie",
     "use 0 to not buffer at all": "Gebruik 0 om helemaal niet te bufferen",
-    "usetags help": "Raadpleeg de documentatie voor meer informatie: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields"
+    "usetags help": "Raadpleeg de documentatie voor meer informatie: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields",
+    "Custom tags": "Aangepaste tags",
+    "custom-tags help": "Extra InfluxDB-tags die met elke waarde van dit datapunt worden geschreven. Wijzigen start een nieuwe reeks in InfluxDB.",
+    "Tag name": "Tagnaam",
+    "Tag value": "Tagwaarde",
+    "Tag name invalid": "Naam vereist. Niet toegestaan: value, q, ack, from, time en namen die met _ beginnen",
+    "Tag value required": "Waarde vereist"
 }

@@ -104,5 +104,11 @@
     "path": "Caminho",
     "retention": "Retenção de armazenamento",
     "use 0 to not buffer at all": "Use 0 para não buffer no total",
-    "usetags help": "Para obter mais informações, consulte a documentação: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields"
+    "usetags help": "Para obter mais informações, consulte a documentação: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields",
+    "Custom tags": "Tags personalizadas",
+    "custom-tags help": "Tags adicionais do InfluxDB gravadas com cada valor deste ponto de dados. Alterá-las inicia uma nova série no InfluxDB.",
+    "Tag name": "Nome da tag",
+    "Tag value": "Valor da tag",
+    "Tag name invalid": "Nome obrigatório. Não permitido: value, q, ack, from, time e nomes que começam com _",
+    "Tag value required": "Valor obrigatório"
 }

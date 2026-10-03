@@ -1356,6 +1356,155 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
             },
         );
     });
+
+    // Custom tags (https://github.com/ioBroker/ioBroker.influxdb/issues/32). Kept at the end, because the
+    // tests above count the enabled datapoints
+    const taggedId = `${instanceName}.testValueTagged`;
+    let taggedNow;
+
+    /** Read the raw points of the tagged datapoint, optionally only those with the given tags */
+    async function queryTaggedPoints(tags) {
+        const adapterObj = await objects.getObjectAsync(`system.adapter.${instanceName}`);
+        const dbname = adapterObj.native.dbname || 'iobroker';
+        const start = taggedNow - 10000;
+        const stop = taggedNow + 10000;
+        let query;
+        if (process.env.INFLUXDB2) {
+            const tagFilter = Object.keys(tags)
+                .map(name => ` and r["${name}"] == "${tags[name]}"`)
+                .join('');
+            query =
+                `from(bucket: "${dbname}") |> range(start: ${new Date(start).toISOString()}, stop: ${new Date(stop).toISOString()}) ` +
+                `|> filter(fn: (r) => r["_measurement"] == "${taggedId}" and r["_field"] == "value"${tagFilter}) ` +
+                `|> group() |> sort(columns: ["_time"])`;
+        } else {
+            const tagFilter = Object.keys(tags)
+                .map(name => ` AND "${name}" = '${tags[name]}'`)
+                .join('');
+            query = `SELECT * FROM "${taggedId}" WHERE time >= ${start}ms AND time <= ${stop}ms${tagFilter}`;
+        }
+        const result = await sendToAsync(instanceName, 'query', query);
+        console.log(`${query}\n=> ${JSON.stringify(result.result)}`);
+        return result.result[0] || [];
+    }
+
+    it(`Test ${adapterShortName}: Enable datapoint with custom tags`, async function () {
+        this.timeout(10000);
+
+        await objects.setObjectAsync(taggedId, {
+            common: { type: 'number', role: 'state' },
+            type: 'state',
+        });
+        const result = await sendToAsync(instanceName, 'enableHistory', {
+            id: taggedId,
+            options: {
+                changesOnly: false,
+                debounceTime: 0,
+                blockTime: 0,
+                disableSkippedValueLogging: true,
+                customTags: [
+                    { name: 'room', value: 'kitchen' },
+                    { name: ' device ', value: 'sensor 1' },
+                    // ignored: reserved name, an empty row (as added by "+" in the admin), a name without value
+                    { name: 'q', value: 'reserved' },
+                    { name: '', value: '' },
+                    { name: 'empty', value: '' },
+                ],
+            },
+        });
+        expect(result.success).to.be.true;
+        // wait till the adapter receives the new settings
+        await setTimeoutAsync(2000);
+    });
+
+    it(`Test ${adapterShortName}: Check normalized custom tags of the enabled datapoint`, async function () {
+        this.timeout(5000);
+
+        const result = await sendToAsync(instanceName, 'getEnabledDPs', {});
+        expect(result[taggedId]).to.be.ok;
+        expect(result[taggedId].customTags).to.be.deep.equal({ room: 'kitchen', device: 'sensor 1' });
+    });
+
+    it(`Test ${adapterShortName}: Write values with custom tags into DB`, async function () {
+        this.timeout(10000);
+
+        taggedNow = Date.now();
+        await setStateAsync(taggedId, { val: 1, ts: taggedNow - 3000, ack: true, from: 'test.0' });
+        await setTimeoutAsync(100);
+        await setStateAsync(taggedId, { val: 2, ts: taggedNow - 2000, ack: true, from: 'test.0' });
+        await setTimeoutAsync(100);
+        await setStateAsync(taggedId, { val: 3, ts: taggedNow - 1000, ack: true, from: 'test.0' });
+        await setTimeoutAsync(500);
+        await sendToAsync(instanceName, 'flushBuffer', {});
+    });
+
+    it(`Test ${adapterShortName}: Read values filtered by custom tags from DB`, async function () {
+        this.timeout(10000);
+
+        const rows = await queryTaggedPoints({ room: 'kitchen', device: 'sensor 1' });
+        // the initial value written on enabling has no timestamp in this range in every suite, so only
+        // count the values written above
+        const values = rows.map(row => row.value ?? row._value).filter(val => val >= 1 && val <= 3);
+        expect(values).to.be.deep.equal([1, 2, 3]);
+        for (const row of rows) {
+            expect(row.room).to.be.equal('kitchen');
+            expect(row.device).to.be.equal('sensor 1');
+            expect(row.empty).to.be.not.ok;
+        }
+
+        const otherRows = await queryTaggedPoints({ room: 'bedroom' });
+        expect(otherRows.length).to.be.equal(0);
+    });
+
+    it(`Test ${adapterShortName}: Read values with custom tags using GetHistory`, async function () {
+        this.timeout(10000);
+
+        const result = await sendToAsync(instanceName, 'getHistory', {
+            id: taggedId,
+            options: {
+                start: taggedNow - 5000,
+                end: taggedNow,
+                count: 50,
+                aggregate: 'none',
+                removeBorderValues: true,
+            },
+        });
+        console.log(JSON.stringify(result.result));
+        expect(result.result.map(entry => entry.val)).to.be.deep.equal([1, 2, 3]);
+    });
+
+    it(`Test ${adapterShortName}: Remove all custom tags`, async function () {
+        this.timeout(10000);
+
+        const result = await sendToAsync(instanceName, 'enableHistory', {
+            id: taggedId,
+            options: { customTags: [] },
+        });
+        expect(result.success).to.be.true;
+        await setTimeoutAsync(2000);
+
+        const enabled = await sendToAsync(instanceName, 'getEnabledDPs', {});
+        expect(enabled[taggedId].customTags).to.be.deep.equal({});
+
+        await setStateAsync(taggedId, { val: 4, ts: taggedNow + 1000, ack: true, from: 'test.0' });
+        await setTimeoutAsync(500);
+        await sendToAsync(instanceName, 'flushBuffer', {});
+
+        const taggedRows = await queryTaggedPoints({ room: 'kitchen' });
+        expect(taggedRows.map(row => row.value ?? row._value)).to.not.include(4);
+        const allRows = await queryTaggedPoints({});
+        const untagged = allRows.filter(row => (row.value ?? row._value) === 4);
+        expect(untagged.length).to.be.equal(1);
+        expect(untagged[0].room).to.be.not.ok;
+    });
+
+    it(`Test ${adapterShortName}: Disable datapoint with custom tags`, async function () {
+        this.timeout(5000);
+
+        const result = await sendToAsync(instanceName, 'disableHistory', { id: taggedId });
+        expect(result.success).to.be.true;
+        await setTimeoutAsync(1000);
+    });
 }
 
 module.exports = {

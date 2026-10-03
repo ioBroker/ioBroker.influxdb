@@ -15,6 +15,8 @@ export type ValuesForInflux = {
     from: string;
     q: number;
     ack: boolean;
+    /** Custom tags of the datapoint (name -> value), see `customTags` in the datapoint settings */
+    tags?: { [name: string]: string };
 };
 
 /**

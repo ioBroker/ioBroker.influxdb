@@ -104,5 +104,11 @@
     "path": "шлях",
     "retention": "Зберігання",
     "use 0 to not buffer at all": "Використовуйте 0, щоб взагалі не буферизувати",
-    "usetags help": "Для отримання додаткової інформації зверніться до документації: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields"
+    "usetags help": "Для отримання додаткової інформації зверніться до документації: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields",
+    "Custom tags": "Користувацькі теги",
+    "custom-tags help": "Додаткові теги InfluxDB, що записуються з кожним значенням цієї точки даних. Їх зміна починає нову серію в InfluxDB.",
+    "Tag name": "Назва тегу",
+    "Tag value": "Значення тегу",
+    "Tag name invalid": "Потрібна назва. Не дозволено: value, q, ack, from, time та назви, що починаються з _",
+    "Tag value required": "Потрібне значення"
 }

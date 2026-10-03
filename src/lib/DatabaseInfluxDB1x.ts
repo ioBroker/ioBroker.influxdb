@@ -162,6 +162,32 @@ export default class DatabaseInfluxDB1x extends Database {
         await this.connection.dropDatabase(dbname);
     }
 
+    /** Convert a value into a point of the `influx` package: everything except time and tags is a field */
+    private static toPoint(seriesId: string, pointToSend: ValuesForInflux): IPoint {
+        const fields: {
+            [name: string]: any;
+        } = {};
+        Object.keys(pointToSend).forEach(key => {
+            if (key === 'time' || key === 'tags') {
+                return;
+            }
+            if (key === 'from' && !pointToSend[key as keyof ValuesForInflux]) {
+                return;
+            }
+            fields[key] = pointToSend[key as keyof ValuesForInflux];
+        });
+
+        const point: IPoint = {
+            measurement: escape.measurement(seriesId),
+            fields,
+            timestamp: new Date(pointToSend.time),
+        };
+        if (pointToSend.tags && Object.keys(pointToSend.tags).length) {
+            point.tags = pointToSend.tags;
+        }
+        return point;
+    }
+
     async writeSeries(series: { [id: string]: ValuesForInflux[] }): Promise<void> {
         if (!this.connection) {
             return Promise.reject(new Error('No connection to InfluxDB'));
@@ -169,26 +195,8 @@ export default class DatabaseInfluxDB1x extends Database {
         const points: IPoint[] = [];
         for (const seriesId in series) {
             if (Object.prototype.hasOwnProperty.call(series, seriesId)) {
-                const pointsToSend = series[seriesId];
-                for (const pointToSend of pointsToSend) {
-                    const fields: {
-                        [name: string]: any;
-                    } = {};
-                    Object.keys(pointToSend).forEach(key => {
-                        if (key === 'time') {
-                            return;
-                        }
-                        if (key === 'from' && !pointToSend[key as keyof ValuesForInflux]) {
-                            return;
-                        }
-                        fields[key] = pointToSend[key as keyof ValuesForInflux];
-                    });
-
-                    points.push({
-                        measurement: escape.measurement(seriesId),
-                        fields,
-                        timestamp: new Date(pointToSend.time),
-                    });
+                for (const pointToSend of series[seriesId]) {
+                    points.push(DatabaseInfluxDB1x.toPoint(seriesId, pointToSend));
                 }
             }
         }
@@ -199,26 +207,7 @@ export default class DatabaseInfluxDB1x extends Database {
         if (!this.connection) {
             return Promise.reject(new Error('No connection to InfluxDB'));
         }
-        const points: IPoint[] = [];
-        for (const pointToSend of pointsToSend) {
-            const fields: {
-                [name: string]: any;
-            } = {};
-            Object.keys(pointToSend).forEach(key => {
-                if (key === 'time') {
-                    return;
-                }
-                if (key === 'from' && !pointToSend[key as keyof ValuesForInflux]) {
-                    return;
-                }
-                fields[key] = pointToSend[key as keyof ValuesForInflux];
-            });
-            points.push({
-                measurement: escape.measurement(seriesId),
-                fields,
-                timestamp: new Date(pointToSend.time),
-            });
-        }
+        const points = pointsToSend.map(pointToSend => DatabaseInfluxDB1x.toPoint(seriesId, pointToSend));
 
         await this.trackConnection(() => this.connection!.writePoints(points));
     }
@@ -227,29 +216,8 @@ export default class DatabaseInfluxDB1x extends Database {
         if (!this.connection) {
             return Promise.reject(new Error('No connection to InfluxDB'));
         }
-        const fields: {
-            [name: string]: any;
-        } = {};
-        Object.keys(pointToSend).forEach(key => {
-            if (key === 'time') {
-                return;
-            }
-            if (key === 'from' && !pointToSend[key as keyof ValuesForInflux]) {
-                return;
-            }
-            fields[key] = pointToSend[key as keyof ValuesForInflux];
-        });
         await this.trackConnection(() =>
-            this.connection!.writePoints(
-                [
-                    {
-                        measurement: escape.measurement(seriesId),
-                        fields,
-                        timestamp: new Date(pointToSend.time),
-                    },
-                ],
-                { precision: 'ms' },
-            ),
+            this.connection!.writePoints([DatabaseInfluxDB1x.toPoint(seriesId, pointToSend)], { precision: 'ms' }),
         );
     }
 
