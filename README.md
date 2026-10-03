@@ -554,8 +554,7 @@ A datapoint that is being logged is never selected, whatever the scope says.
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
-
-### **WORK IN PROGRESS**
+### 5.1.0 (2026-10-03)
 * (@jb-io) Added custom tags per datapoint, written with every value to InfluxDB 1.x and 2.x (#32)
 * (@GermanBluefox) `enableHistory` also accepts the custom tags in the form `getEnabledDPs` reports them, so a configuration read from there and written back keeps its tags
 * (@GermanBluefox) Fixed the error of a failed message (`getRetention`, `test`, `destroy`, `getDatapoints`, `getRawEntries`, ...) being sent as an empty object instead of its text
@@ -565,7 +564,6 @@ A datapoint that is being logged is never selected, whatever the scope says.
 
 **Note:** a buffer written by this version (`influxdata.json`, only present if the adapter was stopped with unwritten values) can not be read by version 5.0.5 and older if custom tags are used. Downgrading discards those buffered values.
 
-## Changelog
 ### 5.0.5 (2026-10-01)
 * (@GermanBluefox) Corrected boolean aggregation
 
@@ -589,21 +587,6 @@ A datapoint that is being logged is never selected, whatever the scope says.
 * (@GermanBluefox) The aggregation is used now from `@iobroker/aggregate` and is shared with the history and SQL adapters.
 * (@joltcoke) Fixed average and total returning null for every interval that contains a null value: parseFloat(null) is NaN and poisoned the sum of the whole interval (thanks to @joltcoke, ioBroker/ioBroker.sql#526). As the result was NaN and not null, ignoreNull could not act on it either
 * (@joltcoke) Fixed min returning a wrong value if the interval contains a null, minmax losing the minimum if the interval starts with a null, and percentile/quantile counting a null as 0
-
-### 5.0.1 (2026-08-15)
-* (@GermanBluefox) Completely refactored the code to TypeScript and ES6
-* (@GermanBluefox) Added possibility to start docker containers directly from the adapter
-* (mcm1957) Adapter requires admin >= 7.7.2 now
-* (arteck) Fixed the connection handling for InfluxDB 1.x: the health check (ping) and the automatic reconnect were never started
-* (arteck) Fixed the loss of buffered values if the writing was running while new values arrived or if the write failed
-* (arteck) Values are no longer written twice if they are written directly (buffer size 0 or conflicting points)
-* (arteck) State IDs and database names are now escaped in the queries
-* (arteck) The password/token is no longer written into the log by the connection test
-* (arteck) The settings "request timeout" and "validate SSL" are now used for InfluxDB 1.x too
-* (arteck) Fixed the cache file name if more than one instance runs in the compact mode
-* (arteck) Fixed the aggregation for `percentile: 100`/`quantile: 1` and the last value of `integralTotal`
-* (bluefox) Fixed empty charts for the aggregation `onchange` ("raw" in e-charts): it was run through the interval aggregation and returned only `null` values
-* (@GermanBluefox) Minimal node.js version is 22
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 
