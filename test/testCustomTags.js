@@ -11,10 +11,23 @@ describe('Test custom tags', function () {
         assert.deepStrictEqual(invalid, []);
     });
 
-    it('means "no tags" for everything that is not an array', function () {
-        for (const rows of [undefined, null, '', 'room=kitchen', {}, { room: 'kitchen' }, 5]) {
+    it('means "no tags" for everything that is neither an array nor a map', function () {
+        for (const rows of [undefined, null, '', 'room=kitchen', {}, 5]) {
             assert.deepStrictEqual(normalizeCustomTags(rows), { tags: {}, invalid: [] }, JSON.stringify(rows));
         }
+    });
+
+    it('also accepts the normalized map, as getEnabledDPs reports it', function () {
+        // a configuration read with getEnabledDPs and written back with enableHistory must keep its tags
+        const { tags, invalid } = normalizeCustomTags({ room: 'kitchen', device: 'heat pump' });
+        assert.deepStrictEqual(tags, { room: 'kitchen', device: 'heat pump' });
+        assert.deepStrictEqual(invalid, []);
+    });
+
+    it('validates the map form exactly like the rows of the admin table', function () {
+        const { tags, invalid } = normalizeCustomTags({ room: 'kitchen', q: 'reserved', empty: '' });
+        assert.deepStrictEqual(tags, { room: 'kitchen' });
+        assert.deepStrictEqual(invalid, ['"q" (reserved name)', '"empty" (empty value)']);
     });
 
     it('silently skips empty rows, as the admin adds them with "+"', function () {

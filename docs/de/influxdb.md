@@ -88,6 +88,39 @@ Logging des Datenpunktes aktivieren Nur Änderungen aufzeichnen: Es werden nur W
     1.  Weitere Parameter wie „nur Änderungen“ und Vorhaltezeit für alle gefilterten Datenpunkte einheitlich auswählen
 5.  Die Änderungen speichern
 
+### <span id="Benutzerdefinierte_Tags">Benutzerdefinierte Tags</span>
+
+Jeder Datenpunkt kann zusätzliche, feste InfluxDB-Tags mitschreiben. Sie werden in den Einstellungen des Datenpunkts unter „Benutzerdefinierte Tags“ als Liste von Name/Wert-Paaren eingetragen und mit jedem Wert dieses Datenpunkts geschrieben – sowohl für InfluxDB 1.x als auch 2.x und unabhängig von der Einstellung „Metadaten als Tags statt als Felder speichern“.
+
+Damit lassen sich die Werte verschiedener Datenpunkte nach ihrer Bedeutung statt nach ihrer ID auswählen und gruppieren, z.B. alle Datenpunkte der Küche mit `room=kitchen` und alle Temperaturfühler mit `type=temperature`. In Grafana kann dann danach gefiltert oder gruppiert werden:
+
+```
+from(bucket: "iobroker")
+  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+  |> filter(fn: (r) => r._field == "value" and r.type == "temperature")
+  |> group(columns: ["room"])
+```
+
+Bitte beachten:
+
+-   Die Namen `value`, `q`, `ack`, `from` und `time` sowie Namen, die mit `_` beginnen, sind reserviert und können nicht verwendet werden. Zeilen ohne Namen oder ohne Wert werden ignoriert, ignorierte Tags werden als Warnung ins Log geschrieben.
+-   InfluxDB identifiziert eine Serie über die Messung und alle ihre Tags. Ändert man die Tags eines Datenpunkts, beginnt deshalb eine neue Serie; die vorher geschriebenen Werte behalten ihre alten Tags. Bei InfluxDB 2.x aggregiert ein `getHistory` über einen Zeitraum, in dem sich die Tags geändert haben, jede Serie für sich – ein solcher Zeitraum kann also zwei Werte pro Intervall enthalten. Die Tags am besten setzen, bevor das Logging beginnt.
+-   Jeder Datenpunkt wird weiterhin in eine eigene Messung geschrieben (seine ID bzw. seine `Alias-ID`). Dieselbe `Alias-ID` für mehrere aktive Datenpunkte zu verwenden, wird nicht unterstützt.
+
+Die Tags können auch per JavaScript über die Nachricht `enableHistory` gesetzt werden:
+
+```javascript
+sendTo('influxdb.0', 'enableHistory', {
+    id: 'hm-rpc.0.ABC123.1.TEMPERATURE',
+    options: {
+        customTags: [
+            { name: 'room', value: 'kitchen' },
+            { name: 'type', value: 'temperature' },
+        ],
+    },
+});
+```
+
 * * *
 
 ## <span id="Bedienung">**Bedienung**</span>

@@ -57,7 +57,7 @@ from(bucket: "iobroker")
 
 Please note:
 - The names `value`, `q`, `ack`, `from` and `time` as well as names starting with `_` are reserved and can not be used. Rows without name or value are ignored. Ignored tags are reported as warning in the log.
-- InfluxDB identifies a series by the measurement and all of its tags. Changing the tags of a datapoint therefore starts a new series, the values written before keep their old tags.
+- InfluxDB identifies a series by the measurement and all of its tags. Changing the tags of a datapoint therefore starts a new series, the values written before keep their old tags. With InfluxDB 2.x an aggregated `getHistory` over a time range in which the tags changed aggregates each series on its own, so such a range can contain two values per interval - one of the old and one of the new series. Add the tags before logging starts if you want to avoid this.
 - Every datapoint is still written into a measurement of its own (its ID or its `Alias-ID`). Using the same `Alias-ID` for several active datapoints is not supported.
 
 Custom tags can also be set via JavaScript with the `enableHistory` message (see [below](#enable)):
@@ -489,6 +489,12 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 
 ### **WORK IN PROGRESS**
 * (@jb-io) Added custom tags per datapoint, written with every value to InfluxDB 1.x and 2.x (#32)
+* (@GermanBluefox) `enableHistory` also accepts the custom tags in the form `getEnabledDPs` reports them, so a configuration read from there and written back keeps its tags
+* (@GermanBluefox) Fixed the error of a failed message (`getRetention`, `test`, `destroy`, `getDatapoints`, `getRawEntries`, ...) being sent as an empty object instead of its text
+* (@GermanBluefox) `io-package.json` matches the current js-controller schema again (`subscribe` removed, `docs.en` added)
+* (@GermanBluefox) The admin frontend is installed before it is linted in the CI, so its lint no longer fails on unresolved types
+
+**Note:** a buffer written by this version (`influxdata.json`, only present if the adapter was stopped with unwritten values) can not be read by version 5.0.5 and older if custom tags are used. Downgrading discards those buffered values.
 
 ## Changelog
 ### 5.0.5 (2026-10-01)

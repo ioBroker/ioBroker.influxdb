@@ -47,16 +47,26 @@ function toText(value: unknown): string {
  * value, so empty names or values (e.g. a row that was added in the admin but never filled) are ignored,
  * and so are reserved names. If a name occurs more than once, the last row wins.
  *
- * @param rows the `customTags` attribute of the custom config, anything else than an array means "no tags"
+ * @param rows the `customTags` attribute of the custom config: either the array of rows from the admin
+ *        table, or an already normalized `name -> value` map. Anything else means "no tags"
  */
 export function normalizeCustomTags(rows: unknown): { tags: CustomTags; invalid: string[] } {
     const tags: CustomTags = {};
     const invalid: string[] = [];
-    if (!Array.isArray(rows)) {
+
+    let rowsToCheck: CustomTagRow[];
+    if (Array.isArray(rows)) {
+        rowsToCheck = rows as CustomTagRow[];
+    } else if (rows && typeof rows === 'object') {
+        // `getEnabledDPs` reports the normalized map, not the rows of the admin table. Accept it here
+        // as well, so a configuration read from there and written back through `enableHistory` keeps
+        // its tags instead of losing them silently
+        rowsToCheck = Object.entries(rows as Record<string, unknown>).map(([name, value]) => ({ name, value }));
+    } else {
         return { tags, invalid };
     }
 
-    for (const row of rows as CustomTagRow[]) {
+    for (const row of rowsToCheck) {
         if (!row || typeof row !== 'object') {
             continue;
         }

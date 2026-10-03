@@ -38,6 +38,14 @@ jobs:
             - name: Install Dependencies
               run: npm ci
 
+            # `npm ci` above only installs the root. `npm run lint` also lints src-admin, and
+            # without its node_modules the React/ioBroker types do not resolve there - eslint then
+            # reports unresolved types as real errors. The adapter test jobs get this install for
+            # free through `npm run build` (tasks.ts runs npmInstall on src-admin); this job does not.
+            - name: Install admin dependencies
+              run: npm install --force
+              working-directory: src-admin
+
             #      - name: Perform a type check
             #        run: npm run check:ts
             #        env:

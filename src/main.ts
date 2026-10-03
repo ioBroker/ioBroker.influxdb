@@ -634,7 +634,7 @@ export class InfluxDBAdapter extends Adapter {
             const result = await this._client?.getRetentionPolicyForDB(this.config.dbname);
             this.sendTo(msg.from, msg.command, { result }, msg.callback);
         } catch (error) {
-            this.sendTo(msg.from, msg.command, { error }, msg.callback);
+            this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
         }
     }
 
@@ -799,7 +799,7 @@ export class InfluxDBAdapter extends Adapter {
                 if (timeout) {
                     clearTimeout(timeout);
                     timeout = null;
-                    return this.sendTo(msg.from, msg.command, { error }, msg.callback);
+                    return this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
                 }
             }
             if (dockerCreated && dockerManager) {
@@ -825,7 +825,7 @@ export class InfluxDBAdapter extends Adapter {
                 );
                 return;
             }
-            this.sendTo(msg.from, msg.command, { error }, msg.callback);
+            this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
         }
     }
 
@@ -869,7 +869,7 @@ export class InfluxDBAdapter extends Adapter {
                 this.sendTo(msg.from, msg.command, { error: null }, msg.callback);
             }
         } catch (error) {
-            this.sendTo(msg.from, msg.command, { error }, msg.callback);
+            this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
         }
     }
 
@@ -941,7 +941,7 @@ export class InfluxDBAdapter extends Adapter {
                     }
                 } catch (error) {
                     if (msg.callback) {
-                        this.sendTo(msg.from, msg.command, { error }, msg.callback);
+                        this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
                     }
                 }
             } else if (msg.command === 'enableHistory') {
@@ -967,7 +967,7 @@ export class InfluxDBAdapter extends Adapter {
         } catch (error) {
             this.log.error(`Cannot process message ${msg.command}: ${formatError(error)}`);
             if (msg.callback) {
-                this.sendTo(msg.from, msg.command, { error }, msg.callback);
+                this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
             }
         }
     }
@@ -3689,46 +3689,39 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
             this.sendTo(msg.from, msg.command, { error: 'Invalid call' }, msg.callback);
             return;
         }
-        const obj = {
-            common: {
-                custom: {
-                    [this.namespace]: {},
-                },
-            },
-        } as ioBroker.StateObject;
-        if (obj.common.custom) {
-            if (msg.message.options) {
-                obj.common.custom[this.namespace] = msg.message.options;
-            }
-            obj.common.custom[this.namespace].enabled = true;
-        }
-        const done = (error?: Error | null): void => {
-            if (error) {
-                this.log.error(`enableHistory: ${error}`);
-                this.sendTo(msg.from, msg.command, { error }, msg.callback);
-            } else {
-                this.log.info(JSON.stringify(obj));
-                this.sendTo(msg.from, msg.command, { success: true }, msg.callback);
-            }
-        };
+        const options: Record<string, any> = { ...msg.message.options, enabled: true };
 
-        if (Array.isArray(msg.message.options?.customTags)) {
-            // extendObject merges arrays element by element, so an empty or shorter list of tags would keep
-            // the old rows. The custom config of this instance is replaced as a whole instead
-            void this.replaceCustomConfig(msg.message.id, obj.common.custom![this.namespace]).then(
-                () => done(),
-                error => done(error),
-            );
-        } else {
-            this.extendForeignObject(msg.message.id, obj, error => done(error));
-        }
+        this.writeCustomConfig(msg.message.id, options).then(
+            () => {
+                this.log.info(`enableHistory: ${msg.message.id} ${JSON.stringify(options)}`);
+                this.sendTo(msg.from, msg.command, { success: true }, msg.callback);
+            },
+            error => {
+                this.log.error(`enableHistory: ${formatError(error)}`);
+                this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
+            },
+        );
     }
 
-    /** Merge `options` into the custom config of this instance and write the object, without merging arrays */
-    async replaceCustomConfig(id: string, options: Record<string, any>): Promise<void> {
+    /**
+     * Write `options` into the custom config of this instance.
+     *
+     * The object is read and written as a whole instead of using `extendForeignObject`, because
+     * `extendObject` merges arrays element by element: a shorter or empty `customTags` list would keep
+     * the rows that were removed. Everything of the custom config of this instance that `options` does
+     * not mention stays untouched, and so do the custom configs of other instances.
+     *
+     * @param id the ID of the datapoint
+     * @param options the attributes of the custom config to write
+     */
+    async writeCustomConfig(id: string, options: Record<string, any>): Promise<void> {
         const obj = await this.getForeignObjectAsync(id);
         if (!obj) {
-            throw new Error(`Object ${id} not found`);
+            // The object does not exist (yet). extendForeignObject creates it, as enableHistory always did
+            await this.extendForeignObjectAsync(id, {
+                common: { custom: { [this.namespace]: options } },
+            });
+            return;
         }
         obj.common.custom ||= {};
         obj.common.custom[this.namespace] = { ...obj.common.custom[this.namespace], ...options };
@@ -3844,7 +3837,7 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
             measurements = await this.readMeasurements();
         } catch (error) {
             this.log.error(`getDatapoints: ${formatError(error)}`);
-            return this.sendTo(msg.from, msg.command, { error }, msg.callback);
+            return this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
         }
 
         const result: { id: string; type: StorageType | null }[] = [];
@@ -3975,7 +3968,7 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
                 this.setConnected(false);
             }
             this.log.error(`getRawEntries: ${formatError(error)}`);
-            this.sendTo(msg.from, msg.command, { error }, msg.callback);
+            this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
         }
     }
 }
