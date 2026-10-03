@@ -1,5 +1,6 @@
-import { InfluxDB, type IPoint, escape } from 'influx';
+import { InfluxDB, type IPoint, type IResults, escape } from 'influx';
 import { Database, type ValuesForInflux } from './Database';
+import { cardinalityFromSeriesKeys, type MeasurementStatistics } from './statistics';
 
 export default class DatabaseInfluxDB1x extends Database {
     private readonly username: string;
@@ -227,5 +228,65 @@ export default class DatabaseInfluxDB1x extends Database {
         }
         this.log.debug(`Query to execute: ${query}`);
         return await this.trackConnection(() => this.connection!.query<T>(query));
+    }
+
+    /**
+     * Run a query and keep the measurement each row belongs to.
+     *
+     * `query()` flattens the series of an InfluxQL answer into one array, which loses the name of
+     * the measurement. `SELECT ... FROM /.*\/` returns one series per measurement, so the grouped
+     * form of the result is what makes a single query enough here.
+     *
+     * @param query the InfluxQL query to run
+     */
+    private async queryGrouped<T>(query: string): Promise<Array<{ name: string; rows: T[] }>> {
+        if (!this.connection) {
+            return Promise.reject(new Error('No connection to InfluxDB'));
+        }
+        this.log.debug(`Query to execute: ${query}`);
+        const result = (await this.trackConnection(() => this.connection!.query<T>(query))) as unknown as IResults<T>;
+        return result?.groups?.() || [];
+    }
+
+    async getStatistics(start: number, stop: number): Promise<MeasurementStatistics> {
+        const where = ` WHERE time >= '${new Date(start).toISOString()}' AND time <= '${new Date(stop).toISOString()}'`;
+        const statistics: MeasurementStatistics = {};
+
+        const entryOf = (name: string): MeasurementStatistics[string] =>
+            (statistics[name] ||= { count: 0, firstTs: null, lastTs: null, cardinality: null });
+
+        // `count` over all measurements at once. The regex has to be inlined, InfluxQL has no
+        // placeholders for it
+        for (const group of await this.queryGrouped<{ count: number }>(`SELECT count("value") FROM /.*/${where}`)) {
+            entryOf(group.name).count = Number(group.rows[0]?.count) || 0;
+        }
+
+        // `first()` and `last()` have to be asked for separately: in one SELECT InfluxQL reports
+        // the beginning of the range as `time` instead of the timestamp of the point
+        for (const group of await this.queryGrouped<{ time: Date }>(`SELECT first("value") FROM /.*/${where}`)) {
+            const ts = group.rows[0]?.time;
+            entryOf(group.name).firstTs = ts ? new Date(ts).getTime() : null;
+        }
+        for (const group of await this.queryGrouped<{ time: Date }>(`SELECT last("value") FROM /.*/${where}`)) {
+            const ts = group.rows[0]?.time;
+            entryOf(group.name).lastTs = ts ? new Date(ts).getTime() : null;
+        }
+
+        // `SHOW SERIES` reads the index, it does not scan any values - unlike the counts above.
+        // A measurement that only exists in the index (all its values are outside the range) is
+        // added here, so it is not silently missing from the statistics.
+        // Note that the index knows no time: unlike the 2.x driver, which derives the cardinality
+        // from the series it actually reads, this is the all-time count even for a limited range
+        const seriesRows = await this.query<{ key: string }>('SHOW SERIES');
+        const cardinality = cardinalityFromSeriesKeys((seriesRows || []).map(row => row.key).filter(key => !!key));
+        for (const [name, count] of Object.entries(cardinality)) {
+            entryOf(name).cardinality = count;
+        }
+
+        return statistics;
+    }
+
+    async dropMeasurement(measurement: string): Promise<void> {
+        await this.query(`DROP MEASUREMENT "${measurement.replace(/"/g, '\\"')}"`);
     }
 }

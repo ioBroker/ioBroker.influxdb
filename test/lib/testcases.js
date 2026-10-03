@@ -1505,6 +1505,124 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         expect(result.success).to.be.true;
         await setTimeoutAsync(1000);
     });
+
+    // Statistics tab (getDpStatistics / cleanupOrphaned). Kept at the very end: the tests above
+    // count the enabled datapoints, and the orphan created here must not disturb them
+    const orphanId = `${instanceName}.testValueOrphan`;
+
+    /** Index the statistics by datapoint ID, so a test can look at the one it cares about */
+    async function readStatistics(message) {
+        const result = await sendToAsync(instanceName, 'getDpStatistics', message || {});
+        expect(result.success).to.be.true;
+        expect(result.result).to.be.an('array');
+        const byId = {};
+        result.result.forEach(row => (byId[row.id] = row));
+        return { ...result, byId };
+    }
+
+    it(`Test ${adapterShortName}: Read datapoint statistics`, async function () {
+        this.timeout(60000);
+
+        const stats = await readStatistics();
+        const testValue = stats.byId[`${instanceName}.testValue`];
+        expect(testValue, 'the statistics must contain testValue').to.be.ok;
+        expect(testValue.count).to.be.above(0);
+        expect(testValue.status).to.be.equal('active');
+        expect(testValue.type).to.be.equal('Number');
+        expect(testValue.firstTs).to.be.a('number');
+        expect(testValue.lastTs).to.be.at.least(testValue.firstTs);
+        // every datapoint of the tests is written without custom tags at this point, so one series
+        expect(testValue.cardinality).to.be.at.least(1);
+
+        // the summary has to agree with the rows it summarizes
+        expect(stats.summary.datapoints).to.be.equal(stats.result.length);
+        expect(stats.summary.values).to.be.equal(stats.result.reduce((sum, row) => sum + row.count, 0));
+        expect(stats.summary.byStatus.active.datapoints).to.be.above(0);
+    });
+
+    it(`Test ${adapterShortName}: Statistics honour the examined time range`, async function () {
+        this.timeout(60000);
+
+        // a range far behind everything the tests write - the datapoints stay listed, but empty
+        const future = await readStatistics({ start: Date.now() + 365 * 24 * 3600000, end: Date.now() + 366 * 24 * 3600000 });
+        expect(future.result.length).to.be.above(0);
+        expect(future.summary.values).to.be.equal(0);
+        for (const row of future.result) {
+            expect(row.count, `${row.id} must have no value in an empty range`).to.be.equal(0);
+            expect(row.firstTs).to.be.null;
+            expect(row.lastTs).to.be.null;
+        }
+    });
+
+    it(`Test ${adapterShortName}: A deleted state keeps its data and is reported as orphaned`, async function () {
+        this.timeout(60000);
+
+        await objects.setObjectAsync(orphanId, {
+            common: { type: 'number', role: 'state' },
+            type: 'state',
+        });
+        await sendToAsync(instanceName, 'enableHistory', {
+            id: orphanId,
+            options: { changesOnly: false, debounceTime: 0, blockTime: 0, disableSkippedValueLogging: true },
+        });
+        await setTimeoutAsync(2000);
+
+        await setStateAsync(orphanId, { val: 42, ts: Date.now(), ack: true, from: 'test.0' });
+        await setTimeoutAsync(500);
+        await sendToAsync(instanceName, 'flushBuffer', {});
+
+        // while it is logged and the object exists it counts as active
+        const active = await readStatistics();
+        expect(active.byId[orphanId], 'the new datapoint must be listed').to.be.ok;
+        expect(active.byId[orphanId].status).to.be.equal('active');
+        expect(active.byId[orphanId].count).to.be.above(0);
+
+        // switching the logging off is not the same as deleting the state
+        await sendToAsync(instanceName, 'disableHistory', { id: orphanId });
+        await setTimeoutAsync(2000);
+        const disabled = await readStatistics();
+        expect(disabled.byId[orphanId].status).to.be.equal('loggingDisabled');
+
+        // now the state itself disappears, its values stay in the database
+        await new Promise(resolve => objects.delObject(orphanId, () => resolve()));
+        await setTimeoutAsync(2000);
+        const orphaned = await readStatistics();
+        expect(orphaned.byId[orphanId], 'the data of a deleted state stays listed').to.be.ok;
+        expect(orphaned.byId[orphanId].status).to.be.equal('objectMissing');
+        expect(orphaned.byId[orphanId].count).to.be.above(0);
+    });
+
+    it(`Test ${adapterShortName}: Cleanup reports the orphan without deleting it`, async function () {
+        this.timeout(60000);
+
+        const preview = await sendToAsync(instanceName, 'cleanupOrphaned', {});
+        expect(preview.success).to.be.true;
+        expect(preview.dryRun).to.be.true;
+        expect(preview.items.map(item => item.id)).to.include(orphanId);
+        expect(preview.datapoints).to.be.equal(preview.items.length);
+        expect(preview.values).to.be.equal(preview.items.reduce((sum, item) => sum + item.count, 0));
+        // a dry run must never select a datapoint that is still being logged
+        expect(preview.items.find(item => item.status === 'active')).to.be.undefined;
+
+        // without `confirm` nothing may be gone
+        const stats = await readStatistics();
+        expect(stats.byId[orphanId], 'a dry run must not delete anything').to.be.ok;
+    });
+
+    it(`Test ${adapterShortName}: Cleanup keeps a datapoint whose logging is only switched off`, async function () {
+        this.timeout(60000);
+
+        // taggedId still exists as a state, its logging was switched off further up
+        const defaultScope = await sendToAsync(instanceName, 'cleanupOrphaned', {});
+        expect(defaultScope.items.map(item => item.id)).to.not.include(taggedId);
+
+        const withDisabled = await sendToAsync(instanceName, 'cleanupOrphaned', {
+            scope: { objectMissing: true, loggingDisabled: true },
+        });
+        expect(withDisabled.dryRun).to.be.true;
+        expect(withDisabled.items.map(item => item.id)).to.include(taggedId);
+        expect(withDisabled.items.map(item => item.id)).to.include(orphanId);
+    });
 }
 
 module.exports = {

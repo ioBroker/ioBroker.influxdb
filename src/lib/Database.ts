@@ -1,4 +1,5 @@
 import { formatError, isConnectionError } from './errors';
+import type { MeasurementStatistics } from './statistics';
 
 /**
  * How long a host counts as unusable after a connection error.
@@ -8,6 +9,11 @@ import { formatError, isConnectionError } from './errors';
  * and no request is sent while the host counts as unavailable. Roughly the reconnect interval.
  */
 const HOST_UNAVAILABLE_TIME = 10_000;
+
+/** Oldest timestamp the adapter looks at. It never writes a point before the epoch */
+export const MIN_INFLUX_TIME = 0;
+/** Newest timestamp a Flux range may stop at. InfluxDB cannot store anything after it */
+export const MAX_INFLUX_TIME = Date.UTC(2262, 3, 11);
 
 export type ValuesForInflux = {
     value: string | number | boolean;
@@ -135,6 +141,34 @@ export abstract class Database {
     ): Promise<void>;
 
     abstract query<T>(query: string): Promise<Array<T & { time: Date }>>;
+
+    /**
+     * Number of values, oldest/newest timestamp and series count of every measurement.
+     *
+     * InfluxDB exposes no byte size per measurement - neither 1.x (`SHOW STATS` and `SHOW SHARDS`
+     * only know the engine and the shards) nor 2.x (disk size is monitored per bucket). Series
+     * cardinality is reported instead: it is both available and meaningful, because it drives the
+     * memory footprint of the index.
+     *
+     * One pass over the whole database, not one query per measurement: an installation that has
+     * been logging for years holds thousands of IDs. Measurements without a value in the range are
+     * not reported - the caller fills them in as "empty", so a datapoint whose logging stopped
+     * before the range still shows up in the statistics.
+     *
+     * @param start beginning of the examined range (ms)
+     * @param stop end of the examined range (ms)
+     */
+    abstract getStatistics(start: number, stop: number): Promise<MeasurementStatistics>;
+
+    /**
+     * Remove a measurement with everything it contains.
+     *
+     * Used by `cleanupOrphaned` for datapoints nobody logs any more. Unlike deleting a time range
+     * this also drops the series from the index, which is the point of the cleanup.
+     *
+     * @param measurement the measurement to remove
+     */
+    abstract dropMeasurement(measurement: string): Promise<void>;
 
     async queries<T>(queries: string[]): Promise<Array<T & { time: Date }>[] | null> {
         const collectedRows: Array<T & { time: Date }>[] = [];

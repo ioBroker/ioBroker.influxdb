@@ -110,5 +110,6 @@
     "Tag name": "Имя тега",
     "Tag value": "Значение тега",
     "Tag name invalid": "Требуется имя. Не допускаются: value, q, ack, from, time и имена, начинающиеся с _",
-    "Tag value required": "Требуется значение"
+    "Tag value required": "Требуется значение",
+    "Statistics": "Статистика"
 }

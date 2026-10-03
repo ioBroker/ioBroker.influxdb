@@ -110,5 +110,6 @@
     "Tag name": "Nombre de la etiqueta",
     "Tag value": "Valor de la etiqueta",
     "Tag name invalid": "Nombre obligatorio. No permitidos: value, q, ack, from, time y nombres que empiezan por _",
-    "Tag value required": "Valor obligatorio"
+    "Tag value required": "Valor obligatorio",
+    "Statistics": "Estadísticas"
 }

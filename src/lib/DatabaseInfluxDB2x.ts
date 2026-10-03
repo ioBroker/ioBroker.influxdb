@@ -1,4 +1,5 @@
-import { Database, escapeFluxString, type ValuesForInflux } from './Database';
+import { Database, escapeFluxString, MAX_INFLUX_TIME, MIN_INFLUX_TIME, type ValuesForInflux } from './Database';
+import type { MeasurementStatistics } from './statistics';
 import { InfluxDB, type QueryApi, type WriteApi, Point } from '@influxdata/influxdb-client';
 import { BucketsAPI, OrgsAPI, HealthAPI, DeleteAPI } from '@influxdata/influxdb-client-apis';
 
@@ -277,6 +278,68 @@ export default class DatabaseInfluxDB2x extends Database {
                         },
                     });
                 }),
+        );
+    }
+
+    async getStatistics(start: number, stop: number): Promise<MeasurementStatistics> {
+        // One script with three yields, so the whole table needs a single request. `first()` and
+        // `last()` keep the natural grouping of `from()`, which means one row per series: their
+        // row count per measurement is its series cardinality, and the smallest/largest `_time`
+        // among them is the oldest/newest value. That saves a fourth pass for the cardinality and
+        // avoids sorting, which would have to hold a whole measurement in memory.
+        const fluxQuery = `base = from(bucket: "${escapeFluxString(this.database)}")
+    |> range(start: ${new Date(start).toISOString()}, stop: ${new Date(stop).toISOString()})
+    |> filter(fn: (r) => r["_field"] == "value")
+
+base |> group(columns: ["_measurement"]) |> count(column: "_value") |> yield(name: "count")
+base |> first() |> yield(name: "first")
+base |> last() |> yield(name: "last")`;
+
+        const rows = await this.query<{ result?: string; _measurement?: string; _value?: unknown; _time?: string }>(
+            fluxQuery,
+        );
+
+        const statistics: MeasurementStatistics = {};
+        const entryOf = (name: string): MeasurementStatistics[string] =>
+            (statistics[name] ||= { count: 0, firstTs: null, lastTs: null, cardinality: null });
+
+        for (const row of rows || []) {
+            const name = row._measurement;
+            if (!name) {
+                continue;
+            }
+            const entry = entryOf(name);
+
+            if (row.result === 'count') {
+                entry.count = Number(row._value) || 0;
+                continue;
+            }
+
+            const ts = row._time ? new Date(row._time).getTime() : NaN;
+            if (!isFinite(ts)) {
+                continue;
+            }
+            if (row.result === 'first') {
+                // one row per series: count them for the cardinality, keep the oldest timestamp
+                entry.cardinality = (entry.cardinality || 0) + 1;
+                entry.firstTs = entry.firstTs === null ? ts : Math.min(entry.firstTs, ts);
+            } else if (row.result === 'last') {
+                entry.lastTs = entry.lastTs === null ? ts : Math.max(entry.lastTs, ts);
+            }
+        }
+
+        return statistics;
+    }
+
+    async dropMeasurement(measurement: string): Promise<void> {
+        // 2.x has no "drop measurement": deleting every point of it over the whole storable range
+        // is the equivalent, the series disappear from the index with their last point
+        await this.deleteData(
+            MIN_INFLUX_TIME,
+            MAX_INFLUX_TIME,
+            this.organization,
+            this.database,
+            `_measurement="${escapeFluxString(measurement)}"`,
         );
     }
 

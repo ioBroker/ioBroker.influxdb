@@ -5,9 +5,23 @@ import { sendResponse, sortByTs } from '@iobroker/aggregate';
 
 import DatabaseInfluxDB1x from './lib/DatabaseInfluxDB1x';
 import DatabaseInfluxDB2x from './lib/DatabaseInfluxDB2x';
-import { escapeFluxString, escapeInfluxQLIdentifier, type Database, type ValuesForInflux } from './lib/Database';
+import {
+    escapeFluxString,
+    escapeInfluxQLIdentifier,
+    MAX_INFLUX_TIME,
+    MIN_INFLUX_TIME,
+    type Database,
+    type ValuesForInflux,
+} from './lib/Database';
 import { formatError, HostUnavailableError, isConnectionError, UnstorableValueError } from './lib/errors';
 import { normalizeCustomTags } from './lib/customTags';
+import {
+    classifyDatapoint,
+    selectForCleanup,
+    summarize,
+    type CleanupScope,
+    type DatapointStat,
+} from './lib/statistics';
 import type {
     GetHistoryOptions,
     InfluxDBAdapterConfig,
@@ -27,10 +41,6 @@ const MAX_RAW_ENTRIES = 2000;
 
 // While the database stays unreachable, remind about it at most once an hour instead of on every retry
 const REPEATED_ERROR_INTERVAL = 3_600_000;
-/** Oldest timestamp the data browser looks at. The adapter never writes a point before the epoch */
-const MIN_INFLUX_TIME = 0;
-/** Newest timestamp a Flux range may stop at. InfluxDB cannot store anything after it */
-const MAX_INFLUX_TIME = Date.UTC(2262, 3, 11);
 
 /**
  * One point as the two clients deliver it.
@@ -891,6 +901,8 @@ export class InfluxDBAdapter extends Adapter {
                             'storeState',
                             'getDatapoints',
                             'getRawEntries',
+                            'getDpStatistics',
+                            'cleanupOrphaned',
                         ],
                     },
                     msg.callback,
@@ -963,6 +975,10 @@ export class InfluxDBAdapter extends Adapter {
                 await this.getDatapoints(msg);
             } else if (msg.command === 'getRawEntries') {
                 await this.getRawEntries(msg);
+            } else if (msg.command === 'getDpStatistics') {
+                await this.getDpStatistics(msg);
+            } else if (msg.command === 'cleanupOrphaned') {
+                await this.cleanupOrphaned(msg);
             }
         } catch (error) {
             this.log.error(`Cannot process message ${msg.command}: ${formatError(error)}`);
@@ -3831,6 +3847,141 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
      * Answer the `getDatapoints` message: every datapoint that has data in the database, no matter whether
      * its logging is still enabled.
      */
+    /**
+     * Collect the statistics of every measurement of the database.
+     *
+     * The measurement list comes from the index, so a datapoint whose logging was switched off
+     * years ago is still listed - with a count of 0 if nothing of it falls into the range. The
+     * status is what makes the table actionable, and it is deliberately derived from ioBroker,
+     * not from the database: only ioBroker knows whether a state still exists and whether this
+     * instance logs it.
+     *
+     * A measurement named after an `Alias-ID` can only be checked against that alias while its
+     * logging is enabled - once the custom config is gone, nothing links it back to the real
+     * state, so an orphaned alias measurement is reported as `objectMissing`.
+     *
+     * @param start beginning of the examined range (ms), the epoch by default
+     * @param stop end of the examined range (ms), the end of the storable range by default
+     */
+    async collectStatistics(start?: number, stop?: number): Promise<DatapointStat[]> {
+        if (!this._client) {
+            throw new Error('not connected');
+        }
+
+        const measurements = await this.readMeasurements();
+        const statistics = await this._client.getStatistics(start ?? MIN_INFLUX_TIME, stop ?? MAX_INFLUX_TIME);
+
+        const stats: DatapointStat[] = [];
+        for (const id of measurements) {
+            const measured = statistics[id];
+            const settings = this._influxDPs[id];
+
+            let objectExists = false;
+            try {
+                objectExists = !!(await this.getForeignObjectAsync(settings?.realId || id));
+            } catch {
+                // an unreadable object counts as missing; the cleanup preview shows it either way
+            }
+
+            stats.push({
+                id,
+                type: await this.getStorageType(id),
+                count: measured?.count || 0,
+                firstTs: measured?.firstTs ?? null,
+                lastTs: measured?.lastTs ?? null,
+                cardinality: measured?.cardinality ?? null,
+                status: classifyDatapoint(objectExists, !!settings),
+            });
+        }
+
+        stats.sort((a, b) => a.id.localeCompare(b.id));
+        return stats;
+    }
+
+    /**
+     * Answer `getDpStatistics` with one row per datapoint plus totals.
+     *
+     * @param msg the message to answer
+     */
+    async getDpStatistics(msg: ioBroker.Message): Promise<void> {
+        try {
+            const stats = await this.collectStatistics(msg.message?.start, msg.message?.end);
+            this.sendTo(
+                msg.from,
+                msg.command,
+                { success: true, result: stats, summary: summarize(stats) },
+                msg.callback,
+            );
+        } catch (error) {
+            this.log.error(`Cannot collect statistics: ${formatError(error)}`);
+            this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
+        }
+    }
+
+    /**
+     * Answer `cleanupOrphaned`: remove the stored values of datapoints nobody logs any more.
+     *
+     * Without `confirm: true` nothing is deleted and the answer only reports what a confirmed run
+     * would remove, so the GUI can show the list and the counts before anything is lost. The same
+     * collection feeds both, so the preview and the deletion cannot disagree about what is
+     * orphaned.
+     *
+     * @param msg the message to answer
+     */
+    async cleanupOrphaned(msg: ioBroker.Message): Promise<void> {
+        const scope: CleanupScope = msg.message?.scope || {};
+        const confirmed = msg.message?.confirm === true;
+
+        try {
+            const stats = await this.collectStatistics();
+            const victims = selectForCleanup(stats, scope);
+            const preview = {
+                datapoints: victims.length,
+                values: victims.reduce((sum, victim) => sum + victim.count, 0),
+                items: victims,
+            };
+
+            if (!confirmed) {
+                this.sendTo(msg.from, msg.command, { success: true, dryRun: true, ...preview }, msg.callback);
+                return;
+            }
+
+            const failed: string[] = [];
+            let removed = 0;
+            for (const victim of victims) {
+                try {
+                    await this._client!.dropMeasurement(victim.id);
+                    // a measurement that is gone must not keep a buffer that would recreate it
+                    delete this._seriesBuffer[victim.id];
+                    delete this._conflictingPoints[victim.id];
+                    removed++;
+                } catch (error) {
+                    this.log.warn(`Cannot remove ${victim.id}: ${formatError(error)}`);
+                    failed.push(victim.id);
+                }
+            }
+
+            const deleted = {
+                datapoints: removed,
+                values: victims
+                    .filter(victim => !failed.includes(victim.id))
+                    .reduce((sum, victim) => sum + victim.count, 0),
+            };
+            this.log.info(
+                `Cleanup removed ${deleted.values} values of ${deleted.datapoints} datapoint(s) that are not logged any more`,
+            );
+            this.sendTo(
+                msg.from,
+                msg.command,
+                { success: true, dryRun: false, ...preview, deleted, failed },
+                msg.callback,
+            );
+        } catch (error) {
+            this.log.error(`Cleanup failed: ${formatError(error)}`);
+            this.sendTo(msg.from, msg.command, { error: formatError(error) }, msg.callback);
+        }
+    }
+
     async getDatapoints(msg: ioBroker.Message): Promise<void> {
         let measurements: string[];
         try {

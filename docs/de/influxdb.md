@@ -123,6 +123,27 @@ sendTo('influxdb.0', 'enableHistory', {
 
 * * *
 
+## <span id="Statistik">Statistik und Aufräumen</span>
+
+Der Reiter **Statistik** in der Instanzkonfiguration listet jeden Datenpunkt auf, den die Datenbank enthält – mit der Anzahl der Werte, dem ältesten und dem neuesten Wert, der Anzahl der Serien und einem Status:
+
+| Status | Bedeutung |
+| --- | --- |
+| wird geloggt | Das Objekt existiert und diese Instanz loggt es |
+| Logging aus | Das Objekt existiert noch, das Logging ist aber ausgeschaltet – die Historie ist weiterhin erreichbar |
+| Objekt gelöscht | Das Objekt wurde in ioBroker gelöscht, an seine Historie kommt niemand mehr heran |
+
+Zwei Dinge sind zu den Zahlen wichtig:
+
+-   **Es gibt keine Größe pro Datenpunkt.** InfluxDB liefert sie nicht, weder in 1.x (`SHOW STATS` und `SHOW SHARDS` kennen nur Engine und Shards) noch in 2.x (der Plattenverbrauch wird pro Bucket überwacht). Stattdessen wird die Anzahl der **Serien** angezeigt: sie bestimmt den Speicherbedarf des Index, und benutzerdefinierte Tags sind der übliche Weg, sie unbeabsichtigt zu erhöhen.
+-   **Zählen ist ein voller Scan.** InfluxDB hat keine Zeilenanzahl, die es nachschlagen könnte, also werden die Werte des untersuchten Zeitraums tatsächlich gelesen. Bei einer Datenbank mit Daten aus mehreren Jahren dauert das – die Zeitraumauswahl über der Tabelle begrenzt den Scan, wenn die Gesamtzahl nicht gebraucht wird.
+
+Das Aufräumen entfernt die gespeicherten Werte von Datenpunkten, die niemand mehr loggt. **Ohne Bestätigung wird nichts gelöscht**: der Dialog zeigt zuerst, was ein bestätigter Lauf entfernen würde. Standardmäßig sind nur Objekte ausgewählt, die es in ioBroker nicht mehr gibt. Datenpunkte mit lediglich ausgeschaltetem Logging werden nur einbezogen, wenn man das ausdrücklich ankreuzt – ihre Historie ist noch erreichbar und oft gewollt. Ein Datenpunkt, der gerade geloggt wird, wird nie ausgewählt.
+
+Dieselben Daten sind auch per JavaScript über die Nachrichten `getDpStatistics` und `cleanupOrphaned` erreichbar, siehe [README](https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#statistics-and-cleanup).
+
+* * *
+
 ## <span id="Bedienung">**Bedienung**</span>
 
 Wählt man in der Titelzeile unter Historie "mit" oder "influxdb.0" aus, werden nur noch Datenpunkte mit Logging angezeigt. [![](img/influxdb_ioBroker_Adapter_SQL_objects_filter.jpg)](img/influxdb_ioBroker_Adapter_SQL_objects_filter.jpg) Ein Klick auf das Zahnradsymbol öffnet die geloggten Daten: [![](img/influxdb_ioBroker_Adapter_SQL_objects_Data.jpg)](img/influxdb_ioBroker_Adapter_SQL_objects_Data.jpg) Im Reiter Table werden die Daten tabellarisch angezeigt. [![ioBroker_Adapter_rickshaw03](img/influxdb_ioBroker_Adapter_rickshaw03.jpg)](img/influxdb_ioBroker_Adapter_rickshaw03.jpg) Im Reiter Chart kann bei installiertem Rickshaw-Adapter eine Verlaufsgrafik angezeigt werden.

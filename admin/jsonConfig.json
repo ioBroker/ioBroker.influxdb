@@ -395,6 +395,20 @@
                 }
             }
         },
+        "statisticsTab": {
+            "type": "panel",
+            "label": "Statistics",
+            "items": {
+                "_statistics": {
+                    "type": "custom",
+                    "i18n": true,
+                    "url": "custom/customComponents.js",
+                    "name": "InfluxDBComponentsSet/Components/Statistics",
+                    "guiApi": 2,
+                    "sm": 12
+                }
+            }
+        },
         "dockerInflux": {
             "type": "panel",
             "label": "InfluxDB Docker",

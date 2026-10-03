@@ -110,5 +110,6 @@
     "Tag name": "Tagnaam",
     "Tag value": "Tagwaarde",
     "Tag name invalid": "Naam vereist. Niet toegestaan: value, q, ack, from, time en namen die met _ beginnen",
-    "Tag value required": "Waarde vereist"
+    "Tag value required": "Waarde vereist",
+    "Statistics": "Statistieken"
 }

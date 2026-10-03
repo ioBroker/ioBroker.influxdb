@@ -110,5 +110,6 @@
     "Tag name": "Nom du tag",
     "Tag value": "Valeur du tag",
     "Tag name invalid": "Nom requis. Non autorisés : value, q, ack, from, time et les noms commençant par _",
-    "Tag value required": "Valeur requise"
+    "Tag value required": "Valeur requise",
+    "Statistics": "Statistiques"
 }

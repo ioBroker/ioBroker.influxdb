@@ -482,6 +482,74 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 });
 ```
 
+## Statistics and cleanup
+
+The **Statistics** tab of the instance configuration lists every datapoint the database contains, with its
+number of values, the oldest and the newest value, the number of series and a status:
+
+| Status | Meaning |
+| --- | --- |
+| `active` | the state exists and this instance logs it |
+| `loggingDisabled` | the state still exists, but its logging is switched off - the history is still reachable |
+| `objectMissing` | the state was deleted in ioBroker, so nothing can reach its history any more |
+
+Two things are worth knowing about the numbers:
+
+- **There is no size per datapoint.** InfluxDB does not report one, neither in 1.x (`SHOW STATS` and
+  `SHOW SHARDS` only know the engine and the shards) nor in 2.x (disk usage is monitored per bucket). The
+  number of **series** is shown instead: it is what drives the memory the index needs, and
+  [custom tags](#custom-tags) are the usual way to increase it unintentionally.
+- **Counting is a full scan.** InfluxDB has no row count it could look up, so the values of the examined
+  range are really read. On a database with years of data that takes a while - the time range selector
+  above the table limits the scan if the full count is not needed.
+
+The same data is available from JavaScript:
+
+```javascript
+// the whole database; `start` and `end` (ms) limit the examined range
+sendTo('influxdb.0', 'getDpStatistics', {}, function (result) {
+    console.log(JSON.stringify(result.summary));
+    // { datapoints: 42, values: 1234567, cardinality: 44,
+    //   byStatus: { active: {...}, loggingDisabled: {...}, objectMissing: {...} } }
+    console.log(JSON.stringify(result.result[0]));
+    // { id: 'hm-rpc.0.ABC123.1.TEMPERATURE', type: 'Number', count: 51234,
+    //   firstTs: 1696000000000, lastTs: 1759000000000, cardinality: 1, status: 'active' }
+});
+```
+
+`cleanupOrphaned` removes the stored values of datapoints nobody logs any more. **Without `confirm: true`
+nothing is deleted** - the answer only reports what a confirmed run would remove, which is what the dialog
+in the admin shows before anything is lost:
+
+```javascript
+// dry run: what would be removed?
+sendTo('influxdb.0', 'cleanupOrphaned', {}, function (result) {
+    console.log(`${result.datapoints} datapoints with ${result.values} values`);
+    console.log(result.items.map(item => item.id).join('
+'));
+});
+
+// really remove it - this cannot be undone
+sendTo('influxdb.0', 'cleanupOrphaned', { confirm: true }, function (result) {
+    console.log(`removed ${result.deleted.datapoints} datapoints`);
+    // result.failed lists the measurements the database refused to drop
+});
+```
+
+The scope decides what counts as removable. By default only states that no longer exist in ioBroker are
+selected, because nothing can reach their history any more. Datapoints whose logging is merely switched
+off are a different matter - their history is still reachable and may well be wanted, so they are only
+included when asked for explicitly:
+
+```javascript
+sendTo('influxdb.0', 'cleanupOrphaned', {
+    scope: { objectMissing: true, loggingDisabled: true },
+    confirm: true,
+});
+```
+
+A datapoint that is being logged is never selected, whatever the scope says.
+
 <!--
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
@@ -493,6 +561,7 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 * (@GermanBluefox) Fixed the error of a failed message (`getRetention`, `test`, `destroy`, `getDatapoints`, `getRawEntries`, ...) being sent as an empty object instead of its text
 * (@GermanBluefox) `io-package.json` matches the current js-controller schema again (`subscribe` removed, `docs.en` added)
 * (@GermanBluefox) The admin frontend is installed before it is linted in the CI, so its lint no longer fails on unresolved types
+* (@GermanBluefox) Added a **Statistics** tab: values, oldest/newest value, series and status per datapoint, plus a cleanup for the data of states that were deleted in ioBroker (`getDpStatistics` and `cleanupOrphaned`)
 
 **Note:** a buffer written by this version (`influxdata.json`, only present if the adapter was stopped with unwritten values) can not be read by version 5.0.5 and older if custom tags are used. Downgrading discards those buffered values.
 

@@ -110,5 +110,6 @@
     "Tag name": "Назва тегу",
     "Tag value": "Значення тегу",
     "Tag name invalid": "Потрібна назва. Не дозволено: value, q, ack, from, time та назви, що починаються з _",
-    "Tag value required": "Потрібне значення"
+    "Tag value required": "Потрібне значення",
+    "Statistics": "Статистика"
 }
