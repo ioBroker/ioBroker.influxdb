@@ -187,6 +187,9 @@ interface SavedInfluxDbCustomConfig extends InfluxDbCustomConfigTyped {
     skipped: ioBroker.State | null | undefined;
     timeout: NodeJS.Timeout | null;
     lastLogTime?: number;
+    /** Newest value received during blockTime, logged when blockTime is over */
+    blocked?: ioBroker.State | null;
+    blockTimeout?: NodeJS.Timeout | null;
 }
 
 export class InfluxDBAdapter extends Adapter {
@@ -295,6 +298,8 @@ export class InfluxDBAdapter extends Adapter {
                         clearTimeout(this._influxDPs[formerAliasId].relogTimeout);
                         this._influxDPs[formerAliasId].relogTimeout = null;
                     }
+                    // a pending blocked value is covered by writeInitialValue below
+                    this.clearBlocked(formerAliasId);
 
                     const state = this._influxDPs[formerAliasId] ? this._influxDPs[formerAliasId].state : null;
                     const skipped = this._influxDPs[formerAliasId] ? this._influxDPs[formerAliasId].skipped : null;
@@ -327,6 +332,7 @@ export class InfluxDBAdapter extends Adapter {
                         if (timeout) {
                             clearTimeout(timeout);
                         }
+                        this.clearBlocked(id);
 
                         delete this._influxDPs[id];
                         this.log.info(`disabled logging of ${id}`);
@@ -1290,7 +1296,12 @@ datasources:
         }
     }
 
-    async pushHistory(id: string, state: ioBroker.State | null | undefined, timerRelog?: boolean): Promise<void> {
+    async pushHistory(
+        id: string,
+        state: ioBroker.State | null | undefined,
+        timerRelog?: boolean,
+        blockReleased?: boolean,
+    ): Promise<void> {
         timerRelog ||= false;
         // Push into InfluxDB
         if (this._influxDPs[id]) {
@@ -1354,6 +1365,7 @@ datasources:
 
                 if (
                     !valueUnstable &&
+                    !blockReleased &&
                     settings.blockTime &&
                     this._influxDPs[id].state &&
                     this._influxDPs[id].state.ts + settings.blockTime > state.ts
@@ -1362,6 +1374,9 @@ datasources:
                         this.log.debug(
                             `value ignored blockTime ${id}, value=${state.val}, ts=${state.ts}, lastState.ts=${this._influxDPs[id].state.ts}, blockTime=${settings.blockTime}`,
                         );
+                    // Without this, a change received during blockTime is lost until the value changes again,
+                    // and a timed relog keeps repeating the outdated value.
+                    this.rememberBlocked(id, state, this._influxDPs[id].state.ts + settings.blockTime);
                     return;
                 }
 
@@ -1465,6 +1480,10 @@ datasources:
                 clearTimeout(this._influxDPs[id].relogTimeout);
                 this._influxDPs[id].relogTimeout = null;
             }
+            if (!timerRelog) {
+                // this value supersedes a value still waiting for the end of blockTime
+                this.clearBlocked(id);
+            }
             if (timerRelog) {
                 state = Object.assign({}, state);
                 state.ts = Date.now();
@@ -1543,6 +1562,53 @@ datasources:
                     );
                 }
             }
+        }
+    }
+
+    /** Remember the newest value received during blockTime and log it once blockTime is over */
+    rememberBlocked(id: string, state: ioBroker.State, blockEnd: number): void {
+        const dp = this._influxDPs[id];
+        // keep the state of the actual change: a repeated update of the same value (ts !== lc) would be
+        // treated as "not changed" when it is logged
+        if (!dp.blocked || dp.blocked.val !== state.val) {
+            dp.blocked = state;
+        }
+        if (!dp.blockTimeout) {
+            const delay = Math.min(Math.max(blockEnd - Date.now(), 0), dp.blockTime);
+            dp.blockTimeout = setTimeout(_id => void this.logBlocked(_id), delay, id);
+        }
+    }
+
+    clearBlocked(id: string): void {
+        const dp = this._influxDPs[id];
+        if (!dp) {
+            return;
+        }
+        if (dp.blockTimeout) {
+            clearTimeout(dp.blockTimeout);
+            dp.blockTimeout = null;
+        }
+        dp.blocked = null;
+    }
+
+    async logBlocked(id: string): Promise<void> {
+        const dp = this._influxDPs[id];
+        if (!dp) {
+            return;
+        }
+        dp.blockTimeout = null;
+        const blocked = dp.blocked;
+        dp.blocked = null;
+        // nothing new compared to the last logged value, or a newer value is already being debounced
+        if (!blocked || dp.timeout || (dp.state && dp.state.val === blocked.val)) {
+            return;
+        }
+        dp.enableDebugLogs &&
+            this.log.debug(`blockTime over ${id}, logging value received meanwhile: ${blocked.val}, ts=${blocked.ts}`);
+        try {
+            await this.pushHistory(id, blocked, false, true);
+        } catch (e) {
+            this.logPushError(id, e);
         }
     }
 
@@ -2718,10 +2784,16 @@ datasources:
                 this._influxDPs[id].timeout = null;
             }
 
+            const blocked = this._influxDPs[id].blocked;
+            this.clearBlocked(id);
+
             try {
                 if (this._influxDPs[id].skipped && !this._influxDPs[id].disableSkippedValueLogging) {
                     await this.pushHelper(id, this._influxDPs[id].skipped);
                     this._influxDPs[id].skipped = null;
+                }
+                if (blocked && this._influxDPs[id].state?.val !== blocked.val) {
+                    await this.pushHelper(id, blocked);
                 }
             } catch (error) {
                 this.logPushError(id, error);

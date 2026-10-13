@@ -616,6 +616,9 @@ A datapoint that is being logged is never selected, whatever the scope says.
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (@franzenhof) A value received during `blockTime` is now logged when the block time is over. Before, it was dropped and a datapoint that then stayed unchanged kept its outdated value in the database (repeated by `changesRelogInterval`) until the next change
+
 ### 5.1.1 (2026-10-13)
 * (@GermanBluefox) Grafana in Docker is shown as link on the intro page and in the instance list of admin. The instance restarts once when the link is added or removed
 * (@GermanBluefox) The settings show the Grafana login (`admin` / admin security password) and link to the documentation

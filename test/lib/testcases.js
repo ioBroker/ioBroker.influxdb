@@ -769,17 +769,57 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                 },
                 result => {
                     console.log(JSON.stringify(result.result, null, 2));
-                    expect(result.result.length).to.be.at.least(9);
+                    // values received during blockTime (2.5, 4, 4.4) are logged once blockTime is over
+                    expect(result.result.length).to.be.at.least(12);
                     expect(result.result[0].val).to.be.equal(1);
-                    expect(result.result[1].val).to.be.at.least(2.3);
-                    expect(result.result[2].val).to.be.equal(4);
-                    expect(result.result[3].val).to.be.equal(5);
-                    expect(result.result[4].val).to.be.equal(6);
-                    expect(result.result[5].val).to.be.equal(6);
-                    expect(result.result[6].val).to.be.equal(6.45);
-                    expect(result.result[7].val).to.be.equal(7);
-                    expect(result.result[8].val).to.be.equal(7);
+                    expect(result.result[1].val).to.be.equal(2.5);
+                    expect(result.result[2].val).to.be.equal(2.9);
+                    expect(result.result[3].val).to.be.equal(3);
+                    expect(result.result[4].val).to.be.equal(4);
+                    expect(result.result[5].val).to.be.equal(4.4);
+                    expect(result.result[6].val).to.be.equal(5);
+                    expect(result.result[7].val).to.be.equal(6);
+                    expect(result.result[8].val).to.be.equal(6);
+                    expect(result.result[9].val).to.be.equal(6.45);
+                    expect(result.result[10].val).to.be.equal(7);
+                    expect(result.result[11].val).to.be.equal(7);
 
+                    resolve();
+                },
+            );
+        });
+    });
+
+    it(`Test ${adapterShortName}: Value received during blockTime is logged after blockTime`, async function () {
+        this.timeout(20000);
+        const start = Date.now() - 10; // getHistory returns values after start only
+
+        await states.setStateAsync(`${instanceName}.testValueBlocked`, { val: 50 }); // expect logged
+        await setTimeoutAsync(2000);
+        await states.setStateAsync(`${instanceName}.testValueBlocked`, { val: 0 }); // expect logged, e.g. a faulty reading
+        await setTimeoutAsync(300);
+        await states.setStateAsync(`${instanceName}.testValueBlocked`, { val: 100 }); // blocked, logged when blockTime is over
+        await setTimeoutAsync(300);
+        await states.setStateAsync(`${instanceName}.testValueBlocked`, { val: 100 }); // same value again (ts !== lc), still blocked
+        await setTimeoutAsync(3000);
+
+        return new Promise(resolve => {
+            sendTo(
+                instanceName,
+                'getHistory',
+                {
+                    id: `${instanceName}.testValueBlocked`,
+                    options: {
+                        start,
+                        end: Date.now(),
+                        count: 50,
+                        aggregate: 'none',
+                        removeBorderValues: true,
+                    },
+                },
+                result => {
+                    console.log(JSON.stringify(result.result, null, 2));
+                    expect(result.result.map(s => s.val)).to.deep.equal([50, 0, 100]);
                     resolve();
                 },
             );
