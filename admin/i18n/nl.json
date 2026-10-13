@@ -95,7 +95,7 @@
     "User": "Gebruiker",
     "Validate SSL certificate": "SSL-certificaat valideren",
     "aliasId": "Alias-ID",
-    "blockTime": "Negeer alle nieuwe waarden voor X ms na de laatste gelogde waarde",
+    "blockTime": "Log maximaal één waarde per X ms; de nieuwste waarde die in de tussentijd is ontvangen, wordt gelogd wanneer de tijd voorbij is",
     "custom-tags help": "Extra InfluxDB-tags die met elke waarde van dit datapunt worden geschreven. Wijzigen start een nieuwe reeks in InfluxDB.",
     "debounce": "Wijzigingen negeren totdat waarde ongewijzigd blijft voor X Milliseconds",
     "docker_explanation": "ioBroker start en beheert een zelf-gehoste InfluxDB-instantie binnen een Docker-container. Deze optie is geschikt voor gebruikers die InfluxDB liever lokaal draaien zonder afhankelijk te zijn van een externe service.",

@@ -826,6 +826,42 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         });
     });
 
+    it(`Test ${adapterShortName}: Ignored value during blockTime does not replace the waiting one`, async function () {
+        this.timeout(20000);
+        const start = Date.now() - 10; // getHistory returns values after start only
+
+        await states.setStateAsync(`${instanceName}.testValueBlocked`, { val: 50 }); // expect logged
+        await setTimeoutAsync(2000);
+        await states.setStateAsync(`${instanceName}.testValueBlocked`, { val: 20 }); // expect logged
+        await setTimeoutAsync(300);
+        await states.setStateAsync(`${instanceName}.testValueBlocked`, { val: 80 }); // blocked, logged when blockTime is over
+        await setTimeoutAsync(300);
+        await states.setStateAsync(`${instanceName}.testValueBlocked`, { val: 101 }); // ignored (above 100), must not replace 80
+        await setTimeoutAsync(3000);
+
+        return new Promise(resolve => {
+            sendTo(
+                instanceName,
+                'getHistory',
+                {
+                    id: `${instanceName}.testValueBlocked`,
+                    options: {
+                        start,
+                        end: Date.now(),
+                        count: 50,
+                        aggregate: 'none',
+                        removeBorderValues: true,
+                    },
+                },
+                result => {
+                    console.log(JSON.stringify(result.result, null, 2));
+                    expect(result.result.map(s => s.val)).to.deep.equal([50, 20, 80]);
+                    resolve();
+                },
+            );
+        });
+    });
+
     it(`Test ${adapterShortName}: Tests with more sample data`, async function () {
         this.timeout(60000);
         const now = new Date();

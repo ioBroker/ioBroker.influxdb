@@ -220,7 +220,7 @@ SELECT mean("value") FROM "system.adapter.admin.0.memRss" WHERE $timeFilter GROU
 
 ## Default Settings
 - **Debounce Time** - Protection against unstable values to make sure that only stable values are logged when the value did not change in the defined amount of Milliseconds. ATTENTION: If values change more often then this setting effectively no value will be logged (because any value is unstable)
-- **Blocktime** - Defines for how long after storing the last value no further value is stored. When the given time in Milliseconds is over then the next value that fulfills all other checks is logged.
+- **Blocktime** - Defines for how long after storing the last value no further value is stored. A value received meanwhile is not lost: when the given time in Milliseconds is over, the newest of them is logged (with its original timestamp) if it fulfills all other checks and differs from the last logged value. Values excluded by the "ignore" settings never replace it.
 - **Record changes only** - This function makes sure that only changed values are logged if they fulfill other checks (see below). Same values will not be logged.
 - **still record the same values (seconds)** - When using "Record changes only" you can set a time interval in seconds here after which also unchanged values will be re-logged into the DB. You can detect the values re-logged by the adapter with the "from" field.
 - **Minimum difference from last value** - When using "Record changes only" you can define the required minimum difference between the new value and the last value. If this is not reached the value is not recorded.
@@ -237,7 +237,7 @@ Most of these values can be pre-defined in the instance settings and are then pr
 The sorted values can be accessed from Javascript adapter.
 
 * Get 50 last stored events for all IDs
-```
+```javascript
 sendTo('influxdb.0', 'getHistory', {
     id: '*',
     options: {
@@ -254,7 +254,7 @@ sendTo('influxdb.0', 'getHistory', {
 ```
 
 * Get stored values for "system.adapter.admin.0.memRss" in last hour
-```
+```javascript
 var end = Date.now();
 sendTo('influxdb.0', 'getHistory', {
     id: 'system.adapter.admin.0.memRss',
@@ -479,7 +479,7 @@ sendTo('influxdb.0', 'flushBuffer', {id: 'mbus.0.counter.xxx'}, result => consol
 ```
 if no id is provided, all buffers will be flushed.
 
-## History Logging Management via Javascript
+## History Logging Management via JavaScript
 The adapter supports enabling and disabling of history logging via JavaScript and also retrieving the list of enabled data points with their settings.
 
 ### enable
@@ -549,11 +549,11 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 The **Statistics** tab of the instance configuration lists every datapoint the database contains, with its
 number of values, the oldest and the newest value, the number of series and a status:
 
-| Status | Meaning |
-| --- | --- |
-| `active` | the state exists and this instance logs it |
+| Status            | Meaning                                                                                  |
+|-------------------|------------------------------------------------------------------------------------------|
+| `active`          | the state exists and this instance logs it                                               |
 | `loggingDisabled` | the state still exists, but its logging is switched off - the history is still reachable |
-| `objectMissing` | the state was deleted in ioBroker, so nothing can reach its history any more |
+| `objectMissing`   | the state was deleted in ioBroker, so nothing can reach its history any more             |
 
 Two things are worth knowing about the numbers:
 
@@ -579,7 +579,7 @@ sendTo('influxdb.0', 'getDpStatistics', {}, function (result) {
 });
 ```
 
-`cleanupOrphaned` removes the stored values of datapoints nobody logs any more. **Without `confirm: true`
+`cleanupOrphaned` removes the stored values of datapoints nobody logs anymore. **Without `confirm: true`
 nothing is deleted** - the answer only reports what a confirmed run would remove, which is what the dialog
 in the admin shows before anything is lost:
 
@@ -598,8 +598,8 @@ sendTo('influxdb.0', 'cleanupOrphaned', { confirm: true }, function (result) {
 });
 ```
 
-The scope decides what counts as removable. By default only states that no longer exist in ioBroker are
-selected, because nothing can reach their history any more. Datapoints whose logging is merely switched
+The scope decides what counts as removable. By default, only states that no longer exist in ioBroker are
+selected, because nothing can reach their history anymore. Datapoints whose logging is merely switched
 off are a different matter - their history is still reachable and may well be wanted, so they are only
 included when asked for explicitly:
 
@@ -618,6 +618,7 @@ A datapoint that is being logged is never selected, whatever the scope says.
 -->
 ### **WORK IN PROGRESS**
 * (@franzenhof) A value received during `blockTime` is now logged when the block time is over. Before, it was dropped and a datapoint that then stayed unchanged kept its outdated value in the database (repeated by `changesRelogInterval`) until the next change
+* (@GermanBluefox) A value excluded by `ignoreZero`/`ignoreBelowNumber`/`ignoreAboveNumber` no longer replaces the value waiting for the end of `blockTime`, and is not written on unload. A waiting value is also written when the datapoint is reconfigured instead of being lost. Note: as the waiting value keeps its original timestamp, two points in the database can now be less than `blockTime` apart
 
 ### 5.1.1 (2026-10-13)
 * (@GermanBluefox) Grafana in Docker is shown as link on the intro page and in the instance list of admin. The instance restarts once when the link is added or removed

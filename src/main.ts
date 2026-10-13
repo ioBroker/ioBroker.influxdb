@@ -298,8 +298,10 @@ export class InfluxDBAdapter extends Adapter {
                         clearTimeout(this._influxDPs[formerAliasId].relogTimeout);
                         this._influxDPs[formerAliasId].relogTimeout = null;
                     }
-                    // a pending blocked value is covered by writeInitialValue below
-                    this.clearBlocked(formerAliasId);
+                    // writeInitialValue below only reads the current state, it does not log it: a value waiting for
+                    // the end of blockTime would be lost, and later repeats of it would count as "not changed".
+                    // The timer is cleared synchronously, before the settings are replaced.
+                    void this.flushBlocked(formerAliasId).catch(e => this.logPushError(formerAliasId, e));
 
                     const state = this._influxDPs[formerAliasId] ? this._influxDPs[formerAliasId].state : null;
                     const skipped = this._influxDPs[formerAliasId] ? this._influxDPs[formerAliasId].skipped : null;
@@ -1363,23 +1365,6 @@ datasources:
                     this._influxDPs[id].timeout = null;
                 }
 
-                if (
-                    !valueUnstable &&
-                    !blockReleased &&
-                    settings.blockTime &&
-                    this._influxDPs[id].state &&
-                    this._influxDPs[id].state.ts + settings.blockTime > state.ts
-                ) {
-                    settings.enableDebugLogs &&
-                        this.log.debug(
-                            `value ignored blockTime ${id}, value=${state.val}, ts=${state.ts}, lastState.ts=${this._influxDPs[id].state.ts}, blockTime=${settings.blockTime}`,
-                        );
-                    // Without this, a change received during blockTime is lost until the value changes again,
-                    // and a timed relog keeps repeating the outdated value.
-                    this.rememberBlocked(id, state, this._influxDPs[id].state.ts + settings.blockTime);
-                    return;
-                }
-
                 if (settings.ignoreZero && (state.val === undefined || state.val === null || state.val === 0)) {
                     settings.enableDebugLogs &&
                         this.log.debug(
@@ -1407,6 +1392,25 @@ datasources:
                         this.log.debug(
                             `value ignored because above ${settings.ignoreAboveNumber} for ${id}, new-value=${state.val}, ts=${state.ts}`,
                         );
+                    return;
+                }
+
+                // Checked after the ignore filters: an ignored value must not replace a valid one that waits
+                // for the end of blockTime
+                if (
+                    !valueUnstable &&
+                    !blockReleased &&
+                    settings.blockTime &&
+                    this._influxDPs[id].state &&
+                    this._influxDPs[id].state.ts + settings.blockTime > state.ts
+                ) {
+                    settings.enableDebugLogs &&
+                        this.log.debug(
+                            `value ignored blockTime ${id}, value=${state.val}, ts=${state.ts}, lastState.ts=${this._influxDPs[id].state.ts}, blockTime=${settings.blockTime}`,
+                        );
+                    // Without this, a change received during blockTime is lost until the value changes again,
+                    // and a timed relog keeps repeating the outdated value.
+                    this.rememberBlocked(id, state, this._influxDPs[id].state.ts + settings.blockTime);
                     return;
                 }
 
@@ -1589,6 +1593,16 @@ datasources:
             dp.blockTimeout = null;
         }
         dp.blocked = null;
+    }
+
+    /** Write a value still waiting for the end of blockTime right away, e.g. on unload or before reconfiguration */
+    async flushBlocked(id: string): Promise<void> {
+        const dp = this._influxDPs[id];
+        const blocked = dp?.blocked;
+        this.clearBlocked(id);
+        if (blocked && dp.state?.val !== blocked.val) {
+            await this.pushHelper(id, blocked);
+        }
     }
 
     async logBlocked(id: string): Promise<void> {
@@ -2783,18 +2797,21 @@ datasources:
                 clearTimeout(this._influxDPs[id].timeout);
                 this._influxDPs[id].timeout = null;
             }
-
-            const blocked = this._influxDPs[id].blocked;
-            this.clearBlocked(id);
+            if (this._influxDPs[id].blockTimeout) {
+                clearTimeout(this._influxDPs[id].blockTimeout);
+                this._influxDPs[id].blockTimeout = null;
+            }
 
             try {
                 if (this._influxDPs[id].skipped && !this._influxDPs[id].disableSkippedValueLogging) {
                     await this.pushHelper(id, this._influxDPs[id].skipped);
                     this._influxDPs[id].skipped = null;
                 }
-                if (blocked && this._influxDPs[id].state?.val !== blocked.val) {
-                    await this.pushHelper(id, blocked);
-                }
+            } catch (error) {
+                this.logPushError(id, error);
+            }
+            try {
+                await this.flushBlocked(id);
             } catch (error) {
                 this.logPushError(id, error);
             }

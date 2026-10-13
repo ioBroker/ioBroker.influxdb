@@ -95,7 +95,7 @@
     "User": "Do utilizador",
     "Validate SSL certificate": "Validar certificado SSL",
     "aliasId": "Alias-ID",
-    "blockTime": "Ignore todos os novos valores por X ms após o último valor registrado",
+    "blockTime": "Registrar no máximo um valor a cada X ms; o valor mais recente recebido nesse intervalo é registrado quando o tempo terminar",
     "custom-tags help": "Tags adicionais do InfluxDB gravadas com cada valor deste ponto de dados. Alterá-las inicia uma nova série no InfluxDB.",
     "debounce": "Ignorar alterações até que o valor permaneça inalterado por X Milissegundos",
     "docker_explanation": "O ioBroker iniciará e gerenciará uma instância auto-hospedada do InfluxDB em um contêiner Docker. Esta opção é adequada para usuários que preferem ter o InfluxDB rodando localmente sem depender de um serviço externo.",

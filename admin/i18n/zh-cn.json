@@ -95,7 +95,7 @@
     "User": "用户",
     "Validate SSL certificate": "验证 SSL 证书",
     "aliasId": "别名 ID",
-    "blockTime": "在上次记录值之后忽略 X 毫秒的所有新值",
+    "blockTime": "每 X 毫秒最多记录一个值；在此期间收到的最新值会在时间结束后记录",
     "custom-tags help": "随该数据点每个值一起写入的附加 InfluxDB 标签。更改它们会在 InfluxDB 中开始一个新的序列。",
     "debounce": "忽略更改，直到值保持不变为X毫秒",
     "docker_explanation": "ioBroker 将在 Docker 容器中启动并管理一个自托管的 InfluxDB 实例。此选项适合希望在本地运行 InfluxDB 而不依赖外部服务的用户。",
