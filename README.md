@@ -617,6 +617,9 @@ A datapoint that is being logged is never selected, whatever the scope says.
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (@GermanBluefox) The "Statistics" tab works now with InfluxDB 2.0
+
 ### 5.1.5 (2026-10-13)
 * (@GermanBluefox) Added missing translations. Compact mode no longer can exit the whole host process. The Grafana admin password is protected now
 

@@ -3946,19 +3946,19 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
         // `schema.measurements` only looks at the last 30 days by default, so a datapoint whose logging
         // was stopped earlier would be missing - the whole range InfluxDB can store must be scanned
         const bucket = escapeFluxString(this.config.dbname);
-        const start = new Date(MIN_INFLUX_TIME).toISOString();
         let rows: { _value: string }[] | undefined;
         try {
             rows = await this._client.query<{ _value: string }>(
-                `import "influxdata/influxdb/schema"\nschema.measurements(bucket: "${bucket}", start: ${start}, stop: ${new Date(MAX_INFLUX_TIME).toISOString()})`,
+                `import "influxdata/influxdb/schema"\nschema.measurements(bucket: "${bucket}", start: ${new Date(MIN_INFLUX_TIME).toISOString()}, stop: ${new Date(MAX_INFLUX_TIME).toISOString()})`,
             );
         } catch (error) {
-            // InfluxDB 2.0 knows no range for `schema.measurements` yet, but `schema.tagValues` has a start
+            // InfluxDB 2.0 knows no range for `schema.measurements` yet. `schema.tagValues` has a start,
+            // but only as duration: back to 1970 covers every timestamp ioBroker can write
             if (!String(error).includes('unexpected argument start')) {
                 throw error;
             }
             rows = await this._client.query<{ _value: string }>(
-                `import "influxdata/influxdb/schema"\nschema.tagValues(bucket: "${bucket}", tag: "_measurement", start: ${start})`,
+                `import "influxdata/influxdb/schema"\nschema.tagValues(bucket: "${bucket}", tag: "_measurement", start: -${Math.ceil(Date.now() / 1000)}s)`,
             );
         }
         return (rows || []).map(row => row._value).filter(name => !!name);
