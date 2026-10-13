@@ -14,7 +14,7 @@
       "uk": "Збереження історії подій для окремих станів в InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "5.1.2",
+    "version": "5.1.3",
     "titleLang": {
       "en": "Logging data with InfluxDB",
       "de": "Daten mit InfluxDB protokollieren",
@@ -29,6 +29,19 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "5.1.3": {
+        "en": "The error of a failed save or delete in the data browser is no longer hidden by the reload of the table",
+        "de": "Fehler beim Speichern oder Löschen im Datenbrowser verdeckt das Neuladen der Tabelle nicht mehr",
+        "ru": "Ошибка неудачного сохранения или удаления в браузере данных больше не скрывается перезагрузкой таблицы",
+        "pt": "O erro de falha ao salvar ou excluir no navegador de dados não é mais oculto ao recarregar a tabela",
+        "nl": "De fout van een mislukte opslag of verwijdering in de gegevensbrowser wordt niet langer verborgen door het opnieuw laden van de tabel",
+        "fr": "L'erreur d'échec de sauvegarde ou de suppression dans le navigateur n'est plus masquée par le rechargement du tableau",
+        "it": "L'errore di salvataggio o eliminazione non riuscito non è più nascosto dal riavvio della tabella",
+        "es": "El error de no guardar o eliminar en el navegador de datos ya no se oculta al volver a cargar la tabla",
+        "pl": "Błąd nieudanego zapisywania lub usunięcia w przeglądarce danych nie jest już ukryty przez ponowne załadowanie tabeli",
+        "uk": "Помилка невдалого збереження або видалення в браузері даних більше не прихована перезавантаженням таблиці",
+        "zh-cn": "重新加载表格不再掩盖数据浏览器中保存或删除失败的错误"
+      },
       "5.1.1": {
         "en": "Grafana in Docker is shown as link on the intro page and in the instance list of admin. The instance restarts once when the link is added or removed\nThe settings show the Grafana login (`admin` / admin security password) and link to the documentation\nDescribed how to use InfluxDB and Grafana in Docker: login, data source, first dashboard, resetting a forgotten password",
         "de": "Grafana in Docker steht als Link auf der Intro-Seite und in der Admin-Instanzliste. Die Instanz startet einmal neu, wenn der Link entfernt wird\nDie Einstellungen zeigen den Grafana-Login (`admin`/ Admin-Passwort) und Link zur Dokumentation\nBeschrieb InfluxDB und Grafana in Docker: Login, Datenquelle, erstes Dashboard, Passwort zurücksetzen",
