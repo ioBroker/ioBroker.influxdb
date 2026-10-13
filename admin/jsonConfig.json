@@ -451,7 +451,26 @@
             "label": "Grafana Docker",
             "hidden": "!data.dockerGrafana?.enabled || !data.dockerInflux?.enabled",
             "items": {
+                "_grafanaLoginInfo": {
+                    "type": "staticText",
+                    "text": "Grafana login info",
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 9
+                },
+                "_grafanaLoginHelp": {
+                    "type": "staticLink",
+                    "label": "Grafana documentation",
+                    "href": "https://github.com/ioBroker/ioBroker.influxdb#grafana-in-docker",
+                    "target": "_blank",
+                    "button": true,
+                    "variant": "outlined",
+                    "xs": 12,
+                    "sm": 12,
+                    "md": 3
+                },
                 "dockerGrafana.bind": {
+                    "newLine": true,
                     "type": "ip",
                     "label": "Start container on IP",
                     "listenOnAllPorts": true,
