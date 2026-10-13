@@ -113,5 +113,10 @@
     "path": "Il percorso",
     "retention": "Conservazione di memoria",
     "use 0 to not buffer at all": "Utilizzare 0 per non bufferizzare affatto",
-    "usetags help": "Per ulteriori informazioni, fare riferimento alla documentazione: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields"
+    "usetags help": "Per ulteriori informazioni, fare riferimento alla documentazione: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields",
+    "DB settings": "Impostazioni DB",
+    "Only by first start": "Solo al primo avvio",
+    "Auto-update Docker image": "Aggiorna automaticamente l'immagine Docker",
+    "Plugins": "Plugin",
+    "Server root URL": "URL radice del server"
 }

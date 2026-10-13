@@ -974,7 +974,7 @@ export class InfluxDBAdapter extends Adapter {
                 void this.finish(() => {
                     if (msg.callback) {
                         this.sendTo(msg.from, msg.command, 'stopped', msg.callback);
-                        setTimeout(() => (this.terminate ? this.terminate() : process.exit()), 200);
+                        setTimeout(() => this.terminate(), 200);
                     }
                 });
             } else if (msg.command === 'getRetention') {
@@ -2822,7 +2822,7 @@ datasources:
         if (callback) {
             callback();
         } else {
-            this.terminate ? this.terminate() : process.exit();
+            this.terminate();
         }
     }
 

@@ -113,5 +113,10 @@
     "path": "шлях",
     "retention": "Зберігання",
     "use 0 to not buffer at all": "Використовуйте 0, щоб взагалі не буферизувати",
-    "usetags help": "Для отримання додаткової інформації зверніться до документації: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields"
+    "usetags help": "Для отримання додаткової інформації зверніться до документації: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields",
+    "DB settings": "Налаштування БД",
+    "Only by first start": "Лише під час першого запуску",
+    "Auto-update Docker image": "Автоматично оновлювати образ Docker",
+    "Plugins": "Плагіни",
+    "Server root URL": "Кореневий URL сервера"
 }

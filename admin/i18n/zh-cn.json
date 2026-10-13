@@ -113,5 +113,10 @@
     "path": "小路",
     "retention": "储存保留",
     "use 0 to not buffer at all": "使用0根本不缓冲",
-    "usetags help": "有关更多信息，请参阅文档："
+    "usetags help": "有关更多信息，请参阅文档：",
+    "DB settings": "数据库设置",
+    "Only by first start": "仅在首次启动时",
+    "Auto-update Docker image": "自动更新 Docker 镜像",
+    "Plugins": "插件",
+    "Server root URL": "服务器根 URL"
 }

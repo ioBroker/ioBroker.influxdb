@@ -113,5 +113,10 @@
     "Tag value required": "Value required",
     "Statistics": "Statistics",
     "Grafana login info": "Grafana login: user \"admin\", password is the \"Admin security password\" below (default \"iobroker\"). The password is only taken over on the very first start of the container - changing it here later has no effect. If you forgot it, see the documentation how to reset it.",
-    "Grafana documentation": "Documentation"
+    "Grafana documentation": "Documentation",
+    "DB settings": "DB settings",
+    "Only by first start": "Only by first start",
+    "Auto-update Docker image": "Auto-update Docker image",
+    "Plugins": "Plugins",
+    "Server root URL": "Server root URL"
 }
