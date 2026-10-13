@@ -612,10 +612,14 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 
 A datapoint that is being logged is never selected, whatever the scope says.
 
+## Changelog
 <!--
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (@GermanBluefox) The "Statistics" tab works now also with InfluxDB 2.0. A datapoint without storage type that received a numeric string is shown there as number
+
 ### 5.1.3 (2026-10-13)
 * (@GermanBluefox) The error of a failed save or delete in the data browser is no longer hidden by the reload of the table
 

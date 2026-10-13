@@ -3945,9 +3945,22 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
 
         // `schema.measurements` only looks at the last 30 days by default, so a datapoint whose logging
         // was stopped earlier would be missing - the whole range InfluxDB can store must be scanned
-        const rows = await this._client.query<{ _value: string }>(
-            `import "influxdata/influxdb/schema"\nschema.measurements(bucket: "${escapeFluxString(this.config.dbname)}", start: ${new Date(MIN_INFLUX_TIME).toISOString()}, stop: ${new Date(MAX_INFLUX_TIME).toISOString()})`,
-        );
+        const bucket = escapeFluxString(this.config.dbname);
+        const start = new Date(MIN_INFLUX_TIME).toISOString();
+        let rows: { _value: string }[] | undefined;
+        try {
+            rows = await this._client.query<{ _value: string }>(
+                `import "influxdata/influxdb/schema"\nschema.measurements(bucket: "${bucket}", start: ${start}, stop: ${new Date(MAX_INFLUX_TIME).toISOString()})`,
+            );
+        } catch (error) {
+            // InfluxDB 2.0 knows no range for `schema.measurements` yet, but `schema.tagValues` has a start
+            if (!String(error).includes('unexpected argument start')) {
+                throw error;
+            }
+            rows = await this._client.query<{ _value: string }>(
+                `import "influxdata/influxdb/schema"\nschema.tagValues(bucket: "${bucket}", tag: "_measurement", start: ${start})`,
+            );
+        }
         return (rows || []).map(row => row._value).filter(name => !!name);
     }
 
@@ -3973,7 +3986,11 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
             return 'Boolean';
         }
         if (typeof cached === 'string') {
-            return 'String';
+            // without a storageType a numeric or boolean string is converted before it is written
+            if (cached.trim() !== '' && isFinite(cached as unknown as number)) {
+                return 'Number';
+            }
+            return cached === 'true' || cached === 'false' ? 'Boolean' : 'String';
         }
 
         try {
