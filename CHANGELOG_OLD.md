@@ -1,4 +1,9 @@
 # Older changes
+## 5.1.1 (2026-10-13)
+* (@GermanBluefox) Grafana in Docker is shown as link on the intro page and in the instance list of admin. The instance restarts once when the link is added or removed
+* (@GermanBluefox) The settings show the Grafana login (`admin` / admin security password) and link to the documentation
+* (@GermanBluefox) Described how to use InfluxDB and Grafana in Docker: login, data source, first dashboard, resetting a forgotten password
+
 ## 5.1.0 (2026-10-03)
 * (@jb-io) Added custom tags per datapoint, written with every value to InfluxDB 1.x and 2.x (#32)
 * (@GermanBluefox) `enableHistory` also accepts the custom tags in the form `getEnabledDPs` reports them, so a configuration read from there and written back keeps its tags
