@@ -999,6 +999,14 @@ export class InfluxDBAdapter extends Adapter {
     }
 
     async main(): Promise<void> {
+        // Writing the own instance object makes js-controller restart the instance, so nothing
+        // else may be started before. It only writes when the link differs, i.e. once after
+        // grafana was switched on or off or its address was changed.
+        if (await this.updateGrafanaLink()) {
+            this.log.info('The link to Grafana was updated, the instance restarts');
+            return;
+        }
+
         this.config.dbname ||= 'iobroker';
         this.config.port = parseInt(this.config.port as string, 10) || 0;
         if (this.config.relogLastValueOnStart === undefined) {
@@ -1181,6 +1189,59 @@ export class InfluxDBAdapter extends Adapter {
                 void this.storeBufferedSeries().catch(e => this.logBufferError(e));
             }, this.config.seriesBufferFlushInterval * 1000);
         }
+    }
+
+    /**
+     * Shows the Grafana running in docker as link on the intro page and in the instance list of admin.
+     * Admin can neither hide a link depending on the configuration nor resolve a nested native attribute
+     * like `dockerGrafana.port` itself, so the link is written into `common.localLinks` of the instance.
+     *
+     * @returns true if the instance object was changed - js-controller restarts the instance then
+     */
+    async updateGrafanaLink(): Promise<boolean> {
+        const instanceObj = await this.getForeignObjectAsync(`system.adapter.${this.namespace}`);
+        if (!instanceObj?.common) {
+            return false;
+        }
+        const localLinks: Record<string, any> = { ...((instanceObj.common.localLinks as Record<string, any>) || {}) };
+        let link: Record<string, any> | undefined;
+        if (this.config.dockerGrafana?.enabled) {
+            const port = parseInt(this.config.dockerGrafana.port as string, 10) || 3000;
+            const bind = this.config.dockerGrafana.bind;
+            // `%ip%` lets admin find the address of the host that is reachable from the browser
+            const host = !bind || bind === '0.0.0.0' || bind === '::' ? '%ip%' : bind;
+            link = {
+                link: `http://${host}:${port}/`,
+                name: 'Grafana',
+                description: {
+                    en: 'Dashboards for the data in InfluxDB. Login: admin / iobroker',
+                    de: 'Dashboards für die Daten in InfluxDB. Login: admin / iobroker',
+                    ru: 'Дашборды для данных в InfluxDB. Логин: admin / iobroker',
+                },
+                color: '#F46800',
+                intro: true,
+            };
+        }
+        if (JSON.stringify(localLinks.grafana) === JSON.stringify(link)) {
+            return false;
+        }
+        if (link) {
+            localLinks.grafana = link;
+        } else {
+            delete localLinks.grafana;
+        }
+        if (Object.keys(localLinks).length) {
+            instanceObj.common.localLinks = localLinks;
+        } else {
+            delete instanceObj.common.localLinks;
+        }
+        try {
+            await this.setForeignObjectAsync(instanceObj._id, instanceObj);
+        } catch (e) {
+            this.log.warn(`Cannot update the link to Grafana: ${formatError(e)}`);
+            return false;
+        }
+        return true;
     }
 
     prepareDockerConfigGrafana(): void {

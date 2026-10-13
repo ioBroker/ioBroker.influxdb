@@ -138,23 +138,85 @@ Enable authentication by editing /etc/influxdb/influxdb.conf:
 - Restart service: ``` service influxdb restart ```
 
 ## Self-hosted docker image for InfluxDB
-This version of the adapter could start a self-hosted docker image of InfluxDB 2.x.
-It is not opened for the network and only accessible from localhost. Of course, the docker environment must be installed and running on the host.
+This version of the adapter could start a self-hosted docker image of InfluxDB 2.x and, optionally, Grafana next to it.
+Of course, the docker environment must be installed and running on the host.
 
 The `iobroker` user must have access to the docker CLI. To fix the rights start `iob fix`.
 
-## Installation of Grafana (Charting Tool)
-There is an additional charting tool for InfluxDB - Grafana.
-It must be installed additionally.
+Enable it in the instance settings with **Use self-hosted InfluxDB in Docker**. All connection settings (host, port, organization, token, ...) are hidden then, because the adapter configures the connection itself.
 
-Install a current version of Grafana 3.x+ because InfluxDB support is enhanced there in comparison to earlier Grafana versions.
+The container is created with these fixed values:
 
-Under debian you can install it as described at http://docs.grafana.org/installation/debian/ .
-For ARM platforms you can check vor v3.x at https://github.com/fg2it/grafana-on-raspberry.
+| Setting           | Value                                      |
+|-------------------|--------------------------------------------|
+| URL               | `http://<ioBroker-host>:8086`              |
+| User / password   | `iobroker` / `iobroker`                    |
+| Organization      | `iobroker`                                 |
+| Bucket            | `iobroker`                                 |
+| API token         | `aW9icm9rZXI4NjY0NTYzODU0NjU2NTY1MjY1Ng==` |
 
-Explanation for other OS can be found [here](http://docs.grafana.org/installation/).
+By default, the container listens only on `127.0.0.1`, so the InfluxDB web interface can only be opened on the ioBroker host itself. To reach it from another computer, set **Start container on IP** in the panel _InfluxDB Docker_ to `0.0.0.0` (all interfaces) or to the IP of the host. **Do this only in a trusted network** - the user, password and token above are the same in every installation. You can change the password in the InfluxDB web interface (user menu → _Change password_) without affecting the adapter, which logs in with the token. Do not delete the token.
 
-After the Grafana is installed, follow [this](http://docs.grafana.org/datasources/influxdb/) to create a connection.
+The data lives in the docker volumes `flux_data` and `flux_config`, so it survives an update or a re-creation of the container.
+
+## Grafana (Charting Tool)
+[Grafana](https://grafana.com/) is a charting tool that shows the data from InfluxDB as dashboards.
+
+### Grafana in Docker
+If InfluxDB runs in Docker (see above), the adapter can start Grafana in Docker too: enable **Use self-hosted Grafana in Docker** in the instance settings (the checkbox is only shown when **Use self-hosted InfluxDB in Docker** is enabled). The connection to InfluxDB is set up automatically - nothing has to be configured in Grafana.
+
+#### First login
+1. Open `http://<ioBroker-host>:3000` in the browser - or simply click the _Grafana_ tile on the intro page of admin (also shown as link in the instance list). The adapter adds this link when Grafana is enabled and restarts its instance once for it. The port can be changed in the panel _Grafana Docker_. Grafana listens on all interfaces by default (`0.0.0.0`); set **Start container on IP** to `127.0.0.1` if it should only be reachable from the host itself.
+2. Log in with
+   - **user: `admin`**
+   - **password: `iobroker`** - or the value of **Admin security password** in the panel _Grafana Docker_, if it was changed before the first start.
+3. Grafana asks to set a new password. Set one or click _Skip_.
+
+**The admin password is only applied on the very first start of the container**, when Grafana creates its database. Changing **Admin security password** in the adapter settings later has no effect, and a password changed in Grafana is not shown in the adapter settings. If you forgot it, reset it on the ioBroker host:
+
+```bash
+docker ps --filter name=grafana --format '{{.Names}}'     # shows the container name, e.g. iob_influxdb_0_grafana
+docker exec -it iob_influxdb_0_grafana grafana cli admin reset-admin-password <new-password>
+```
+
+The option **Enable user sign-ups** shows a _Sign up_ link on the login page, where everybody who can open Grafana can create a user. Disable it if Grafana is reachable from your network.
+
+#### The data source
+The data source `InfluxDB` is already present and set as default (_Connections → Data sources_). It uses the query language **Flux**, organization `iobroker` and bucket `iobroker`, and connects to the InfluxDB container inside the docker network, independent of the port configured for the host. The adapter writes this data source anew on every start, so it can not be edited in Grafana. You can add data sources of your own next to it.
+
+#### The first dashboard
+1. _Dashboards → New → New dashboard → Add visualization_ and select the data source `InfluxDB`.
+2. Switch the query editor to _Code_ (if shown) and enter a Flux query. Every datapoint is stored in a measurement named like its ID (or its `Alias-ID`), the value is in the field `value`:
+
+   ```
+   from(bucket: "iobroker")
+     |> range(start: v.timeRangeStart, stop: v.timeRangeStop)
+     |> filter(fn: (r) => r._measurement == "system.adapter.admin.0.memRss" and r._field == "value")
+     |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)
+   ```
+
+   Replace `system.adapter.admin.0.memRss` with the ID of one of your logged datapoints. `aggregateWindow` reduces the number of points to what fits into the chart - use `fn: last` for values that are not numbers or should not be averaged.
+3. Click _Refresh_ above the chart, then _Save dashboard_.
+
+The easiest way to find the right measurement and field names is the _Data Explorer_ of the InfluxDB web interface (see above): select bucket, measurement and field there and click _Script Editor_ to get the matching Flux query. In Grafana, _Explore_ can be used to try out queries without a dashboard.
+
+Further hints:
+- Plugins can be installed via the option **Plugins** in the panel _Grafana Docker_ (e.g. `grafana-clock-panel`); they are installed on the next start of the container.
+- If Grafana is accessed via a reverse proxy under a sub-path, enter the full public URL in **Server root URL**.
+- Dashboards, users and settings are stored in the docker volume `grafana_data` and survive an update of the container.
+
+### Grafana installed manually
+If you do not use Docker, Grafana must be installed separately. Explanations for the different operating systems can be found [here](https://grafana.com/docs/grafana/latest/setup-grafana/installation/).
+After the installation, open `http://<host>:3000` and log in with `admin` / `admin` (Grafana's own default; you are asked to change it right away).
+Then create a data source as described [here](https://grafana.com/docs/grafana/latest/datasources/influxdb/):
+- InfluxDB 1.x: query language _InfluxQL_, URL of InfluxDB, database name and the user/password of the adapter settings.
+- InfluxDB 2.x: query language _Flux_, URL of InfluxDB, organization, token and default bucket of the adapter settings.
+
+The query from [The first dashboard](#the-first-dashboard) works for InfluxDB 2.x. For InfluxDB 1.x with InfluxQL use e.g.:
+
+```
+SELECT mean("value") FROM "system.adapter.admin.0.memRss" WHERE $timeFilter GROUP BY time($__interval) fill(previous)
+```
 
 ## Default Settings
 - **Debounce Time** - Protection against unstable values to make sure that only stable values are logged when the value did not change in the defined amount of Milliseconds. ATTENTION: If values change more often then this setting effectively no value will be logged (because any value is unstable)
@@ -554,6 +616,11 @@ A datapoint that is being logged is never selected, whatever the scope says.
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (@GermanBluefox) Grafana in Docker is shown as link on the intro page and in the instance list of admin. The instance restarts once when the link is added or removed
+* (@GermanBluefox) The settings show the Grafana login (`admin` / admin security password) and link to the documentation
+* (@GermanBluefox) Described how to use InfluxDB and Grafana in Docker: login, data source, first dashboard, resetting a forgotten password
+
 ### 5.1.0 (2026-10-03)
 * (@jb-io) Added custom tags per datapoint, written with every value to InfluxDB 1.x and 2.x (#32)
 * (@GermanBluefox) `enableHistory` also accepts the custom tags in the form `getEnabledDPs` reports them, so a configuration read from there and written back keeps its tags

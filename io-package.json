@@ -158,7 +158,8 @@
     "type": "storage",
     "docs": {
       "en": [
-        "README.md"
+        "README.md",
+        "docs/en/influxdb.md"
       ],
       "de": [
         "docs/de/influxdb.md"
