@@ -617,7 +617,7 @@ A datapoint that is being logged is never selected, whatever the scope says.
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 5.1.4 (2026-10-13)
 * (@GermanBluefox) The "Statistics" tab works now also with InfluxDB 2.0. A datapoint without storage type that received a numeric string is shown there as number
 
 ### 5.1.3 (2026-10-13)
@@ -641,9 +641,6 @@ A datapoint that is being logged is never selected, whatever the scope says.
 * (@GermanBluefox) Added a **Statistics** tab: values, oldest/newest value, series and status per datapoint, plus a cleanup for the data of states that were deleted in ioBroker (`getDpStatistics` and `cleanupOrphaned`)
 
 **Note:** a buffer written by this version (`influxdata.json`, only present if the adapter was stopped with unwritten values) can not be read by version 5.0.5 and older if custom tags are used. Downgrading discards those buffered values.
-
-### 5.0.5 (2026-10-01)
-* (@GermanBluefox) Corrected boolean aggregation
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 
