@@ -646,7 +646,7 @@ A datapoint that is being logged is never selected, whatever the scope says.
 	### **WORK IN PROGRESS**
 -->
 ### **WORK IN PROGRESS**
-* (jhoos70) Added support for InfluxDB 3.x (Core and Enterprise): data is written with the line protocol and read with InfluxQL over HTTP
+* (jhoos70) Added support for InfluxDB 3.x (Core and Enterprise): data is written with the line protocol and read with InfluxQL over HTTP (inspired by the InfluxDB 3 fork of [dirkhe](https://github.com/dirkhe/ioBroker.influxdb))
 ### 5.1.6 (2026-10-13)
 * (@GermanBluefox) The "Statistics" tab works now with InfluxDB 2.0
 
