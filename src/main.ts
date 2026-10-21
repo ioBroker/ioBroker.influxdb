@@ -42,6 +42,14 @@ const MAX_RAW_ENTRIES = 2000;
 // While the database stays unreachable, remind about it at most once an hour instead of on every retry
 const REPEATED_ERROR_INTERVAL = 3_600_000;
 
+// Exclusive-resource registry of js-controller 8 (the part used here). The installed types and
+// older controllers do not have it, so it is probed at runtime.
+type TcpPortResource = { port: number; bind?: string };
+interface ResourceRegistry {
+    registerUsedResource(type: 'tcpPort', data: TcpPortResource): Promise<void>;
+    checkUsedResource?(type: 'tcpPort', data?: Partial<TcpPortResource>): Promise<{ instance: string }[]>;
+}
+
 /**
  * One point as the two clients deliver it.
  *
@@ -1189,6 +1197,7 @@ export class InfluxDBAdapter extends Adapter {
                 ?.instanceIsReady()
                 .catch((e: unknown) => this.log.error(`Cannot start the docker containers: ${formatError(e)}`));
         }
+        void this.registerUsedPorts();
 
         void this.connect();
 
@@ -1198,6 +1207,69 @@ export class InfluxDBAdapter extends Adapter {
                 this._seriesBufferFlushPlanned = true;
                 void this.storeBufferedSeries().catch(e => this.logBufferError(e));
             }, this.config.seriesBufferFlushInterval * 1000);
+        }
+    }
+
+    /**
+     * The host ports this instance occupies: only those of the containers it starts itself.
+     *
+     * `native.port` is the port of the database the adapter connects to, it does not listen on it. That is why
+     * `common.declareUsedResources` is set: js-controller would otherwise register it as used by this instance.
+     * The addresses are the defaults of `docker-compose.yaml`, where an empty bind means localhost.
+     */
+    private usedPorts(): TcpPortResource[] {
+        const ports: TcpPortResource[] = [];
+        // an unset or wildcard bind is the registry's default anyway
+        const bindOf = (bind: string | undefined): string | undefined =>
+            bind === '0.0.0.0' ? undefined : bind || '127.0.0.1';
+        if (this.config.dockerInflux?.enabled) {
+            ports.push({
+                port: parseInt(this.config.dockerInflux.port as string, 10) || 8086,
+                bind: bindOf(this.config.dockerInflux.bind),
+            });
+        }
+        if (this.config.dockerGrafana?.enabled) {
+            ports.push({
+                port: parseInt(this.config.dockerGrafana.port as string, 10) || 3000,
+                bind: bindOf(this.config.dockerGrafana.bind),
+            });
+        }
+        return ports;
+    }
+
+    /** The exclusive-resource API of js-controller 8, or null if the controller does not have it */
+    private resourceRegistry(): ResourceRegistry | null {
+        const registry = this as unknown as ResourceRegistry;
+        return typeof registry.registerUsedResource === 'function' ? registry : null;
+    }
+
+    /**
+     * Reports the ports of the docker containers to js-controller (>= 8), so they show up as occupied.
+     * Before, it warns if another instance holds one of them: the container would not start then.
+     */
+    async registerUsedPorts(): Promise<void> {
+        const registry = this.resourceRegistry();
+        if (!registry) {
+            return;
+        }
+        for (const data of this.usedPorts()) {
+            if (registry.checkUsedResource) {
+                try {
+                    const holders = await registry.checkUsedResource('tcpPort', data);
+                    if (holders.length) {
+                        this.log.warn(
+                            `Port ${data.port} is already used by ${holders.map(h => h.instance).join(', ')}. The docker container will probably not start.`,
+                        );
+                    }
+                } catch (e) {
+                    this.log.debug(`Cannot check if port ${data.port} is free: ${formatError(e)}`);
+                }
+            }
+            try {
+                await registry.registerUsedResource('tcpPort', data);
+            } catch (e) {
+                this.log.warn(`Cannot register port ${data.port} as used: ${formatError(e)}`);
+            }
         }
     }
 
