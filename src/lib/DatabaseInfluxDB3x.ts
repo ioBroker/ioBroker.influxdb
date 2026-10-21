@@ -214,14 +214,47 @@ export default class DatabaseInfluxDB3x extends Database {
         return [{ online: true }];
     }
 
-    getRetentionPolicyForDB(_dbName: string): Promise<{ name: string | null; time: number | undefined } | null> {
-        // the retention of a database is set on the server (`influxdb3 update database --retention-period`)
-        return Promise.resolve(null);
+    async getRetentionPolicyForDB(dbName: string): Promise<{ name: string | null; time: number | undefined } | null> {
+        let rows: RawRow[];
+        try {
+            rows = await this.rawQuery('SHOW RETENTION POLICIES', dbName);
+        } catch (error) {
+            // a database that was not created yet has no retention
+            if ((error as { statusCode?: number }).statusCode === 404) {
+                return null;
+            }
+            throw error;
+        }
+        const row = rows[0] as { name?: string; duration?: string } | undefined;
+        if (!row) {
+            return null;
+        }
+        // looks like "720h0m0s", "0s" for an infinite retention
+        const match = /^(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?$/.exec(row.duration || '');
+        const time = match
+            ? (parseInt(match[1], 10) || 0) * 3600 + (parseInt(match[2], 10) || 0) * 60 + (parseInt(match[3], 10) || 0)
+            : undefined;
+        return { name: row.name || null, time };
     }
 
-    applyRetentionPolicyToDB(dbName: string, _retention: number): Promise<void> {
-        this.log.debug(`The retention of ${dbName} is managed on the InfluxDB 3 server, nothing to apply`);
-        return Promise.resolve();
+    async applyRetentionPolicyToDB(dbName: string, retention: string | number): Promise<void> {
+        const seconds = parseInt(retention as string, 10) || 0;
+        const old = await this.getRetentionPolicyForDB(dbName);
+        this.log.debug(`old retention: ${JSON.stringify(old)} new retention: ${seconds}`);
+        if (old && old.time === seconds) {
+            this.log.debug(`Retention policy for ${dbName} remains unchanged.`);
+            return;
+        }
+        this.log.info(
+            `Applying retention policy for ${dbName} to ${seconds === 0 ? 'infinity' : `${seconds} seconds`}`,
+        );
+        // no retention_period (null) means infinite
+        await this.request(
+            'PUT',
+            '/api/v3/configure/database',
+            JSON.stringify({ db: dbName, retention_period: seconds === 0 ? null : `${seconds}s` }),
+            'application/json',
+        );
     }
 
     async getMetaDataStorageType(): Promise<'tags' | 'fields' | 'none'> {
@@ -325,12 +358,12 @@ export default class DatabaseInfluxDB3x extends Database {
      *
      * @param statement the statement
      */
-    private async rawQuery(statement: string): Promise<RawRow[]> {
+    private async rawQuery(statement: string, database = this.database): Promise<RawRow[]> {
         this.log.debug(`Query to execute: ${statement}`);
         const text = await this.request(
             'POST',
             '/api/v3/query_influxql',
-            JSON.stringify({ db: this.database, q: statement, format: 'json' }),
+            JSON.stringify({ db: database, q: statement, format: 'json' }),
             'application/json',
         );
         return text.trim() ? JSON.parse(text) : [];

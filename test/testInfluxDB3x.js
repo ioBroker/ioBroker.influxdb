@@ -332,6 +332,46 @@ describe('InfluxDB 3.x: driver against a mock server', function () {
         assert.strictEqual(await createDb().getMetaDataStorageType(), 'none');
     });
 
+    it('reads the retention of the database', async function () {
+        respond = () => ({
+            status: 200,
+            body: JSON.stringify([{ 'iox::database': 'iobroker', name: 'autogen', duration: '720h0m0s' }]),
+        });
+        assert.deepStrictEqual(await createDb().getRetentionPolicyForDB('iobroker'), {
+            name: 'autogen',
+            time: 30 * 24 * 3600,
+        });
+        assert.strictEqual(JSON.parse(requests[0].body).q, 'SHOW RETENTION POLICIES');
+
+        respond = () => ({ status: 200, body: JSON.stringify([{ name: 'autogen', duration: '0s' }]) });
+        assert.strictEqual((await createDb().getRetentionPolicyForDB('iobroker')).time, 0);
+
+        respond = () => ({ status: 404, body: JSON.stringify({ error: 'query error: database not found: x' }) });
+        assert.strictEqual(await createDb().getRetentionPolicyForDB('x'), null);
+    });
+
+    it('sets the retention only if it changed, and clears it for 0', async function () {
+        let current = '24h0m0s';
+        respond = request => {
+            if (request.method === 'PUT') {
+                return { status: 200 };
+            }
+            return { status: 200, body: JSON.stringify([{ name: 'autogen', duration: current }]) };
+        };
+        const puts = () => requests.filter(request => request.method === 'PUT');
+
+        await createDb().applyRetentionPolicyToDB('iobroker', 86400);
+        assert.strictEqual(puts().length, 0, 'unchanged');
+
+        await createDb().applyRetentionPolicyToDB('iobroker', 3600);
+        assert.strictEqual(puts().length, 1);
+        assert.strictEqual(puts()[0].url, '/api/v3/configure/database');
+        assert.deepStrictEqual(JSON.parse(puts()[0].body), { db: 'iobroker', retention_period: '3600s' });
+
+        await createDb().applyRetentionPolicyToDB('iobroker', 0);
+        assert.deepStrictEqual(JSON.parse(puts()[1].body), { db: 'iobroker', retention_period: null });
+    });
+
     it('treats a database that does not exist yet as empty', async function () {
         respond = () => ({ status: 404, body: JSON.stringify({ error: 'query error: database not found: iobroker' }) });
         assert.strictEqual(await createDb().getMetaDataStorageType(), 'none');

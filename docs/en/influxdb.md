@@ -68,7 +68,7 @@ If necessary, the data type with which the values are stored can be defined here
 
 #### Storage retention
 
-Defines how long the values are kept (infinite, 2 years, 1 year, …, 1 day). [![](../de/img/influxdb_ioBroker_Adapter_SQL_objects_timerange.jpg)](../de/img/influxdb_ioBroker_Adapter_SQL_objects_timerange.jpg) Not available with InfluxDB 3.x: the retention is set on the server (`influxdb3 update database --retention-period`).
+Defines how long the values are kept (infinite, 2 years, 1 year, …, 1 day). [![](../de/img/influxdb_ioBroker_Adapter_SQL_objects_timerange.jpg)](../de/img/influxdb_ioBroker_Adapter_SQL_objects_timerange.jpg)
 
 #### Debounce time (ms)
 

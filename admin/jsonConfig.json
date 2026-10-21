@@ -240,7 +240,6 @@
                     "newLine": true,
                     "type": "select",
                     "label": "retention",
-                    "hidden": "data.dbversion === '3.x'",
                     "options": [
                         {
                             "value": 0,
@@ -300,14 +299,14 @@
                     "min": 1,
                     "sm": 12,
                     "md": 4,
-                    "hidden": "(data.retention !== -1) || data.dbversion === '3.x'",
+                    "hidden": "(data.retention !== -1)",
                     "help": "Number of days to keep the data."
                 },
                 "retentionConfirm": {
                     "newLine": true,
                     "type": "checkbox",
                     "label": "Apply lower retention",
-                    "hidden": "data.dbversion === '3.x' || ((originalData.retention >= 0 && data.retention >= 0 && ((data.retention >= originalData.retention && originalData.retention != 0) || data.retention == 0)) || (originalData.retention === -1 && data.retention >= 0 && ((data.retention >= parseInt(originalData.customRetentionDuration, 10) * 24 * 60) || data.retention == 0)) || (originalData.retention > 0 && data.retention === -1 && (parseInt(data.customRetentionDuration, 10) * 24 * 60 >= originalData.retention)) || (originalData.retention === -1 && data.retention === -1 && data.customRetentionDuration >= originalData.customRetentionDuration))",
+                    "hidden": "((originalData.retention >= 0 && data.retention >= 0 && ((data.retention >= originalData.retention && originalData.retention != 0) || data.retention == 0)) || (originalData.retention === -1 && data.retention >= 0 && ((data.retention >= parseInt(originalData.customRetentionDuration, 10) * 24 * 60) || data.retention == 0)) || (originalData.retention > 0 && data.retention === -1 && (parseInt(data.customRetentionDuration, 10) * 24 * 60 >= originalData.retention)) || (originalData.retention === -1 && data.retention === -1 && data.customRetentionDuration >= originalData.customRetentionDuration))",
                     "disabled": "((originalData.retention >= 0 && data.retention >= 0 && ((data.retention >= originalData.retention && originalData.retention != 0) || data.retention == 0)) || (originalData.retention === -1 && data.retention >= 0 && ((data.retention >= parseInt(originalData.customRetentionDuration, 10) * 24 * 60) || data.retention == 0)) || (originalData.retention > 0 && data.retention === -1 && (parseInt(data.customRetentionDuration, 10) * 24 * 60 >= originalData.retention)) || (originalData.retention === -1 && data.retention === -1 && data.customRetentionDuration >= originalData.customRetentionDuration))",
                     "confirm": {
                         "text": "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.",

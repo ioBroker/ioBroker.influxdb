@@ -58,7 +58,7 @@ What InfluxDB 3 cannot do, and what the adapter does about it:
 
 | Function | With InfluxDB 3.x |
 |---|---|
-| Retention | Not part of the adapter settings. Set it on the server, e.g. `influxdb3 update database --database iobroker --retention-period 2y`. |
+| Retention | Supported: `Storage retention` is applied to the database with `PUT /api/v3/configure/database` on every start, like for the other versions. A retention that was set on the server (e.g. with `influxdb3 update database --retention-period`) is overwritten by the adapter setting; choose `infinite` and set it on the server if you prefer that. |
 | `delete` / `deleteRange` | Not supported: InfluxDB 3 can not delete single values or a time range. The commands answer with an error and are not listed in `features`. |
 | `deleteAll` and the cleanup of orphaned datapoints | Supported. The whole measurement (table) is deleted. InfluxDB 3 keeps the name of a deleted table in its catalog, renamed to `<name>-YYYYMMDDTHHMMSS`; the adapter does not show these leftovers. |
 | `update` | Supported when `q`, `ack` and `from` are stored as fields: a value with the same time replaces the old one. Not supported with metadata as tags, as the tags are part of the series. |
@@ -107,7 +107,7 @@ After the migration, the adapter is able to work with the old data (e.g. for his
 
 InfluxDB 3 cannot open the data files of 1.x or 2.x, and there is no upgrade tool. The data has to be exported as line protocol and written into the new database. Both paths below were tried with InfluxDB 1.8 / 2.7 and 3 Core 3.12: the exported points arrive with the same measurements, fields and tags that the adapter writes itself. Please always create a backup before you start.
 
-Prepare the new server first: create a token (`influxdb3 create token --admin`), set the version to `3.x` in the adapter and let it create the database (or create it with `influxdb3 create database iobroker`). Stop the adapter while you import. The retention of InfluxDB 3 is set on the server afterwards, see [InfluxDB 3.x](#influxdb-3x).
+Prepare the new server first: create a token (`influxdb3 create token --admin`), set the version to `3.x` in the adapter and let it create the database (or create it with `influxdb3 create database iobroker`). Stop the adapter while you import. The adapter applies the retention setting to the new database on start.
 
 #### From InfluxDB 1.x
 
@@ -145,7 +145,7 @@ Keep the adapter setting `Store metadata information as tags` as it was in 2.x: 
 ## Retention Policy
 While Influx 1.x supports the concept of multiple **retention policies** for one database, Influx 2 by design allows only one **retention period** per bucket. Therefore, it is only possible to set one policy for the whole database/bucket with this adapter via _Default Settings -> Storage retention_. The retention selected here will be applied on the fly and can be changed at any time. Retention policies set by the adapter will never be deleted, but instead altered if required, as otherwise Influx 1.x would delete all data that the policy applied to.
 
-InfluxDB 3.x does not have the setting in the adapter: the retention of a database is configured on the server, see [InfluxDB 3.x](#influxdb-3x).
+With InfluxDB 3.x the setting is applied to the database as its retention period, see [InfluxDB 3.x](#influxdb-3x).
 
 Please also read [Understanding Retention Policies](RetentionPolicies.md). 
 
