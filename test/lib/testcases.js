@@ -39,6 +39,9 @@ function getStateAsync(id) {
     });
 }
 
+// Windows with values an integral over 30 min returns when a previous suite wrote the same samples shortly before
+const EXISTING_DATA_MAX_WINDOWS = 4;
+
 function setTimeoutAsync(timeout) {
     return new Promise(resolve => {
         setTimeout(() => {
@@ -942,7 +945,10 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
             }
         } else {
             if (assumeExistingData) {
-                expect(result.result.length).to.be.within(1, 3);
+                // The previous suite wrote the same samples a few minutes earlier (relative to its own `now`).
+                // The query reaches one step (30 min) beyond start and end, so depending on how both runs fall
+                // into the 30-min windows of InfluxDB, up to 4 windows have values
+                expect(result.result.length).to.be.within(1, EXISTING_DATA_MAX_WINDOWS);
                 if (process.env.INFLUXDB2) {
                     // expect((result.result[0].val + result.result[1].val)).to.be.within(3780, 4000);
                 } else {
@@ -982,7 +988,8 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                 expect(result.result[0].val).to.be.equal(62.25);
             }
         } else {
-            expect(result.result.length).to.be.within(1, 3);
+            // with the samples of the previous suite, see Sample I1-1
+            expect(result.result.length).to.be.within(1, assumeExistingData ? EXISTING_DATA_MAX_WINDOWS : 3);
             const sum = result.result.map(it => it.val).reduce((acc, val) => acc + val, 0);
 
             if (process.env.INFLUXDB2) {
