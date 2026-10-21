@@ -39,6 +39,9 @@ function getStateAsync(id) {
     });
 }
 
+// InfluxDB 3 makes a written value visible to queries only after its next WAL flush (once per second by default)
+const WRITE_VISIBLE_DELAY = process.env.INFLUXDB3 ? 1500 : 0;
+
 function setTimeoutAsync(timeout) {
     return new Promise(resolve => {
         setTimeout(() => {
@@ -572,6 +575,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
 
         try {
             await logSampleData(`${instanceName}.testValueDebounce`);
+            await setTimeoutAsync(WRITE_VISIBLE_DELAY);
         } catch (err) {
             console.log(err);
             expect(err).to.be.not.ok;
@@ -1510,7 +1514,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         await setStateAsync(taggedId, { val: 2, ts: taggedNow - 2000, ack: true, from: 'test.0' });
         await setTimeoutAsync(100);
         await setStateAsync(taggedId, { val: 3, ts: taggedNow - 1000, ack: true, from: 'test.0' });
-        await setTimeoutAsync(500);
+        await setTimeoutAsync(500 + WRITE_VISIBLE_DELAY);
         await sendToAsync(instanceName, 'flushBuffer', {});
     });
 
@@ -1563,7 +1567,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         expect(enabled[taggedId].customTags).to.be.deep.equal({});
 
         await setStateAsync(taggedId, { val: 4, ts: taggedNow + 1000, ack: true, from: 'test.0' });
-        await setTimeoutAsync(500);
+        await setTimeoutAsync(500 + WRITE_VISIBLE_DELAY);
         await sendToAsync(instanceName, 'flushBuffer', {});
 
         const taggedRows = await queryTaggedPoints({ room: 'kitchen' });
