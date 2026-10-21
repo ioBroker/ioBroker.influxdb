@@ -625,6 +625,8 @@ A datapoint that is being logged is never selected, whatever the scope says.
 * (@GermanBluefox) Values outside of the minimum/maximum of a datapoint can now also be written as `null` (gap in the chart) or limited to the minimum/maximum instead of being ignored
 * (@GermanBluefox) `getHistory` honors the option `ignoreNull`, it was always `true` before
 * (@GermanBluefox) `getHistory` with InfluxDB 2.x answers with the error if the query fails, instead of letting the caller run into its timeout
+* (@GermanBluefox) Points buffered by version 4.x (`influxdata.json`) are converted when read, instead of failing with "invalid float value for field 'q': undefined" on every flush (#517)
+* (@GermanBluefox) The ports of the docker containers (InfluxDB, Grafana) are reported to js-controller 8 as occupied (`registerUsedResource`). The port of the database itself is no longer counted as a port used by the instance
 * (@GermanBluefox) HTTP errors from InfluxDB (e.g. 500 "timeout") are no longer treated as a lost connection (#551)
 * (@GermanBluefox) Start values (`relogLastValueOnStart`) are written only once after the adapter start, not on every reconnect (#551)
 
