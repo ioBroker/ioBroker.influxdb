@@ -239,7 +239,7 @@ export default class DatabaseInfluxDB2x extends Database {
         }
 
         if (stateValue.value === null) {
-            return point.booleanField(NULL_MARKER_FIELD, true);
+            return point.floatField(NULL_MARKER_FIELD, 1);
         }
         switch (typeof stateValue.value) {
             case 'boolean':

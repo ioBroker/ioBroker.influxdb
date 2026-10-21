@@ -176,7 +176,7 @@ export default class DatabaseInfluxDB1x extends Database {
                 return;
             }
             if (key === 'value' && pointToSend.value === null) {
-                fields[NULL_MARKER_FIELD] = true;
+                fields[NULL_MARKER_FIELD] = 1;
                 return;
             }
             fields[key] = pointToSend[key as keyof ValuesForInflux];

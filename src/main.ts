@@ -2854,6 +2854,27 @@ datasources:
         }
     }
 
+    /**
+     * `ignoreNull` of a getHistory request: as requested, otherwise null values are dropped - except for a datapoint
+     * that writes values outside of its range as gaps (outOfRange = 'null'), whose gaps would get lost then
+     *
+     * @param id the requested ID (maybe an alias)
+     * @param requested `ignoreNull` of the request: false, true, 0 or one of them as string
+     */
+    getIgnoreNull(id: string | undefined, requested: unknown): boolean | 0 {
+        if (requested === true || requested === 'true') {
+            return true;
+        }
+        if (requested === false || requested === 'false') {
+            return false;
+        }
+        if (requested === 0 || requested === '0') {
+            return 0;
+        }
+        const realId = id && this._aliasMap[id] ? this._aliasMap[id] : id;
+        return !(realId && this._influxDPs[realId]?.outOfRange === 'null');
+    }
+
     async getHistoryV1(msg: ioBroker.Message): Promise<void> {
         const startTime = Date.now();
 
@@ -2883,7 +2904,7 @@ datasources:
                 parseInt(this.config.limit as string, 10) ||
                 2000,
             addId: msg.message.options.addId || false,
-            ignoreNull: true,
+            ignoreNull: this.getIgnoreNull(msg.message.id, msg.message.options.ignoreNull),
             sessionId: msg.message.options.sessionId,
             returnNewestEntries: msg.message.options.returnNewestEntries || false,
             percentile:
@@ -3278,7 +3299,7 @@ datasources:
                 parseInt(this.config.limit as string, 10) ||
                 2000,
             addId: msg.message.options.addId || false,
-            ignoreNull: true,
+            ignoreNull: this.getIgnoreNull(msg.message.id, msg.message.options.ignoreNull),
             sessionId: msg.message.options.sessionId,
             returnNewestEntries: msg.message.options.returnNewestEntries || false,
             percentile:
@@ -3681,6 +3702,8 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
                             this.setConnected(false);
                         }
                         this.log.error(`getHistory: ${formatError(error)}`);
+                        // without an answer the caller waits for its timeout
+                        sendResponse(this, msg, id, options, formatError(error), startTime);
                     }
                 },
                 storedCount ? 50 : 0,

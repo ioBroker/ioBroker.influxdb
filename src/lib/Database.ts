@@ -17,7 +17,9 @@ export const MAX_INFLUX_TIME = Date.UTC(2262, 3, 11);
 
 /**
  * Field written instead of `value` for a null value, as InfluxDB can not store null: the point reads back
- * with `value` null, and the marker keeps it a valid point even when q/ack/from are tags
+ * with `value` null, and the marker keeps it a valid point even when q/ack/from are tags.
+ * Its value is the number 1: with tags, Flux has to group it together with the (numeric) values, which
+ * fails for different types ("schema collision")
  */
 export const NULL_MARKER_FIELD = 'isNull';
 

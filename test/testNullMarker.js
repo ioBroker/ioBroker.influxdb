@@ -24,7 +24,7 @@ describe('Test null values written as gap', function () {
         const point = DatabaseInfluxDB1x.toPoint('test.0.value', gap);
 
         assert.strictEqual(point.fields.value, undefined);
-        assert.strictEqual(point.fields[NULL_MARKER_FIELD], true);
+        assert.strictEqual(point.fields[NULL_MARKER_FIELD], 1);
         assert.strictEqual(point.fields.q, 0);
         assert.strictEqual(point.fields.ack, true);
     });
@@ -40,7 +40,7 @@ describe('Test null values written as gap', function () {
         const line = client2x(false).stateValueToPoint('test.0.value', gap).toLineProtocol();
 
         assert.ok(line, 'the point must be valid');
-        assert.ok(line.includes(`${NULL_MARKER_FIELD}=T`), line);
+        assert.ok(line.includes(`${NULL_MARKER_FIELD}=1`), line);
         assert.ok(!/[ ,]value=/.test(line), line);
         assert.ok(line.includes('ack=T'), line);
     });
@@ -50,7 +50,7 @@ describe('Test null values written as gap', function () {
 
         // without any field the client would drop the point (toLineProtocol() returns undefined)
         assert.ok(line, 'the point must be valid');
-        assert.ok(line.includes(` ${NULL_MARKER_FIELD}=T `), line);
+        assert.ok(line.includes(` ${NULL_MARKER_FIELD}=1 `), line);
         assert.ok(line.includes('ack=true'), line);
     });
 
