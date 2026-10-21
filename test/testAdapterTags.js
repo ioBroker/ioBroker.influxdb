@@ -218,7 +218,8 @@ describe(`Test influx-tags adapter`, function () {
                             found++;
                         }
                     }
-                    expect(found).to.be.equal(76);
+                    // +2: re-enabling testValue while connected logs its current value immediately (once per suite)
+                    expect(found).to.be.equal(78);
 
                     done();
                 });

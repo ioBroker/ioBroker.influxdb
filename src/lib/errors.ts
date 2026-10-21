@@ -185,13 +185,18 @@ export function isConnectionError(err: unknown, depth = 0): boolean {
 
     const error = err as Record<string, any>;
 
+    // The server answered: only a gateway in front of it can tell that InfluxDB itself is down. Any other
+    // status (e.g. 500 "unexpected error writing points to database: timeout") is a write error, so the
+    // message must not be matched against CONNECTION_ERROR_PATTERN.
+    const statusCode = getHttpStatusCode(error);
+    if (statusCode !== undefined) {
+        return CONNECTION_ERROR_STATUS_CODES.includes(statusCode);
+    }
+
     if (typeof error.code === 'string' && CONNECTION_ERROR_CODES.includes(error.code)) {
         return true;
     }
     if (typeof error.name === 'string' && CONNECTION_ERROR_NAMES.includes(error.name)) {
-        return true;
-    }
-    if (typeof error.statusCode === 'number' && CONNECTION_ERROR_STATUS_CODES.includes(error.statusCode)) {
         return true;
     }
     if (typeof error.message === 'string' && CONNECTION_ERROR_PATTERN.test(error.message)) {
@@ -207,6 +212,26 @@ export function isConnectionError(err: unknown, depth = 0): boolean {
     }
 
     return error.cause !== undefined && error.cause !== null && isConnectionError(error.cause, depth + 1);
+}
+
+/**
+ * HTTP status of an answer of the server: `statusCode` of the 2.x client's `HttpError`, `res.statusCode`
+ * of the 1.x driver's `RequestError`
+ *
+ * @param error the error to inspect
+ * @returns the status code or undefined if the error does not come from an HTTP answer
+ */
+function getHttpStatusCode(error: Record<string, any>): number | undefined {
+    if (typeof error.statusCode === 'number') {
+        return error.statusCode;
+    }
+    if (typeof error.res?.statusCode === 'number') {
+        return error.res.statusCode;
+    }
+    if (typeof error.status === 'number') {
+        return error.status;
+    }
+    return undefined;
 }
 
 /**

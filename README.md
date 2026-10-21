@@ -617,6 +617,10 @@ A datapoint that is being logged is never selected, whatever the scope says.
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (@GermanBluefox) HTTP errors from InfluxDB (e.g. 500 "timeout") are no longer treated as a lost connection (#551)
+* (@GermanBluefox) Start values (`relogLastValueOnStart`) are written only once after the adapter start, not on every reconnect (#551)
+
 ### 5.1.6 (2026-10-13)
 * (@GermanBluefox) The "Statistics" tab works now with InfluxDB 2.0
 
