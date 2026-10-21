@@ -57,6 +57,7 @@ Differences to 1.x and 2.x:
 - The metadata `q`, `ack` and `from` are always stored as fields, the option "Use tags" is not available.
 - **Limits of InfluxDB 3 Core**: at most 2000 tables in all databases and 500 columns per table. As the adapter writes one measurement (table) per state, Core can log at most about 2000 states. InfluxDB 3 Enterprise has higher, configurable limits.
 - A deleted measurement is still listed by InfluxDB 3 for a while (renamed to `<name>-<deletion time>`); the adapter ignores these.
+- A written value can be queried only after the next flush of the write-ahead log of InfluxDB 3 (once per second by default, `--wal-flush-interval`), so a chart can lag behind by up to a second.
 
 ### Custom tags
 Every datapoint can carry additional, static InfluxDB tags. They are defined in the datapoint settings (`Custom tags`) as a list of name/value pairs and are written with every value of this datapoint - for both InfluxDB 1.x and 2.x and independent of the setting [Store metadata information as tags instead of fields](#store-metadata-information-as-tags-instead-of-fields).
