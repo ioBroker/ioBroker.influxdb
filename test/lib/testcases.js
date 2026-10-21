@@ -42,6 +42,11 @@ function getStateAsync(id) {
 // Windows with values an integral over 30 min returns when a previous suite wrote the same samples shortly before
 const EXISTING_DATA_MAX_WINDOWS = 4;
 
+// Windows an aggregate with `count: 1` returns at most: the query reaches one step beyond start and end, and
+// these 3 steps are not aligned to the window grid of InfluxDB (multiples of the step since 1970), so they
+// touch up to 4 windows
+const ONE_STEP_MAX_WINDOWS = 4;
+
 function setTimeoutAsync(timeout) {
     return new Promise(resolve => {
         setTimeout(() => {
@@ -642,7 +647,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                     expect(result.result[0].id).to.be.equal(`${instanceName}.testValueDebounce alias`);
                 } else {
                     if (process.env.INFLUXDB2) {
-                        expect(result.result.length).to.be.within(1, 3);
+                        expect(result.result.length).to.be.within(1, ONE_STEP_MAX_WINDOWS);
                         expect(result.result[1] ? result.result[1].val : result.result[0].val).to.be.within(5, 7);
                     } else {
                         expect(result.result.length).to.be.within(1, 2);
@@ -672,7 +677,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                             expect(result.result.length).to.be.equal(1);
                             expect(result.result[0].val).to.be.equal(7);
                         } else {
-                            expect(result.result.length).to.be.within(1, 3);
+                            expect(result.result.length).to.be.within(1, ONE_STEP_MAX_WINDOWS);
                             expect(result.result[result.result.length - 1].val).to.be.equal(7);
                             expect(result.result[0].id).to.be.equal(`${instanceName}.testValueDebounce alias`);
                         }
