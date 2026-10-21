@@ -103,6 +103,45 @@ Please refer to the [official guides on how to migrate](https://docs.influxdata.
 
 After the migration, the adapter is able to work with the old data (e.g. for history-queries) as well. This only applies if you don't decide to [use Tags for storing metadata fields](#Store-metadata-information-as-tags-instead-of-fields).
 
+### Migration to InfluxDB 3
+
+InfluxDB 3 cannot open the data files of 1.x or 2.x, and there is no upgrade tool. The data has to be exported as line protocol and written into the new database. Both paths below were tried with InfluxDB 1.8 / 2.7 and 3 Core 3.12: the exported points arrive with the same measurements, fields and tags that the adapter writes itself. Please always create a backup before you start.
+
+Prepare the new server first: create a token (`influxdb3 create token --admin`), set the version to `3.x` in the adapter and let it create the database (or create it with `influxdb3 create database iobroker`). Stop the adapter while you import. The retention of InfluxDB 3 is set on the server afterwards, see [InfluxDB 3.x](#influxdb-3x).
+
+#### From InfluxDB 1.x
+
+1. Export the database as line protocol. The tool lives in the InfluxDB 1.x installation:
+   ```
+   influx_inspect export -datadir /var/lib/influxdb/data -waldir /var/lib/influxdb/wal -database iobroker -out export.lp
+   ```
+2. Remove the header of the file (the lines that begin with `#` or `CREATE`):
+   ```
+   grep -vE '^(#|CREATE)' export.lp > data.lp
+   ```
+3. Write it into InfluxDB 3. The export uses nanosecond timestamps:
+   ```
+   curl -X POST "http://localhost:8181/api/v3/write_lp?db=iobroker&precision=nanosecond&accept_partial=true" \
+     -H "Authorization: Bearer <token>" --data-binary @data.lp
+   ```
+
+The metadata `q`, `ack` and `from` are stored as fields in 1.x, so keep `Store metadata information as tags` **disabled** in the adapter.
+
+#### From InfluxDB 2.x
+
+1. Export the bucket as line protocol (the tool is part of `influxd`; look up the bucket ID with `influx bucket list`):
+   ```
+   influxd inspect export-lp --bucket-id <bucket-id> --engine-path /var/lib/influxdb2/engine --output-path data.lp
+   ```
+2. Write the file as shown above for 1.x.
+
+Keep the adapter setting `Store metadata information as tags` as it was in 2.x: with tags enabled the export contains `q`, `ack` and `from` as tags, otherwise as fields. A database must not be mixed - the adapter refuses to start if the stored metadata does not match the setting.
+
+#### Notes
+- A large export has to be sent in several requests, e.g. split the file with `split -l 200000 data.lp part-` and write the parts one after the other. A line that is rejected (e.g. because of a type conflict inside the data) is reported with `accept_partial=true`; the remaining lines are stored.
+- InfluxDB 3 Core allows only a few databases (5 by default); a deleted database still counts. Migrate everything into the one database of the adapter.
+- Delete the line protocol file afterwards, it contains all of your data.
+
 ## Retention Policy
 While Influx 1.x supports the concept of multiple **retention policies** for one database, Influx 2 by design allows only one **retention period** per bucket. Therefore, it is only possible to set one policy for the whole database/bucket with this adapter via _Default Settings -> Storage retention_. The retention selected here will be applied on the fly and can be changed at any time. Retention policies set by the adapter will never be deleted, but instead altered if required, as otherwise Influx 1.x would delete all data that the policy applied to.
 
