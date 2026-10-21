@@ -118,5 +118,7 @@
     "Only by first start": "仅在首次启动时",
     "Auto-update Docker image": "自动更新 Docker 镜像",
     "Plugins": "插件",
-    "Server root URL": "服务器根 URL"
+    "Server root URL": "服务器根 URL",
+    "Wait for the database to store each value": "等待数据库存储每个值",
+    "syncWrites help": "InfluxDB 3 在接收到值后约一秒存储该值。关闭：立即确认单个值（快速），但可以在一秒后读取并保持不变。 On：每个值都等待数据库（更安全，但当缓冲区数据点为 0 时速度较慢）。"
 }

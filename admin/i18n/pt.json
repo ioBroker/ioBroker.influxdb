@@ -118,5 +118,7 @@
     "Only by first start": "Apenas no primeiro início",
     "Auto-update Docker image": "Atualizar automaticamente a imagem Docker",
     "Plugins": "Plugins",
-    "Server root URL": "URL raiz do servidor"
+    "Server root URL": "URL raiz do servidor",
+    "Wait for the database to store each value": "Aguarde o banco de dados armazenar cada valor",
+    "syncWrites help": "O InfluxDB 3 armazena um valor cerca de um segundo após ser recebido. Desligado: valores únicos são reconhecidos imediatamente (rápido), mas podem ser lidos e duram até um segundo depois. Ativado: cada valor aguarda o banco de dados (mais seguro, mas lento quando Buffer Datapoints é 0)."
 }

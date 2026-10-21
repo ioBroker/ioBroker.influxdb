@@ -118,5 +118,7 @@
     "Only by first start": "Alleen bij de eerste start",
     "Auto-update Docker image": "Docker-image automatisch bijwerken",
     "Plugins": "Plug-ins",
-    "Server root URL": "Basis-URL van de server"
+    "Server root URL": "Basis-URL van de server",
+    "Wait for the database to store each value": "Wacht tot de database elke waarde heeft opgeslagen",
+    "syncWrites help": "InfluxDB 3 slaat een waarde op ongeveer een seconde nadat deze is ontvangen. Uit: afzonderlijke waarden worden in één keer bevestigd (snel), maar kunnen worden gelezen en zijn tot een seconde later houdbaar. Aan: elke afzonderlijke waarde wacht op de database (veiliger, maar langzamer wanneer Buffer Datapoints 0 is)."
 }

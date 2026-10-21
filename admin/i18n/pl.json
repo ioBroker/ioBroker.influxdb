@@ -118,5 +118,7 @@
     "Only by first start": "Tylko przy pierwszym uruchomieniu",
     "Auto-update Docker image": "Automatycznie aktualizuj obraz Docker",
     "Plugins": "Wtyczki",
-    "Server root URL": "Główny adres URL serwera"
+    "Server root URL": "Główny adres URL serwera",
+    "Wait for the database to store each value": "Poczekaj, aż baza danych zapisze każdą wartość",
+    "syncWrites help": "InfluxDB 3 przechowuje wartość około sekundy po jej odebraniu. Wył.: pojedyncze wartości są potwierdzane natychmiast (szybko), ale można je odczytać i zachować trwałość do sekundy później. Włączone: każda pojedyncza wartość czeka na bazę danych (bezpieczniej, ale wolniej, gdy punkty danych bufora wynoszą 0)."
 }
