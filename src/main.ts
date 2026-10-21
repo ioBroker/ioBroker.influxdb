@@ -1777,7 +1777,12 @@ datasources:
         await this.pushValueIntoDB(_id, state, false);
     }
 
-    async pushValueIntoDB(id: string, state: ioBroker.State, directWrite: boolean): Promise<void> {
+    async pushValueIntoDB(
+        id: string,
+        state: ioBroker.State,
+        directWrite: boolean,
+        tags?: { [name: string]: string },
+    ): Promise<void> {
         if (!this._client) {
             this.log.warn('No connection to DB');
             throw new Error('No connection to DB');
@@ -1811,7 +1816,7 @@ datasources:
             q: state.q || 0,
             ack: !!state.ack,
         };
-        const customTags = this._influxDPs[id]?.customTags;
+        const customTags = tags || this._influxDPs[id]?.customTags;
         if (customTags && Object.keys(customTags).length) {
             influxFields.tags = customTags;
         }
@@ -2559,11 +2564,21 @@ datasources:
                     }
                     storedState.ts = state.ts;
 
-                    // InfluxDB 3 cannot delete a point, but a point with the same time and tags replaces it
-                    if (this.config.dbversion !== '3.x') {
+                    // InfluxDB 3 cannot delete a point, but a point with the same time and tags replaces it.
+                    // So the point has to be written with the tags it was stored with, not the current ones.
+                    let storedTags: { [name: string]: string } | undefined;
+                    if (this.config.dbversion === '3.x') {
+                        const known = ['time', 'value', 'val', 'ack', 'q', 'ts', 'from'];
+                        storedTags = {};
+                        for (const [name, value] of Object.entries(found)) {
+                            if (!known.includes(name) && typeof value === 'string' && value !== '') {
+                                storedTags[name] = value;
+                            }
+                        }
+                    } else {
                         await this._delete(id, { ts: new Date(stored.time || stored.ts).getTime() });
                     }
-                    await this.pushValueIntoDB(id, storedState, true);
+                    await this.pushValueIntoDB(id, storedState, true, storedTags);
                 } else {
                     this.log.error(`Cannot find value to delete for ${id}: ${JSON.stringify(state)}`);
                     throw new Error('not found');
@@ -3131,7 +3146,13 @@ datasources:
                     break;
 
                 case 'count':
-                    query += ' count(value) as val';
+                    if (this.config.dbversion === '3.x') {
+                        // InfluxQL count() reports nothing for a boolean measurement on InfluxDB 3: count in Node
+                        query += ' value';
+                        options.preAggregated = false;
+                    } else {
+                        query += ' count(value) as val';
+                    }
                     break;
 
                 case 'none':
@@ -4315,6 +4336,12 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
 
         const rows = await this._client.queries<RawEntryRow>([countQuery, dataQuery]);
         this.setConnected(true);
+
+        if (this._client instanceof DatabaseInfluxDB3x && !rows?.[0]?.[0]) {
+            // InfluxQL count() reports nothing for a boolean measurement on InfluxDB 3
+            const total = await this._client.countRows(id, options.start, options.end);
+            return { entries: (rows?.[1] || []).map(row => rawRowToEntry(row)), total };
+        }
 
         // InfluxDB 1.x counts into the aliased column "total", 2.x into the Flux column "_value"
         const counted = rows?.[0]?.[0];

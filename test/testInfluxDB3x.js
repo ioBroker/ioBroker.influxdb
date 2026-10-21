@@ -60,6 +60,18 @@ describe('InfluxDB 3.x: line protocol', function () {
     });
 });
 
+describe('InfluxDB 3.x: line protocol, newlines', function () {
+    it('escapes the space that replaces a newline', function () {
+        const line = toLineProtocol('a\nb', value({ tags: { room: 'x\ny' } }), false);
+        assert.ok(line.startsWith('a\\ b,room=x\\ y '), line);
+        assert.ok(!line.includes('\n'), line);
+    });
+
+    it('keeps a backslash in front of a newline apart from the replacement space', function () {
+        assert.ok(toLineProtocol('a\\\nb', value(), false).startsWith('a\\\\\\ b '));
+    });
+});
+
 describe('InfluxDB 3.x: statements', function () {
     it('splits statements and ignores empty ones', function () {
         assert.deepStrictEqual(splitStatements('SELECT 1; SELECT 2;; '), ['SELECT 1', 'SELECT 2']);
@@ -325,6 +337,11 @@ describe('InfluxDB 3.x: driver against a mock server', function () {
         assert.strictEqual(await createDb().getMetaDataStorageType(), 'none');
     });
 
+    it('connects with a token that may only write', async function () {
+        respond = () => ({ status: 403, body: 'forbidden' });
+        assert.strictEqual(await createDb().getMetaDataStorageType(), 'none');
+    });
+
     it('lists databases and falls back to the configured one if the token may not list them', async function () {
         respond = () => ({
             status: 200,
@@ -337,6 +354,21 @@ describe('InfluxDB 3.x: driver against a mock server', function () {
 
         respond = () => ({ status: 401, body: JSON.stringify({ error: 'the request was not authenticated' }) });
         await assert.rejects(createDb().getDatabaseNames(), /not authenticated/);
+
+        // a wrong path or a server that is not InfluxDB 3 is no permission problem
+        respond = () => ({ status: 404, body: 'not found' });
+        await assert.rejects(createDb().getDatabaseNames());
+    });
+
+    it('counts the rows of a measurement with SQL, also if it never was written', async function () {
+        respond = () => ({ status: 200, body: JSON.stringify([{ c: 7 }]) });
+        assert.strictEqual(await createDb().countRows('a"b', 1760000000000, 1760000001000), 7);
+        const { q } = JSON.parse(requests[0].body);
+        assert.ok(requests[0].url.startsWith('/api/v3/query_sql'), requests[0].url);
+        assert.ok(q.includes('FROM "a""b"') && q.includes('time >= ') && q.includes('time <= '), q);
+
+        respond = () => ({ status: 404, body: 'table not found' });
+        assert.strictEqual(await createDb().countRows('never'), 0);
     });
 
     it('creates a database and accepts that it exists already', async function () {

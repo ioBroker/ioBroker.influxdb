@@ -168,8 +168,9 @@ export default class DatabaseInfluxDB3x extends Database {
             );
             return rows.map(row => row['iox::database']).filter((name): name is string => !!name);
         } catch (error) {
-            // A token that may only write cannot list databases, but it can still write into its own
-            if ([403, 404, 405].includes((error as { statusCode?: number }).statusCode || 0)) {
+            // A token that may only write cannot list databases, but it can still write into its own.
+            // 404/405 are not a permission problem but a wrong path or a server that is not InfluxDB 3
+            if ((error as { statusCode?: number }).statusCode === 403) {
                 this.log.debug(`Cannot list the databases (${error}), assuming "${this.database}" exists`);
                 return [this.database];
             }
@@ -233,8 +234,16 @@ export default class DatabaseInfluxDB3x extends Database {
             const fieldKeys = await this.rawQuery('SHOW FIELD KEYS');
             return fieldKeys.some(row => isMetaData(row.fieldKey)) ? 'fields' : 'none';
         } catch (error) {
+            const statusCode = (error as { statusCode?: number }).statusCode;
             // a database that was not written to yet does not exist
-            if ((error as { statusCode?: number }).statusCode === 404) {
+            if (statusCode === 404) {
+                return 'none';
+            }
+            // a token that may only write cannot look at the stored keys - connecting must still succeed
+            if (statusCode === 403) {
+                this.log.warn(
+                    `The token may not read from ${this.database}, so the storage of q, ack and from cannot be checked: ${error}`,
+                );
                 return 'none';
             }
             throw error;
@@ -371,6 +380,36 @@ export default class DatabaseInfluxDB3x extends Database {
             'application/json',
         );
         return text.trim() ? JSON.parse(text) : [];
+    }
+
+    /**
+     * Count the points of a measurement.
+     *
+     * InfluxQL `count(value)` reports nothing for a boolean measurement, SQL does not have that problem.
+     *
+     * @param measurement the measurement
+     * @param start first millisecond to count, no lower limit if omitted
+     * @param end last millisecond to count, no upper limit if omitted
+     */
+    async countRows(measurement: string, start?: number, end?: number): Promise<number> {
+        const conditions: string[] = [];
+        if (start !== undefined) {
+            conditions.push(`time >= '${new Date(start).toISOString()}'`);
+        }
+        if (end !== undefined) {
+            conditions.push(`time <= '${new Date(end).toISOString()}'`);
+        }
+        const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : '';
+        try {
+            const rows = await this.sqlQuery(`SELECT count(*) AS c FROM "${measurement.replace(/"/g, '""')}"${where}`);
+            return Number(rows[0]?.c) || 0;
+        } catch (error) {
+            // nothing was ever written for it
+            if ((error as { statusCode?: number }).statusCode === 404) {
+                return 0;
+            }
+            throw error;
+        }
     }
 
     async listMeasurements(): Promise<string[]> {

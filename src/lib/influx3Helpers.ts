@@ -10,17 +10,17 @@ import type { ValuesForInflux } from './Database';
 
 /** Escape a measurement name for the line protocol */
 function escapeMeasurement(name: string): string {
-    return name.replace(/\\/g, '\\\\').replace(/,/g, '\\,').replace(/ /g, '\\ ').replace(/\n/g, ' ');
+    return name.replace(/\n/g, ' ').replace(/\\/g, '\\\\').replace(/,/g, '\\,').replace(/ /g, '\\ ');
 }
 
 /** Escape a tag key, tag value or field key for the line protocol */
 function escapeKey(name: string): string {
     return name
+        .replace(/\n/g, ' ')
         .replace(/\\/g, '\\\\')
         .replace(/,/g, '\\,')
         .replace(/=/g, '\\=')
-        .replace(/ /g, '\\ ')
-        .replace(/\n/g, ' ');
+        .replace(/ /g, '\\ ');
 }
 
 /** Escape a string field value (without the surrounding quotes) */
