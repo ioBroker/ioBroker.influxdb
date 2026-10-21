@@ -1653,7 +1653,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         await setTimeoutAsync(2000);
 
         await setStateAsync(orphanId, { val: 42, ts: Date.now(), ack: true, from: 'test.0' });
-        await setTimeoutAsync(500);
+        await setTimeoutAsync(500 + WRITE_VISIBLE_DELAY);
         await sendToAsync(instanceName, 'flushBuffer', {});
 
         // while it is logged and the object exists it counts as active

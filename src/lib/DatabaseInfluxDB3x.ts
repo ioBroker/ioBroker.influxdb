@@ -53,7 +53,17 @@ export default class DatabaseInfluxDB3x extends Database {
         },
     ) {
         super(options);
-        const path = (db3xOptions.path || '').replace(/^\/+|\/+$/g, '');
+        // trimmed without a regex: `/^\/+|\/+$/` backtracks polynomially on many slashes (CodeQL js/polynomial-redos)
+        const rawPath = db3xOptions.path || '';
+        let start = 0;
+        let end = rawPath.length;
+        while (start < end && rawPath[start] === '/') {
+            start++;
+        }
+        while (end > start && rawPath[end - 1] === '/') {
+            end--;
+        }
+        const path = rawPath.slice(start, end);
         this.basePath = path ? `/${path}` : '';
         this.token = db3xOptions.token;
         this.useTags = db3xOptions.useTags || false;
