@@ -204,6 +204,8 @@ export class InfluxDBAdapter extends Adapter {
     private _seriesBufferChecker: NodeJS.Timeout | null = null;
     private _seriesBufferCounter: number = 0;
     private _seriesBufferFlushPlanned = false;
+    /** The write of a flush of the whole buffer, while it runs */
+    private _flushInFlight: Promise<void> | null = null;
     private _seriesBuffer: { [id: string]: ValuesForInflux[] } = {};
     private _conflictingPoints: { [id: string]: number } = {};
     private readonly _errorPoints: { [id: string]: number } = {};
@@ -1869,6 +1871,12 @@ datasources:
     }
 
     async storeBufferedSeries(id?: string | null): Promise<number> {
+        if (id && this._flushInFlight) {
+            // The points of this ID may just be written by a flush of the whole buffer: they are no longer in
+            // the buffer, but not yet in the database either - getHistory would miss them (on InfluxDB 3 a
+            // batch waits for the write-ahead log, about a second)
+            await this._flushInFlight;
+        }
         if (id && !this._seriesBuffer[id]?.length) {
             return 0;
         }
@@ -1914,12 +1922,26 @@ datasources:
         this._seriesBuffer = {};
         this._seriesBufferCounter = 0;
 
+        let write: Promise<void>;
         if (result > 15000) {
             // if we have too many data points in buffer, we better writer them per id
             this.log.info(`Too many data points (${result}) to write at once; write per ID`);
-            await this.writeAllSeriesPerID(currentBuffer);
+            write = this.writeAllSeriesPerID(currentBuffer);
         } else {
-            await this.writeAllSeriesAtOnce(currentBuffer);
+            write = this.writeAllSeriesAtOnce(currentBuffer);
+        }
+        // whoever waits for it only needs to know that it is over, the error is handled below
+        const inFlight = write.then(
+            () => undefined,
+            () => undefined,
+        );
+        this._flushInFlight = inFlight;
+        try {
+            await write;
+        } finally {
+            if (this._flushInFlight === inFlight) {
+                this._flushInFlight = null;
+            }
         }
         this._seriesBufferFlushPlanned = false;
         this._seriesBufferChecker = setInterval(

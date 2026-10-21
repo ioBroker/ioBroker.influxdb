@@ -1399,7 +1399,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                             done();
                         },
                     );
-                }, 1000);
+                }, 1000 + WRITE_VISIBLE_DELAY);
             },
         );
     });
