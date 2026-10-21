@@ -337,7 +337,6 @@
   },
   "protectedNative": [
     "password",
-    "dockerGrafana.adminSecurityPassword",
     "token"
   ],
   "encryptedNative": [
