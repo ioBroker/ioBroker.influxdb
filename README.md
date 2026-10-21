@@ -64,6 +64,7 @@ What InfluxDB 3 cannot do, and what the adapter does about it:
 | `update` | Supported when `q`, `ack` and `from` are stored as fields: a value with the same time replaces the old one. Not supported with metadata as tags, as the tags are part of the series. |
 | Number of series (Statistics tab) | Unknown, the column stays empty. |
 | Write latency | InfluxDB 3 answers a write after the next write-ahead-log flush, which takes about a second. The adapter awaits the direct write of a value (`Buffer Datapoints` = 0), so by default it writes single values with `no_sync`: the answer comes at once and rejected values are still reported, but the value is readable and durable up to a second later. Enable `Wait for the database to store each value` (Expert Settings, `syncWrites`) to wait for the flush instead; single values then take about a second each, so prefer a buffer in that case. Batches (buffer flushes) are always written the regular way. |
+| Limits of InfluxDB 3 Core | At most 2000 tables in all databases and 500 columns per table. The adapter writes one measurement (table) per datapoint, so Core can log at most about 2000 datapoints. InfluxDB 3 Enterprise has higher, configurable limits. |
 | Types | InfluxDB 3 fixes the type of a field per measurement like the other versions. A type conflict is handled as before (the value is converted and the datatype of the datapoint is pinned). |
 
 ### Custom tags
