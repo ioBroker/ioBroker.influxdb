@@ -617,6 +617,9 @@ A datapoint that is being logged is never selected, whatever the scope says.
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (@GermanBluefox) The ports of the docker containers (InfluxDB, Grafana) are reported to js-controller 8 as occupied (`registerUsedResource`). The port of the database itself is no longer counted as a port used by the instance
+
 ### 5.1.6 (2026-10-13)
 * (@GermanBluefox) The "Statistics" tab works now with InfluxDB 2.0
 
