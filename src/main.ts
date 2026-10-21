@@ -15,6 +15,7 @@ import {
 } from './lib/Database';
 import { formatError, HostUnavailableError, isConnectionError, UnstorableValueError } from './lib/errors';
 import { normalizeCustomTags } from './lib/customTags';
+import { normalizeSeriesBuffer } from './lib/bufferFile';
 import {
     classifyDatapoint,
     selectForCleanup,
@@ -1088,13 +1089,16 @@ export class InfluxDBAdapter extends Adapter {
         try {
             if (statSync(this._cacheFile).isFile()) {
                 const fileContent = readFileSync(this._cacheFile, 'utf-8');
-                const tempData = JSON.parse(fileContent, (key, value) => (key === 'time' ? new Date(value) : value));
+                const tempData = JSON.parse(fileContent);
 
-                if (tempData.seriesBufferCounter) {
-                    this._seriesBufferCounter = tempData.seriesBufferCounter;
-                }
                 if (tempData.seriesBuffer) {
-                    this._seriesBuffer = tempData.seriesBuffer;
+                    // the file may come from an older version (4.x wrapped every point in an array)
+                    const { series, count, dropped } = normalizeSeriesBuffer(tempData.seriesBuffer);
+                    this._seriesBuffer = series;
+                    this._seriesBufferCounter = count;
+                    if (dropped) {
+                        this.log.warn(`Dropped ${dropped} unusable buffered points from last exit`);
+                    }
                 }
                 if (tempData.conflictingPoints) {
                     this._conflictingPoints = tempData.conflictingPoints;

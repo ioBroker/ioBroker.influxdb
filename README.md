@@ -617,6 +617,9 @@ A datapoint that is being logged is never selected, whatever the scope says.
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (@GermanBluefox) Points buffered by version 4.x (`influxdata.json`) are converted when read, instead of failing with "invalid float value for field 'q': undefined" on every flush (#517)
+
 ### 5.1.6 (2026-10-13)
 * (@GermanBluefox) The "Statistics" tab works now with InfluxDB 2.0
 
