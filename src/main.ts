@@ -1644,7 +1644,9 @@ datasources:
             dp.blocked = state;
         }
         if (!dp.blockTimeout) {
-            const delay = Math.min(Math.max(blockEnd - Date.now(), 0), dp.blockTime);
+            // the remaining time on the clock of the state timestamps, not the wall clock: a state whose ts
+            // lags behind would otherwise be released at once and blockTime would no longer limit anything
+            const delay = Math.min(Math.max(blockEnd - state.ts, 0), dp.blockTime);
             dp.blockTimeout = setTimeout(_id => void this.logBlocked(_id), delay, id);
         }
     }
@@ -1667,7 +1669,8 @@ datasources:
         const blocked = dp?.blocked;
         this.clearBlocked(id);
         if (blocked && dp.state?.val !== blocked.val) {
-            await this.pushHelper(id, blocked);
+            // like after the timer: the value still has to pass changesOnly/minDelta and becomes the last state
+            await this.pushHistory(id, blocked, false, true);
         }
     }
 
