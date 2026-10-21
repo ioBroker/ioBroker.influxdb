@@ -639,7 +639,9 @@ export class InfluxDBAdapter extends Adapter {
     }
 
     async processStartValues(): Promise<void> {
-        for (const taskId of this._tasksStart) {
+        // start values are written only once: a reconnect must not log them again
+        const tasks = this._tasksStart.splice(0);
+        for (const taskId of tasks) {
             if (taskId && this._influxDPs[taskId]?.changesOnly) {
                 await this.pushHistory(taskId, this._influxDPs[taskId].state, true);
             }
@@ -1291,7 +1293,8 @@ datasources:
             this._influxDPs[id].state = state;
             if (this.config.relogLastValueOnStart) {
                 this._tasksStart.push(id);
-                if (this._tasksStart.length === 1 && this._connected) {
+                // already connected (e.g. object changed after the start): write it now, not on the next reconnect
+                if (this._connected) {
                     await this.processStartValues();
                 }
             }
