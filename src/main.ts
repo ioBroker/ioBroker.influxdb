@@ -1019,6 +1019,8 @@ export class InfluxDBAdapter extends Adapter {
                 const id = msg.message ? msg.message.id : undefined;
                 this.log.debug(`Flushing buffer for ${id || 'all'}`);
                 try {
+                    // a periodic flush may be writing right now: the caller expects its points stored, too
+                    await this._flushInFlight;
                     await this.storeBufferedSeries(id);
                     if (msg.callback) {
                         this.sendTo(msg.from, msg.command, { error: null }, msg.callback);
@@ -1871,10 +1873,12 @@ datasources:
     }
 
     async storeBufferedSeries(id?: string | null): Promise<number> {
-        if (this._flushInFlight) {
-            // The points may just be written by a flush of the whole buffer: they are no longer in the buffer,
-            // but not yet in the database either - getHistory or the message flushBuffer would answer too early
-            // (on InfluxDB 3 a batch waits for the write-ahead log, about a second)
+        if (id && this._flushInFlight) {
+            // The points of this ID may just be written by a flush of the whole buffer: they are no longer in
+            // the buffer, but not yet in the database either - getHistory would miss them (on InfluxDB 3 a
+            // batch waits for the write-ahead log, about a second).
+            // Only for an ID: a flush of the whole buffer is also started from within the write path
+            // (addPointToSeriesBuffer), and waiting there for the running flush would wait for itself
             await this._flushInFlight;
         }
         if (id && !this._seriesBuffer[id]?.length) {
