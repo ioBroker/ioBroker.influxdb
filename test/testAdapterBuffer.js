@@ -203,7 +203,9 @@ describe(`Test influx-buffer adapter with Buffered write`, function () {
     tests.register(it, expect, sendTo, adapterShortName, false, 0, 3, 'influx-buffer');
 
     it(`Test influx-buffer: Write string value for memHeapUsed into DB to force a type conflict`, function (done) {
-        this.timeout(5000);
+        // InfluxDB 3 answers every write after the next WAL flush (about a second), and the flush writes the
+        // buffered datapoints one after the other once a type conflict has to be located
+        this.timeout(process.env.INFLUXDB3 ? 30000 : 5000);
         now = Date.now();
 
         states.setState(

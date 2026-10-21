@@ -805,7 +805,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         await states.setStateAsync(`${instanceName}.testValueBlocked`, { val: 100 }); // blocked, logged when blockTime is over
         await setTimeoutAsync(300);
         await states.setStateAsync(`${instanceName}.testValueBlocked`, { val: 100 }); // same value again (ts !== lc), still blocked
-        await setTimeoutAsync(3000);
+        await setTimeoutAsync(3000 + WRITE_VISIBLE_DELAY);
 
         return new Promise(resolve => {
             sendTo(
@@ -989,7 +989,16 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
             expect(result.result.length).to.be.within(1, 3);
             const sum = result.result.map(it => it.val).reduce((acc, val) => acc + val, 0);
 
-            if (process.env.INFLUXDB2) {
+            if (process.env.INFLUXDB3) {
+                // The suites share one database and the sample data of the earlier suites is still in it. On
+                // InfluxDB 3 more of it falls into the range than on 1.x/2.x (the exact sum is checked above
+                // without existing data)
+                if (assumeExistingData) {
+                    expect(parseFloat(sum.toFixed(2))).to.be.within(60, 100);
+                } else {
+                    expect(parseFloat(sum.toFixed(2))).to.be.equal(62.21);
+                }
+            } else if (process.env.INFLUXDB2) {
                 if (assumeExistingData) {
                     expect(parseFloat(sum.toFixed(2))).to.be.within(49, 80);
                 } else {
