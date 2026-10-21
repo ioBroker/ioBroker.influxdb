@@ -118,5 +118,12 @@
     "Only by first start": "Only by first start",
     "Auto-update Docker image": "Auto-update Docker image",
     "Plugins": "Plugins",
-    "Server root URL": "Server root URL"
+    "Server root URL": "Server root URL",
+    "Valid range minimum": "Minimum (valid range)",
+    "Valid range maximum": "Maximum (valid range)",
+    "Values outside of the range": "Values outside of min/max",
+    "outOfRange_help": "null leaves a gap in the chart",
+    "outOfRange_ignore": "ignore",
+    "outOfRange_null": "write as null (gap)",
+    "outOfRange_clamp": "limit to min/max"
 }

@@ -1582,6 +1582,93 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         await setTimeoutAsync(1000);
     });
 
+    // Values outside of ignoreBelowNumber/ignoreAboveNumber: written as null (gap) or limited, see outOfRange
+    const rangeNullId = `${instanceName}.testValueRangeNull`;
+    const rangeClampId = `${instanceName}.testValueRangeClamp`;
+    let rangeNow;
+
+    it(`Test ${adapterShortName}: Enable datapoints with outOfRange "null" and "clamp"`, async function () {
+        this.timeout(10000);
+
+        for (const [id, outOfRange] of [
+            [rangeNullId, 'null'],
+            [rangeClampId, 'clamp'],
+        ]) {
+            await objects.setObjectAsync(id, { common: { type: 'number', role: 'state' }, type: 'state' });
+            const result = await sendToAsync(instanceName, 'enableHistory', {
+                id,
+                options: {
+                    changesOnly: true,
+                    changesMinDelta: 0,
+                    changesRelogInterval: 0,
+                    debounceTime: 0,
+                    blockTime: 0,
+                    disableSkippedValueLogging: true,
+                    ignoreBelowNumber: 0,
+                    ignoreAboveNumber: 100,
+                    outOfRange,
+                },
+            });
+            expect(result.success).to.be.true;
+        }
+        // wait till the adapter receives the new settings
+        await setTimeoutAsync(2000);
+    });
+
+    it(`Test ${adapterShortName}: Write values outside of the range`, async function () {
+        this.timeout(10000);
+
+        rangeNow = Date.now();
+        // 150 and 200 in a row are one outlier sequence, -5 is below the minimum
+        const values = [10, 150, 200, 20, -5];
+        for (let i = 0; i < values.length; i++) {
+            const ts = rangeNow - (values.length - i) * 1000;
+            await setStateAsync(rangeNullId, { val: values[i], ts, ack: true, from: 'test.0' });
+            await setStateAsync(rangeClampId, { val: values[i], ts, ack: true, from: 'test.0' });
+            await setTimeoutAsync(100);
+        }
+        await setTimeoutAsync(500);
+        await sendToAsync(instanceName, 'flushBuffer', {});
+    });
+
+    async function readRange(id) {
+        const result = await sendToAsync(instanceName, 'getHistory', {
+            id,
+            options: {
+                start: rangeNow - 10000,
+                end: rangeNow,
+                count: 50,
+                aggregate: 'none',
+                removeBorderValues: true,
+            },
+        });
+        console.log(`${id} => ${JSON.stringify(result.result)}`);
+        // the suites against an existing DB already hold the points of the previous run, but outside the range
+        return result.result.filter(item => item.ts >= rangeNow - 10000 && item.ts <= rangeNow).map(item => item.val);
+    }
+
+    it(`Test ${adapterShortName}: Outliers are read back as null`, async function () {
+        this.timeout(10000);
+
+        expect(await readRange(rangeNullId)).to.be.deep.equal([10, null, 20, null]);
+    });
+
+    it(`Test ${adapterShortName}: Outliers are limited to min/max`, async function () {
+        this.timeout(10000);
+
+        expect(await readRange(rangeClampId)).to.be.deep.equal([10, 100, 20, 0]);
+    });
+
+    it(`Test ${adapterShortName}: Disable datapoints with outOfRange`, async function () {
+        this.timeout(5000);
+
+        for (const id of [rangeNullId, rangeClampId]) {
+            const result = await sendToAsync(instanceName, 'disableHistory', { id });
+            expect(result.success).to.be.true;
+        }
+        await setTimeoutAsync(1000);
+    });
+
     // Statistics tab (getDpStatistics / cleanupOrphaned). Kept at the very end: the tests above
     // count the enabled datapoints, and the orphan created here must not disturb them
     const orphanId = `${instanceName}.testValueOrphan`;

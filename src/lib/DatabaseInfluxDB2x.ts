@@ -1,4 +1,11 @@
-import { Database, escapeFluxString, MAX_INFLUX_TIME, MIN_INFLUX_TIME, type ValuesForInflux } from './Database';
+import {
+    Database,
+    escapeFluxString,
+    MAX_INFLUX_TIME,
+    MIN_INFLUX_TIME,
+    NULL_MARKER_FIELD,
+    type ValuesForInflux,
+} from './Database';
 import type { MeasurementStatistics } from './statistics';
 import { InfluxDB, type QueryApi, type WriteApi, Point } from '@influxdata/influxdb-client';
 import { BucketsAPI, OrgsAPI, HealthAPI, DeleteAPI } from '@influxdata/influxdb-client-apis';
@@ -231,6 +238,9 @@ export default class DatabaseInfluxDB2x extends Database {
             }
         }
 
+        if (stateValue.value === null) {
+            return point.booleanField(NULL_MARKER_FIELD, true);
+        }
         switch (typeof stateValue.value) {
             case 'boolean':
                 point.booleanField('value', stateValue.value);

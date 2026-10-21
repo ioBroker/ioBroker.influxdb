@@ -18,6 +18,9 @@ export type {
 /** Type a value is stored as. It is fixed by InfluxDB with the first written point of a measurement */
 export type StorageType = 'Number' | 'String' | 'Boolean';
 
+/** What happens with a number outside `ignoreBelowNumber`/`ignoreAboveNumber`: dropped, written as null (gap) or limited */
+export type OutOfRangeAction = 'ignore' | 'null' | 'clamp';
+
 /** Options of the `getRawEntries` message, already sanitized by the adapter */
 export interface RawEntriesOptions {
     /** oldest timestamp to return (inclusive) */
@@ -93,6 +96,7 @@ export interface InfluxDbCustomConfig {
     changesMinDelta: number | string;
     ignoreBelowNumber: number | string | null | undefined;
     ignoreAboveNumber: number | string | null;
+    outOfRange?: OutOfRangeAction | '';
     ignoreZero: boolean | 'true' | 'false';
     disableSkippedValueLogging: boolean | 'true' | 'false' | '';
     storageType: '' | StorageType | false;
@@ -114,6 +118,7 @@ export interface InfluxDbCustomConfigTyped {
     changesMinDelta: number;
     ignoreBelowNumber: number | null;
     ignoreAboveNumber: number | null;
+    outOfRange: OutOfRangeAction;
     ignoreZero: boolean;
     disableSkippedValueLogging: boolean;
     storageType: StorageType | false;
