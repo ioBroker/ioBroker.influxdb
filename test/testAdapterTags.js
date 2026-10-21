@@ -230,9 +230,11 @@ describe(`Test influx-tags adapter`, function () {
                     }
                     if (process.env.INFLUXDB3) {
                         // InfluxQL returns one row per value, Flux one per value and tag series
-                        expect(found).to.be.within(13, 14);
+                        // (+2 as below: re-enabling testValue logs its current value immediately)
+                        expect(found).to.be.within(13, 16);
                     } else {
-                        expect(found).to.be.equal(76);
+                        // +2: re-enabling testValue while connected logs its current value immediately (once per suite)
+                        expect(found).to.be.equal(78);
                     }
 
                     done();

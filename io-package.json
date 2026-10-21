@@ -135,6 +135,7 @@
     "getHistory": true,
     "enabled": true,
     "compact": true,
+    "declareUsedResources": true,
     "nogit": true,
     "dependencies": [
       {

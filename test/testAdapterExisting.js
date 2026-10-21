@@ -216,7 +216,8 @@ describe(`Test influx-existing adapter`, function () {
                     found++;
                 }
             }
-            expect(found).to.be.equal(26);
+            // +1 start value per suite: re-enabling testValue while connected logs its current value immediately
+            expect(found).to.be.equal(28);
 
             done();
         });

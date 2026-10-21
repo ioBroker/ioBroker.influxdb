@@ -90,6 +90,9 @@ describe('Test isConnectionError', function () {
             isConnectionError(Object.assign(new Error('No host available'), { name: 'ServiceNotAvailableError' })),
         );
         assert.ok(isConnectionError(Object.assign(new Error('Bad Gateway'), { statusCode: 502 })));
+        assert.ok(isConnectionError(Object.assign(new Error('Service Unavailable'), { statusCode: 503 })));
+        assert.ok(isConnectionError(Object.assign(new Error('timeout'), { name: 'HttpError', statusCode: 504 })));
+        assert.ok(isConnectionError({ code: 'ETIMEDOUT' }));
     });
 
     it('does not classify a rejected point as connection error', function () {
@@ -97,6 +100,16 @@ describe('Test isConnectionError', function () {
         assert.ok(!isConnectionError(new Error('partial write: field type conflict: input field "value" on ...')));
         assert.ok(!isConnectionError(Object.assign(new Error('unauthorized access'), { statusCode: 401 })));
         assert.ok(!isConnectionError(new Error('database not found')));
+        assert.ok(
+            !isConnectionError(
+                Object.assign(new Error('unexpected error writing points to database: timeout'), {
+                    name: 'HttpError',
+                    statusCode: 500,
+                }),
+            ),
+            'an answer of the server is no connection error, even if the message says "timeout"',
+        );
+        assert.ok(!isConnectionError(Object.assign(new Error('timeout'), { res: { statusCode: 400 } })));
         assert.ok(!isConnectionError(null));
         assert.ok(!isConnectionError(undefined));
         assert.ok(!isConnectionError(new UnstorableValueError('null', 'Skipping null value for x')));
