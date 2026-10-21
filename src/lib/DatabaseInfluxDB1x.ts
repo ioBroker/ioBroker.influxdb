@@ -1,12 +1,12 @@
-import { InfluxDB, type IPoint, type IResults, escape } from 'influx';
+import { InfluxDB, type IPoint, type IQueryOptions, type IResults, escape } from 'influx';
 import { Database, type ValuesForInflux } from './Database';
 import { cardinalityFromSeriesKeys, type MeasurementStatistics } from './statistics';
 
 export default class DatabaseInfluxDB1x extends Database {
     private readonly username: string;
     private readonly password: string;
-    private readonly validateSSL: boolean;
-    private connection: InfluxDB | null = null;
+    protected readonly validateSSL: boolean;
+    protected connection: InfluxDB | null = null;
 
     constructor(
         options: {
@@ -29,6 +29,11 @@ export default class DatabaseInfluxDB1x extends Database {
         this.validateSSL = db1xOptions.validateSSL !== undefined ? db1xOptions.validateSSL : true;
 
         this.connect();
+    }
+
+    /** Options sent with every query. 1.x uses the defaults of the driver */
+    protected queryOptions(): IQueryOptions | undefined {
+        return undefined;
     }
 
     connect(): void {
@@ -95,7 +100,7 @@ export default class DatabaseInfluxDB1x extends Database {
             shardGroupDuration: string;
             replicaN: number;
             default: boolean;
-        }>(`SHOW RETENTION POLICIES ON ${escape.quoted(dbname)}`);
+        }>(`SHOW RETENTION POLICIES ON ${escape.quoted(dbname)}`, this.queryOptions());
         const regex = /(?:(\d+)h)?(?:(\d+)m)?(?:(\d+)s)?/;
         let retentionTime: number | undefined;
         let retentionName: string | null = null;
@@ -164,7 +169,7 @@ export default class DatabaseInfluxDB1x extends Database {
     }
 
     /** Convert a value into a point of the `influx` package: everything except time and tags is a field */
-    private static toPoint(seriesId: string, pointToSend: ValuesForInflux): IPoint {
+    protected toPoint(seriesId: string, pointToSend: ValuesForInflux): IPoint {
         const fields: {
             [name: string]: any;
         } = {};
@@ -197,7 +202,7 @@ export default class DatabaseInfluxDB1x extends Database {
         for (const seriesId in series) {
             if (Object.prototype.hasOwnProperty.call(series, seriesId)) {
                 for (const pointToSend of series[seriesId]) {
-                    points.push(DatabaseInfluxDB1x.toPoint(seriesId, pointToSend));
+                    points.push(this.toPoint(seriesId, pointToSend));
                 }
             }
         }
@@ -208,7 +213,7 @@ export default class DatabaseInfluxDB1x extends Database {
         if (!this.connection) {
             return Promise.reject(new Error('No connection to InfluxDB'));
         }
-        const points = pointsToSend.map(pointToSend => DatabaseInfluxDB1x.toPoint(seriesId, pointToSend));
+        const points = pointsToSend.map(pointToSend => this.toPoint(seriesId, pointToSend));
 
         await this.trackConnection(() => this.connection!.writePoints(points));
     }
@@ -218,7 +223,7 @@ export default class DatabaseInfluxDB1x extends Database {
             return Promise.reject(new Error('No connection to InfluxDB'));
         }
         await this.trackConnection(() =>
-            this.connection!.writePoints([DatabaseInfluxDB1x.toPoint(seriesId, pointToSend)], { precision: 'ms' }),
+            this.connection!.writePoints([this.toPoint(seriesId, pointToSend)], { precision: 'ms' }),
         );
     }
 
@@ -227,7 +232,7 @@ export default class DatabaseInfluxDB1x extends Database {
             return Promise.reject(new Error('No connection to InfluxDB'));
         }
         this.log.debug(`Query to execute: ${query}`);
-        return await this.trackConnection(() => this.connection!.query<T>(query));
+        return await this.trackConnection(() => this.connection!.query<T>(query, this.queryOptions()));
     }
 
     /**
@@ -239,12 +244,16 @@ export default class DatabaseInfluxDB1x extends Database {
      *
      * @param query the InfluxQL query to run
      */
-    private async queryGrouped<T>(query: string): Promise<Array<{ name: string; rows: T[] }>> {
+    protected async queryGrouped<T>(
+        query: string,
+    ): Promise<Array<{ name: string; rows: T[]; tags?: Record<string, string> }>> {
         if (!this.connection) {
             return Promise.reject(new Error('No connection to InfluxDB'));
         }
         this.log.debug(`Query to execute: ${query}`);
-        const result = (await this.trackConnection(() => this.connection!.query<T>(query))) as unknown as IResults<T>;
+        const result = (await this.trackConnection(() =>
+            this.connection!.query<T>(query, this.queryOptions()),
+        )) as unknown as IResults<T>;
         return result?.groups?.() || [];
     }
 
@@ -272,18 +281,26 @@ export default class DatabaseInfluxDB1x extends Database {
             entryOf(group.name).lastTs = ts ? new Date(ts).getTime() : null;
         }
 
+        for (const [name, count] of Object.entries(await this.readCardinality(where))) {
+            entryOf(name).cardinality = count;
+        }
+
+        return statistics;
+    }
+
+    /**
+     * Number of series of every measurement
+     *
+     * @param _where the condition limiting the examined range, see getStatistics()
+     */
+    protected async readCardinality(_where: string): Promise<{ [measurement: string]: number }> {
         // `SHOW SERIES` reads the index, it does not scan any values - unlike the counts above.
         // A measurement that only exists in the index (all its values are outside the range) is
         // added here, so it is not silently missing from the statistics.
         // Note that the index knows no time: unlike the 2.x driver, which derives the cardinality
         // from the series it actually reads, this is the all-time count even for a limited range
         const seriesRows = await this.query<{ key: string }>('SHOW SERIES');
-        const cardinality = cardinalityFromSeriesKeys((seriesRows || []).map(row => row.key).filter(key => !!key));
-        for (const [name, count] of Object.entries(cardinality)) {
-            entryOf(name).cardinality = count;
-        }
-
-        return statistics;
+        return cardinalityFromSeriesKeys((seriesRows || []).map(row => row.key).filter(key => !!key));
     }
 
     async dropMeasurement(measurement: string): Promise<void> {

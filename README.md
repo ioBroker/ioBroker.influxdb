@@ -11,7 +11,7 @@
 
 This adapter saves state history into InfluxDB.
 
-**The Adapter supports InfluxDB 1.x and 2.x**
+**The Adapter supports InfluxDB 1.x, 2.x and 3.x**
 
 **This adapter uses Sentry libraries to automatically report exceptions and code errors to the developers.** For more details and for information how to disable the error reporting see [Sentry-Plugin Documentation](https://github.com/ioBroker/plugin-sentry#plugin-sentry)! Sentry reporting is used starting with js-controller 3.0.
 
@@ -42,6 +42,21 @@ With `Influx 2.x` it is now also possible, to store this metadata-information be
 - Attempting to use an existing database that was set up without enabling the Tag-feature will cause the adapter to fail to initialize, and you will see an error message about it in the log.
   - This also is valid the other way: Once you start using the Tag-feature in a new database, you cannot switch back to using fields for this database.
 - This feature is currently only available if you use Influx 2.x. And only if you use the new responsive GUI of Admin 5.
+
+### InfluxDB 3.x
+InfluxDB 3 (Core and Enterprise) is supported via its InfluxDB 1.x compatible API. Choose "3.x" in the adapter configuration and enter:
+* **Host** and **Port**: the default port of InfluxDB 3 is `8181`.
+* **Token**: an admin token (`influxdb3 create token --admin`) or a token with read and write permissions for the database. If the server runs with `--without-auth`, enter any text.
+
+The database (default `iobroker`) is created on the first adapter start, and the retention from _Default Settings -> Storage retention_ is applied to it.
+
+Custom queries via the "query" message use InfluxQL, like with 1.x. Several statements can be separated by `;`.
+
+Differences to 1.x and 2.x:
+- **No deletion of single values or time ranges**: InfluxDB 3 Core can only delete whole tables. "Delete all values" of a state removes its measurement; "delete" and "delete range" answer with an error and are not offered as features. Changing a value (`update`) works, as a point with the same timestamp replaces the old one.
+- The metadata `q`, `ack` and `from` are always stored as fields, the option "Use tags" is not available.
+- **Limits of InfluxDB 3 Core**: at most 2000 tables in all databases and 500 columns per table. As the adapter writes one measurement (table) per state, Core can log at most about 2000 states. InfluxDB 3 Enterprise has higher, configurable limits.
+- A deleted measurement is still listed by InfluxDB 3 for a while (renamed to `<name>-<deletion time>`); the adapter ignores these.
 
 ### Custom tags
 Every datapoint can carry additional, static InfluxDB tags. They are defined in the datapoint settings (`Custom tags`) as a list of name/value pairs and are written with every value of this datapoint - for both InfluxDB 1.x and 2.x and independent of the setting [Store metadata information as tags instead of fields](#store-metadata-information-as-tags-instead-of-fields).
@@ -107,6 +122,7 @@ Please refer to the official InfluxDB pages for installation instructions depend
 
 * InfluxDB 1.x: https://docs.influxdata.com/influxdb/v1.8/introduction/install/
 * InfluxDB 2.x: https://docs.influxdata.com/influxdb/v2.2/install/
+* InfluxDB 3.x: https://docs.influxdata.com/influxdb3/core/install/
 
 ### Setup authentication for InfluxDB 1.x (optional)
 **NOTE:** Influx DB V2.x relies on organization/token login, instead of username/password! This is only applicable for InfluxDB 1.x
@@ -352,6 +368,9 @@ sendTo('influxdb.0', 'query', 'SELECT * FROM iobroker.global."system.adapter.adm
 });
 ```
 **NOTE:** The values are coming back in the result array in filename "value" (instead of "val" as normal in ioBroker)
+
+### Influx 3.x
+With InfluxDB 3.x the queries are InfluxQL, like with 1.x, so the examples above apply.
 
 ### Influx 2.x
 In InfluxDB v2.0 onwards, the SQL-based query language *InfluxQL* is deprecated in favour of *Flux*. For more information, please refer to [the offical InfluxDB 2.0 documentation](https://docs.influxdata.com/influxdb/v2.0/reference/flux/).
@@ -617,6 +636,9 @@ A datapoint that is being logged is never selected, whatever the scope says.
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (@GermanBluefox) Added support for InfluxDB 3.x (Core and Enterprise). Based on the work of @dirkhe
+
 ### 5.1.6 (2026-10-13)
 * (@GermanBluefox) The "Statistics" tab works now with InfluxDB 2.0
 

@@ -157,9 +157,46 @@ jobs:
     #        if: startsWith(runner.OS, 'windows')
     #        run: set DEBUG=testing:* & npm run test:integration
 
+    adapter-tests-influxdb3:
+        if: contains(github.event.head_commit.message, '[skip ci]') == false
+
+        needs: [check-and-lint]
+
+        runs-on: ${{ matrix.os }}
+        strategy:
+            matrix:
+                node-version: [22.x, 24.x]
+                os: [ubuntu-latest]
+
+        steps:
+            - uses: actions/checkout@v7
+            - name: Use Node.js ${{ matrix.node-version }}
+              uses: actions/setup-node@v7
+              with:
+                  node-version: ${{ matrix.node-version }}
+
+            - name: Install Dependencies
+              run: |
+                  npm ci
+                  npm run build
+
+            - name: Start InfluxDB 3 Core
+              run: |
+                  docker run -d --name influxdb3 -p 8181:8181 influxdb:3-core influxdb3 serve --node-id node0 --object-store memory
+                  for i in $(seq 1 30); do curl -s -o /dev/null http://localhost:8181/health && break; sleep 1; done
+                  TOKEN=$(docker exec influxdb3 influxdb3 create token --admin | grep -o 'apiv3_[A-Za-z0-9_-]*' | head -1)
+                  echo "::add-mask::$TOKEN"
+                  echo "INFLUXDB3_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+                  docker logs influxdb3
+
+            - name: Run local tests
+              env:
+                  INFLUXDB3: true
+              run: npm test
+
     # Deploys the final package to NPM
     deploy:
-        needs: [check-and-lint, adapter-tests-influxdb1, adapter-tests-influxdb2]
+        needs: [check-and-lint, adapter-tests-influxdb1, adapter-tests-influxdb2, adapter-tests-influxdb3]
 
         # Permissions are required to create GitHub releases and npm trusted publishing
         permissions:

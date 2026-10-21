@@ -238,3 +238,34 @@ function describeNested(err: unknown, depth: number): string {
     }
     return formatError(err, depth);
 }
+
+/** Type names of InfluxDB 3 (`iox::column_type::field::<type>`) as InfluxDB 1.x reports them */
+const IOX_TYPE_NAMES: { [ioxType: string]: string } = {
+    float: 'float',
+    integer: 'integer',
+    uinteger: 'unsigned',
+    string: 'string',
+    boolean: 'boolean',
+    bool: 'boolean',
+};
+
+/**
+ * Report a type conflict of InfluxDB 3 in the words of InfluxDB 1.x/2.x
+ *
+ * InfluxDB 3 answers "invalid column type for column 'value', expected iox::column_type::field::float, got
+ * iox::column_type::field::string". The handling of type conflicts recognizes the 1.x text
+ * "field type conflict: ... is type string, already exists as type float", so it is appended.
+ *
+ * @param errorText the formatted error
+ * @returns the text, extended by the 1.x wording if it is a type conflict of InfluxDB 3
+ */
+export function normalizeTypeConflict(errorText: string): string {
+    const match = errorText.match(
+        /invalid column type for column '([^']*)', expected iox::column_type::field::(\w+), got iox::column_type::field::(\w+)/,
+    );
+    if (!match) {
+        return errorText;
+    }
+    const [, column, expected, got] = match;
+    return `${errorText} (field type conflict: input field "${column}" is type ${IOX_TYPE_NAMES[got] || got}, already exists as type ${IOX_TYPE_NAMES[expected] || expected})`;
+}

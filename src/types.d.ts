@@ -53,7 +53,7 @@ export interface InfluxDBAdapterConfig {
     pingInterval: number | string;
     requestTimeout: number | string;
     validateSSL: boolean;
-    dbversion: '1.x' | '2.x';
+    dbversion: '1.x' | '2.x' | '3.x';
     usetags: boolean;
     pingserver: boolean;
     blockTime: number | string;
