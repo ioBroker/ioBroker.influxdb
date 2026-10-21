@@ -194,7 +194,10 @@ export function isConnectionError(err: unknown, depth = 0): boolean {
     if (typeof error.statusCode === 'number' && CONNECTION_ERROR_STATUS_CODES.includes(error.statusCode)) {
         return true;
     }
-    if (typeof error.message === 'string' && CONNECTION_ERROR_PATTERN.test(error.message)) {
+    // a client error (4xx) is the answer of a reachable server; its message may quote user data such as the
+    // ID of a datapoint ("...timeout"), which must not be mistaken for a network problem
+    const isClientError = typeof error.statusCode === 'number' && error.statusCode >= 400 && error.statusCode < 500;
+    if (!isClientError && typeof error.message === 'string' && CONNECTION_ERROR_PATTERN.test(error.message)) {
         return true;
     }
 
