@@ -170,6 +170,12 @@ export abstract class Database {
      */
     abstract dropMeasurement(measurement: string): Promise<void>;
 
+    /**
+     * Names of all measurements, for drivers that know a better way than the generic query of `main.ts`
+     * (InfluxQL `SHOW MEASUREMENTS` for 1.x, `schema.measurements` for 2.x).
+     */
+    listMeasurements?(): Promise<string[]>;
+
     async queries<T>(queries: string[]): Promise<Array<T & { time: Date }>[] | null> {
         const collectedRows: Array<T & { time: Date }>[] = [];
         let success = false;

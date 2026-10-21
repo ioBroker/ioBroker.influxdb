@@ -105,6 +105,8 @@
     "retention": "Storage retention",
     "use 0 to not buffer at all": "Use 0 to not buffer at all",
     "usetags help": "For more information, please refer to the documentation: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields",
+    "Wait for the database to store each value": "Wait for the database to store each value",
+    "syncWrites help": "InfluxDB 3 stores a value about a second after it is received. Off: single values are acknowledged at once (fast), but can be read and are durable up to a second later. On: every single value waits for the database (safer, but slow when Buffer Datapoints is 0).",
     "Custom tags": "Custom tags",
     "custom-tags help": "Additional InfluxDB tags written with every value of this datapoint. Changing them starts a new series in InfluxDB.",
     "Tag name": "Tag name",

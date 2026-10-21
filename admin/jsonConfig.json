@@ -29,7 +29,8 @@
                     "default": "1.x",
                     "options": [
                         { "label": "1.x", "value": "1.x" },
-                        { "label": "2.x", "value": "2.x" }
+                        { "label": "2.x", "value": "2.x" },
+                        { "label": "3.x", "value": "3.x" }
                     ],
                     "hidden": "!!data.dockerInflux?.enabled",
                     "sm": 12,
@@ -76,14 +77,14 @@
                     "newLine": true,
                     "type": "text",
                     "label": "User",
-                    "hidden": "data.dbversion === '2.x' || !!data.dockerInflux?.enabled",
+                    "hidden": "data.dbversion !== '1.x' || !!data.dockerInflux?.enabled",
                     "sm": 12,
                     "md": 4
                 },
                 "password": {
                     "type": "password",
                     "label": "Password",
-                    "hidden": "data.dbversion === '2.x' || !!data.dockerInflux?.enabled",
+                    "hidden": "data.dbversion !== '1.x' || !!data.dockerInflux?.enabled",
                     "repeat": true,
                     "sm": 12,
                     "md": 8
@@ -92,7 +93,7 @@
                     "newLine": true,
                     "type": "text",
                     "label": "Organization",
-                    "hidden": "data.dbversion === '1.x' || !!data.dockerInflux?.enabled",
+                    "hidden": "data.dbversion !== '2.x' || !!data.dockerInflux?.enabled",
                     "sm": 12,
                     "md": 4
                 },
@@ -239,6 +240,7 @@
                     "newLine": true,
                     "type": "select",
                     "label": "retention",
+                    "hidden": "data.dbversion === '3.x'",
                     "options": [
                         {
                             "value": 0,
@@ -298,14 +300,14 @@
                     "min": 1,
                     "sm": 12,
                     "md": 4,
-                    "hidden": "(data.retention !== -1)",
+                    "hidden": "(data.retention !== -1) || data.dbversion === '3.x'",
                     "help": "Number of days to keep the data."
                 },
                 "retentionConfirm": {
                     "newLine": true,
                     "type": "checkbox",
                     "label": "Apply lower retention",
-                    "hidden": "((originalData.retention >= 0 && data.retention >= 0 && ((data.retention >= originalData.retention && originalData.retention != 0) || data.retention == 0)) || (originalData.retention === -1 && data.retention >= 0 && ((data.retention >= parseInt(originalData.customRetentionDuration, 10) * 24 * 60) || data.retention == 0)) || (originalData.retention > 0 && data.retention === -1 && (parseInt(data.customRetentionDuration, 10) * 24 * 60 >= originalData.retention)) || (originalData.retention === -1 && data.retention === -1 && data.customRetentionDuration >= originalData.customRetentionDuration))",
+                    "hidden": "data.dbversion === '3.x' || ((originalData.retention >= 0 && data.retention >= 0 && ((data.retention >= originalData.retention && originalData.retention != 0) || data.retention == 0)) || (originalData.retention === -1 && data.retention >= 0 && ((data.retention >= parseInt(originalData.customRetentionDuration, 10) * 24 * 60) || data.retention == 0)) || (originalData.retention > 0 && data.retention === -1 && (parseInt(data.customRetentionDuration, 10) * 24 * 60 >= originalData.retention)) || (originalData.retention === -1 && data.retention === -1 && data.customRetentionDuration >= originalData.customRetentionDuration))",
                     "disabled": "((originalData.retention >= 0 && data.retention >= 0 && ((data.retention >= originalData.retention && originalData.retention != 0) || data.retention == 0)) || (originalData.retention === -1 && data.retention >= 0 && ((data.retention >= parseInt(originalData.customRetentionDuration, 10) * 24 * 60) || data.retention == 0)) || (originalData.retention > 0 && data.retention === -1 && (parseInt(data.customRetentionDuration, 10) * 24 * 60 >= originalData.retention)) || (originalData.retention === -1 && data.retention === -1 && data.customRetentionDuration >= originalData.customRetentionDuration))",
                     "confirm": {
                         "text": "Lowering the retention period should be considered with caution: Past data exceeding the retention period will be lost.",
@@ -371,6 +373,15 @@
                         "title": "Please confirm!",
                         "type": "warning"
                     }
+                },
+                "syncWrites": {
+                    "newLine": true,
+                    "type": "checkbox",
+                    "sm": 12,
+                    "md": 6,
+                    "label": "Wait for the database to store each value",
+                    "help": "syncWrites help",
+                    "hidden": "data.dbversion !== '3.x'"
                 },
                 "pingserver": {
                     "type": "checkbox",

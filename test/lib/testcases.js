@@ -1607,8 +1607,13 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         expect(testValue.type).to.be.equal('Number');
         expect(testValue.firstTs).to.be.a('number');
         expect(testValue.lastTs).to.be.at.least(testValue.firstTs);
-        // every datapoint of the tests is written without custom tags at this point, so one series
-        expect(testValue.cardinality).to.be.at.least(1);
+        // every datapoint of the tests is written without custom tags at this point, so one series.
+        // InfluxDB 3 has no way to count series
+        if (process.env.INFLUXDB3) {
+            expect(testValue.cardinality).to.be.null;
+        } else {
+            expect(testValue.cardinality).to.be.at.least(1);
+        }
 
         // the summary has to agree with the rows it summarizes
         expect(stats.summary.datapoints).to.be.equal(stats.result.length);

@@ -11,7 +11,7 @@
 
 This adapter saves state history into InfluxDB.
 
-**The Adapter supports InfluxDB 1.x and 2.x**
+**The Adapter supports InfluxDB 1.x, 2.x and 3.x (Core and Enterprise)**
 
 **This adapter uses Sentry libraries to automatically report exceptions and code errors to the developers.** For more details and for information how to disable the error reporting see [Sentry-Plugin Documentation](https://github.com/ioBroker/plugin-sentry#plugin-sentry)! Sentry reporting is used starting with js-controller 3.0.
 
@@ -42,6 +42,29 @@ With `Influx 2.x` it is now also possible, to store this metadata-information be
 - Attempting to use an existing database that was set up without enabling the Tag-feature will cause the adapter to fail to initialize, and you will see an error message about it in the log.
   - This also is valid the other way: Once you start using the Tag-feature in a new database, you cannot switch back to using fields for this database.
 - This feature is currently only available if you use Influx 2.x. And only if you use the new responsive GUI of Admin 5.
+
+### InfluxDB 3.x
+InfluxDB 3 (Core and Enterprise) is supported. It has no organizations and no buckets, so the settings are the simplest of all three versions:
+* **Host, port, protocol**: InfluxDB 3 listens on port `8181` by default.
+* **Authentication Token**: a token that may write to and read from the database. Create one with `influxdb3 create token --admin` (or a database token). If the server runs without authentication (`--without-auth`) leave the field empty.
+* **DB Name**: the name of the database. The default is `iobroker`. The adapter creates it on the first start (a token that is not allowed to create databases is fine: the first write creates it).
+* **Path** and **Validate SSL certificate** work as for 2.x.
+
+The adapter writes with the InfluxDB line protocol over HTTP (`/api/v3/write_lp`) and reads with **InfluxQL** over HTTP (`/api/v3/query_influxql`), the same way as for 1.x. No additional client library is needed. The [metadata-as-tags](#store-metadata-information-as-tags-instead-of-fields) and the [custom tags](#custom-tags) work as for 2.x.
+
+When doing custom queries via the "query" message, use InfluxQL as described for [Influx 1.x](#influx-1x). The server accepts one statement per request; the adapter splits several statements separated by `;` and runs them one after the other, so the result is an array with one entry per statement, as with 1.x.
+
+What InfluxDB 3 cannot do, and what the adapter does about it:
+
+| Function | With InfluxDB 3.x |
+|---|---|
+| Retention | Not part of the adapter settings. Set it on the server, e.g. `influxdb3 update database --database iobroker --retention-period 2y`. |
+| `delete` / `deleteRange` | Not supported: InfluxDB 3 can not delete single values or a time range. The commands answer with an error and are not listed in `features`. |
+| `deleteAll` and the cleanup of orphaned datapoints | Supported. The whole measurement (table) is deleted. InfluxDB 3 keeps the name of a deleted table in its catalog, renamed to `<name>-YYYYMMDDTHHMMSS`; the adapter does not show these leftovers. |
+| `update` | Supported when `q`, `ack` and `from` are stored as fields: a value with the same time replaces the old one. Not supported with metadata as tags, as the tags are part of the series. |
+| Number of series (Statistics tab) | Unknown, the column stays empty. |
+| Write latency | InfluxDB 3 answers a write after the next write-ahead-log flush, which takes about a second. The adapter awaits the direct write of a value (`Buffer Datapoints` = 0), so by default it writes single values with `no_sync`: the answer comes at once and rejected values are still reported, but the value is readable and durable up to a second later. Enable `Wait for the database to store each value` (Expert Settings, `syncWrites`) to wait for the flush instead; single values then take about a second each, so prefer a buffer in that case. Batches (buffer flushes) are always written the regular way. |
+| Types | InfluxDB 3 fixes the type of a field per measurement like the other versions. A type conflict is handled as before (the value is converted and the datatype of the datapoint is pinned). |
 
 ### Custom tags
 Every datapoint can carry additional, static InfluxDB tags. They are defined in the datapoint settings (`Custom tags`) as a list of name/value pairs and are written with every value of this datapoint - for both InfluxDB 1.x and 2.x and independent of the setting [Store metadata information as tags instead of fields](#store-metadata-information-as-tags-instead-of-fields).
@@ -83,6 +106,8 @@ After the migration, the adapter is able to work with the old data (e.g. for his
 ## Retention Policy
 While Influx 1.x supports the concept of multiple **retention policies** for one database, Influx 2 by design allows only one **retention period** per bucket. Therefore, it is only possible to set one policy for the whole database/bucket with this adapter via _Default Settings -> Storage retention_. The retention selected here will be applied on the fly and can be changed at any time. Retention policies set by the adapter will never be deleted, but instead altered if required, as otherwise Influx 1.x would delete all data that the policy applied to.
 
+InfluxDB 3.x does not have the setting in the adapter: the retention of a database is configured on the server, see [InfluxDB 3.x](#influxdb-3x).
+
 Please also read [Understanding Retention Policies](RetentionPolicies.md). 
 
 ## Direct writes or buffered writes?
@@ -107,9 +132,10 @@ Please refer to the official InfluxDB pages for installation instructions depend
 
 * InfluxDB 1.x: https://docs.influxdata.com/influxdb/v1.8/introduction/install/
 * InfluxDB 2.x: https://docs.influxdata.com/influxdb/v2.2/install/
+* InfluxDB 3.x: https://docs.influxdata.com/influxdb3/core/install/
 
 ### Setup authentication for InfluxDB 1.x (optional)
-**NOTE:** Influx DB V2.x relies on organization/token login, instead of username/password! This is only applicable for InfluxDB 1.x
+**NOTE:** Influx DB V2.x relies on organization/token login, instead of username/password! InfluxDB 3.x needs only a token. This is only applicable for InfluxDB 1.x
 
 If you use DB locally, you may leave authentication disabled and skip this part.
 
@@ -211,8 +237,9 @@ After the installation, open `http://<host>:3000` and log in with `admin` / `adm
 Then create a data source as described [here](https://grafana.com/docs/grafana/latest/datasources/influxdb/):
 - InfluxDB 1.x: query language _InfluxQL_, URL of InfluxDB, database name and the user/password of the adapter settings.
 - InfluxDB 2.x: query language _Flux_, URL of InfluxDB, organization, token and default bucket of the adapter settings.
+- InfluxDB 3.x: query language _InfluxQL_ (or _SQL_), URL of InfluxDB, database name and token of the adapter settings.
 
-The query from [The first dashboard](#the-first-dashboard) works for InfluxDB 2.x. For InfluxDB 1.x with InfluxQL use e.g.:
+The query from [The first dashboard](#the-first-dashboard) works for InfluxDB 2.x. For InfluxDB 1.x and 3.x with InfluxQL use e.g.:
 
 ```
 SELECT mean("value") FROM "system.adapter.admin.0.memRss" WHERE $timeFilter GROUP BY time($__interval) fill(previous)
@@ -560,7 +587,8 @@ Two things are worth knowing about the numbers:
 - **There is no size per datapoint.** InfluxDB does not report one, neither in 1.x (`SHOW STATS` and
   `SHOW SHARDS` only know the engine and the shards) nor in 2.x (disk usage is monitored per bucket). The
   number of **series** is shown instead: it is what drives the memory the index needs, and
-  [custom tags](#custom-tags) are the usual way to increase it unintentionally.
+  [custom tags](#custom-tags) are the usual way to increase it unintentionally. InfluxDB 3.x can not tell the
+  number of series, the column stays empty.
 - **Counting is a full scan.** InfluxDB has no row count it could look up, so the values of the examined
   range are really read. On a database with years of data that takes a while - the time range selector
   above the table limits the scan if the full count is not needed.
@@ -617,6 +645,8 @@ A datapoint that is being logged is never selected, whatever the scope says.
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (jhoos70) Added support for InfluxDB 3.x (Core and Enterprise): data is written with the line protocol and read with InfluxQL over HTTP
 ### 5.1.6 (2026-10-13)
 * (@GermanBluefox) The "Statistics" tab works now with InfluxDB 2.0
 

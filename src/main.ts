@@ -5,6 +5,7 @@ import { sendResponse, sortByTs } from '@iobroker/aggregate';
 
 import DatabaseInfluxDB1x from './lib/DatabaseInfluxDB1x';
 import DatabaseInfluxDB2x from './lib/DatabaseInfluxDB2x';
+import DatabaseInfluxDB3x from './lib/DatabaseInfluxDB3x';
 import {
     escapeFluxString,
     escapeInfluxQLIdentifier,
@@ -489,6 +490,11 @@ export class InfluxDBAdapter extends Adapter {
         }
     }
 
+    /** InfluxDB 1.x and 3.x are queried with InfluxQL, 2.x with Flux */
+    isInfluxQL(): boolean {
+        return this.config.dbversion === '1.x' || this.config.dbversion === '3.x';
+    }
+
     async connect(): Promise<void> {
         if (!this.config.path) {
             this.config.path = '';
@@ -497,7 +503,7 @@ export class InfluxDBAdapter extends Adapter {
         }
 
         this.log.info(
-            `Connecting ${this.config.protocol}://${this.config.host}:${this.config.port}/${this.config.dbversion === '2.x' ? this.config.path || '' : ''} ...`,
+            `Connecting ${this.config.protocol}://${this.config.host}:${this.config.port}/${this.config.dbversion === '1.x' ? '' : this.config.path || ''} ...`,
         );
 
         this.config.validateSSL = this.config.validateSSL !== undefined ? !!this.config.validateSSL : true;
@@ -528,6 +534,30 @@ export class InfluxDBAdapter extends Adapter {
                         organization: this.config.organization,
                         validateSSL: this.config.validateSSL,
                         useTags: this.config.usetags,
+                    },
+                );
+                break;
+            case '3.x':
+                // eslint-disable-next-line no-control-regex
+                if (/[\x00-\x08\x0E-\x1F\x80-\xFF]/.test(this.config.token)) {
+                    this.log.error('Token error: Please re-enter the token in Admin. Stopping');
+                    return;
+                }
+                this._client = new DatabaseInfluxDB3x(
+                    {
+                        log: this.log,
+                        host: this.config.host,
+                        port: this.config.port,
+                        protocol: this.config.protocol, // optional, default 'http'
+                        database: this.config.dbname,
+                        requestTimeout: this.config.requestTimeout as number,
+                    },
+                    {
+                        path: this.config.path, // optional, for a reverse proxy
+                        token: this.config.token,
+                        validateSSL: this.config.validateSSL,
+                        useTags: this.config.usetags,
+                        syncWrites: this.config.syncWrites,
                     },
                 );
                 break;
@@ -588,8 +618,8 @@ export class InfluxDBAdapter extends Adapter {
                 this.log.warn(formatError(error));
             }
 
-            if (this.config.dbversion === '2.x') {
-                // For 2.x the connection is finalized inside checkMetaDataStorageType (after the
+            if (this.config.dbversion === '2.x' || this.config.dbversion === '3.x') {
+                // For 2.x/3.x the connection is finalized inside checkMetaDataStorageType (after the
                 // tags/fields compatibility check), so it can abort the start on a conflict.
                 await this.checkMetaDataStorageType();
             } else {
@@ -766,6 +796,26 @@ export class InfluxDBAdapter extends Adapter {
             config.dbname ||= 'iobroker';
 
             switch (config.dbversion) {
+                case '3.x':
+                    this.log.info('Connecting to InfluxDB 3');
+                    lClient = new DatabaseInfluxDB3x(
+                        {
+                            log: this.log,
+                            host: config.host,
+                            port: config.port,
+                            protocol: config.protocol, // optional, default 'http'
+                            database: config.dbname,
+                            requestTimeout: config.requestTimeout,
+                        },
+                        {
+                            path: config.path,
+                            token: config.token,
+                            validateSSL: config.validateSSL,
+                            useTags: config.usetags,
+                            syncWrites: config.syncWrites,
+                        },
+                    );
+                    break;
                 case '2.x':
                     this.log.info('Connecting to InfluxDB 2');
                     lClient = new DatabaseInfluxDB2x(
@@ -881,7 +931,7 @@ export class InfluxDBAdapter extends Adapter {
                     this.log.warn(formatError(error));
                 }
 
-                if (this.config.dbversion === '2.x') {
+                if (this.config.dbversion === '2.x' || this.config.dbversion === '3.x') {
                     await this.checkMetaDataStorageType();
                 }
                 this.sendTo(msg.from, msg.command, { error: null }, msg.callback);
@@ -896,25 +946,36 @@ export class InfluxDBAdapter extends Adapter {
         this.config.dbname ||= 'iobroker';
         try {
             if (msg.command === 'features') {
-                // Currently the supported features are identical for InfluxDB 1.x and 2.x
-                this.sendTo(
-                    msg.from,
-                    msg.command,
-                    {
-                        supportedFeatures: [
-                            'update',
-                            'delete',
-                            'deleteRange',
-                            'deleteAll',
-                            'storeState',
-                            'getDatapoints',
-                            'getRawEntries',
-                            'getDpStatistics',
-                            'cleanupOrphaned',
-                        ],
-                    },
-                    msg.callback,
-                );
+                const supportedFeatures = [
+                    'update',
+                    'delete',
+                    'deleteRange',
+                    'deleteAll',
+                    'storeState',
+                    'getDatapoints',
+                    'getRawEntries',
+                    'getDpStatistics',
+                    'cleanupOrphaned',
+                ];
+                if (this.config.dbversion === '3.x') {
+                    // InfluxDB 3 deletes whole tables only. `update` rewrites a point in place, which works
+                    // as long as q/ack/from are fields: as tags they would be part of the series key
+                    return this.sendTo(
+                        msg.from,
+                        msg.command,
+                        {
+                            supportedFeatures: supportedFeatures.filter(
+                                feature =>
+                                    feature !== 'delete' &&
+                                    feature !== 'deleteRange' &&
+                                    (feature !== 'update' || !this.config.usetags),
+                            ),
+                        },
+                        msg.callback,
+                    );
+                }
+                // The supported features are identical for InfluxDB 1.x and 2.x
+                this.sendTo(msg.from, msg.command, { supportedFeatures }, msg.callback);
             } else if (msg.command === 'update') {
                 await this.updateState(msg);
             } else if (msg.command === 'delete') {
@@ -926,7 +987,7 @@ export class InfluxDBAdapter extends Adapter {
             } else if (msg.command === 'storeState') {
                 await this.storeState(msg);
             } else if (msg.command === 'getHistory') {
-                if (this.config.dbversion === '1.x') {
+                if (this.isInfluxQL()) {
                     await this.getHistoryV1(msg);
                 } else {
                     await this.getHistoryV2(msg);
@@ -943,6 +1004,7 @@ export class InfluxDBAdapter extends Adapter {
                         await this.multiQuery(msg);
                         break;
                     case '1.x':
+                    case '3.x': // InfluxDB 3 is queried with InfluxQL, too
                     default:
                         await this.query(msg);
                         break;
@@ -2187,6 +2249,19 @@ datasources:
                 this.log.warn(`Error on delete("${formatError(error)}"`);
                 throw error;
             }
+        } else if (this.config.dbversion === '3.x') {
+            if (state.ts || state.start || state.end) {
+                throw new Error('InfluxDB 3.x cannot delete single values or a time range, only a whole datapoint');
+            }
+            try {
+                await this._client?.dropMeasurement(id);
+                if (this._client) {
+                    this.setConnected(true);
+                }
+            } catch (error) {
+                this.log.warn(`Error on delete of ${id}: ${formatError(error)}`);
+                throw error;
+            }
         } else {
             throw new Error('not implemented');
         }
@@ -2432,7 +2507,12 @@ datasources:
             throw new Error('not connected');
         }
 
-        if (this.config.dbversion === '1.x') {
+        if (this.config.dbversion === '3.x' && this.config.usetags) {
+            // the point cannot be deleted and a changed tag would write a second point next to it
+            throw new Error('InfluxDB 3.x cannot update a value if q, ack and from are stored as tags');
+        }
+
+        if (this.isInfluxQL()) {
             const query = `SELECT * FROM "${escapeInfluxQLIdentifier(id)}" WHERE time = '${new Date(state.ts).toISOString()}'`;
 
             try {
@@ -2451,8 +2531,12 @@ datasources:
                     this.setConnected(true);
                 }
 
-                if (result?.[0]?.[0]) {
-                    const stored = result[0][0];
+                // a single statement answers with the rows, several with one array of rows per statement
+                const first: unknown = result?.[0];
+                const found = (Array.isArray(first) ? first[0] : first) as
+                    NonNullable<typeof result>[number][number] | undefined;
+                if (found) {
+                    const stored = found;
                     const storedState: ioBroker.State = {
                         val: stored.val === undefined ? stored.value : stored.val,
                         ack: stored.ack,
@@ -2475,7 +2559,10 @@ datasources:
                     }
                     storedState.ts = state.ts;
 
-                    await this._delete(id, { ts: new Date(stored.time || stored.ts).getTime() });
+                    // InfluxDB 3 cannot delete a point, but a point with the same time and tags replaces it
+                    if (this.config.dbversion !== '3.x') {
+                        await this._delete(id, { ts: new Date(stored.time || stored.ts).getTime() });
+                    }
                     await this.pushValueIntoDB(id, storedState, true);
                 } else {
                     this.log.error(`Cannot find value to delete for ${id}: ${JSON.stringify(state)}`);
@@ -3938,7 +4025,11 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
             throw new Error('not connected');
         }
 
-        if (this.config.dbversion === '1.x') {
+        if (this._client.listMeasurements) {
+            return this._client.listMeasurements();
+        }
+
+        if (this.isInfluxQL()) {
             const rows = await this._client.query<{ name: string }>('SHOW MEASUREMENTS');
             return (rows || []).map(row => row.name).filter(name => !!name);
         }
@@ -4180,7 +4271,7 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
         let countQuery: string;
         let dataQuery: string;
 
-        if (this.config.dbversion === '1.x') {
+        if (this.isInfluxQL()) {
             const safeId = escapeInfluxQLIdentifier(id);
             const conditions: string[] = [];
             if (options.start !== undefined) {

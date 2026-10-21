@@ -308,6 +308,7 @@
     "validateSSL": true,
     "dbversion": "1.x",
     "usetags": false,
+    "syncWrites": false,
     "pingserver": true,
     "blockTime": 0,
     "debounceTime": 0,
