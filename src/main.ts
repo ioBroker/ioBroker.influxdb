@@ -1871,10 +1871,10 @@ datasources:
     }
 
     async storeBufferedSeries(id?: string | null): Promise<number> {
-        if (id && this._flushInFlight) {
-            // The points of this ID may just be written by a flush of the whole buffer: they are no longer in
-            // the buffer, but not yet in the database either - getHistory would miss them (on InfluxDB 3 a
-            // batch waits for the write-ahead log, about a second)
+        if (this._flushInFlight) {
+            // The points may just be written by a flush of the whole buffer: they are no longer in the buffer,
+            // but not yet in the database either - getHistory or the message flushBuffer would answer too early
+            // (on InfluxDB 3 a batch waits for the write-ahead log, about a second)
             await this._flushInFlight;
         }
         if (id && !this._seriesBuffer[id]?.length) {
