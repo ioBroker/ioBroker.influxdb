@@ -36,12 +36,12 @@ When doing custom queries via the "query" message, you can use Flux queries to s
 #### Store metadata information as tags instead of fields
 For `Influx 1.x` state value, as well as associated metadata fields (`q`, `ack` and `from`) are stored as fields within InfluxDB. When using Flux-commands to retrieve this data (instead of `InfluxQL`) the data is returned in separate tables, which makes it more difficult to view the data in a joined way when using external database clients or Influx CLI `query` command. This is by design, as Influx only supports one field per data-point.
 
-With `Influx 2.x` it is now also possible, to store this metadata-information besides the actual value of the state as Influx Tags. Tags are indexed and allow for faster search queries. In addition, they are closely linked to the measurement stored within the db, meaning they will be returned in one table with the queried measurement which makes them much easier to handle, when used outside this adapter. There are limitations with this, however:
+With `Influx 2.x` and `3.x` it is now also possible, to store this metadata-information besides the actual value of the state as Influx Tags. Tags are indexed and allow for faster search queries. In addition, they are closely linked to the measurement stored within the db, meaning they will be returned in one table with the queried measurement which makes them much easier to handle, when used outside this adapter. There are limitations with this, however:
 - The use of tags for metadata needs to be enabled under `Advanced Settings`. It is disabled by default.
 - If you decide to use tags, you cannot continue to use old measurements that were gathered with Influx 1.x, as they are stored in fields.
 - Attempting to use an existing database that was set up without enabling the Tag-feature will cause the adapter to fail to initialize, and you will see an error message about it in the log.
   - This also is valid the other way: Once you start using the Tag-feature in a new database, you cannot switch back to using fields for this database.
-- This feature is currently only available if you use Influx 2.x. And only if you use the new responsive GUI of Admin 5.
+- This feature is only available if you use Influx 2.x or 3.x. And only if you use the new responsive GUI of Admin 5.
 
 ### InfluxDB 3.x
 InfluxDB 3 (Core and Enterprise) is supported. It has no organizations and no buckets, so the settings are the simplest of all three versions:
@@ -67,7 +67,7 @@ What InfluxDB 3 cannot do, and what the adapter does about it:
 | Types | InfluxDB 3 fixes the type of a field per measurement like the other versions. A type conflict is handled as before (the value is converted and the datatype of the datapoint is pinned). |
 
 ### Custom tags
-Every datapoint can carry additional, static InfluxDB tags. They are defined in the datapoint settings (`Custom tags`) as a list of name/value pairs and are written with every value of this datapoint - for both InfluxDB 1.x and 2.x and independent of the setting [Store metadata information as tags instead of fields](#store-metadata-information-as-tags-instead-of-fields).
+Every datapoint can carry additional, static InfluxDB tags. They are defined in the datapoint settings (`Custom tags`) as a list of name/value pairs and are written with every value of this datapoint - for all InfluxDB versions and independent of the setting [Store metadata information as tags instead of fields](#store-metadata-information-as-tags-instead-of-fields).
 
 This allows selecting and grouping the values of different datapoints by their meaning instead of by their IDs, e.g. give all datapoints of the kitchen the tag `room=kitchen` and all temperature sensors the tag `type=temperature`. In Grafana, the values can then be filtered or grouped by these tags:
 
@@ -164,7 +164,7 @@ Enable authentication by editing /etc/influxdb/influxdb.conf:
 - Restart service: ``` service influxdb restart ```
 
 ## Self-hosted docker image for InfluxDB
-This version of the adapter could start a self-hosted docker image of InfluxDB 2.x and, optionally, Grafana next to it.
+This version of the adapter could start a self-hosted docker image of InfluxDB 2.x (not 3.x) and, optionally, Grafana next to it.
 Of course, the docker environment must be installed and running on the host.
 
 The `iobroker` user must have access to the docker CLI. To fix the rights start `iob fix`.

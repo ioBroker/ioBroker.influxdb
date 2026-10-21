@@ -22,11 +22,15 @@ Defines whether the database is accessed via plain http or secured https.
 
 #### Login
 
-The owner of the database (user) under whose ID the data is recorded.
+The owner of the database (user) under whose ID the data is recorded. Only used with InfluxDB 1.x; InfluxDB 2.x and 3.x log in with a token.
 
 #### Password
 
-The password of the given user in the database. For safety, the password has to be entered a second time in the following field.
+The password of the given user in the database. For safety, the password has to be entered a second time in the following field. Only used with InfluxDB 1.x.
+
+#### InfluxDB 3.x
+
+Choose "3.x" as the database version, enter host, port (default `8181`), the token and the database name. InfluxDB 3 cannot delete single values or a time range, and it does not report the number of series. In the expert settings, "Wait for the database to store each value" makes single values wait for the write-ahead log (about one second each) instead of being acknowledged at once. Details and all limits: [README, InfluxDB 3.x](https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#influxdb-3x).
 
 #### Round to
 
@@ -64,7 +68,7 @@ If necessary, the data type with which the values are stored can be defined here
 
 #### Storage retention
 
-Defines how long the values are kept (infinite, 2 years, 1 year, …, 1 day). [![](../de/img/influxdb_ioBroker_Adapter_SQL_objects_timerange.jpg)](../de/img/influxdb_ioBroker_Adapter_SQL_objects_timerange.jpg)
+Defines how long the values are kept (infinite, 2 years, 1 year, …, 1 day). [![](../de/img/influxdb_ioBroker_Adapter_SQL_objects_timerange.jpg)](../de/img/influxdb_ioBroker_Adapter_SQL_objects_timerange.jpg) Not available with InfluxDB 3.x: the retention is set on the server (`influxdb3 update database --retention-period`).
 
 #### Debounce time (ms)
 
@@ -90,7 +94,7 @@ Enables the logging of the datapoint. With "log changes only", values are only s
 
 ### <span id="Custom_tags">Custom tags</span>
 
-Every datapoint can carry additional, static InfluxDB tags. They are entered in the settings of the datapoint under "Custom tags" as a list of name/value pairs and are written with every value of this datapoint - for both InfluxDB 1.x and 2.x and independent of the setting "Store metadata information as tags instead of fields".
+Every datapoint can carry additional, static InfluxDB tags. They are entered in the settings of the datapoint under "Custom tags" as a list of name/value pairs and are written with every value of this datapoint - for all InfluxDB versions and independent of the setting "Store metadata information as tags instead of fields".
 
 This allows selecting and grouping the values of different datapoints by their meaning instead of by their IDs, e.g. give all datapoints of the kitchen the tag `room=kitchen` and all temperature sensors the tag `type=temperature`. In Grafana, the values can then be filtered or grouped by these tags:
 
@@ -152,7 +156,7 @@ If "with" or `influxdb.0` is selected under history in the title row, only datap
 
 ## <span id="Docker">InfluxDB and Grafana in Docker</span>
 
-The adapter can start InfluxDB 2.x and optionally Grafana itself as Docker containers. Docker has to be installed on the ioBroker host for this, and the user `iobroker` must be allowed to use Docker (run `iob fix` if necessary).
+The adapter can start InfluxDB 2.x (not 3.x) and optionally Grafana itself as Docker containers. Docker has to be installed on the ioBroker host for this, and the user `iobroker` must be allowed to use Docker (run `iob fix` if necessary).
 
 ### InfluxDB in Docker
 
@@ -226,8 +230,9 @@ Without Docker, Grafana has to be installed separately, see the [installation gu
 
 - InfluxDB 1.x: query language _InfluxQL_, URL of InfluxDB, database name and user/password from the adapter settings.
 - InfluxDB 2.x: query language _Flux_, URL of InfluxDB, organization, token and default bucket from the adapter settings.
+- InfluxDB 3.x: query language _InfluxQL_ (or _SQL_), URL of InfluxDB, database name and token from the adapter settings.
 
-The query from [The first dashboard](#the-first-dashboard) works for InfluxDB 2.x. For InfluxDB 1.x with InfluxQL use e.g.:
+The query from [The first dashboard](#the-first-dashboard) works for InfluxDB 2.x. For InfluxDB 1.x and 3.x with InfluxQL use e.g.:
 
 ```
 SELECT mean("value") FROM "system.adapter.admin.0.memRss" WHERE $timeFilter GROUP BY time($__interval) fill(previous)
