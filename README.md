@@ -617,7 +617,7 @@ A datapoint that is being logged is never selected, whatever the scope says.
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 5.1.8 (2026-10-23)
 * (@GermanBluefox) The timed relog (`changesRelogInterval`) starts right after the adapter start or a change of the datapoint settings, not only with the first update of the state
 
 ### 5.1.7 (2026-10-21)
@@ -634,9 +634,6 @@ A datapoint that is being logged is never selected, whatever the scope says.
 
 ### 5.1.4 (2026-10-13)
 * (@GermanBluefox) The "Statistics" tab works now also with InfluxDB 2.0. A datapoint without storage type that received a numeric string is shown there as number
-
-### 5.1.3 (2026-10-13)
-* (@GermanBluefox) The error of a failed save or delete in the data browser is no longer hidden by the reload of the table
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 
