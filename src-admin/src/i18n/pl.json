@@ -10,6 +10,7 @@
     "influxdb_cleanup_done": "Usunięto %s wartości z %s punktów danych",
     "influxdb_cleanup_failed": "Nie udało się usunąć %s punktów danych, zobacz log",
     "influxdb_cleanup_nothing": "Nie ma nic do wyczyszczenia.",
+    "influxdb_cleanup_selected": "Wybrane do usunięcia: %s punktów danych z %s wartościami. Odznacz punkty danych, które chcesz zachować.",
     "influxdb_col_count": "Wartości",
     "influxdb_col_first": "Najstarsza wartość",
     "influxdb_col_id": "ID",

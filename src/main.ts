@@ -4329,6 +4329,14 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
         const scope: CleanupScope = msg.message?.scope || {};
         const confirmed = msg.message?.confirm === true;
 
+        if (
+            scope.ids !== undefined &&
+            (!Array.isArray(scope.ids) || scope.ids.some((id: unknown) => typeof id !== 'string'))
+        ) {
+            this.sendTo(msg.from, msg.command, { error: 'scope.ids must be an array of strings' }, msg.callback);
+            return;
+        }
+
         try {
             const stats = await this.collectStatistics();
             const victims = selectForCleanup(stats, scope);
