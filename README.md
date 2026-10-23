@@ -612,11 +612,24 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 
 A datapoint that is being logged is never selected, whatever the scope says.
 
+`scope.ids` limits a run to some of these datapoints. The IDs only narrow the selection made by the statuses,
+so an ID that would not be removed anyway (e.g. one that is being logged) is ignored:
+
+```javascript
+sendTo('influxdb.0', 'cleanupOrphaned', {
+    scope: { objectMissing: true, ids: ['javascript.0.oldState'] },
+    confirm: true,
+});
+```
+
 ## Changelog
 <!--
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (GermanBluefox) The cleanup dialog of the statistics tab has checkboxes, so only the selected datapoints are deleted (#565)
+
 ### 5.1.8 (2026-10-23)
 * (@GermanBluefox) The timed relog (`changesRelogInterval`) starts right after the adapter start or a change of the datapoint settings, not only with the first update of the state
 

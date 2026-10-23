@@ -112,6 +112,35 @@ describe('Test statistics', function () {
             const all = selectForCleanup(stats, { objectMissing: true, loggingDisabled: true });
             assert.ok(!all.find(s => s.status === 'active'));
         });
+
+        it('can be limited to selected IDs', function () {
+            assert.deepStrictEqual(
+                selectForCleanup(stats, { loggingDisabled: true, ids: ['missing'] }).map(s => s.id),
+                ['missing'],
+            );
+            assert.deepStrictEqual(
+                selectForCleanup(stats, { loggingDisabled: true, ids: [] }).map(s => s.id),
+                [],
+            );
+        });
+
+        it('ignores selected IDs that are not candidates', function () {
+            assert.deepStrictEqual(
+                selectForCleanup(stats, { ids: ['active', 'disabled', 'missing'] }).map(s => s.id),
+                ['missing'],
+            );
+            assert.deepStrictEqual(
+                selectForCleanup(stats, { loggingDisabled: true, ids: ['active'] }).map(s => s.id),
+                [],
+            );
+        });
+
+        it('keeps the old behavior without IDs', function () {
+            assert.deepStrictEqual(
+                selectForCleanup(stats, { loggingDisabled: true, ids: undefined }).map(s => s.id),
+                ['disabled', 'missing'],
+            );
+        });
     });
 
     describe('cardinalityFromSeriesKeys', function () {

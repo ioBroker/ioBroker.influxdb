@@ -10,6 +10,7 @@
     "influxdb_cleanup_done": "已删除 %s 个值，来自 %s 个数据点",
     "influxdb_cleanup_failed": "%s 个数据点无法删除，请查看日志",
     "influxdb_cleanup_nothing": "没有需要清理的内容。",
+    "influxdb_cleanup_selected": "已选择删除：%s 个数据点，共 %s 个值。取消勾选要保留的数据点。",
     "influxdb_col_count": "值数量",
     "influxdb_col_first": "最早的值",
     "influxdb_col_id": "ID",

@@ -10,6 +10,7 @@
     "influxdb_cleanup_done": "Видалено %s значень із %s точок даних",
     "influxdb_cleanup_failed": "Не вдалося видалити %s точок даних, див. журнал",
     "influxdb_cleanup_nothing": "Немає чого очищати.",
+    "influxdb_cleanup_selected": "Вибрано для видалення: %s точок даних із %s значеннями. Зніміть позначку з точок даних, які хочете зберегти.",
     "influxdb_col_count": "Значення",
     "influxdb_col_first": "Найстаріше значення",
     "influxdb_col_id": "ID",

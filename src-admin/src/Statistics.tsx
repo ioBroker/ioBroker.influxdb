@@ -75,6 +75,8 @@ interface StatisticsState extends ConfigGenericState {
     sortAsc: boolean;
     /** the dry-run result, which is what the confirmation dialog shows */
     preview: CleanupPreview | null;
+    /** the IDs of the preview the user still wants to remove */
+    selected: string[];
     /** whether the pending cleanup should also drop datapoints that merely have logging switched off */
     includeDisabled: boolean;
     deleting: boolean;
@@ -127,6 +129,7 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
             sortField: 'count',
             sortAsc: false,
             preview: null,
+            selected: [],
             includeDisabled: false,
             deleting: false,
             doneText: '',
@@ -180,14 +183,16 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
             const result = await this.sendToInstance('cleanupOrphaned', {
                 scope: { objectMissing: true, loggingDisabled: includeDisabled },
             });
+            const items: DatapointStat[] = result.items || [];
             this.setState({
                 loading: false,
                 includeDisabled,
                 preview: {
                     datapoints: result.datapoints,
                     values: result.values,
-                    items: result.items || [],
+                    items,
                 },
+                selected: items.map(item => item.id),
             });
         } catch (e: any) {
             this.setState({ loading: false, errorText: e.message });
@@ -198,7 +203,12 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
         this.setState({ deleting: true, errorText: '' });
         try {
             const result = await this.sendToInstance('cleanupOrphaned', {
-                scope: { objectMissing: true, loggingDisabled: this.state.includeDisabled },
+                scope: {
+                    objectMissing: true,
+                    loggingDisabled: this.state.includeDisabled,
+                    // only what is still ticked in the dialog, the adapter never widens this list
+                    ids: this.state.selected,
+                },
                 confirm: true,
             });
             this.setState(
@@ -293,10 +303,13 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
     }
 
     renderConfirmDialog(): React.JSX.Element | null {
-        const { preview, includeDisabled, deleting } = this.state;
+        const { preview, includeDisabled, deleting, selected } = this.state;
         if (!preview) {
             return null;
         }
+        const selectedItems = preview.items.filter(item => selected.includes(item.id));
+        const selectedValues = selectedItems.reduce((sum, item) => sum + item.count, 0);
+        const allSelected = !!preview.items.length && selectedItems.length === preview.items.length;
 
         return (
             <Dialog
@@ -312,6 +325,9 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
                             <DialogContentText sx={{ mb: 1 }}>
                                 {I18n.t('influxdb_cleanup_confirm_text', preview.datapoints, preview.values)}
                             </DialogContentText>
+                            <DialogContentText sx={{ mb: 1 }}>
+                                {I18n.t('influxdb_cleanup_selected', selectedItems.length, selectedValues)}
+                            </DialogContentText>
                             <TableContainer
                                 component={Paper}
                                 sx={{ maxHeight: 320 }}
@@ -322,6 +338,21 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
                                 >
                                     <TableHead>
                                         <TableRow>
+                                            <TableCell padding="checkbox">
+                                                <Checkbox
+                                                    size="small"
+                                                    checked={allSelected}
+                                                    indeterminate={!!selectedItems.length && !allSelected}
+                                                    disabled={deleting}
+                                                    onChange={() =>
+                                                        this.setState({
+                                                            selected: allSelected
+                                                                ? []
+                                                                : preview.items.map(item => item.id),
+                                                        })
+                                                    }
+                                                />
+                                            </TableCell>
                                             <TableCell>{I18n.t('influxdb_col_id')}</TableCell>
                                             <TableCell>{I18n.t('influxdb_col_status')}</TableCell>
                                             <TableCell align="right">{I18n.t('influxdb_col_count')}</TableCell>
@@ -330,6 +361,20 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
                                     <TableBody>
                                         {preview.items.map(item => (
                                             <TableRow key={item.id}>
+                                                <TableCell padding="checkbox">
+                                                    <Checkbox
+                                                        size="small"
+                                                        checked={selected.includes(item.id)}
+                                                        disabled={deleting}
+                                                        onChange={e =>
+                                                            this.setState({
+                                                                selected: e.target.checked
+                                                                    ? [...selected, item.id]
+                                                                    : selected.filter(id => id !== item.id),
+                                                            })
+                                                        }
+                                                    />
+                                                </TableCell>
                                                 <TableCell sx={{ wordBreak: 'break-all' }}>{item.id}</TableCell>
                                                 <TableCell>
                                                     <Chip
@@ -369,7 +414,7 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
                     <Button
                         variant="contained"
                         color="error"
-                        disabled={deleting || !preview.datapoints}
+                        disabled={deleting || !selectedItems.length}
                         startIcon={<DeleteSweep />}
                         onClick={() => void this.confirmCleanup()}
                     >
