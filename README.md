@@ -625,6 +625,11 @@ A datapoint that is being logged is never selected, whatever the scope says.
 * (@GermanBluefox) Values outside of the minimum/maximum of a datapoint can now also be written as `null` (gap in the chart) or limited to the minimum/maximum instead of being ignored
 * (@GermanBluefox) `getHistory` honors the option `ignoreNull`, it was always `true` before
 * (@GermanBluefox) `getHistory` with InfluxDB 2.x answers with the error if the query fails, instead of letting the caller run into its timeout
+
+### 5.1.8 (2026-10-23)
+* (@GermanBluefox) The timed relog (`changesRelogInterval`) starts right after the adapter start or a change of the datapoint settings, not only with the first update of the state
+
+### 5.1.7 (2026-10-21)
 * (@GermanBluefox) Points buffered by version 4.x (`influxdata.json`) are converted when read, instead of failing with "invalid float value for field 'q': undefined" on every flush (#517)
 * (@GermanBluefox) The ports of the docker containers (InfluxDB, Grafana) are reported to js-controller 8 as occupied (`registerUsedResource`). The port of the database itself is no longer counted as a port used by the instance
 * (@GermanBluefox) HTTP errors from InfluxDB (e.g. 500 "timeout") are no longer treated as a lost connection (#551)
@@ -638,13 +643,6 @@ A datapoint that is being logged is never selected, whatever the scope says.
 
 ### 5.1.4 (2026-10-13)
 * (@GermanBluefox) The "Statistics" tab works now also with InfluxDB 2.0. A datapoint without storage type that received a numeric string is shown there as number
-
-### 5.1.3 (2026-10-13)
-* (@GermanBluefox) The error of a failed save or delete in the data browser is no longer hidden by the reload of the table
-
-### 5.1.2 (2026-10-13)
-* (@franzenhof) A value received during `blockTime` is now logged when the block time is over. Before, it was dropped and a datapoint that then stayed unchanged kept its outdated value in the database (repeated by `changesRelogInterval`) until the next change
-* (@GermanBluefox) A value excluded by `ignoreZero`/`ignoreBelowNumber`/`ignoreAboveNumber` no longer replaces the value waiting for the end of `blockTime`, and is not written on unload. A waiting value is also written when the datapoint is reconfigured instead of being lost. Note: as the waiting value keeps its original timestamp, two points in the database can now be less than `blockTime` apart
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 
