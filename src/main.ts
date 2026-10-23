@@ -1367,6 +1367,16 @@ datasources:
         if (state && this._influxDPs[id]) {
             state.from = `system.adapter.${this.namespace}`;
             this._influxDPs[id].state = state;
+            // Without this, the timed relog starts only with the first update of the state after the start, and
+            // a rarely updated state gets no values at all until then. A start value written below restarts it.
+            const settings = this._influxDPs[id];
+            if (settings.changesOnly && settings.changesRelogInterval > 0 && !settings.relogTimeout) {
+                settings.relogTimeout = setTimeout(
+                    _id => this.reLogHelper(_id),
+                    settings.changesRelogInterval * 1000,
+                    id,
+                );
+            }
             if (this.config.relogLastValueOnStart) {
                 this._tasksStart.push(id);
                 // already connected (e.g. object changed after the start): write it now, not on the next reconnect

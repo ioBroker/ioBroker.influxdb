@@ -92,6 +92,8 @@ describe(`Test influx-buffer adapter with Buffered write`, function () {
             config.native.retention = -1;
             config.native.customRetentionDuration = 10;
             config.native.dbname = 'otheriobroker';
+            // without start values the timed relog has to start on its own, see "Timed relog starts without an update"
+            config.native.relogLastValueOnStart = false;
 
             config.native.enableDebugLogs = true;
 
