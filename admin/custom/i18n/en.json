@@ -10,6 +10,7 @@
     "influxdb_cleanup_done": "Deleted %s values of %s datapoints",
     "influxdb_cleanup_failed": "%s datapoints could not be removed, see the log",
     "influxdb_cleanup_nothing": "There is nothing to clean up.",
+    "influxdb_cleanup_selected": "Selected for deletion: %s datapoints with %s values. Untick the datapoints you want to keep.",
     "influxdb_col_count": "Values",
     "influxdb_col_first": "Oldest value",
     "influxdb_col_id": "ID",

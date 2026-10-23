@@ -10,6 +10,7 @@
     "influxdb_cleanup_done": "%s valeurs de %s points de données supprimées",
     "influxdb_cleanup_failed": "%s points de données n'ont pas pu être supprimés, voir le journal",
     "influxdb_cleanup_nothing": "Il n'y a rien à nettoyer.",
+    "influxdb_cleanup_selected": "Sélectionnés pour suppression : %s points de données avec %s valeurs. Décochez les points de données à conserver.",
     "influxdb_col_count": "Valeurs",
     "influxdb_col_first": "Valeur la plus ancienne",
     "influxdb_col_id": "ID",
