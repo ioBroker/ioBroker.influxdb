@@ -1607,6 +1607,53 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         await setTimeoutAsync(1000);
     });
 
+    // A state that is not updated after the start must still be relogged every changesRelogInterval. With
+    // relogLastValueOnStart the start value starts the timer anyway, so only the buffer suite, which switches
+    // it off, shows a missing timer
+    const relogId = `${instanceName}.testValueRelogStart`;
+
+    it(`Test ${adapterShortName}: Timed relog starts without an update of the state`, async function () {
+        this.timeout(20000);
+
+        await objects.setObjectAsync(relogId, {
+            common: { type: 'number', role: 'state' },
+            type: 'state',
+        });
+        await setStateAsync(relogId, { val: 7, ack: true, from: 'test.0' });
+        const start = Date.now();
+        const result = await sendToAsync(instanceName, 'enableHistory', {
+            id: relogId,
+            options: { changesOnly: true, changesRelogInterval: 2, debounceTime: 0, blockTime: 0 },
+        });
+        expect(result.success).to.be.true;
+
+        // no update of the state from here on: everything logged comes from the timed relog
+        await setTimeoutAsync(8000);
+        await sendToAsync(instanceName, 'flushBuffer', {});
+
+        const history = await sendToAsync(instanceName, 'getHistory', {
+            id: relogId,
+            options: {
+                start,
+                end: Date.now(),
+                count: 50,
+                aggregate: 'none',
+                removeBorderValues: true,
+            },
+        });
+        console.log(JSON.stringify(history.result, null, 2));
+        expect(history.result.length).to.be.at.least(2);
+        history.result.forEach(state => expect(state.val).to.be.equal(7));
+    });
+
+    it(`Test ${adapterShortName}: Disable datapoint with timed relog`, async function () {
+        this.timeout(5000);
+
+        const result = await sendToAsync(instanceName, 'disableHistory', { id: relogId });
+        expect(result.success).to.be.true;
+        await setTimeoutAsync(1000);
+    });
+
     // Statistics tab (getDpStatistics / cleanupOrphaned). Kept at the very end: the tests above
     // count the enabled datapoints, and the orphan created here must not disturb them
     const orphanId = `${instanceName}.testValueOrphan`;

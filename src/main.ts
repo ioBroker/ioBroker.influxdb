@@ -16,6 +16,7 @@ import {
 } from './lib/Database';
 import { formatError, HostUnavailableError, isConnectionError, UnstorableValueError } from './lib/errors';
 import { normalizeCustomTags } from './lib/customTags';
+import { normalizeSeriesBuffer } from './lib/bufferFile';
 import {
     classifyDatapoint,
     selectForCleanup,
@@ -1164,13 +1165,16 @@ export class InfluxDBAdapter extends Adapter {
         try {
             if (statSync(this._cacheFile).isFile()) {
                 const fileContent = readFileSync(this._cacheFile, 'utf-8');
-                const tempData = JSON.parse(fileContent, (key, value) => (key === 'time' ? new Date(value) : value));
+                const tempData = JSON.parse(fileContent);
 
-                if (tempData.seriesBufferCounter) {
-                    this._seriesBufferCounter = tempData.seriesBufferCounter;
-                }
                 if (tempData.seriesBuffer) {
-                    this._seriesBuffer = tempData.seriesBuffer;
+                    // the file may come from an older version (4.x wrapped every point in an array)
+                    const { series, count, dropped } = normalizeSeriesBuffer(tempData.seriesBuffer);
+                    this._seriesBuffer = series;
+                    this._seriesBufferCounter = count;
+                    if (dropped) {
+                        this.log.warn(`Dropped ${dropped} unusable buffered points from last exit`);
+                    }
                 }
                 if (tempData.conflictingPoints) {
                     this._conflictingPoints = tempData.conflictingPoints;
@@ -1429,6 +1433,16 @@ datasources:
         if (state && this._influxDPs[id]) {
             state.from = `system.adapter.${this.namespace}`;
             this._influxDPs[id].state = state;
+            // Without this, the timed relog starts only with the first update of the state after the start, and
+            // a rarely updated state gets no values at all until then. A start value written below restarts it.
+            const settings = this._influxDPs[id];
+            if (settings.changesOnly && settings.changesRelogInterval > 0 && !settings.relogTimeout) {
+                settings.relogTimeout = setTimeout(
+                    _id => this.reLogHelper(_id),
+                    settings.changesRelogInterval * 1000,
+                    id,
+                );
+            }
             if (this.config.relogLastValueOnStart) {
                 this._tasksStart.push(id);
                 // already connected (e.g. object changed after the start): write it now, not on the next reconnect
