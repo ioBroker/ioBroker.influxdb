@@ -83,6 +83,16 @@ describe(`Test influx-buffer adapter with Buffered write`, function () {
                 console.log(`############SECRET: ${secret}`);
                 config.native.token = setup.encrypt(secret, process.env.INFLUXDB2_TOKEN || 'test-token'); //authToken;
                 config.native.organization = process.env.INFLUXDB2_ORG || 'test-org';
+            } else if (process.env.INFLUXDB3) {
+                config.native.dbversion = '3.x';
+                config.native.host = process.env.INFLUXDB3_HOST || 'localhost';
+                config.native.port = parseInt(process.env.INFLUXDB3_PORT || '8181', 10);
+
+                let secret = await setup.getSecret();
+                if (secret === null) {
+                    secret = 'Zgfr56gFe87jJOM';
+                }
+                config.native.token = setup.encrypt(secret, process.env.INFLUXDB3_TOKEN || '');
             } else if (process.env.INFLUX_DB1_HOST) {
                 config.native.host = process.env.INFLUX_DB1_HOST;
             }
@@ -195,7 +205,9 @@ describe(`Test influx-buffer adapter with Buffered write`, function () {
     tests.register(it, expect, sendTo, adapterShortName, false, 0, 3, 'influx-buffer');
 
     it(`Test influx-buffer: Write string value for memHeapUsed into DB to force a type conflict`, function (done) {
-        this.timeout(5000);
+        // InfluxDB 3 answers every write after the next WAL flush (about a second), and the flush writes the
+        // buffered datapoints one after the other once a type conflict has to be located
+        this.timeout(process.env.INFLUXDB3 ? 30000 : 5000);
         now = Date.now();
 
         states.setState(

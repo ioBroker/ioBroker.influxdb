@@ -29,7 +29,8 @@
                     "default": "1.x",
                     "options": [
                         { "label": "1.x", "value": "1.x" },
-                        { "label": "2.x", "value": "2.x" }
+                        { "label": "2.x", "value": "2.x" },
+                        { "label": "3.x", "value": "3.x" }
                     ],
                     "hidden": "!!data.dockerInflux?.enabled",
                     "sm": 12,
@@ -76,14 +77,14 @@
                     "newLine": true,
                     "type": "text",
                     "label": "User",
-                    "hidden": "data.dbversion === '2.x' || !!data.dockerInflux?.enabled",
+                    "hidden": "data.dbversion !== '1.x' || !!data.dockerInflux?.enabled",
                     "sm": 12,
                     "md": 4
                 },
                 "password": {
                     "type": "password",
                     "label": "Password",
-                    "hidden": "data.dbversion === '2.x' || !!data.dockerInflux?.enabled",
+                    "hidden": "data.dbversion !== '1.x' || !!data.dockerInflux?.enabled",
                     "repeat": true,
                     "sm": 12,
                     "md": 8
@@ -92,7 +93,7 @@
                     "newLine": true,
                     "type": "text",
                     "label": "Organization",
-                    "hidden": "data.dbversion === '1.x' || !!data.dockerInflux?.enabled",
+                    "hidden": "data.dbversion !== '2.x' || !!data.dockerInflux?.enabled",
                     "sm": 12,
                     "md": 4
                 },
@@ -371,6 +372,15 @@
                         "title": "Please confirm!",
                         "type": "warning"
                     }
+                },
+                "syncWrites": {
+                    "newLine": true,
+                    "type": "checkbox",
+                    "sm": 12,
+                    "md": 6,
+                    "label": "Wait for the database to store each value",
+                    "help": "syncWrites help",
+                    "hidden": "data.dbversion !== '3.x'"
                 },
                 "pingserver": {
                     "type": "checkbox",

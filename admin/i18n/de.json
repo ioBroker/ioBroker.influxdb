@@ -26,6 +26,8 @@
     "Confirmation required.": "Bestätigung erforderlich.",
     "Counter": "Zähler",
     "Custom retention duration (days)": "Benutzerdefinierte Aufbewahrungsdauer (Tage)",
+    "Wait for the database to store each value": "Auf das Speichern jedes Wertes durch die Datenbank warten",
+    "syncWrites help": "InfluxDB 3 speichert einen Wert etwa eine Sekunde nach dem Empfang. Aus: Einzelwerte werden sofort bestätigt (schnell), sind aber bis zu einer Sekunde später les- und dauerhaft. An: jeder Einzelwert wartet auf die Datenbank (sicherer, aber langsam, wenn Datenpunkte puffern auf 0 steht).",
     "Custom tags": "Benutzerdefinierte Tags",
     "Custom timeframe": "Benutzerdefinierter Zeitrahmen",
     "DB Name": "DB Name",

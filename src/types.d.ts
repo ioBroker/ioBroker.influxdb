@@ -53,8 +53,10 @@ export interface InfluxDBAdapterConfig {
     pingInterval: number | string;
     requestTimeout: number | string;
     validateSSL: boolean;
-    dbversion: '1.x' | '2.x';
+    dbversion: '1.x' | '2.x' | '3.x';
     usetags: boolean;
+    /** InfluxDB 3.x: wait for the write-ahead log flush when writing a single value */
+    syncWrites: boolean;
     pingserver: boolean;
     blockTime: number | string;
     debounceTime: number | string;

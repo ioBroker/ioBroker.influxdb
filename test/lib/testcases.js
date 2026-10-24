@@ -39,6 +39,9 @@ function getStateAsync(id) {
     });
 }
 
+// InfluxDB 3 makes a written value visible to queries only after its next WAL flush (once per second by default)
+const WRITE_VISIBLE_DELAY = process.env.INFLUXDB3 ? 1500 : 0;
+
 // Windows with values an integral over 30 min returns when a previous suite wrote the same samples shortly before
 const EXISTING_DATA_MAX_WINDOWS = 4;
 
@@ -580,6 +583,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
 
         try {
             await logSampleData(`${instanceName}.testValueDebounce`);
+            await setTimeoutAsync(WRITE_VISIBLE_DELAY);
         } catch (err) {
             console.log(err);
             expect(err).to.be.not.ok;
@@ -809,7 +813,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         await states.setStateAsync(`${instanceName}.testValueBlocked`, { val: 100 }); // blocked, logged when blockTime is over
         await setTimeoutAsync(300);
         await states.setStateAsync(`${instanceName}.testValueBlocked`, { val: 100 }); // same value again (ts !== lc), still blocked
-        await setTimeoutAsync(3000);
+        await setTimeoutAsync(3000 + WRITE_VISIBLE_DELAY);
 
         return new Promise(resolve => {
             sendTo(
@@ -997,7 +1001,16 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
             expect(result.result.length).to.be.within(1, assumeExistingData ? EXISTING_DATA_MAX_WINDOWS : 3);
             const sum = result.result.map(it => it.val).reduce((acc, val) => acc + val, 0);
 
-            if (process.env.INFLUXDB2) {
+            if (process.env.INFLUXDB3) {
+                // The suites share one database and the sample data of the earlier suites is still in it. On
+                // InfluxDB 3 more of it falls into the range than on 1.x/2.x (the exact sum is checked above
+                // without existing data)
+                if (assumeExistingData) {
+                    expect(parseFloat(sum.toFixed(2))).to.be.within(60, 100);
+                } else {
+                    expect(parseFloat(sum.toFixed(2))).to.be.equal(62.21);
+                }
+            } else if (process.env.INFLUXDB2) {
                 if (assumeExistingData) {
                     expect(parseFloat(sum.toFixed(2))).to.be.within(49, 80);
                 } else {
@@ -1407,7 +1420,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                             done();
                         },
                     );
-                }, 1000);
+                }, 1000 + WRITE_VISIBLE_DELAY);
             },
         );
     });
@@ -1522,7 +1535,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         await setStateAsync(taggedId, { val: 2, ts: taggedNow - 2000, ack: true, from: 'test.0' });
         await setTimeoutAsync(100);
         await setStateAsync(taggedId, { val: 3, ts: taggedNow - 1000, ack: true, from: 'test.0' });
-        await setTimeoutAsync(500);
+        await setTimeoutAsync(500 + WRITE_VISIBLE_DELAY);
         await sendToAsync(instanceName, 'flushBuffer', {});
     });
 
@@ -1575,7 +1588,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         expect(enabled[taggedId].customTags).to.be.deep.equal({});
 
         await setStateAsync(taggedId, { val: 4, ts: taggedNow + 1000, ack: true, from: 'test.0' });
-        await setTimeoutAsync(500);
+        await setTimeoutAsync(500 + WRITE_VISIBLE_DELAY);
         await sendToAsync(instanceName, 'flushBuffer', {});
 
         const taggedRows = await queryTaggedPoints({ room: 'kitchen' });
@@ -1666,8 +1679,13 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         expect(testValue.type).to.be.equal('Number');
         expect(testValue.firstTs).to.be.a('number');
         expect(testValue.lastTs).to.be.at.least(testValue.firstTs);
-        // every datapoint of the tests is written without custom tags at this point, so one series
-        expect(testValue.cardinality).to.be.at.least(1);
+        // every datapoint of the tests is written without custom tags at this point, so one series.
+        // InfluxDB 3 has no way to count series
+        if (process.env.INFLUXDB3) {
+            expect(testValue.cardinality).to.be.null;
+        } else {
+            expect(testValue.cardinality).to.be.at.least(1);
+        }
 
         // the summary has to agree with the rows it summarizes
         expect(stats.summary.datapoints).to.be.equal(stats.result.length);
@@ -1703,7 +1721,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         await setTimeoutAsync(2000);
 
         await setStateAsync(orphanId, { val: 42, ts: Date.now(), ack: true, from: 'test.0' });
-        await setTimeoutAsync(500);
+        await setTimeoutAsync(500 + WRITE_VISIBLE_DELAY);
         await sendToAsync(instanceName, 'flushBuffer', {});
 
         // while it is logged and the object exists it counts as active

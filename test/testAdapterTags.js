@@ -83,6 +83,16 @@ describe(`Test influx-tags adapter`, function () {
                 console.log(`############SECRET: ${secret}`);
                 config.native.token = setup.encrypt(secret, process.env.INFLUXDB2_TOKEN || 'test-token'); //authToken;
                 config.native.organization = process.env.INFLUXDB2_ORG || 'test-org';
+            } else if (process.env.INFLUXDB3) {
+                config.native.dbversion = '3.x';
+                config.native.host = process.env.INFLUXDB3_HOST || 'localhost';
+                config.native.port = parseInt(process.env.INFLUXDB3_PORT || '8181', 10);
+
+                let secret = await setup.getSecret();
+                if (secret === null) {
+                    secret = 'Zgfr56gFe87jJOM';
+                }
+                config.native.token = setup.encrypt(secret, process.env.INFLUXDB3_TOKEN || '');
             } else if (process.env.INFLUX_DB1_HOST) {
                 config.native.host = process.env.INFLUX_DB1_HOST;
             }
@@ -172,8 +182,8 @@ describe(`Test influx-tags adapter`, function () {
         });
     });
 
-    if (process.env.INFLUXDB2) {
-        // Test only with Influxdb 2.x
+    if (process.env.INFLUXDB2 || process.env.INFLUXDB3) {
+        // Test only with Influxdb 2.x and 3.x
         tests.register(it, expect, sendTo, adapterShortName, false, 0, 3, 'influx-tags');
 
         it(`Test influx-tags: Write string value for memHeapUsed into DB to force a type conflict`, function (done) {
@@ -218,8 +228,13 @@ describe(`Test influx-tags adapter`, function () {
                             found++;
                         }
                     }
-                    // +2: re-enabling testValue while connected logs its current value immediately (once per suite)
-                    expect(found).to.be.equal(78);
+                    if (process.env.INFLUXDB3) {
+                        // InfluxQL returns one row per value, Flux one per value and tag series
+                        expect(found).to.be.within(13, 14);
+                    } else {
+                        // +2: re-enabling testValue while connected logs its current value immediately (once per suite)
+                        expect(found).to.be.equal(78);
+                    }
 
                     done();
                 });

@@ -81,6 +81,16 @@ describe(`Test influx-initial adapter`, function () {
                 console.log(`############SECRET: ${secret}`);
                 config.native.token = setup.encrypt(secret, process.env.INFLUXDB2_TOKEN || 'test-token'); //authToken;
                 config.native.organization = process.env.INFLUXDB2_ORG || 'test-org';
+            } else if (process.env.INFLUXDB3) {
+                config.native.dbversion = '3.x';
+                config.native.host = process.env.INFLUXDB3_HOST || 'localhost';
+                config.native.port = parseInt(process.env.INFLUXDB3_PORT || '8181', 10);
+
+                let secret = await setup.getSecret();
+                if (secret === null) {
+                    secret = 'Zgfr56gFe87jJOM';
+                }
+                config.native.token = setup.encrypt(secret, process.env.INFLUXDB3_TOKEN || '');
             } else if (process.env.INFLUX_DB1_HOST) {
                 config.native.host = process.env.INFLUX_DB1_HOST;
             }
