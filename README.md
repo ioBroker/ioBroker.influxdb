@@ -695,7 +695,7 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 5.2.0 (2026-10-24)
 * (GermanBluefox) The cleanup dialog of the statistics tab has checkboxes, so only the selected datapoints are deleted (#565)
 
 ### 5.1.8 (2026-10-23)
@@ -713,9 +713,6 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 
 ### 5.1.5 (2026-10-13)
 * (@GermanBluefox) Added missing translations. Compact mode no longer can exit the whole host process. The Grafana admin password is protected now
-
-### 5.1.4 (2026-10-13)
-* (@GermanBluefox) The "Statistics" tab works now also with InfluxDB 2.0. A datapoint without storage type that received a numeric string is shown there as number
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 

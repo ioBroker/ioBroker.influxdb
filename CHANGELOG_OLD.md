@@ -1,4 +1,7 @@
 # Older changes
+## 5.1.4 (2026-10-13)
+* (@GermanBluefox) The "Statistics" tab works now also with InfluxDB 2.0. A datapoint without storage type that received a numeric string is shown there as number
+
 ## 5.1.3 (2026-10-13)
 * (@GermanBluefox) The error of a failed save or delete in the data browser is no longer hidden by the reload of the table
 

@@ -14,7 +14,7 @@
       "uk": "Збереження історії подій для окремих станів в InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "5.1.8",
+    "version": "5.2.0",
     "titleLang": {
       "en": "Logging data with InfluxDB",
       "de": "Daten mit InfluxDB protokollieren",
@@ -29,6 +29,19 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "5.2.0": {
+        "en": "The cleanup dialog of the statistics tab has checkboxes, so only the selected datapoints are deleted (#565)",
+        "de": "Der Bereinigungsdialog im Statistik-Tab hat Checkboxen, sodass nur die Daten gelöscht werden (#565)",
+        "ru": "В диалоговом окне очистки вкладки статистики есть флажки, поэтому удаляются только выбранные точки данных (#565)",
+        "pt": "A caixa de diálogo de limpeza da aba de estatísticas exclui somente os dados selecionados (#565)",
+        "nl": "Het opschoonvenster van het tabblad Statistieken bevat selectievakjes, zodat alleen de geselecteerde datapunten worden verwijderd (#565)",
+        "fr": "La boîte de dialogue de l'onglet Statistiques comporte des cases à cocher, seuls les points de données sélectionnés (#565)",
+        "it": "La finestra di dialogo delle statistiche ha delle caselle, eliminano solo i punti dati selezionati (#565)",
+        "es": "El cuadro de limpieza de la pestaña de estadísticas tiene casillas, por lo que solo se borran los puntos de datos seleccionados (#565)",
+        "pl": "Okno czyszczenia karty statystyki zawiera pola wyboru, więc tylko wybrane punkty danych są usuwane (#565)",
+        "uk": "У діалоговому вікні очищення вкладки статистики є прапорці, тому видаляються лише вибрані точки даних (#565)",
+        "zh-cn": "统计选项卡的清理对话框有复选框，因此仅删除选定的数据点 (#565)"
+      },
       "5.1.8": {
         "en": "The timed relog (`changesRelogInterval`) starts right after the adapter start or a change of the datapoint settings, not only with the first update of the state",
         "de": "Das zeitgesteuerte Relog (`changesRelogInterval`) beginnt direkt nach dem Adapterstart oder einer Änderung der Datenpunkteinstellungen, nicht nur beim ersten Status-Update",
@@ -106,19 +119,6 @@
         "pl": "Błąd nieudanego zapisywania lub usunięcia w przeglądarce danych nie jest już ukryty przez ponowne załadowanie tabeli",
         "uk": "Помилка невдалого збереження або видалення в браузері даних більше не прихована перезавантаженням таблиці",
         "zh-cn": "重新加载表格不再掩盖数据浏览器中保存或删除失败的错误"
-      },
-      "5.1.1": {
-        "en": "Grafana in Docker is shown as link on the intro page and in the instance list of admin. The instance restarts once when the link is added or removed\nThe settings show the Grafana login (`admin` / admin security password) and link to the documentation\nDescribed how to use InfluxDB and Grafana in Docker: login, data source, first dashboard, resetting a forgotten password",
-        "de": "Grafana in Docker steht als Link auf der Intro-Seite und in der Admin-Instanzliste. Die Instanz startet einmal neu, wenn der Link entfernt wird\nDie Einstellungen zeigen den Grafana-Login (`admin`/ Admin-Passwort) und Link zur Dokumentation\nBeschrieb InfluxDB und Grafana in Docker: Login, Datenquelle, erstes Dashboard, Passwort zurücksetzen",
-        "ru": "Grafana в Docker отображается в виде ссылки на вступительной странице и в списке экземпляров администратора. Инстанс перезапускается один раз при добавлении или удалении ссылки\nВ настройках указан логин Grafana (пароль безопасности `admin`/admin) и ссылка на документацию\nОписано, как использовать InfluxDB и Grafana в Docker: логин, источник данных, первая панель управления, сброс забытого пароля",
-        "pt": "O Grafana no Docker é um link na introdução e na lista de instâncias do admin. A instância reinicia ao adicionar ou remover o link\nAs configurações mostram o login do Grafana (senha `admin`/admin) e link para a documentação\nDescreveu como usar InfluxDB e Grafana no Docker: login, fonte de dados, primeiro painel, redefinir senha",
-        "nl": "Grafana in Docker wordt als link weergegeven op de introductiepagina en in de instantielijst van de admin. De instance wordt eenmaal opnieuw gestart wanneer de link wordt toegevoegd of verwijderd\nDe instellingen tonen de Grafana-login (`admin` /admin-beveiligingswachtwoord) en een link naar de documentatie\nBeschreven hoe u InfluxDB en Grafana in Docker kunt gebruiken: inloggen, gegevensbron, eerste dashboard, een vergeten wachtwoord opnieuw instellen",
-        "fr": "Grafana dans Docker apparaît sous forme de lien sur la page d'introduction et dans la liste des admin. L'instance redémarre dès que le lien est ajouté ou supprimé\nLes paramètres indiquent le login Grafana (« admin` » /mot de passe admin security) et un lien vers la documentation\nA expliqué comment utiliser InfluxDB et Grafana dans Docker : connexion, source de données, premier tableau de bord, mot de passe oublié",
-        "it": "Grafana in Docker è mostrato come link nell'intro e nella lista di admin. L'istanza si riavvia quando il link viene aggiunto o rimosso\nLe impostazioni mostrano il login Grafana (`admin` /admin) e il link alla documentazione\nHa descritto come usare InfluxDB e Grafana in Docker: login, fonte dati, prima dashboard, reimpostazione",
-        "es": "Grafana en Docker aparece como enlace en la página de inicio y en la lista de casos de admin. La instancia se reinicia una vez al añadir o eliminar el enlace\nLa configuración muestra el inicio de sesión de Grafana (`admin` /contraseña de seguridad) y el enlace a la documentación\nDescribió cómo usar InfluxDB y Grafana en Docker: inicio de sesión, fuente de datos, primer panel, restablecer una contraseña olvidada",
-        "pl": "Grafana w Docker jest wyświetlana jako link na stronie wprowadzającej i na liście instancji administratora. Instancja uruchamia się ponownie raz po dodaniu lub usunięciu łącza\nUstawienia pokazują login Grafana (`admin`/admin security password) i link do dokumentacji\nOpisano, jak korzystać z InfluxDB i Grafana w Docker: login, źródło danych, pierwszy pulpit nawigacyjny, resetowanie zapomnianego hasła",
-        "uk": "Grafana в Docker відображається як посилання на вступній сторінці та в списку екземплярів адміністратора. Екземпляр перезавантажується один раз при додаванні або видаленні посилання\nУ налаштуваннях відображається логін Grafana (`admin`/пароль безпеки адміністратора) та посилання на документацію\nОписано, як використовувати InfluxDB і Grafana в Docker: логін, джерело даних, перша інформаційна панель, скидання забутого пароля",
-        "zh-cn": "Docker 中的 Grafana 在介绍页和管理员的实例列表中显示为链接。添加或删除链接后，实例会重新启动一次\n设置显示 Grafana 登录名（`admin` /管理员安全密码）和指向文档的链接\n描述了如何在 Docker 中使用 InfluxDB 和 Grafana：登录、数据源、第一个仪表板、重置忘记的密码"
       }
     },
     "mode": "daemon",
