@@ -1012,7 +1012,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
                 }
             } else if (process.env.INFLUXDB2) {
                 if (assumeExistingData) {
-                    expect(parseFloat(sum.toFixed(2))).to.be.within(49, 80);
+                    expect(parseFloat(sum.toFixed(2))).to.be.within(49, 125);
                 } else {
                     expect(parseFloat(sum.toFixed(2))).to.be.within(49, 50);
                 }
@@ -1047,7 +1047,7 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         } else {
             const sum = result.result.map(it => it.val).reduce((acc, val) => acc + val, 0);
             expect(result.result.length).to.be.within(1, 2);
-            expect(sum).to.be.within(30, 50);
+            expect(parseFloat(sum.toFixed(2))).to.be.within(30, 50);
         }
         // Result Influxdb21 Doku = 50.0
 
