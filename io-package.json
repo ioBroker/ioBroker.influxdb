@@ -14,7 +14,7 @@
       "uk": "Збереження історії подій для окремих станів в InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "5.2.0",
+    "version": "5.2.1",
     "titleLang": {
       "en": "Logging data with InfluxDB",
       "de": "Daten mit InfluxDB protokollieren",
@@ -29,6 +29,19 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "5.2.1": {
+        "en": "The cleanup dialog of the statistics tab shows the oldest and the newest value of each datapoint and can preselect only datapoints whose last value is older than a given number of days, so measurements that scripts still write to stay untouched",
+        "de": "Der Bereinigungsdialog im Statistik-Tab zeigt den ältesten und den neuesten Wert jedes Datenpunkts und kann nur Daten vorwählen, deren letzter Wert älter als eine bestimmte Anzahl von Tagen ist. Messwerte bleiben also unverändert",
+        "ru": "В диалоговом окне очистки вкладки статистики отображается самое старое и самое новое значение каждой точки данных. Можно предварительно выбрать только точки данных, последнее значение которых превышает заданное количество дней, поэтому измерения, которые все еще записываются скриптами, остаются нетронутыми.",
+        "pt": "A caixa de diálogo de limpeza da guia de estatísticas mostra o valor mais antigo e o mais novo de cada ponto de dados e pode pré-selecionar somente pontos com mais de um dado número de dias.",
+        "nl": "Het opschoonvenster van het tabblad Statistieken toont de oudste en de nieuwste waarde van elk datapunt en kan alleen datapunten voorselecteren waarvan de laatste waarde ouder is dan een bepaald aantal dagen, zodat metingen die scripts nog steeds schrijven, onaangeroerd blijven",
+        "fr": "La boîte de dialogue de nettoyage de l'onglet Statistiques affiche la valeur la plus ancienne et la plus récente de chaque point de données et ne peut présélectionner que les points dont la dernière valeur remonte à un certain nombre de jours. Ainsi, les mesures que les scripts écrivent",
+        "it": "La finestra di dialogo di pulizia della scheda statistiche mostra il valore più vecchio e più recente di ogni datapoint e può preselezionare solo i datapoint il cui ultimo valore è più vecchio di un dato numero di giorni",
+        "es": "El cuadro de diálogo de limpieza de la pestaña de estadísticas muestra el valor más antiguo y el más reciente de cada punto de datos y solo puede preseleccionar los puntos de datos cuyo último valor sea anterior a un número determinado de días, de modo que las medidas que escriben los guiones permanecen intactas",
+        "pl": "Okno czyszczenia karty statystyki pokazuje najstarszą i najnowszą wartość każdego punktu danych i może wstępnie wybrać tylko punkty danych, których ostatnia wartość jest starsza niż dana liczba dni, więc pomiary, które skrypty nadal zapisują, aby pozostały nietknięte",
+        "uk": "Діалогове вікно очищення вкладки статистики показує найстаріше і найновіше значення кожного пункту даних і може попередньо виділити лише точки даних, останнє значення яких старше заданої кількості днів, тому вимірювання, які скрипти все ще записують, залишаються недоторканими",
+        "zh-cn": "统计选项卡的清理对话框显示每个数据点的最旧和最新值，并且只能预先选择最后一个值早于给定天数的数据点，因此脚本写入的测量值仍保持不变"
+      },
       "5.2.0": {
         "en": "The cleanup dialog of the statistics tab has checkboxes, so only the selected datapoints are deleted (#565)",
         "de": "Der Bereinigungsdialog im Statistik-Tab hat Checkboxen, sodass nur die Daten gelöscht werden (#565)",
@@ -106,19 +119,6 @@
         "pl": "Zakładka „Statystyki” działa teraz również z InfluxDB 2.0. Punkt danych bez typu pamięci, który otrzymał ciąg numeryczny, jest tam pokazany jako liczba",
         "uk": "Вкладка «Статистика» тепер працює також з InfluxDB 2.0. Точка даних без типу сховища, яка отримала числовий рядок, відображається там як номер",
         "zh-cn": "“统计” 选项卡现在也适用于InfluxDB 2.0。接收到数字字符串的无存储类型的数据点在那里显示为数字"
-      },
-      "5.1.3": {
-        "en": "The error of a failed save or delete in the data browser is no longer hidden by the reload of the table",
-        "de": "Fehler beim Speichern oder Löschen im Datenbrowser verdeckt das Neuladen der Tabelle nicht mehr",
-        "ru": "Ошибка неудачного сохранения или удаления в браузере данных больше не скрывается перезагрузкой таблицы",
-        "pt": "O erro de falha ao salvar ou excluir no navegador de dados não é mais oculto ao recarregar a tabela",
-        "nl": "De fout van een mislukte opslag of verwijdering in de gegevensbrowser wordt niet langer verborgen door het opnieuw laden van de tabel",
-        "fr": "L'erreur d'échec de sauvegarde ou de suppression dans le navigateur n'est plus masquée par le rechargement du tableau",
-        "it": "L'errore di salvataggio o eliminazione non riuscito non è più nascosto dal riavvio della tabella",
-        "es": "El error de no guardar o eliminar en el navegador de datos ya no se oculta al volver a cargar la tabla",
-        "pl": "Błąd nieudanego zapisywania lub usunięcia w przeglądarce danych nie jest już ukryty przez ponowne załadowanie tabeli",
-        "uk": "Помилка невдалого збереження або видалення в браузері даних більше не прихована перезавантаженням таблиці",
-        "zh-cn": "重新加载表格不再掩盖数据浏览器中保存或删除失败的错误"
       }
     },
     "mode": "daemon",

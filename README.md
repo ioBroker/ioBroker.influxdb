@@ -695,7 +695,7 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 5.2.1 (2026-10-27)
 * (GermanBluefox) The cleanup dialog of the statistics tab shows the oldest and the newest value of each datapoint and can preselect only datapoints whose last value is older than a given number of days, so measurements that scripts still write to stay untouched
 
 ### 5.2.0 (2026-10-24)
@@ -713,9 +713,6 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 
 ### 5.1.6 (2026-10-13)
 * (@GermanBluefox) The "Statistics" tab works now with InfluxDB 2.0
-
-### 5.1.5 (2026-10-13)
-* (@GermanBluefox) Added missing translations. Compact mode no longer can exit the whole host process. The Grafana admin password is protected now
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 

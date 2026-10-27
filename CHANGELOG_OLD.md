@@ -1,4 +1,7 @@
 # Older changes
+## 5.1.5 (2026-10-13)
+* (@GermanBluefox) Added missing translations. Compact mode no longer can exit the whole host process. The Grafana admin password is protected now
+
 ## 5.1.4 (2026-10-13)
 * (@GermanBluefox) The "Statistics" tab works now also with InfluxDB 2.0. A datapoint without storage type that received a numeric string is shown there as number
 
