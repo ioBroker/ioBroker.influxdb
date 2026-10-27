@@ -77,6 +77,8 @@ interface StatisticsState extends ConfigGenericState {
     preview: CleanupPreview | null;
     /** the IDs of the preview the user still wants to remove */
     selected: string[];
+    /** only preselect datapoints whose newest value is older than this many days; empty preselects all */
+    olderThanDays: string;
     /** whether the pending cleanup should also drop datapoints that merely have logging switched off */
     includeDisabled: boolean;
     deleting: boolean;
@@ -101,6 +103,26 @@ function formatNumber(value: number | null): string {
 
 function formatTs(ts: number | null): string {
     return ts ? new Date(ts).toLocaleString() : '—';
+}
+
+/**
+ * The IDs the cleanup dialog ticks by itself.
+ *
+ * The adapter only knows whether an object exists, so a measurement a script writes into directly
+ * is reported as `objectMissing` like a real leftover. Its newest value tells them apart: with an
+ * age given, only datapoints nobody wrote to for that long are ticked.
+ *
+ * @param items the cleanup candidates
+ * @param olderThanDays the age as typed in, empty or not positive ticks all candidates
+ */
+function preselect(items: DatapointStat[], olderThanDays: string): string[] {
+    const days = parseFloat(olderThanDays);
+    if (!(days > 0)) {
+        return items.map(item => item.id);
+    }
+    const cutoff = Date.now() - days * 24 * 3600_000;
+    // a measurement without any value is not written to either
+    return items.filter(item => item.lastTs === null || item.lastTs < cutoff).map(item => item.id);
 }
 
 const STATUS_COLOR: Record<DatapointStatus, 'success' | 'warning' | 'error'> = {
@@ -130,6 +152,7 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
             sortAsc: false,
             preview: null,
             selected: [],
+            olderThanDays: '',
             includeDisabled: false,
             deleting: false,
             doneText: '',
@@ -192,7 +215,7 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
                     values: result.values,
                     items,
                 },
-                selected: items.map(item => item.id),
+                selected: preselect(items, this.state.olderThanDays),
             });
         } catch (e: any) {
             this.setState({ loading: false, errorText: e.message });
@@ -303,7 +326,7 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
     }
 
     renderConfirmDialog(): React.JSX.Element | null {
-        const { preview, includeDisabled, deleting, selected } = this.state;
+        const { preview, includeDisabled, deleting, selected, olderThanDays } = this.state;
         if (!preview) {
             return null;
         }
@@ -315,7 +338,7 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
             <Dialog
                 open={!0}
                 onClose={() => !deleting && this.setState({ preview: null })}
-                maxWidth="md"
+                maxWidth="lg"
                 fullWidth
             >
                 <DialogTitle>{I18n.t('influxdb_cleanup_confirm_title')}</DialogTitle>
@@ -325,6 +348,30 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
                             <DialogContentText sx={{ mb: 1 }}>
                                 {I18n.t('influxdb_cleanup_confirm_text', preview.datapoints, preview.values)}
                             </DialogContentText>
+                            <TextField
+                                variant="standard"
+                                size="small"
+                                type="number"
+                                sx={{ mb: 1, width: 360 }}
+                                label={I18n.t('influxdb_cleanup_older_than')}
+                                helperText={I18n.t('influxdb_cleanup_older_than_help')}
+                                value={olderThanDays}
+                                disabled={deleting}
+                                onChange={e =>
+                                    this.setState({
+                                        olderThanDays: e.target.value,
+                                        selected: preselect(preview.items, e.target.value),
+                                    })
+                                }
+                                slotProps={{
+                                    htmlInput: { min: 0 },
+                                    input: {
+                                        endAdornment: (
+                                            <InputAdornment position="end">{I18n.t('influxdb_days')}</InputAdornment>
+                                        ),
+                                    },
+                                }}
+                            />
                             <DialogContentText sx={{ mb: 1 }}>
                                 {I18n.t('influxdb_cleanup_selected', selectedItems.length, selectedValues)}
                             </DialogContentText>
@@ -356,6 +403,8 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
                                             <TableCell>{I18n.t('influxdb_col_id')}</TableCell>
                                             <TableCell>{I18n.t('influxdb_col_status')}</TableCell>
                                             <TableCell align="right">{I18n.t('influxdb_col_count')}</TableCell>
+                                            <TableCell>{I18n.t('influxdb_col_first')}</TableCell>
+                                            <TableCell>{I18n.t('influxdb_col_last')}</TableCell>
                                         </TableRow>
                                     </TableHead>
                                     <TableBody>
@@ -384,6 +433,12 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
                                                     />
                                                 </TableCell>
                                                 <TableCell align="right">{formatNumber(item.count)}</TableCell>
+                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                                                    {formatTs(item.firstTs)}
+                                                </TableCell>
+                                                <TableCell sx={{ whiteSpace: 'nowrap' }}>
+                                                    {formatTs(item.lastTs)}
+                                                </TableCell>
                                             </TableRow>
                                         ))}
                                     </TableBody>
