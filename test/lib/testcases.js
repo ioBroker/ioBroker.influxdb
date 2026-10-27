@@ -1724,8 +1724,13 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         await setTimeoutAsync(500 + WRITE_VISIBLE_DELAY);
         await sendToAsync(instanceName, 'flushBuffer', {});
 
-        // while it is logged and the object exists it counts as active
-        const active = await readStatistics();
+        // while it is logged and the object exists it counts as active. The write runs in the background
+        // and can take over a second on a busy CI runner, so wait until the value is counted
+        let active = await readStatistics();
+        for (let i = 0; i < 20 && !(active.byId[orphanId]?.count > 0); i++) {
+            await setTimeoutAsync(500);
+            active = await readStatistics();
+        }
         expect(active.byId[orphanId], 'the new datapoint must be listed').to.be.ok;
         expect(active.byId[orphanId].status).to.be.equal('active');
         expect(active.byId[orphanId].count).to.be.above(0);
