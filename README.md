@@ -695,6 +695,9 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (GermanBluefox) The cleanup dialog of the statistics tab shows the oldest and the newest value of each datapoint and can preselect only datapoints whose last value is older than a given number of days, so measurements that scripts still write to stay untouched
+
 ### 5.2.0 (2026-10-24)
 * (GermanBluefox) The cleanup dialog of the statistics tab has checkboxes, so only the selected datapoints are deleted (#565)
 
