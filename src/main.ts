@@ -140,6 +140,20 @@ function applyIntervalBorders(options: GetHistoryOptions, borders: unknown): boo
     return true;
 }
 
+/**
+ * Whether `count` limits the raw values of a `getHistory` request that InfluxDB does not aggregate itself.
+ *
+ * `count` is the number of values only for `none` and for a request without start, which asks for the newest values.
+ * Otherwise the whole range must be read, like the sql and history adapters do: `onchange` is drawn as it is and the
+ * other methods are aggregated by `@iobroker/aggregate` afterwards. With the limit, only the oldest values arrived
+ * and the line ended early (https://github.com/ioBroker/ioBroker.echarts/issues/1275).
+ *
+ * @param options the options of the request
+ */
+function countLimitsRawValues(options: GetHistoryOptions): boolean {
+    return options.aggregate === 'none' || !options.start;
+}
+
 function parseNumberWithNull(value: any): number | null {
     if (typeof value === 'number') {
         return value;
@@ -3339,7 +3353,12 @@ datasources:
 
         if (resultsFromInfluxDB) {
             query += ` LIMIT ${options.limit}`;
-        } else if (!withBorders && options.aggregate !== 'minmax' && options.aggregate !== 'integral') {
+        } else if (
+            !withBorders &&
+            countLimitsRawValues(options) &&
+            options.aggregate !== 'minmax' &&
+            options.aggregate !== 'integral'
+        ) {
             // With borders, `count` is the number of intervals and not of the raw values
             query += ` LIMIT ${options.count}`;
         }
@@ -3751,7 +3770,8 @@ ${this.config.usetags ? ' |> duplicate(column: "_value", as: "value")' : ' |> pi
                     if (
                         !withBorders &&
                         !(resultsFromInfluxDB && supportsAggregates) &&
-                        options.aggregate !== 'minmax'
+                        options.aggregate !== 'minmax' &&
+                        countLimitsRawValues(options)
                     ) {
                         fluxQuery += ` |> limit(n: ${options.count})`;
                     }
