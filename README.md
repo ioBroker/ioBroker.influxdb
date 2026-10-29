@@ -695,6 +695,9 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (GermanBluefox) `getHistory` accepts `intervalBorders`: the client can send the borders of the intervals itself, e.g. the local days of a chart. InfluxDB groups by equally long windows, so after a switch of the daylight saving time every window ended an hour away from the midnight and a value written at 23:59:59 was shown on the next day. With borders the values are read raw and aggregated by the adapter (ioBroker/ioBroker.echarts#1311)
+
 ### 5.2.2 (2026-10-27)
 * (GermanBluefox) The cleanup dialog of the statistics tab shows the oldest and the newest value of each datapoint and can preselect only datapoints whose last value is older than a given number of days, so measurements that scripts still write to stay untouched
 
