@@ -1,7 +1,7 @@
 import { statSync, readFileSync, writeFileSync, unlinkSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { Adapter, type AdapterOptions, getAbsoluteDefaultDataDir } from '@iobroker/adapter-core'; // Get common adapter utils
-import { sendResponse, sortByTs } from '@iobroker/aggregate';
+import { sendResponse, sortByTs, parseIntervalBorders } from '@iobroker/aggregate';
 
 import DatabaseInfluxDB1x from './lib/DatabaseInfluxDB1x';
 import DatabaseInfluxDB2x from './lib/DatabaseInfluxDB2x';
@@ -114,6 +114,30 @@ function parseNumber(value: any, defaultValue?: number): number {
         return isNaN(v) ? defaultValue || 0 : v;
     }
     return defaultValue || 0;
+}
+
+/**
+ * Take over the borders of the intervals that the client sent with `getHistory`, e.g. the local days of a chart.
+ *
+ * InfluxDB groups by equally long windows, but a day around the switch of the daylight saving time has 23 or 25
+ * hours and a month 28 to 31 days. With borders, the values are therefore read raw and `@iobroker/aggregate` builds
+ * the intervals.
+ *
+ * @param options the options of the request, start, end and step are adjusted
+ * @param borders the raw `intervalBorders` of the message
+ * @returns true if the borders are used, so the database must not aggregate and the values must not be limited
+ */
+function applyIntervalBorders(options: GetHistoryOptions, borders: unknown): boolean {
+    const intervalBorders = parseIntervalBorders(borders, options.limit);
+    if (!intervalBorders) {
+        return false;
+    }
+    options.intervalBorders = intervalBorders;
+    options.start = intervalBorders[0];
+    options.end = intervalBorders[intervalBorders.length - 1];
+    // A step sent along would make the queries build windows again
+    options.step = undefined;
+    return true;
 }
 
 function parseNumberWithNull(value: any): number | null {
@@ -3097,6 +3121,7 @@ datasources:
             removeBorderValues: msg.message.options.removeBorderValues || false,
             round: 0,
         };
+        const withBorders = applyIntervalBorders(options, msg.message.options.intervalBorders);
 
         this.log.debug(`${logId} getHistory message: ${JSON.stringify(msg.message)}`);
 
@@ -3203,6 +3228,7 @@ datasources:
 
         let resultsFromInfluxDB =
             !msg.message.useAdapter &&
+            !withBorders &&
             options.aggregate !== 'onchange' &&
             options.aggregate !== 'none' &&
             options.aggregate !== 'minmax';
@@ -3313,7 +3339,8 @@ datasources:
 
         if (resultsFromInfluxDB) {
             query += ` LIMIT ${options.limit}`;
-        } else if (options.aggregate !== 'minmax' && options.aggregate !== 'integral') {
+        } else if (!withBorders && options.aggregate !== 'minmax' && options.aggregate !== 'integral') {
+            // With borders, `count` is the number of intervals and not of the raw values
             query += ` LIMIT ${options.count}`;
         }
 
@@ -3496,6 +3523,7 @@ datasources:
                     : undefined,
             removeBorderValues: msg.message.options.removeBorderValues || false,
         };
+        const withBorders = applyIntervalBorders(options, msg.message.options.intervalBorders);
         const logId = (msg.message.id ? msg.message.id : 'all') + Date.now() + Math.random();
         let id: string | undefined = msg.message.id === '*' ? undefined : msg.message.id;
 
@@ -3601,7 +3629,10 @@ datasources:
         }
 
         const resultsFromInfluxDB =
-            options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax';
+            !withBorders &&
+            options.aggregate !== 'onchange' &&
+            options.aggregate !== 'none' &&
+            options.aggregate !== 'minmax';
 
         // query one timegroup-value more than requested originally at start and end
         // to make sure to have no 0 values because of the way InfluxDB does group by time
@@ -3716,7 +3747,12 @@ ${this.config.usetags ? ' |> duplicate(column: "_value", as: "value")' : ' |> pi
                         fluxQuery += ` |> sort(columns:["_time"], desc: false)`;
                     }
 
-                    if (!(resultsFromInfluxDB && supportsAggregates) && options.aggregate !== 'minmax') {
+                    // With borders, `count` is the number of intervals and not of the raw values
+                    if (
+                        !withBorders &&
+                        !(resultsFromInfluxDB && supportsAggregates) &&
+                        options.aggregate !== 'minmax'
+                    ) {
                         fluxQuery += ` |> limit(n: ${options.count})`;
                     }
 
