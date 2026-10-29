@@ -3,6 +3,15 @@ import type { MeasurementStatistics } from './statistics';
 import { InfluxDB, type QueryApi, type WriteApi, Point } from '@influxdata/influxdb-client';
 import { BucketsAPI, OrgsAPI, HealthAPI, DeleteAPI } from '@influxdata/influxdb-client-apis';
 
+/**
+ * Shortest time a delete request may take before the client gives up.
+ *
+ * A delete with a predicate walks every shard of the range and every series of the bucket in it, so on
+ * a bucket that has been filled for years it takes minutes - far beyond the request timeout of
+ * ordinary queries and writes (30 s by default), which made the cleanup fail with "Request timed out".
+ */
+const DELETE_REQUEST_TIMEOUT = 10 * 60_000;
+
 // Influx 2.x auth requires token, not user/pw
 export default class DatabaseInfluxDB2x extends Database {
     private connection!: InfluxDB;
@@ -64,7 +73,15 @@ export default class DatabaseInfluxDB2x extends Database {
         this.bucketsApi = new BucketsAPI(this.connection);
         this.orgsApi = new OrgsAPI(this.connection);
         this.healthApi = new HealthAPI(this.connection);
-        this.deleteApi = new DeleteAPI(this.connection);
+        // the client knows only one timeout per connection, so deletes get a connection of their own
+        this.deleteApi = new DeleteAPI(
+            new InfluxDB({
+                url,
+                token: this.token,
+                timeout: Math.max(this.requestTimeout, DELETE_REQUEST_TIMEOUT),
+                transportOptions: { rejectUnauthorized: this.validateSSL },
+            }),
+        );
     }
 
     async deleteData(
