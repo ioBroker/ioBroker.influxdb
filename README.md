@@ -695,7 +695,7 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
-### **WORK IN PROGRESS**
+### 5.2.3 (2026-10-29)
 * (GermanBluefox) `getHistory` accepts `intervalBorders`: the client can send the borders of the intervals itself, e.g. the local days of a chart. InfluxDB groups by equally long windows, so after a switch of the daylight saving time every window ended an hour away from the midnight and a value written at 23:59:59 was shown on the next day. With borders the values are read raw and aggregated by the adapter (ioBroker/ioBroker.echarts#1311)
 * (GermanBluefox) `getHistory` with a start reads the whole range of raw values again: `count` limited them for "onchange" too, so a chart line ended after the oldest 2000 (InfluxDB 1.x) or 500 (InfluxDB 2.x) values and ran straight to the right edge. Like in the sql and history adapters, `count` limits the raw values only for "none" and for a request without start (ioBroker/ioBroker.echarts#1275)
 * (GermanBluefox) InfluxDB 2.x: deleting values (cleanup of the statistics tab, `delete`, `deleteRange`, `deleteAll`) waits up to 10 minutes. A delete walks every shard of the bucket and failed after the request timeout of 30 s with "Request timed out"
@@ -715,9 +715,6 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 * (@GermanBluefox) HTTP errors from InfluxDB (e.g. 500 "timeout") are no longer treated as a lost connection (#551)
 * (@GermanBluefox) Start values (`relogLastValueOnStart`) are written only once after the adapter start, not on every reconnect (#551)
 * (jhoos70) Added support for InfluxDB 3.x (Core and Enterprise): data is written with the line protocol and read with InfluxQL over HTTP (inspired by the InfluxDB 3 fork of [dirkhe](https://github.com/dirkhe/ioBroker.influxdb))
-
-### 5.1.6 (2026-10-13)
-* (@GermanBluefox) The "Statistics" tab works now with InfluxDB 2.0
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 
