@@ -1491,7 +1491,8 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         this.timeout(20000);
 
         const query = `${await limitedTestValueQuery(2)}; this is no query`;
-        const result = await sendToAsync(instanceName, 'query', query);
+        // not sendToAsync: it rejects on an answer with an error, and that answer is what is checked here
+        const result = await new Promise(resolve => sendTo(instanceName, 'query', query, resolve));
         console.log(`${query}\n=> ${JSON.stringify(result)}`);
 
         expect(result.error).to.be.a('string').and.not.empty;
