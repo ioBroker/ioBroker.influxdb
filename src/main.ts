@@ -4034,10 +4034,10 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
         if (this._client) {
             const queriesString = msg.message.query || msg.message;
 
-            let queries;
+            let queries: string[];
             try {
                 //parse queries to array
-                queries = queriesString.split(';');
+                queries = String(queriesString).split(';');
 
                 for (let q = 0, len = queries.length; q < len; q++) {
                     if (!queries[q] || typeof queries[q] !== 'string') {
@@ -4057,25 +4057,17 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
                 );
                 return;
             }
-            this.log.debug(`queries: ${queries}`);
+            this.log.debug(`queries: ${JSON.stringify(queries)}`);
 
             try {
-                let rows = await this._client?.query<
-                    {
-                        time?: number;
-                        ts?: number;
-                        value: number;
-                        val: number;
-                        q: number;
-                        from: string;
-                        ack: boolean;
-                    }[]
-                >(queries);
+                // Flux has no statement delimiter, so every query is sent on its own (one result entry per query)
+                const rows: {
+                    time?: number | string | Date;
+                    ts?: number;
+                    value?: number;
+                    val?: number;
+                }[][] = (await this._client.queries(queries)) || [];
                 this.setConnected(true);
-                if (Array.isArray(rows) && rows.length && !Array.isArray(rows[0])) {
-                    // The new influx lib returns only one array, sp reformat it because of backwards compatibility
-                    rows = [rows as any];
-                }
 
                 this.log.debug(`result: ${JSON.stringify(rows)}`);
 

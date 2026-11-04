@@ -106,19 +106,6 @@
         "pl": "Zakładka „Statystyki” działa teraz z InfluxDB 2.0",
         "uk": "Вкладка «Статистика» тепер працює з InfluxDB 2.0",
         "zh-cn": "“统计” 选项卡现在适用于 InfluxDB 2.0"
-      },
-      "5.1.5": {
-        "en": "Added missing translations. Compact mode no longer can exit the whole host process. The Grafana admin password is protected now",
-        "de": "Fehlende Übersetzungen. Der Kompaktmodus beendet nicht mehr den Host-Prozess. Das Grafana-Admin-Passwort ist nun geschützt",
-        "ru": "Добавлены недостающие переводы. Компактный режим больше не позволяет завершить весь процесс хоста. Пароль администратора Grafana теперь защищен",
-        "pt": "Adição de traduções faltantes. O modo compacto não sai mais do processo host. A senha admin do Grafana está protegida",
-        "nl": "Ontbrekende vertalingen toegevoegd. De compacte modus kan niet langer het hele hostproces afsluiten. Het beheerderswachtwoord van Grafana is nu beveiligd",
-        "fr": "Ajout de traductions manquantes. Le mode compact ne peut plus arrêter tout le processus hôte. Le mot de passe admin Grafana est désormais protégé",
-        "it": "Aggiunte traduzioni mancanti La modalità compatta non chiude più l'intero host. La password admin di Grafana è ora protetta",
-        "es": "Añadió las traducciones que faltaban. El modo compacto ya no puede salir de todo el host. La contraseña de Grafana ya está protegida",
-        "pl": "Dodano brakujące tłumaczenia. Tryb kompaktowy nie może już zakończyć całego procesu hosta. Hasło administratora Grafana jest teraz chronione",
-        "uk": "Додані відсутні переклади. Компактний режим більше не може вийти з усього процесу хоста. Пароль адміністратора Grafana тепер захищений",
-        "zh-cn": "添加了缺失的翻译。紧凑模式不再可以退出整个主机进程。Grafana 管理员密码现已受到保护"
       }
     },
     "mode": "daemon",

@@ -1458,6 +1458,49 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         );
     });
 
+    /** Build a query that returns at most `limit` raw points of testValue (Flux for 2.x, InfluxQL otherwise) */
+    async function limitedTestValueQuery(limit) {
+        const adapterObj = await objects.getObjectAsync(`system.adapter.${instanceName}`);
+        const dbname = adapterObj.native.dbname || 'iobroker';
+        if (process.env.INFLUXDB2) {
+            return (
+                `from(bucket: "${dbname}") |> range(start: 1970-01-01T00:00:00Z) ` +
+                `|> filter(fn: (r) => r["_measurement"] == "${instanceName}.testValue" and r["_field"] == "value") ` +
+                `|> group() |> limit(n: ${limit})`
+            );
+        }
+        return `SELECT * FROM "${instanceName}.testValue" LIMIT ${limit}`;
+    }
+
+    // https://github.com/ioBroker/ioBroker.influxdb/issues/580
+    it(`Test ${adapterShortName}: Run several queries separated by ";" at once`, async function () {
+        this.timeout(20000);
+
+        const query = `${await limitedTestValueQuery(2)}; ${await limitedTestValueQuery(3)}`;
+        const result = await sendToAsync(instanceName, 'query', query);
+        console.log(`${query}\n=> ${JSON.stringify(result)}`);
+
+        expect(result.error).to.be.undefined;
+        expect(result.result).to.be.an('array').with.lengthOf(2);
+        expect(result.result[0]).to.be.an('array').with.lengthOf(2);
+        expect(result.result[1]).to.be.an('array').with.lengthOf(3);
+        expect(result.result[1][0].ts).to.be.a('number');
+    });
+
+    it(`Test ${adapterShortName}: Report the failing one of several queries`, async function () {
+        this.timeout(20000);
+
+        const query = `${await limitedTestValueQuery(2)}; this is no query`;
+        const result = await sendToAsync(instanceName, 'query', query);
+        console.log(`${query}\n=> ${JSON.stringify(result)}`);
+
+        expect(result.error).to.be.a('string').and.not.empty;
+        expect(result.result).to.be.an('array').that.is.empty;
+        if (process.env.INFLUXDB2) {
+            expect(result.error).to.include('query #2');
+        }
+    });
+
     // Custom tags (https://github.com/ioBroker/ioBroker.influxdb/issues/32). Kept at the end, because the
     // tests above count the enabled datapoints
     const taggedId = `${instanceName}.testValueTagged`;
