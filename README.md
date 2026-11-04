@@ -717,15 +717,16 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 ```
 
 ## Changelog
+<!--
+	Placeholder for the next version (at the beginning of the line):
+	### **WORK IN PROGRESS**
+-->
 
 ### **WORK IN PROGRESS**
 * (GermanBluefox) Data browser: the values of a datapoint can be exported as CSV (e.g. for Excel) or as JSON (the format of `storeState`) for the selected time range
 - (copilot) Adapter requires node.js >= 22.19.0 now
 * (GermanBluefox) InfluxDB 2.x: the `query` command with several Flux queries separated by `;` works again. Since 5.0 the queries were sent as one broken statement and InfluxDB answered with "invalid statement: ,". When one of several queries fails, the error names the failing query (#580)
-<!--
-	Placeholder for the next version (at the beginning of the line):
-	### **WORK IN PROGRESS**
--->
+
 ### 5.2.3 (2026-10-29)
 * (GermanBluefox) `getHistory` accepts `intervalBorders`: the client can send the borders of the intervals itself, e.g. the local days of a chart. InfluxDB groups by equally long windows, so after a switch of the daylight saving time every window ended an hour away from the midnight and a value written at 23:59:59 was shown on the next day. With borders the values are read raw and aggregated by the adapter (ioBroker/ioBroker.echarts#1311)
 * (GermanBluefox) `getHistory` with a start reads the whole range of raw values again: `count` limited them for "onchange" too, so a chart line ended after the oldest 2000 (InfluxDB 1.x) or 500 (InfluxDB 2.x) values and ran straight to the right edge. Like in the sql and history adapters, `count` limits the raw values only for "none" and for a request without start (ioBroker/ioBroker.echarts#1275)
