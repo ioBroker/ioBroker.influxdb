@@ -30,6 +30,8 @@ export interface RawEntriesOptions {
     offset: number;
     /** sort order by timestamp */
     sort: 'asc' | 'desc';
+    /** skip counting the entries of the range (a full scan), e.g. for the following pages of an export */
+    noTotal?: boolean;
 }
 
 export interface InfluxDBAdapterConfig {

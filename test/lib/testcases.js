@@ -1382,6 +1382,32 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         );
     });
 
+    it(`Test ${adapterShortName}: getRawEntries reads a window without counting, start and end inclusive`, async function () {
+        this.timeout(20000);
+
+        const id = `${instanceName}.testValue`;
+        const first = await sendToAsync(instanceName, 'getRawEntries', { id, sort: 'asc', limit: 4 });
+        console.log(JSON.stringify(first));
+        expect(first.error).to.be.undefined;
+        expect(first.total).to.be.at.least(4);
+        expect(first.result).to.have.lengthOf(4);
+
+        // the export of the data browser reads consecutive windows this way
+        const window = await sendToAsync(instanceName, 'getRawEntries', {
+            id,
+            start: first.result[1].ts,
+            end: first.result[2].ts,
+            sort: 'asc',
+            limit: 100,
+            noTotal: true,
+        });
+        console.log(JSON.stringify(window));
+        expect(window.error).to.be.undefined;
+        expect(window.total).to.be.undefined;
+        expect(window.result.map(entry => entry.ts)).to.deep.equal([first.result[1].ts, first.result[2].ts]);
+        expect(window.result[0].val).to.deep.equal(first.result[1].val);
+    });
+
     it(`Test ${adapterShortName}: storeState and getHistory for unknown Id`, function (done) {
         this.timeout(25000);
 
