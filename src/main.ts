@@ -38,8 +38,11 @@ const dataDir = getAbsoluteDefaultDataDir();
 
 const dockerDefaultToken = Buffer.from('iobroker86645638546565652656').toString('base64');
 
-/** Maximal number of entries one `getRawEntries` call may return */
-const MAX_RAW_ENTRIES = 2000;
+/**
+ * Maximal number of entries one `getRawEntries` call may return. An export of the data browser reads with
+ * this page size, and 5000 entries are still well below 1 MB as a message
+ */
+const MAX_RAW_ENTRIES = 5000;
 
 // While the database stays unreachable, remind about it at most once an hour instead of on every retry
 const REPEATED_ERROR_INTERVAL = 3_600_000;
@@ -4458,7 +4461,10 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
      * In contrast to `getHistory`, the points are returned exactly as they are in the database: no
      * aggregation, no interpolation, no border values and no rounding.
      */
-    async readRawEntries(id: string, options: RawEntriesOptions): Promise<{ entries: IobDataEntry[]; total: number }> {
+    async readRawEntries(
+        id: string,
+        options: RawEntriesOptions,
+    ): Promise<{ entries: IobDataEntry[]; total: number | undefined }> {
         if (!this._client) {
             throw new Error('not connected');
         }
@@ -4473,7 +4479,10 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
                 conditions.push(`time >= '${new Date(options.start).toISOString()}'`);
             }
             if (options.end !== undefined) {
-                conditions.push(`time <= '${new Date(options.end).toISOString()}'`);
+                // exclusive end one millisecond later, like the Flux range below: a point stored with a finer
+                // precision than milliseconds belongs to the millisecond it starts in. Otherwise it would get
+                // lost between two consecutive ranges [a, b] and [b + 1, c], as an export reads them.
+                conditions.push(`time < '${new Date(options.end + 1).toISOString()}'`);
             }
             const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : '';
 
@@ -4504,6 +4513,13 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
                 `|> sort(columns:["_time"], desc: ${options.sort === 'asc' ? 'false' : 'true'})\n` +
                 `|> limit(n: ${options.limit}, offset: ${options.offset})` +
                 `${this.config.usetags ? '\n|> duplicate(column: "_value", as: "value")' : ''}`;
+        }
+
+        if (options.noTotal) {
+            this.log.debug(`getRawEntries query to execute: ${dataQuery}`);
+            const rows = await this._client.query<RawEntryRow>(dataQuery);
+            this.setConnected(true);
+            return { entries: rows.map(row => rawRowToEntry(row)), total: undefined };
         }
 
         this.log.debug(`getRawEntries queries to execute: ${countQuery}\n---\n${dataQuery}`);
@@ -4549,6 +4565,7 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
             limit: Math.min(Math.max(parseInt(msg.message.limit, 10) || 100, 1), MAX_RAW_ENTRIES),
             offset: Math.max(parseInt(msg.message.offset, 10) || 0, 0),
             sort: msg.message.sort === 'asc' ? 'asc' : 'desc',
+            noTotal: msg.message.noTotal === true,
         };
 
         try {

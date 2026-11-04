@@ -611,6 +611,32 @@ sendTo('influxdb.0', 'getEnabledDPs', {}, function (result) {
 });
 ```
 
+## Data browser and export
+
+The **Data browser** tab of the instance configuration shows the values stored for a datapoint exactly as
+they are in the database, and lets you insert, edit and delete single values.
+
+The export button in its toolbar writes all values of the selected datapoint in the selected time range
+into a file, oldest first:
+
+- **CSV** with the columns `ts` (milliseconds since 1970, UTC), `time` (local time), `val`, `ack`, `q` and
+  `from`. Column and decimal separator can be chosen; the preselection (`;` and `,` for most languages,
+  `,` and `.` for English and Chinese) is what Excel usually expects with the language of the admin.
+- **JSON** as an array of `{ts, val, ack, q, from}` - the format [`storeState`](#storestate) accepts, so
+  the values can be written back, e.g. to another datapoint:
+
+```javascript
+const fs = require('fs');
+const values = JSON.parse(fs.readFileSync('/opt/export/hm-rpc.0.ABC123.1.TEMPERATURE.json', 'utf8'));
+sendTo('influxdb.0', 'storeState', { id: 'javascript.0.temperatureCopy', state: values }, result =>
+    console.log(JSON.stringify(result)),
+);
+```
+
+The export reads the range in time windows of a few thousand values each, so even a datapoint with
+millions of values does not make InfluxDB sort everything at once. A very large export still takes a while
+and needs the memory of the browser for the whole file.
+
 ## Statistics and cleanup
 
 The **Statistics** tab of the instance configuration lists every datapoint the database contains, with its
@@ -693,6 +719,7 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 ## Changelog
 
 ### **WORK IN PROGRESS**
+* (GermanBluefox) Data browser: the values of a datapoint can be exported as CSV (e.g. for Excel) or as JSON (the format of `storeState`) for the selected time range
 - (copilot) Adapter requires node.js >= 22.19.0 now
 * (GermanBluefox) InfluxDB 2.x: the `query` command with several Flux queries separated by `;` works again. Since 5.0 the queries were sent as one broken statement and InfluxDB answered with "invalid statement: ,". When one of several queries fails, the error names the failing query (#580)
 <!--
