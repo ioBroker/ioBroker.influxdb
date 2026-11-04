@@ -721,8 +721,7 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
-
-### **WORK IN PROGRESS**
+### 5.3.0 (2026-11-04)
 * (GermanBluefox) Data browser: the values of a datapoint can be exported as CSV (e.g. for Excel) or as JSON (the format of `storeState`) for the selected time range
 - (copilot) Adapter requires node.js >= 22.19.0 now
 * (GermanBluefox) InfluxDB 2.x: the `query` command with several Flux queries separated by `;` works again. Since 5.0 the queries were sent as one broken statement and InfluxDB answered with "invalid statement: ,". When one of several queries fails, the error names the failing query (#580)
@@ -740,13 +739,6 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 
 ### 5.1.8 (2026-10-23)
 * (@GermanBluefox) The timed relog (`changesRelogInterval`) starts right after the adapter start or a change of the datapoint settings, not only with the first update of the state
-
-### 5.1.7 (2026-10-21)
-* (@GermanBluefox) Points buffered by version 4.x (`influxdata.json`) are converted when read, instead of failing with "invalid float value for field 'q': undefined" on every flush (#517)
-* (@GermanBluefox) The ports of the docker containers (InfluxDB, Grafana) are reported to js-controller 8 as occupied (`registerUsedResource`). The port of the database itself is no longer counted as a port used by the instance
-* (@GermanBluefox) HTTP errors from InfluxDB (e.g. 500 "timeout") are no longer treated as a lost connection (#551)
-* (@GermanBluefox) Start values (`relogLastValueOnStart`) are written only once after the adapter start, not on every reconnect (#551)
-* (jhoos70) Added support for InfluxDB 3.x (Core and Enterprise): data is written with the line protocol and read with InfluxQL over HTTP (inspired by the InfluxDB 3 fork of [dirkhe](https://github.com/dirkhe/ioBroker.influxdb))
 
 [Older changelogs can be found there](CHANGELOG_OLD.md)
 
