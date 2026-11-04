@@ -52,7 +52,7 @@
     "ignoreBelowNumber": {
       "newLine": true,
       "type": "text",
-      "label": "ignore values below x",
+      "label": "Valid range minimum",
       "hidden": "!customObj || !customObj.common || customObj.common.type !== 'number'",
       "defaultFunc": "data.ignoreBelowZero ? '0' : ''",
       "validator": "((data.ignoreBelowNumber || '').toString().length === 0) || isFinite(data.ignoreBelowNumber)",
@@ -62,11 +62,25 @@
     },
     "ignoreAboveNumber": {
       "type": "text",
-      "label": "ignore values above x",
+      "label": "Valid range maximum",
       "hidden": "!customObj || !customObj.common || customObj.common.type !== 'number'",
       "validator": "((data.ignoreAboveNumber || '').toString().length === 0) || isFinite(data.ignoreAboveNumber)",
       "validatorErrorText": "Enter a number or leave the field empty",
       "validatorNoSaveOnError": true,
+      "sm": 6
+    },
+    "outOfRange": {
+      "newLine": true,
+      "type": "select",
+      "label": "Values outside of the range",
+      "help": "outOfRange_help",
+      "options": [
+        { "label": "outOfRange_ignore", "value": "ignore" },
+        { "label": "outOfRange_null", "value": "null" },
+        { "label": "outOfRange_clamp", "value": "clamp" }
+      ],
+      "default": "ignore",
+      "hidden": "!customObj || !customObj.common || customObj.common.type !== 'number' || ((data.ignoreBelowNumber === undefined || data.ignoreBelowNumber === null || data.ignoreBelowNumber === '') && (data.ignoreAboveNumber === undefined || data.ignoreAboveNumber === null || data.ignoreAboveNumber === ''))",
       "sm": 6
     },
     "ignoreZero": {
