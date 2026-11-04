@@ -124,6 +124,11 @@ export type CleanupScope = {
     objectMissing?: boolean;
     /** States that still exist but are not logged. Their history may still be wanted. */
     loggingDisabled?: boolean;
+    /**
+     * Restrict the run to these IDs. They only narrow the selection made by the statuses above,
+     * so an ID that is not a candidate anyway (e.g. an `active` one) is never removed.
+     */
+    ids?: string[];
 };
 
 /**
@@ -131,19 +136,21 @@ export type CleanupScope = {
  *
  * An empty scope selects `objectMissing` only. Defaulting to the safe half means a caller that
  * forgets to pass a scope deletes the data nobody can reach any more, not data someone may be
- * keeping on purpose. `active` datapoints are never selectable.
+ * keeping on purpose. `active` datapoints are never selectable, not even via `ids`.
  *
  * @param stats the per-datapoint statistics
- * @param scope which statuses to include
+ * @param scope which statuses (and optionally which IDs) to include
  */
 export function selectForCleanup(stats: DatapointStat[], scope?: CleanupScope): DatapointStat[] {
     const includeMissing = scope?.objectMissing !== false;
     const includeDisabled = scope?.loggingDisabled === true;
+    const ids = scope?.ids ? new Set(scope.ids) : null;
 
     return stats.filter(
         stat =>
-            (stat.status === 'objectMissing' && includeMissing) ||
-            (stat.status === 'loggingDisabled' && includeDisabled),
+            ((stat.status === 'objectMissing' && includeMissing) ||
+                (stat.status === 'loggingDisabled' && includeDisabled)) &&
+            (!ids || ids.has(stat.id)),
     );
 }
 

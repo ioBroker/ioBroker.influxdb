@@ -125,5 +125,12 @@
     "path": "Chemin",
     "retention": "Storage retention",
     "use 0 to not buffer at all": "Use 0 to not buffer at all",
-    "usetags help": "Pour plus d'informations, veuillez vous référer à la documentation : https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields"
+    "usetags help": "Pour plus d'informations, veuillez vous référer à la documentation : https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields",
+    "DB settings": "Paramètres de la BD",
+    "Only by first start": "Uniquement au premier démarrage",
+    "Auto-update Docker image": "Mettre à jour automatiquement l'image Docker",
+    "Plugins": "Plugins",
+    "Server root URL": "URL racine du serveur",
+    "Wait for the database to store each value": "Attendez que la base de données stocke chaque valeur",
+    "syncWrites help": "InfluxDB 3 stocke une valeur environ une seconde après sa réception. Désactivé : les valeurs individuelles sont reconnues immédiatement (rapidement), mais peuvent être lues et sont durables jusqu'à une seconde plus tard. Activé : chaque valeur attend la base de données (plus sûre, mais plus lente lorsque Buffer Datapoints est 0)."
 }

@@ -1,10 +1,11 @@
 import { statSync, readFileSync, writeFileSync, unlinkSync, existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { Adapter, type AdapterOptions, getAbsoluteDefaultDataDir } from '@iobroker/adapter-core'; // Get common adapter utils
-import { sendResponse, sortByTs } from '@iobroker/aggregate';
+import { sendResponse, sortByTs, parseIntervalBorders } from '@iobroker/aggregate';
 
 import DatabaseInfluxDB1x from './lib/DatabaseInfluxDB1x';
 import DatabaseInfluxDB2x from './lib/DatabaseInfluxDB2x';
+import DatabaseInfluxDB3x from './lib/DatabaseInfluxDB3x';
 import {
     escapeFluxString,
     escapeInfluxQLIdentifier,
@@ -38,8 +39,11 @@ const dataDir = getAbsoluteDefaultDataDir();
 
 const dockerDefaultToken = Buffer.from('iobroker86645638546565652656').toString('base64');
 
-/** Maximal number of entries one `getRawEntries` call may return */
-const MAX_RAW_ENTRIES = 2000;
+/**
+ * Maximal number of entries one `getRawEntries` call may return. An export of the data browser reads with
+ * this page size, and 5000 entries are still well below 1 MB as a message
+ */
+const MAX_RAW_ENTRIES = 5000;
 
 // While the database stays unreachable, remind about it at most once an hour instead of on every retry
 const REPEATED_ERROR_INTERVAL = 3_600_000;
@@ -119,6 +123,44 @@ function parseNumber(value: any, defaultValue?: number): number {
         return isNaN(v) ? defaultValue || 0 : v;
     }
     return defaultValue || 0;
+}
+
+/**
+ * Take over the borders of the intervals that the client sent with `getHistory`, e.g. the local days of a chart.
+ *
+ * InfluxDB groups by equally long windows, but a day around the switch of the daylight saving time has 23 or 25
+ * hours and a month 28 to 31 days. With borders, the values are therefore read raw and `@iobroker/aggregate` builds
+ * the intervals.
+ *
+ * @param options the options of the request, start, end and step are adjusted
+ * @param borders the raw `intervalBorders` of the message
+ * @returns true if the borders are used, so the database must not aggregate and the values must not be limited
+ */
+function applyIntervalBorders(options: GetHistoryOptions, borders: unknown): boolean {
+    const intervalBorders = parseIntervalBorders(borders, options.limit);
+    if (!intervalBorders) {
+        return false;
+    }
+    options.intervalBorders = intervalBorders;
+    options.start = intervalBorders[0];
+    options.end = intervalBorders[intervalBorders.length - 1];
+    // A step sent along would make the queries build windows again
+    options.step = undefined;
+    return true;
+}
+
+/**
+ * Whether `count` limits the raw values of a `getHistory` request that InfluxDB does not aggregate itself.
+ *
+ * `count` is the number of values only for `none` and for a request without start, which asks for the newest values.
+ * Otherwise the whole range must be read, like the sql and history adapters do: `onchange` is drawn as it is and the
+ * other methods are aggregated by `@iobroker/aggregate` afterwards. With the limit, only the oldest values arrived
+ * and the line ended early (https://github.com/ioBroker/ioBroker.echarts/issues/1275).
+ *
+ * @param options the options of the request
+ */
+function countLimitsRawValues(options: GetHistoryOptions): boolean {
+    return options.aggregate === 'none' || !options.start;
 }
 
 function parseNumberWithNull(value: any): number | null {
@@ -221,6 +263,8 @@ export class InfluxDBAdapter extends Adapter {
     private _seriesBufferChecker: NodeJS.Timeout | null = null;
     private _seriesBufferCounter: number = 0;
     private _seriesBufferFlushPlanned = false;
+    /** The write of a flush of the whole buffer, while it runs */
+    private _flushInFlight: Promise<void> | null = null;
     private _seriesBuffer: { [id: string]: ValuesForInflux[] } = {};
     private _conflictingPoints: { [id: string]: number } = {};
     private readonly _errorPoints: { [id: string]: number } = {};
@@ -507,6 +551,11 @@ export class InfluxDBAdapter extends Adapter {
         }
     }
 
+    /** InfluxDB 1.x and 3.x are queried with InfluxQL, 2.x with Flux */
+    isInfluxQL(): boolean {
+        return this.config.dbversion === '1.x' || this.config.dbversion === '3.x';
+    }
+
     async connect(): Promise<void> {
         if (!this.config.path) {
             this.config.path = '';
@@ -515,7 +564,7 @@ export class InfluxDBAdapter extends Adapter {
         }
 
         this.log.info(
-            `Connecting ${this.config.protocol}://${this.config.host}:${this.config.port}/${this.config.dbversion === '2.x' ? this.config.path || '' : ''} ...`,
+            `Connecting ${this.config.protocol}://${this.config.host}:${this.config.port}/${this.config.dbversion === '1.x' ? '' : this.config.path || ''} ...`,
         );
 
         this.config.validateSSL = this.config.validateSSL !== undefined ? !!this.config.validateSSL : true;
@@ -546,6 +595,30 @@ export class InfluxDBAdapter extends Adapter {
                         organization: this.config.organization,
                         validateSSL: this.config.validateSSL,
                         useTags: this.config.usetags,
+                    },
+                );
+                break;
+            case '3.x':
+                // eslint-disable-next-line no-control-regex
+                if (/[\x00-\x08\x0E-\x1F\x80-\xFF]/.test(this.config.token)) {
+                    this.log.error('Token error: Please re-enter the token in Admin. Stopping');
+                    return;
+                }
+                this._client = new DatabaseInfluxDB3x(
+                    {
+                        log: this.log,
+                        host: this.config.host,
+                        port: this.config.port,
+                        protocol: this.config.protocol, // optional, default 'http'
+                        database: this.config.dbname,
+                        requestTimeout: this.config.requestTimeout as number,
+                    },
+                    {
+                        path: this.config.path, // optional, for a reverse proxy
+                        token: this.config.token,
+                        validateSSL: this.config.validateSSL,
+                        useTags: this.config.usetags,
+                        syncWrites: this.config.syncWrites,
                     },
                 );
                 break;
@@ -606,8 +679,8 @@ export class InfluxDBAdapter extends Adapter {
                 this.log.warn(formatError(error));
             }
 
-            if (this.config.dbversion === '2.x') {
-                // For 2.x the connection is finalized inside checkMetaDataStorageType (after the
+            if (this.config.dbversion === '2.x' || this.config.dbversion === '3.x') {
+                // For 2.x/3.x the connection is finalized inside checkMetaDataStorageType (after the
                 // tags/fields compatibility check), so it can abort the start on a conflict.
                 await this.checkMetaDataStorageType();
             } else {
@@ -786,6 +859,26 @@ export class InfluxDBAdapter extends Adapter {
             config.dbname ||= 'iobroker';
 
             switch (config.dbversion) {
+                case '3.x':
+                    this.log.info('Connecting to InfluxDB 3');
+                    lClient = new DatabaseInfluxDB3x(
+                        {
+                            log: this.log,
+                            host: config.host,
+                            port: config.port,
+                            protocol: config.protocol, // optional, default 'http'
+                            database: config.dbname,
+                            requestTimeout: config.requestTimeout,
+                        },
+                        {
+                            path: config.path,
+                            token: config.token,
+                            validateSSL: config.validateSSL,
+                            useTags: config.usetags,
+                            syncWrites: config.syncWrites,
+                        },
+                    );
+                    break;
                 case '2.x':
                     this.log.info('Connecting to InfluxDB 2');
                     lClient = new DatabaseInfluxDB2x(
@@ -901,7 +994,7 @@ export class InfluxDBAdapter extends Adapter {
                     this.log.warn(formatError(error));
                 }
 
-                if (this.config.dbversion === '2.x') {
+                if (this.config.dbversion === '2.x' || this.config.dbversion === '3.x') {
                     await this.checkMetaDataStorageType();
                 }
                 this.sendTo(msg.from, msg.command, { error: null }, msg.callback);
@@ -916,25 +1009,36 @@ export class InfluxDBAdapter extends Adapter {
         this.config.dbname ||= 'iobroker';
         try {
             if (msg.command === 'features') {
-                // Currently the supported features are identical for InfluxDB 1.x and 2.x
-                this.sendTo(
-                    msg.from,
-                    msg.command,
-                    {
-                        supportedFeatures: [
-                            'update',
-                            'delete',
-                            'deleteRange',
-                            'deleteAll',
-                            'storeState',
-                            'getDatapoints',
-                            'getRawEntries',
-                            'getDpStatistics',
-                            'cleanupOrphaned',
-                        ],
-                    },
-                    msg.callback,
-                );
+                const supportedFeatures = [
+                    'update',
+                    'delete',
+                    'deleteRange',
+                    'deleteAll',
+                    'storeState',
+                    'getDatapoints',
+                    'getRawEntries',
+                    'getDpStatistics',
+                    'cleanupOrphaned',
+                ];
+                if (this.config.dbversion === '3.x') {
+                    // InfluxDB 3 deletes whole tables only. `update` rewrites a point in place, which works
+                    // as long as q/ack/from are fields: as tags they would be part of the series key
+                    return this.sendTo(
+                        msg.from,
+                        msg.command,
+                        {
+                            supportedFeatures: supportedFeatures.filter(
+                                feature =>
+                                    feature !== 'delete' &&
+                                    feature !== 'deleteRange' &&
+                                    (feature !== 'update' || !this.config.usetags),
+                            ),
+                        },
+                        msg.callback,
+                    );
+                }
+                // The supported features are identical for InfluxDB 1.x and 2.x
+                this.sendTo(msg.from, msg.command, { supportedFeatures }, msg.callback);
             } else if (msg.command === 'update') {
                 await this.updateState(msg);
             } else if (msg.command === 'delete') {
@@ -946,7 +1050,7 @@ export class InfluxDBAdapter extends Adapter {
             } else if (msg.command === 'storeState') {
                 await this.storeState(msg);
             } else if (msg.command === 'getHistory') {
-                if (this.config.dbversion === '1.x') {
+                if (this.isInfluxQL()) {
                     await this.getHistoryV1(msg);
                 } else {
                     await this.getHistoryV2(msg);
@@ -963,6 +1067,7 @@ export class InfluxDBAdapter extends Adapter {
                         await this.multiQuery(msg);
                         break;
                     case '1.x':
+                    case '3.x': // InfluxDB 3 is queried with InfluxQL, too
                     default:
                         await this.query(msg);
                         break;
@@ -975,6 +1080,8 @@ export class InfluxDBAdapter extends Adapter {
                 const id = msg.message ? msg.message.id : undefined;
                 this.log.debug(`Flushing buffer for ${id || 'all'}`);
                 try {
+                    // a periodic flush may be writing right now: the caller expects its points stored, too
+                    await this._flushInFlight;
                     await this.storeBufferedSeries(id);
                     if (msg.callback) {
                         this.sendTo(msg.from, msg.command, { error: null }, msg.callback);
@@ -1690,7 +1797,9 @@ datasources:
             dp.blocked = state;
         }
         if (!dp.blockTimeout) {
-            const delay = Math.min(Math.max(blockEnd - Date.now(), 0), dp.blockTime);
+            // the remaining time on the clock of the state timestamps, not the wall clock: a state whose ts
+            // lags behind would otherwise be released at once and blockTime would no longer limit anything
+            const delay = Math.min(Math.max(blockEnd - state.ts, 0), dp.blockTime);
             dp.blockTimeout = setTimeout(_id => void this.logBlocked(_id), delay, id);
         }
     }
@@ -1713,7 +1822,8 @@ datasources:
         const blocked = dp?.blocked;
         this.clearBlocked(id);
         if (blocked && dp.state?.val !== blocked.val) {
-            await this.pushHelper(id, blocked);
+            // like after the timer: the value still has to pass changesOnly/minDelta and becomes the last state
+            await this.pushHistory(id, blocked, false, true);
         }
     }
 
@@ -1829,7 +1939,12 @@ datasources:
         await this.pushValueIntoDB(_id, state, false);
     }
 
-    async pushValueIntoDB(id: string, state: ioBroker.State, directWrite: boolean): Promise<void> {
+    async pushValueIntoDB(
+        id: string,
+        state: ioBroker.State,
+        directWrite: boolean,
+        tags?: { [name: string]: string },
+    ): Promise<void> {
         if (!this._client) {
             this.log.warn('No connection to DB');
             throw new Error('No connection to DB');
@@ -1865,7 +1980,7 @@ datasources:
             q: state.q || 0,
             ack: !!state.ack,
         };
-        const customTags = this._influxDPs[id]?.customTags;
+        const customTags = tags || this._influxDPs[id]?.customTags;
         if (customTags && Object.keys(customTags).length) {
             influxFields.tags = customTags;
         }
@@ -1918,6 +2033,14 @@ datasources:
     }
 
     async storeBufferedSeries(id?: string | null): Promise<number> {
+        if (id && this._flushInFlight) {
+            // The points of this ID may just be written by a flush of the whole buffer: they are no longer in
+            // the buffer, but not yet in the database either - getHistory would miss them (on InfluxDB 3 a
+            // batch waits for the write-ahead log, about a second).
+            // Only for an ID: a flush of the whole buffer is also started from within the write path
+            // (addPointToSeriesBuffer), and waiting there for the running flush would wait for itself
+            await this._flushInFlight;
+        }
         if (id && !this._seriesBuffer[id]?.length) {
             return 0;
         }
@@ -1963,12 +2086,26 @@ datasources:
         this._seriesBuffer = {};
         this._seriesBufferCounter = 0;
 
+        let write: Promise<void>;
         if (result > 15000) {
             // if we have too many data points in buffer, we better writer them per id
             this.log.info(`Too many data points (${result}) to write at once; write per ID`);
-            await this.writeAllSeriesPerID(currentBuffer);
+            write = this.writeAllSeriesPerID(currentBuffer);
         } else {
-            await this.writeAllSeriesAtOnce(currentBuffer);
+            write = this.writeAllSeriesAtOnce(currentBuffer);
+        }
+        // whoever waits for it only needs to know that it is over, the error is handled below
+        const inFlight = write.then(
+            () => undefined,
+            () => undefined,
+        );
+        this._flushInFlight = inFlight;
+        try {
+            await write;
+        } finally {
+            if (this._flushInFlight === inFlight) {
+                this._flushInFlight = null;
+            }
         }
         this._seriesBufferFlushPlanned = false;
         this._seriesBufferChecker = setInterval(
@@ -2304,6 +2441,19 @@ datasources:
                 this.log.warn(`Error on delete("${formatError(error)}"`);
                 throw error;
             }
+        } else if (this.config.dbversion === '3.x') {
+            if (state.ts || state.start || state.end) {
+                throw new Error('InfluxDB 3.x cannot delete single values or a time range, only a whole datapoint');
+            }
+            try {
+                await this._client?.dropMeasurement(id);
+                if (this._client) {
+                    this.setConnected(true);
+                }
+            } catch (error) {
+                this.log.warn(`Error on delete of ${id}: ${formatError(error)}`);
+                throw error;
+            }
         } else {
             throw new Error('not implemented');
         }
@@ -2549,7 +2699,12 @@ datasources:
             throw new Error('not connected');
         }
 
-        if (this.config.dbversion === '1.x') {
+        if (this.config.dbversion === '3.x' && this.config.usetags) {
+            // the point cannot be deleted and a changed tag would write a second point next to it
+            throw new Error('InfluxDB 3.x cannot update a value if q, ack and from are stored as tags');
+        }
+
+        if (this.isInfluxQL()) {
             const query = `SELECT * FROM "${escapeInfluxQLIdentifier(id)}" WHERE time = '${new Date(state.ts).toISOString()}'`;
 
             try {
@@ -2568,8 +2723,12 @@ datasources:
                     this.setConnected(true);
                 }
 
-                if (result?.[0]?.[0]) {
-                    const stored = result[0][0];
+                // a single statement answers with the rows, several with one array of rows per statement
+                const first: unknown = result?.[0];
+                const found = (Array.isArray(first) ? first[0] : first) as
+                    NonNullable<typeof result>[number][number] | undefined;
+                if (found) {
+                    const stored = found;
                     const storedState: ioBroker.State = {
                         val: stored.val === undefined ? stored.value : stored.val,
                         ack: stored.ack,
@@ -2592,8 +2751,21 @@ datasources:
                     }
                     storedState.ts = state.ts;
 
-                    await this._delete(id, { ts: new Date(stored.time || stored.ts).getTime() });
-                    await this.pushValueIntoDB(id, storedState, true);
+                    // InfluxDB 3 cannot delete a point, but a point with the same time and tags replaces it.
+                    // So the point has to be written with the tags it was stored with, not the current ones.
+                    let storedTags: { [name: string]: string } | undefined;
+                    if (this.config.dbversion === '3.x') {
+                        const known = ['time', 'value', 'val', 'ack', 'q', 'ts', 'from'];
+                        storedTags = {};
+                        for (const [name, value] of Object.entries(found)) {
+                            if (!known.includes(name) && typeof value === 'string' && value !== '') {
+                                storedTags[name] = value;
+                            }
+                        }
+                    } else {
+                        await this._delete(id, { ts: new Date(stored.time || stored.ts).getTime() });
+                    }
+                    await this.pushValueIntoDB(id, storedState, true, storedTags);
                 } else {
                     this.log.error(`Cannot find value to delete for ${id}: ${JSON.stringify(state)}`);
                     throw new Error('not found');
@@ -3015,6 +3187,7 @@ datasources:
             removeBorderValues: msg.message.options.removeBorderValues || false,
             round: 0,
         };
+        const withBorders = applyIntervalBorders(options, msg.message.options.intervalBorders);
 
         this.log.debug(`${logId} getHistory message: ${JSON.stringify(msg.message)}`);
 
@@ -3121,6 +3294,7 @@ datasources:
 
         let resultsFromInfluxDB =
             !msg.message.useAdapter &&
+            !withBorders &&
             options.aggregate !== 'onchange' &&
             options.aggregate !== 'none' &&
             options.aggregate !== 'minmax';
@@ -3182,7 +3356,13 @@ datasources:
                     break;
 
                 case 'count':
-                    query += ' count(value) as val';
+                    if (this.config.dbversion === '3.x') {
+                        // InfluxQL count() reports nothing for a boolean measurement on InfluxDB 3: count in Node
+                        query += ' value';
+                        options.preAggregated = false;
+                    } else {
+                        query += ' count(value) as val';
+                    }
                     break;
 
                 case 'none':
@@ -3226,7 +3406,13 @@ datasources:
 
         if (resultsFromInfluxDB) {
             query += ` LIMIT ${options.limit}`;
-        } else if (options.aggregate !== 'minmax' && options.aggregate !== 'integral') {
+        } else if (
+            !withBorders &&
+            countLimitsRawValues(options) &&
+            options.aggregate !== 'minmax' &&
+            options.aggregate !== 'integral'
+        ) {
+            // With borders, `count` is the number of intervals and not of the raw values
             query += ` LIMIT ${options.count}`;
         }
 
@@ -3409,6 +3595,7 @@ datasources:
                     : undefined,
             removeBorderValues: msg.message.options.removeBorderValues || false,
         };
+        const withBorders = applyIntervalBorders(options, msg.message.options.intervalBorders);
         const logId = (msg.message.id ? msg.message.id : 'all') + Date.now() + Math.random();
         let id: string | undefined = msg.message.id === '*' ? undefined : msg.message.id;
 
@@ -3514,7 +3701,10 @@ datasources:
         }
 
         const resultsFromInfluxDB =
-            options.aggregate !== 'onchange' && options.aggregate !== 'none' && options.aggregate !== 'minmax';
+            !withBorders &&
+            options.aggregate !== 'onchange' &&
+            options.aggregate !== 'none' &&
+            options.aggregate !== 'minmax';
 
         // query one timegroup-value more than requested originally at start and end
         // to make sure to have no 0 values because of the way InfluxDB does group by time
@@ -3632,7 +3822,13 @@ ${this.config.usetags ? ' |> duplicate(column: "_value", as: "value")' : ' |> pi
                         fluxQuery += ` |> sort(columns:["_time"], desc: false)`;
                     }
 
-                    if (!(resultsFromInfluxDB && supportsAggregates) && options.aggregate !== 'minmax') {
+                    // With borders, `count` is the number of intervals and not of the raw values
+                    if (
+                        !withBorders &&
+                        !(resultsFromInfluxDB && supportsAggregates) &&
+                        options.aggregate !== 'minmax' &&
+                        countLimitsRawValues(options)
+                    ) {
                         fluxQuery += ` |> limit(n: ${options.count})`;
                     }
 
@@ -3899,10 +4095,10 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
         if (this._client) {
             const queriesString = msg.message.query || msg.message;
 
-            let queries;
+            let queries: string[];
             try {
                 //parse queries to array
-                queries = queriesString.split(';');
+                queries = String(queriesString).split(';');
 
                 for (let q = 0, len = queries.length; q < len; q++) {
                     if (!queries[q] || typeof queries[q] !== 'string') {
@@ -3922,25 +4118,17 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
                 );
                 return;
             }
-            this.log.debug(`queries: ${queries}`);
+            this.log.debug(`queries: ${JSON.stringify(queries)}`);
 
             try {
-                let rows = await this._client?.query<
-                    {
-                        time?: number;
-                        ts?: number;
-                        value: number;
-                        val: number;
-                        q: number;
-                        from: string;
-                        ack: boolean;
-                    }[]
-                >(queries);
+                // Flux has no statement delimiter, so every query is sent on its own (one result entry per query)
+                const rows: {
+                    time?: number | string | Date;
+                    ts?: number;
+                    value?: number;
+                    val?: number;
+                }[][] = (await this._client.queries(queries)) || [];
                 this.setConnected(true);
-                if (Array.isArray(rows) && rows.length && !Array.isArray(rows[0])) {
-                    // The new influx lib returns only one array, sp reformat it because of backwards compatibility
-                    rows = [rows as any];
-                }
 
                 this.log.debug(`result: ${JSON.stringify(rows)}`);
 
@@ -4085,7 +4273,11 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
             throw new Error('not connected');
         }
 
-        if (this.config.dbversion === '1.x') {
+        if (this._client.listMeasurements) {
+            return this._client.listMeasurements();
+        }
+
+        if (this.isInfluxQL()) {
             const rows = await this._client.query<{ name: string }>('SHOW MEASUREMENTS');
             return (rows || []).map(row => row.name).filter(name => !!name);
         }
@@ -4246,6 +4438,14 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
         const scope: CleanupScope = msg.message?.scope || {};
         const confirmed = msg.message?.confirm === true;
 
+        if (
+            scope.ids !== undefined &&
+            (!Array.isArray(scope.ids) || scope.ids.some((id: unknown) => typeof id !== 'string'))
+        ) {
+            this.sendTo(msg.from, msg.command, { error: 'scope.ids must be an array of strings' }, msg.callback);
+            return;
+        }
+
         try {
             const stats = await this.collectStatistics();
             const victims = selectForCleanup(stats, scope);
@@ -4319,7 +4519,10 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
      * In contrast to `getHistory`, the points are returned exactly as they are in the database: no
      * aggregation, no interpolation, no border values and no rounding.
      */
-    async readRawEntries(id: string, options: RawEntriesOptions): Promise<{ entries: IobDataEntry[]; total: number }> {
+    async readRawEntries(
+        id: string,
+        options: RawEntriesOptions,
+    ): Promise<{ entries: IobDataEntry[]; total: number | undefined }> {
         if (!this._client) {
             throw new Error('not connected');
         }
@@ -4327,14 +4530,17 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
         let countQuery: string;
         let dataQuery: string;
 
-        if (this.config.dbversion === '1.x') {
+        if (this.isInfluxQL()) {
             const safeId = escapeInfluxQLIdentifier(id);
             const conditions: string[] = [];
             if (options.start !== undefined) {
                 conditions.push(`time >= '${new Date(options.start).toISOString()}'`);
             }
             if (options.end !== undefined) {
-                conditions.push(`time <= '${new Date(options.end).toISOString()}'`);
+                // exclusive end one millisecond later, like the Flux range below: a point stored with a finer
+                // precision than milliseconds belongs to the millisecond it starts in. Otherwise it would get
+                // lost between two consecutive ranges [a, b] and [b + 1, c], as an export reads them.
+                conditions.push(`time < '${new Date(options.end + 1).toISOString()}'`);
             }
             const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : '';
 
@@ -4367,10 +4573,23 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
                 `${this.config.usetags ? '\n|> duplicate(column: "_value", as: "value")' : ''}`;
         }
 
+        if (options.noTotal) {
+            this.log.debug(`getRawEntries query to execute: ${dataQuery}`);
+            const rows = await this._client.query<RawEntryRow>(dataQuery);
+            this.setConnected(true);
+            return { entries: rows.map(row => rawRowToEntry(row)), total: undefined };
+        }
+
         this.log.debug(`getRawEntries queries to execute: ${countQuery}\n---\n${dataQuery}`);
 
         const rows = await this._client.queries<RawEntryRow>([countQuery, dataQuery]);
         this.setConnected(true);
+
+        if (this._client instanceof DatabaseInfluxDB3x && !rows?.[0]?.[0]) {
+            // InfluxQL count() reports nothing for a boolean measurement on InfluxDB 3
+            const total = await this._client.countRows(id, options.start, options.end);
+            return { entries: (rows?.[1] || []).map(row => rawRowToEntry(row)), total };
+        }
 
         // InfluxDB 1.x counts into the aliased column "total", 2.x into the Flux column "_value"
         const counted = rows?.[0]?.[0];
@@ -4406,6 +4625,7 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
             limit: Math.min(Math.max(parseInt(msg.message.limit, 10) || 100, 1), MAX_RAW_ENTRIES),
             offset: Math.max(parseInt(msg.message.offset, 10) || 0, 0),
             sort: msg.message.sort === 'asc' ? 'asc' : 'desc',
+            noTotal: msg.message.noTotal === true,
         };
 
         try {

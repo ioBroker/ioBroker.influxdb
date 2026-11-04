@@ -179,24 +179,39 @@ export abstract class Database {
      */
     abstract dropMeasurement(measurement: string): Promise<void>;
 
+    /**
+     * Names of all measurements, for drivers that know a better way than the generic query of `main.ts`
+     * (InfluxQL `SHOW MEASUREMENTS` for 1.x, `schema.measurements` for 2.x).
+     */
+    listMeasurements?(): Promise<string[]>;
+
     async queries<T>(queries: string[]): Promise<Array<T & { time: Date }>[] | null> {
         const collectedRows: Array<T & { time: Date }>[] = [];
         let success = false;
-        const errors: string[] = [];
-        for (const query of queries) {
+        const errors: { index: number; error: unknown }[] = [];
+        for (let i = 0; i < queries.length; i++) {
+            const query = queries[i];
             try {
                 const rows = await this.query(query);
                 success = true;
                 collectedRows.push(rows as Array<T & { time: Date }>);
             } catch (error) {
                 this.log.warn(`Error in query "${query}": ${formatError(error)}`);
-                errors.push(error);
+                errors.push({ index: i, error });
                 collectedRows.push([]);
             }
         }
 
         if (errors.length) {
-            throw new Error(`${errors.length} Error happened while processing ${queries.length} queries`);
+            if (queries.length === 1) {
+                // keep the original error (message of the DB) for a single query
+                throw errors[0].error;
+            }
+            throw new Error(
+                `${errors.length} Error happened while processing ${queries.length} queries: ${errors
+                    .map(e => `query #${e.index + 1}: ${formatError(e.error)}`)
+                    .join('; ')}`,
+            );
         }
         return success ? collectedRows : null;
     }

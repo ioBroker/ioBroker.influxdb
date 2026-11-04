@@ -22,11 +22,15 @@ Defines whether the database is accessed via plain http or secured https.
 
 #### Login
 
-The owner of the database (user) under whose ID the data is recorded.
+The owner of the database (user) under whose ID the data is recorded. Only used with InfluxDB 1.x; InfluxDB 2.x and 3.x log in with a token.
 
 #### Password
 
-The password of the given user in the database. For safety, the password has to be entered a second time in the following field.
+The password of the given user in the database. For safety, the password has to be entered a second time in the following field. Only used with InfluxDB 1.x.
+
+#### InfluxDB 3.x
+
+Choose "3.x" as the database version, enter host, port (default `8181`), the token and the database name. InfluxDB 3 cannot delete single values or a time range, and it does not report the number of series. In the expert settings, "Wait for the database to store each value" makes single values wait for the write-ahead log (about one second each) instead of being acknowledged at once. Details and all limits: [README, InfluxDB 3.x](https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#influxdb-3x).
 
 #### Round to
 
@@ -90,7 +94,7 @@ Enables the logging of the datapoint. With "log changes only", values are only s
 
 ### <span id="Custom_tags">Custom tags</span>
 
-Every datapoint can carry additional, static InfluxDB tags. They are entered in the settings of the datapoint under "Custom tags" as a list of name/value pairs and are written with every value of this datapoint - for both InfluxDB 1.x and 2.x and independent of the setting "Store metadata information as tags instead of fields".
+Every datapoint can carry additional, static InfluxDB tags. They are entered in the settings of the datapoint under "Custom tags" as a list of name/value pairs and are written with every value of this datapoint - for all InfluxDB versions and independent of the setting "Store metadata information as tags instead of fields".
 
 This allows selecting and grouping the values of different datapoints by their meaning instead of by their IDs, e.g. give all datapoints of the kitchen the tag `room=kitchen` and all temperature sensors the tag `type=temperature`. In Grafana, the values can then be filtered or grouped by these tags:
 
@@ -138,7 +142,9 @@ Two things are important about the numbers:
 -   **There is no size per datapoint.** InfluxDB does not provide it, neither in 1.x (`SHOW STATS` and `SHOW SHARDS` only know the engine and the shards) nor in 2.x (disk usage is monitored per bucket). The number of **series** is shown instead: it determines the memory needed by the index, and custom tags are the usual way to increase it unintentionally.
 -   **Counting is a full scan.** InfluxDB has no row count it could look up, so the values of the examined time range are actually read. For a database with data of several years this takes a while - the time range selection above the table limits the scan if the total is not needed.
 
-The cleanup removes the stored values of datapoints that nobody logs any more. **Nothing is deleted without confirmation**: the dialog first shows what a confirmed run would remove. By default, only objects that no longer exist in ioBroker are selected. Datapoints whose logging is merely switched off are only included if you explicitly check that - their history is still reachable and often wanted. A datapoint that is currently logged is never selected.
+The cleanup removes the stored values of datapoints that nobody logs any more. **Nothing is deleted without confirmation**: the dialog first shows what a confirmed run would remove. By default, only objects that no longer exist in ioBroker are selected. Datapoints whose logging is merely switched off are only included if you explicitly check that - their history is still reachable and often wanted. A datapoint that is currently logged is never selected. In the dialog all found datapoints are preselected; use the checkboxes to deselect the ones you want to keep. Only the selected datapoints are deleted.
+
+The adapter only knows whether a measurement has an object. If a script writes directly into the database without an object, that measurement is therefore shown as "object deleted" as well. To tell such measurements apart from real leftovers, the dialog shows the oldest and the newest value of every datapoint. If a number is entered at **Last value older than … days**, only datapoints whose newest value is older (or that have no value at all) are preselected. Datapoints that are still written to are then left out, but can still be ticked by hand.
 
 The same data is also available via JavaScript with the messages `getDpStatistics` and `cleanupOrphaned`, see [README](https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#statistics-and-cleanup).
 
@@ -152,7 +158,7 @@ If "with" or `influxdb.0` is selected under history in the title row, only datap
 
 ## <span id="Docker">InfluxDB and Grafana in Docker</span>
 
-The adapter can start InfluxDB 2.x and optionally Grafana itself as Docker containers. Docker has to be installed on the ioBroker host for this, and the user `iobroker` must be allowed to use Docker (run `iob fix` if necessary).
+The adapter can start InfluxDB 2.x (not 3.x) and optionally Grafana itself as Docker containers. Docker has to be installed on the ioBroker host for this, and the user `iobroker` must be allowed to use Docker (run `iob fix` if necessary).
 
 ### InfluxDB in Docker
 
@@ -226,8 +232,9 @@ Without Docker, Grafana has to be installed separately, see the [installation gu
 
 - InfluxDB 1.x: query language _InfluxQL_, URL of InfluxDB, database name and user/password from the adapter settings.
 - InfluxDB 2.x: query language _Flux_, URL of InfluxDB, organization, token and default bucket from the adapter settings.
+- InfluxDB 3.x: query language _InfluxQL_ (or _SQL_), URL of InfluxDB, database name and token from the adapter settings.
 
-The query from [The first dashboard](#the-first-dashboard) works for InfluxDB 2.x. For InfluxDB 1.x with InfluxQL use e.g.:
+The query from [The first dashboard](#the-first-dashboard) works for InfluxDB 2.x. For InfluxDB 1.x and 3.x with InfluxQL use e.g.:
 
 ```
 SELECT mean("value") FROM "system.adapter.admin.0.memRss" WHERE $timeFilter GROUP BY time($__interval) fill(previous)

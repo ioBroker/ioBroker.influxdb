@@ -22,11 +22,15 @@ Hier wird angegeben, ob der Zugriff auf die Datenbank per einfachem http oder ge
 
 #### Login
 
-Der Besitzer der Datenbank (User) unter dessen ID die Daten aufgezeichnet werden sollen
+Der Besitzer der Datenbank (User) unter dessen ID die Daten aufgezeichnet werden sollen. Nur bei InfluxDB 1.x; InfluxDB 2.x und 3.x melden sich mit einem Token an.
 
 #### Passwort
 
-Dieses ist das Passwort des angegebenen Users in der SQL-Datenbank. Zur Sicherheit muss dieses Passwort im folgenden Feld wiederholt eingegeben werden.
+Dieses ist das Passwort des angegebenen Users in der SQL-Datenbank. Zur Sicherheit muss dieses Passwort im folgenden Feld wiederholt eingegeben werden. Nur bei InfluxDB 1.x.
+
+#### InfluxDB 3.x
+
+„3.x“ als Datenbankversion wählen, Host, Port (Standard `8181`), Token und Datenbanknamen eintragen. InfluxDB 3 kann weder einzelne Werte noch einen Zeitbereich löschen und meldet die Anzahl der Serien nicht. In den Experteneinstellungen lässt „Auf das Speichern jedes Wertes durch die Datenbank warten“ Einzelwerte auf das Write-Ahead-Log warten (je ca. eine Sekunde), statt sofort bestätigt zu werden. Details und alle Einschränkungen: [README, InfluxDB 3.x](https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#influxdb-3x).
 
 #### Aufrunden auf
 
@@ -90,7 +94,7 @@ Logging des Datenpunktes aktivieren nur Änderungen aufzeichnen: Es werden nur W
 
 ### <span id="Benutzerdefinierte_Tags">Benutzerdefinierte Tags</span>
 
-Jeder Datenpunkt kann zusätzliche, feste InfluxDB-Tags mitschreiben. Sie werden in den Einstellungen des Datenpunkts unter „Benutzerdefinierte Tags“ als Liste von Name/Wert-Paaren eingetragen und mit jedem Wert dieses Datenpunkts geschrieben – sowohl für InfluxDB 1.x als auch 2.x und unabhängig von der Einstellung „Metadaten als Tags statt als Felder speichern“.
+Jeder Datenpunkt kann zusätzliche, feste InfluxDB-Tags mitschreiben. Sie werden in den Einstellungen des Datenpunkts unter „Benutzerdefinierte Tags“ als Liste von Name/Wert-Paaren eingetragen und mit jedem Wert dieses Datenpunkts geschrieben – für alle InfluxDB-Versionen und unabhängig von der Einstellung „Metadaten als Tags statt als Felder speichern“.
 
 Damit lassen sich die Werte verschiedener Datenpunkte nach ihrer Bedeutung statt nach ihrer ID auswählen und gruppieren, z.B. alle Datenpunkte der Küche mit `room=kitchen` und alle Temperaturfühler mit `type=temperature`. In Grafana kann dann danach gefiltert oder gruppiert werden:
 
@@ -138,7 +142,9 @@ Zwei Dinge sind zu den Zahlen wichtig:
 -   **Es gibt keine Größe pro Datenpunkt.** InfluxDB liefert sie nicht, weder in 1.x (`SHOW STATS` und `SHOW SHARDS` kennen nur Engine und Shards) noch in 2.x (der Plattenverbrauch wird pro Bucket überwacht). Stattdessen wird die Anzahl der **Serien** angezeigt: Sie bestimmt den Speicherbedarf des Index, und benutzerdefinierte Tags sind der übliche Weg, sie unbeabsichtigt zu erhöhen.
 -   **Zählen ist ein voller Scan.** InfluxDB hat keine Zeilenanzahl, die es nachschlagen könnte, also werden die Werte des untersuchten Zeitraums tatsächlich gelesen. Bei einer Datenbank mit Daten aus mehreren Jahren dauert das – die Zeitraumauswahl über der Tabelle begrenzt den Scan, wenn die Gesamtzahl nicht gebraucht wird.
 
-Das Aufräumen entfernt die gespeicherten Werte von Datenpunkten, die niemand mehr loggt. **Ohne Bestätigung wird nichts gelöscht**: Der Dialog zeigt zuerst, was ein bestätigter Lauf entfernen würde. Standardmäßig sind nur Objekte ausgewählt, die es in ioBroker nicht mehr gibt. Datenpunkte mit lediglich ausgeschaltetem Logging werden nur einbezogen, wenn man das ausdrücklich ankreuzt – ihre Historie ist noch erreichbar und oft gewollt. Ein Datenpunkt, der gerade geloggt wird, wird nie ausgewählt.
+Das Aufräumen entfernt die gespeicherten Werte von Datenpunkten, die niemand mehr loggt. **Ohne Bestätigung wird nichts gelöscht**: Der Dialog zeigt zuerst, was ein bestätigter Lauf entfernen würde. Standardmäßig sind nur Objekte ausgewählt, die es in ioBroker nicht mehr gibt. Datenpunkte mit lediglich ausgeschaltetem Logging werden nur einbezogen, wenn man das ausdrücklich ankreuzt – ihre Historie ist noch erreichbar und oft gewollt. Ein Datenpunkt, der gerade geloggt wird, wird nie ausgewählt. Im Dialog sind alle gefundenen Datenpunkte vorausgewählt; über die Checkboxen lassen sich einzelne Datenpunkte abwählen, die behalten werden sollen. Gelöscht werden nur die ausgewählten.
+
+Der Adapter weiß nur, ob es zu einer Messung ein Objekt gibt. Schreibt ein Skript direkt in die Datenbank, ohne dass dazu ein Objekt existiert, steht bei dieser Messung deshalb ebenfalls „Objekt gelöscht“. Um solche Messungen von echten Datenleichen zu unterscheiden, zeigt der Dialog zu jedem Datenpunkt den ältesten und den neuesten Wert. Ist bei **Letzter Wert älter als … Tage** eine Zahl eingetragen, sind nur Datenpunkte vorausgewählt, deren neuester Wert älter ist (oder die gar keinen Wert haben). Datenpunkte, in die noch geschrieben wird, bleiben dann außen vor, können aber weiterhin von Hand angekreuzt werden.
 
 Dieselben Daten sind auch per JavaScript über die Nachrichten `getDpStatistics` und `cleanupOrphaned` erreichbar, siehe [README](https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#statistics-and-cleanup).
 
@@ -152,7 +158,7 @@ Wählt man in der Titelzeile unter Historie "mit" oder `influxdb.0` aus, werden 
 
 ## <span id="Docker">InfluxDB und Grafana in Docker</span>
 
-Der Adapter kann InfluxDB 2.x und optional Grafana selbst als Docker-Container starten. Docker muss dafür auf dem ioBroker-Host installiert sein und der Benutzer `iobroker` muss Docker benutzen dürfen (ggf. `iob fix` ausführen).
+Der Adapter kann InfluxDB 2.x (nicht 3.x) und optional Grafana selbst als Docker-Container starten. Docker muss dafür auf dem ioBroker-Host installiert sein und der Benutzer `iobroker` muss Docker benutzen dürfen (ggf. `iob fix` ausführen).
 
 ### InfluxDB in Docker
 
@@ -226,8 +232,9 @@ Ohne Docker muss Grafana separat installiert werden, siehe [Installationsanleitu
 
 - InfluxDB 1.x: Abfragesprache _InfluxQL_, URL von InfluxDB, Datenbankname sowie Benutzer/Passwort aus den Adapter-Einstellungen.
 - InfluxDB 2.x: Abfragesprache _Flux_, URL von InfluxDB, Organisation, Token und Standard-Bucket aus den Adapter-Einstellungen.
+- InfluxDB 3.x: Abfragesprache _InfluxQL_ (oder _SQL_), URL von InfluxDB, Datenbankname und Token aus den Adapter-Einstellungen.
 
-Die Abfrage aus [Das erste Dashboard](#das-erste-dashboard) funktioniert für InfluxDB 2.x. Für InfluxDB 1.x mit InfluxQL z.B.:
+Die Abfrage aus [Das erste Dashboard](#das-erste-dashboard) funktioniert für InfluxDB 2.x. Für InfluxDB 1.x und 3.x mit InfluxQL z.B.:
 
 ```
 SELECT mean("value") FROM "system.adapter.admin.0.memRss" WHERE $timeFilter GROUP BY time($__interval) fill(previous)

@@ -125,5 +125,12 @@
     "path": "Дорожка",
     "retention": "Время хранения в базе",
     "use 0 to not buffer at all": "Для деактвации буферизации введите 0",
-    "usetags help": "Для получения дополнительной информации обратитесь к документации: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields"
+    "usetags help": "Для получения дополнительной информации обратитесь к документации: https://github.com/ioBroker/ioBroker.influxdb/blob/master/README.md#Store-metadata-information-as-tags-instead-of-fields",
+    "DB settings": "Настройки БД",
+    "Only by first start": "Только при первом запуске",
+    "Auto-update Docker image": "Автоматически обновлять образ Docker",
+    "Plugins": "Плагины",
+    "Server root URL": "Корневой URL сервера",
+    "Wait for the database to store each value": "Подождите, пока база данных сохранит каждое значение.",
+    "syncWrites help": "InfluxDB 3 сохраняет значение примерно через секунду после его получения. Выкл.: отдельные значения подтверждаются сразу (быстро), но могут быть прочитаны и сохраняются до секунды позже. Включено: каждое отдельное значение ожидает базы данных (более безопасно, но медленно, когда точки данных буфера равны 0)."
 }
