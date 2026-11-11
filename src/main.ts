@@ -1478,11 +1478,7 @@ datasources:
             // a rarely updated state gets no values at all until then. A start value written below restarts it.
             const settings = this._influxDPs[id];
             if (settings.changesOnly && settings.changesRelogInterval > 0 && !settings.relogTimeout) {
-                settings.relogTimeout = setTimeout(
-                    _id => this.reLogHelper(_id),
-                    settings.changesRelogInterval * 1000,
-                    id,
-                );
+                this.startRelogTimer(id, settings.changesRelogInterval * 1000);
             }
             if (this.config.relogLastValueOnStart) {
                 this._tasksStart.push(id);
@@ -1704,6 +1700,10 @@ datasources:
                     } catch (e) {
                         this.logPushError(id, e);
                     }
+                    if (!this._influxDPs[id]) {
+                        // logging was disabled during the write: start no timer for it
+                        return;
+                    }
                     this._influxDPs[id].skipped = null;
                 }
                 if (
@@ -1731,11 +1731,7 @@ datasources:
                             );
                         void this.pushHelper(id).catch(e => this.logPushError(id, e));
                         if (settings.changesOnly && settings.changesRelogInterval > 0) {
-                            this._influxDPs[id].relogTimeout = setTimeout(
-                                _id => this.reLogHelper(_id),
-                                settings.changesRelogInterval * 1000,
-                                id,
-                            );
+                            this.startRelogTimer(id, settings.changesRelogInterval * 1000);
                         }
                     },
                     settings.debounceTime,
@@ -1755,14 +1751,22 @@ datasources:
                 }
                 void this.pushHelper(id, state).catch(e => this.logPushError(id, e));
                 if (settings.changesOnly && settings.changesRelogInterval > 0) {
-                    this._influxDPs[id].relogTimeout = setTimeout(
-                        _id => this.reLogHelper(_id),
-                        settings.changesRelogInterval * 1000,
-                        id,
-                    );
+                    this.startRelogTimer(id, settings.changesRelogInterval * 1000);
                 }
             }
         }
+    }
+
+    /** Start the timed relog of id. A running timer is stopped first, else parallel pushHistory calls leak timers */
+    private startRelogTimer(id: string, delay: number): void {
+        const dp = this._influxDPs[id];
+        if (!dp) {
+            return;
+        }
+        if (dp.relogTimeout) {
+            clearTimeout(dp.relogTimeout);
+        }
+        dp.relogTimeout = setTimeout(_id => this.reLogHelper(_id), delay, id);
     }
 
     /** Remember the newest value received during blockTime and log it once blockTime is over */
@@ -1830,7 +1834,10 @@ datasources:
             this.log.info(`non-existing id ${_id}`);
             return;
         }
-        this._influxDPs[_id].relogTimeout = null;
+        if (this._influxDPs[_id].relogTimeout) {
+            clearTimeout(this._influxDPs[_id].relogTimeout);
+            this._influxDPs[_id].relogTimeout = null;
+        }
         if (this._influxDPs[_id].skipped) {
             await this.pushHistory(_id, this._influxDPs[_id].skipped, true);
         } else if (this._influxDPs[_id].state) {
