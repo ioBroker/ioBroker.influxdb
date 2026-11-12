@@ -1478,11 +1478,7 @@ datasources:
             // a rarely updated state gets no values at all until then. A start value written below restarts it.
             const settings = this._influxDPs[id];
             if (settings.changesOnly && settings.changesRelogInterval > 0 && !settings.relogTimeout) {
-                settings.relogTimeout = setTimeout(
-                    _id => this.reLogHelper(_id),
-                    settings.changesRelogInterval * 1000,
-                    id,
-                );
+                this.startRelogTimer(id);
             }
             if (this.config.relogLastValueOnStart) {
                 this._tasksStart.push(id);
@@ -1694,17 +1690,21 @@ datasources:
                     );
                 ignoreDebounce = true;
             } else {
-                if (settings.changesOnly && this._influxDPs[id].skipped) {
+                const skipped = this._influxDPs[id].skipped;
+                if (settings.changesOnly && skipped) {
+                    // taken out before the await, so a concurrent call for the same id does not write it again
+                    this._influxDPs[id].skipped = null;
                     settings.enableDebugLogs &&
-                        this.log.debug(
-                            `Skipped value logged ${id}, value=${this._influxDPs[id].skipped.val}, ts=${this._influxDPs[id].skipped.ts}`,
-                        );
+                        this.log.debug(`Skipped value logged ${id}, value=${skipped.val}, ts=${skipped.ts}`);
                     try {
-                        await this.pushHelper(id, this._influxDPs[id].skipped);
+                        await this.pushHelper(id, skipped);
                     } catch (e) {
                         this.logPushError(id, e);
                     }
-                    this._influxDPs[id].skipped = null;
+                    // the datapoint may have been removed during the await
+                    if (!this._influxDPs[id]) {
+                        return;
+                    }
                 }
                 if (
                     this._influxDPs[id].state &&
@@ -1731,11 +1731,7 @@ datasources:
                             );
                         void this.pushHelper(id).catch(e => this.logPushError(id, e));
                         if (settings.changesOnly && settings.changesRelogInterval > 0) {
-                            this._influxDPs[id].relogTimeout = setTimeout(
-                                _id => this.reLogHelper(_id),
-                                settings.changesRelogInterval * 1000,
-                                id,
-                            );
+                            this.startRelogTimer(id);
                         }
                     },
                     settings.debounceTime,
@@ -1755,14 +1751,19 @@ datasources:
                 }
                 void this.pushHelper(id, state).catch(e => this.logPushError(id, e));
                 if (settings.changesOnly && settings.changesRelogInterval > 0) {
-                    this._influxDPs[id].relogTimeout = setTimeout(
-                        _id => this.reLogHelper(_id),
-                        settings.changesRelogInterval * 1000,
-                        id,
-                    );
+                    this.startRelogTimer(id);
                 }
             }
         }
+    }
+
+    /** (Re)start the timed relog. A running timer is cleared first, otherwise it would be orphaned and relog forever */
+    startRelogTimer(id: string): void {
+        const dp = this._influxDPs[id];
+        if (dp.relogTimeout) {
+            clearTimeout(dp.relogTimeout);
+        }
+        dp.relogTimeout = setTimeout(_id => this.reLogHelper(_id), dp.changesRelogInterval * 1000, id);
     }
 
     /** Remember the newest value received during blockTime and log it once blockTime is over */
@@ -1829,6 +1830,9 @@ datasources:
         if (!this._influxDPs[_id]) {
             this.log.info(`non-existing id ${_id}`);
             return;
+        }
+        if (this._influxDPs[_id].relogTimeout) {
+            clearTimeout(this._influxDPs[_id].relogTimeout);
         }
         this._influxDPs[_id].relogTimeout = null;
         if (this._influxDPs[_id].skipped) {
