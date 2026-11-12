@@ -1724,6 +1724,67 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
         await setTimeoutAsync(1000);
     });
 
+    // Two updates of a state in the same tick are processed concurrently (#595): the pending skipped value
+    // must be written only once, and only one relog timer may stay active
+    const relogTwiceId = `${instanceName}.testValueRelogTwice`;
+
+    it(`Test ${adapterShortName}: Timed relog after two updates in the same tick`, async function () {
+        this.timeout(30000);
+
+        await objects.setObjectAsync(relogTwiceId, {
+            common: { type: 'number', role: 'state' },
+            type: 'state',
+        });
+        const result = await sendToAsync(instanceName, 'enableHistory', {
+            id: relogTwiceId,
+            options: { changesOnly: true, changesRelogInterval: 2, debounceTime: 0, blockTime: 0 },
+        });
+        expect(result.success).to.be.true;
+        await setTimeoutAsync(2000);
+
+        const start = Date.now();
+        await setStateAsync(relogTwiceId, { val: 5, ts: start, ack: true, from: 'test.0' });
+        await setTimeoutAsync(100);
+        // the same value again: not logged, but remembered as skipped value
+        await setStateAsync(relogTwiceId, { val: 5, ts: start + 100, ack: true, from: 'test.0' });
+        await setStateAsync(relogTwiceId, { val: 5, ts: start + 200, ack: true, from: 'test.0' });
+        await setTimeoutAsync(300);
+
+        // two new values without awaiting the first one
+        const changed = Date.now();
+        await Promise.all([
+            setStateAsync(relogTwiceId, { val: 6, ts: changed, ack: true, from: 'test.0' }),
+            setStateAsync(relogTwiceId, { val: 7, ts: changed + 1, ack: true, from: 'test.0' }),
+        ]);
+
+        // relogs expected at about changed + 2 s and changed + 4 s
+        await setTimeoutAsync(5000);
+        await sendToAsync(instanceName, 'disableHistory', { id: relogTwiceId });
+        await sendToAsync(instanceName, 'flushBuffer', {});
+        await setTimeoutAsync(500 + WRITE_VISIBLE_DELAY);
+
+        const history = await sendToAsync(instanceName, 'getHistory', {
+            id: relogTwiceId,
+            options: {
+                start,
+                end: Date.now(),
+                count: 50,
+                aggregate: 'none',
+                removeBorderValues: true,
+            },
+        });
+        console.log(JSON.stringify(history.result, null, 2));
+
+        // the skipped value is written exactly once
+        const skipped = history.result.filter(state => state.val === 5 && state.ts === start + 200);
+        expect(skipped.length).to.be.equal(1);
+
+        // one relog chain: the value 7 itself plus two relogs. An orphaned timer would add two more
+        const latest = history.result.filter(state => state.val === 7);
+        expect(latest.length).to.be.at.least(2);
+        expect(latest.length).to.be.at.most(3);
+    });
+
     // Statistics tab (getDpStatistics / cleanupOrphaned). Kept at the very end: the tests above
     // count the enabled datapoints, and the orphan created here must not disturb them
     const orphanId = `${instanceName}.testValueOrphan`;
