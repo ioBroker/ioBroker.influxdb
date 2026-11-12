@@ -293,6 +293,10 @@ SELECT mean("value") FROM "system.adapter.admin.0.memRss" WHERE $timeFilter GROU
 - **Minimum difference from last value** - When using "Record changes only" you can define the required minimum difference between the new value and the last value. If this is not reached the value is not recorded.
 - **ignore 0 or null values (==0)** - You can define if 0 or null values should be ignored.
 - **ignore values below zero (<0)** - You can define if values below zero should be ignored.
+- **Minimum / Maximum (valid range)** - Numbers below the minimum or above the maximum are outside the valid range. Leave a field empty to not check that side. As soon as one of both is set, you can choose what happens with such a value in **Values outside of min/max**:
+  - *ignore* (default) - the value is not logged.
+  - *write as null (gap)* - instead of the value a gap is logged, so the chart does not show a line through the outlier. As InfluxDB can not store `null`, the point is written without the `value` field and with the field `isNull` (= 1) instead; `getHistory` returns it with `val: null`. Unless the request sets `ignoreNull`, `getHistory` keeps these nulls for such a datapoint (otherwise null values are dropped by default). Aggregations calculated by InfluxDB (average, min, max, ...) skip it. With "Record changes only", outliers in a row are logged as one gap. A `null` received from the device is then written as gap too.
+  - *limit to min/max* - the minimum or maximum is logged instead of the value.
 - **Disable charting optimized logging of skipped values** - By default, the adapter tries to record the values for optimized charting. This can mean that additional values (that e.g. not fulfilled all checks above) are logged automatically. If this is not wanted, you can disable this feature.
 - **Alias-ID** - You can define an alias for the ID. This is useful if you have changed a device and want to have continuous data logging. Please consider switching to real alias States in teh future!
 - **Storage retention** - How many values in the past will be stored on disk. Data are deleted when the time is reached as soon as new data should be stored for a datapoint.
@@ -725,6 +729,9 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 * (GermanBluefox) Data browser: the values of a datapoint can be exported as CSV (e.g. for Excel) or as JSON (the format of `storeState`) for the selected time range
 - (copilot) Adapter requires node.js >= 22.19.0 now
 * (GermanBluefox) InfluxDB 2.x: the `query` command with several Flux queries separated by `;` works again. Since 5.0 the queries were sent as one broken statement and InfluxDB answered with "invalid statement: ,". When one of several queries fails, the error names the failing query (#580)
+* (GermanBluefox) Values outside of the minimum/maximum of a datapoint can now also be written as `null` (gap in the chart) or limited to the minimum/maximum instead of being ignored
+* (GermanBluefox) `getHistory` honors the option `ignoreNull`, it was always `true` before
+* (GermanBluefox) `getHistory` with InfluxDB 2.x answers with the error if the query fails, instead of letting the caller run into its timeout
 
 ### 5.2.3 (2026-10-29)
 * (GermanBluefox) `getHistory` accepts `intervalBorders`: the client can send the borders of the intervals itself, e.g. the local days of a chart. InfluxDB groups by equally long windows, so after a switch of the daylight saving time every window ended an hour away from the midnight and a value written at 23:59:59 was shown on the next day. With borders the values are read raw and aggregated by the adapter (ioBroker/ioBroker.echarts#1311)
