@@ -723,8 +723,6 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 -->
 ### **WORK IN PROGRESS**
 * (GermanBluefox) Fixed: timed relog leaked timers and wrote the skipped value multiple times when a state was set twice in quick succession (#595)
-
-### 5.3.0 (2026-11-04)
 * (GermanBluefox) Data browser: the values of a datapoint can be exported as CSV (e.g. for Excel) or as JSON (the format of `storeState`) for the selected time range
 - (copilot) Adapter requires node.js >= 22.19.0 now
 * (GermanBluefox) InfluxDB 2.x: the `query` command with several Flux queries separated by `;` works again. Since 5.0 the queries were sent as one broken statement and InfluxDB answered with "invalid statement: ,". When one of several queries fails, the error names the failing query (#580)
