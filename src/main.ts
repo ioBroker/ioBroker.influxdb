@@ -1490,6 +1490,9 @@ datasources:
         }
     }
 
+    // Must stay free of awaits: onStateChange does not wait for it, and an await would let two updates
+    // of the same state interleave (#595). It is async only to keep the signature of its callers.
+    // eslint-disable-next-line @typescript-eslint/require-await
     async pushHistory(
         id: string,
         state: ioBroker.State | null | undefined,
@@ -1692,19 +1695,14 @@ datasources:
             } else {
                 const skipped = this._influxDPs[id].skipped;
                 if (settings.changesOnly && skipped) {
-                    // taken out before the await, so a concurrent call for the same id does not write it again
                     this._influxDPs[id].skipped = null;
                     settings.enableDebugLogs &&
                         this.log.debug(`Skipped value logged ${id}, value=${skipped.val}, ts=${skipped.ts}`);
-                    try {
-                        await this.pushHelper(id, skipped);
-                    } catch (e) {
-                        this.logPushError(id, e);
-                    }
-                    // the datapoint may have been removed during the await
-                    if (!this._influxDPs[id]) {
-                        return;
-                    }
+                    // Not awaited on purpose (#595): an await here lets a second update of the same state run
+                    // in between. It then overtakes this one, so the older value ends up as the last state, and
+                    // each call starts its own relog timer. pushHelper buffers or starts writing the point
+                    // synchronously, so the skipped value still goes out before the new one.
+                    void this.pushHelper(id, skipped).catch(e => this.logPushError(id, e));
                 }
                 if (
                     this._influxDPs[id].state &&
