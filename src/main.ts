@@ -12,6 +12,7 @@ import {
     MAX_INFLUX_TIME,
     MIN_INFLUX_TIME,
     type Database,
+    NULL_MARKER_FIELD,
     type ValuesForInflux,
 } from './lib/Database';
 import { formatError, HostUnavailableError, isConnectionError, UnstorableValueError } from './lib/errors';
@@ -66,16 +67,21 @@ interface RawEntryRow {
     _time?: Date | string | number;
     value?: number | string | boolean | null;
     _value?: number | string | boolean | null;
+    _field?: string;
     ack?: boolean | number | string;
     q?: number | string;
     from?: string;
     /** only in the answer of the counting query of InfluxDB 1.x */
     total?: number;
+    /** only in the answer of the counting query of InfluxDB 1.x: the number of gap markers */
+    totalNull?: number;
 }
 
 /** Convert one stored point into the entry format of the ioBroker history API */
 function rawRowToEntry(row: RawEntryRow): IobDataEntry {
-    const value = row.value !== undefined ? row.value : row._value;
+    // a gap marker (see NULL_MARKER_FIELD) reads back as null: as a field it lacks "value", as a row of its own
+    // (usetags) it carries the marker in "_value"
+    const value = row._field === NULL_MARKER_FIELD ? null : row.value !== undefined ? row.value : row._value;
     const entry: IobDataEntry = {
         ts: new Date((row.time ?? row._time) as string).getTime(),
         // the entry of the history API is typed as a number, but a measurement may hold strings or booleans
@@ -205,6 +211,9 @@ function normalizeStateConfig(
     customConfig.ignoreBelowNumber = parseNumberWithNull(customConfig.ignoreBelowNumber);
     if (customConfig.ignoreBelowNumber === null && parseBool(customConfig.ignoreBelowZero)) {
         customConfig.ignoreBelowNumber = 0;
+    }
+    if (customConfig.outOfRange !== 'null' && customConfig.outOfRange !== 'clamp') {
+        customConfig.outOfRange = 'ignore';
     }
 
     customConfig.disableSkippedValueLogging = parseBool(
@@ -1568,27 +1577,41 @@ datasources:
                         );
                     return;
                 }
-                if (
-                    typeof settings.ignoreBelowNumber === 'number' &&
-                    typeof state.val === 'number' &&
-                    state.val < settings.ignoreBelowNumber
-                ) {
-                    settings.enableDebugLogs &&
-                        this.log.debug(
-                            `value ignored because below ${settings.ignoreBelowNumber} for ${id}, new-value=${state.val}, ts=${state.ts}`,
-                        );
-                    return;
-                }
-                if (
-                    typeof settings.ignoreAboveNumber === 'number' &&
-                    typeof state.val === 'number' &&
-                    state.val > settings.ignoreAboveNumber
-                ) {
-                    settings.enableDebugLogs &&
-                        this.log.debug(
-                            `value ignored because above ${settings.ignoreAboveNumber} for ${id}, new-value=${state.val}, ts=${state.ts}`,
-                        );
-                    return;
+                if (typeof state.val === 'number') {
+                    let limit: number | null = null;
+                    let direction = '';
+                    if (typeof settings.ignoreBelowNumber === 'number' && state.val < settings.ignoreBelowNumber) {
+                        limit = settings.ignoreBelowNumber;
+                        direction = 'below';
+                    } else if (
+                        typeof settings.ignoreAboveNumber === 'number' &&
+                        state.val > settings.ignoreAboveNumber
+                    ) {
+                        limit = settings.ignoreAboveNumber;
+                        direction = 'above';
+                    }
+                    if (limit !== null) {
+                        if (settings.outOfRange === 'ignore') {
+                            settings.enableDebugLogs &&
+                                this.log.debug(
+                                    `value ignored because ${direction} ${limit} for ${id}, new-value=${state.val}, ts=${state.ts}`,
+                                );
+                            return;
+                        }
+                        // From here on the replacement runs through all further filters like a received value
+                        const val = settings.outOfRange === 'clamp' ? limit : null;
+                        settings.enableDebugLogs &&
+                            this.log.debug(
+                                `value ${state.val} ${direction} ${limit} for ${id} replaced by ${val}, ts=${state.ts}`,
+                            );
+                        const lastState = this._influxDPs[id].state;
+                        state = { ...state, val };
+                        if (lastState?.val === val) {
+                            // changesOnly detects a change by ts === lc: for the replacement, several different
+                            // outliers in a row are no change, so they are written once and not per value
+                            state.lc = lastState.lc;
+                        }
+                    }
                 }
 
                 // Checked after the ignore filters: an ignored value must not replace a valid one that waits
@@ -1871,7 +1894,7 @@ datasources:
         // InfluxDB can not handle null or non-finite values. The error is thrown (and not just logged),
         // because storeState() has to answer with it instead of a silent "success"; the state-change path
         // catches it and logs it once per datapoint, see logSkipOnce().
-        if (state.val === null) {
+        if (state.val === null && _settings.outOfRange !== 'null') {
             throw new UnstorableValueError('null', `Skipping null value for ${_id}: InfluxDB can not store null`);
         }
         if (typeof state.val === 'number' && !isFinite(state.val)) {
@@ -1897,8 +1920,10 @@ datasources:
                 state.val = false;
             }
         }
-        if (_settings.storageType === 'String' && typeof state.val !== 'string') {
-            state.val = state.val === null ? 'null' : state.val.toString();
+        if (state.val === null) {
+            // only allowed with outOfRange = 'null' (see above): written as a gap, whatever the storageType is
+        } else if (_settings.storageType === 'String' && typeof state.val !== 'string') {
+            state.val = state.val.toString();
         } else if (_settings.storageType === 'Number' && typeof state.val !== 'number') {
             if (typeof state.val === 'boolean') {
                 state.val = state.val ? 1 : 0;
@@ -1925,9 +1950,11 @@ datasources:
             throw new Error('No connection to DB');
         }
 
-        if (state.val === null || state.val === undefined) {
+        // InfluxDB can not handle null/non-existing values. null is only written as a gap marker, when the
+        // datapoint is configured for it
+        if (state.val === undefined || (state.val === null && this._influxDPs[id]?.outOfRange !== 'null')) {
             throw new Error('InfluxDB can not handle null/non-existing values');
-        } // InfluxDB can not handle null/non-existing values
+        }
         if (typeof state.val === 'number' && !isFinite(state.val)) {
             throw new Error(`InfluxDB can not handle non finite values like ${state.val}`);
         }
@@ -1941,7 +1968,7 @@ datasources:
         }
         state.ts = ts;
 
-        if (typeof state.val === 'object') {
+        if (state.val !== null && typeof state.val === 'object') {
             state.val = JSON.stringify(state.val);
         }
 
@@ -2249,7 +2276,8 @@ datasources:
                         this._influxDPs[pointId].storageType = 'Boolean';
                         this._influxDPs[pointId].storageTypeAdjustedInternally = true;
                     } else if (errorText.includes(', already exists as type string')) {
-                        point.value = point.value.toString();
+                        // a gap marker has no value field and can not cause the conflict
+                        point.value = point.value === null ? null : point.value.toString();
                         retry = true;
                         adjustType = true;
                         this._influxDPs[pointId].storageType = 'String';
@@ -3087,6 +3115,27 @@ datasources:
         }
     }
 
+    /**
+     * `ignoreNull` of a getHistory request: as requested, otherwise null values are dropped - except for a datapoint
+     * that writes values outside of its range as gaps (outOfRange = 'null'), whose gaps would get lost then
+     *
+     * @param id the requested ID (maybe an alias)
+     * @param requested `ignoreNull` of the request: false, true, 0 or one of them as string
+     */
+    getIgnoreNull(id: string | undefined, requested: unknown): boolean | 0 {
+        if (requested === true || requested === 'true') {
+            return true;
+        }
+        if (requested === false || requested === 'false') {
+            return false;
+        }
+        if (requested === 0 || requested === '0') {
+            return 0;
+        }
+        const realId = id && this._aliasMap[id] ? this._aliasMap[id] : id;
+        return !(realId && this._influxDPs[realId]?.outOfRange === 'null');
+    }
+
     async getHistoryV1(msg: ioBroker.Message): Promise<void> {
         const startTime = Date.now();
 
@@ -3116,7 +3165,7 @@ datasources:
                 parseInt(this.config.limit as string, 10) ||
                 2000,
             addId: msg.message.options.addId || false,
-            ignoreNull: true,
+            ignoreNull: this.getIgnoreNull(msg.message.id, msg.message.options.ignoreNull),
             sessionId: msg.message.options.sessionId,
             returnNewestEntries: msg.message.options.returnNewestEntries || false,
             percentile:
@@ -3319,7 +3368,8 @@ datasources:
                 case 'none':
                 case 'onchange':
                 case 'minmax':
-                    query += ' value';
+                    // InfluxQL returns only rows with one of the selected fields set: the marker brings the gaps
+                    query += ` value, "${NULL_MARKER_FIELD}"`;
                     options.preAggregated = false;
                     break;
 
@@ -3524,7 +3574,7 @@ datasources:
                 parseInt(this.config.limit as string, 10) ||
                 2000,
             addId: msg.message.options.addId || false,
-            ignoreNull: true,
+            ignoreNull: this.getIgnoreNull(msg.message.id, msg.message.options.ignoreNull),
             sessionId: msg.message.options.sessionId,
             returnNewestEntries: msg.message.options.returnNewestEntries || false,
             percentile:
@@ -3729,9 +3779,12 @@ ${this.config.usetags ? ' |> duplicate(column: "_value", as: "value")' : ' |> pi
 
                     if (supportsAggregates && id) {
                         const config = this._influxDPs[id];
-                        if (config?.state && typeof config.state.val !== 'number') {
+                        // a gap (null) in a number series does not prevent the aggregation
+                        const noNumber = (val: ioBroker.StateValue): boolean =>
+                            typeof val !== 'number' && !(val === null && config.outOfRange === 'null');
+                        if (config?.state && noNumber(config.state.val)) {
                             supportsAggregates = false;
-                        } else if (config?.skipped && typeof config.skipped.val !== 'number') {
+                        } else if (config?.skipped && noNumber(config.skipped.val)) {
                             supportsAggregates = false;
                         }
                     }
@@ -3861,6 +3914,7 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
                             _start?: number;
                             _stop?: number;
                             _measurement?: string;
+                            _field?: string;
                             time?: number;
                             ts?: number;
                             from?: string;
@@ -3888,7 +3942,9 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
                                         val: null,
                                     };
                                     const storedItem = rows[qr][rr];
-                                    if (storedItem.val !== undefined) {
+                                    if (storedItem._field === NULL_MARKER_FIELD) {
+                                        // gap marker with usetags: "value" is the duplicated marker, val stays null
+                                    } else if (storedItem.val !== undefined) {
                                         item.val = storedItem.val;
                                     } else if (storedItem.value !== undefined) {
                                         item.val = storedItem.value!;
@@ -3931,6 +3987,8 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
                             this.setConnected(false);
                         }
                         this.log.error(`getHistory: ${formatError(error)}`);
+                        // without an answer the caller waits for its timeout
+                        sendResponse(this, msg, id, options, formatError(error), startTime);
                     }
                 },
                 storedCount ? 50 : 0,
@@ -4486,7 +4544,7 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
             }
             const where = conditions.length ? ` WHERE ${conditions.join(' AND ')}` : '';
 
-            countQuery = `SELECT count(value) AS total FROM "${safeId}"${where}`;
+            countQuery = `SELECT count(value) AS total, count("${NULL_MARKER_FIELD}") AS totalNull FROM "${safeId}"${where}`;
             dataQuery =
                 `SELECT * FROM "${safeId}"${where} ORDER BY time ${options.sort === 'asc' ? 'ASC' : 'DESC'}` +
                 ` LIMIT ${options.limit} OFFSET ${options.offset}`;
@@ -4500,7 +4558,7 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
 
             countQuery =
                 `from(bucket: "${safeBucket}")\n${range}\n` +
-                `|> filter(fn: (r) => r["_measurement"] == "${safeId}" and r["_field"] == "value")\n` +
+                `|> filter(fn: (r) => r["_measurement"] == "${safeId}" and (r["_field"] == "value" or r["_field"] == "${NULL_MARKER_FIELD}"))\n` +
                 `|> group()\n|> count(column: "_value")`;
 
             // `group()` is essential: without it, sort and limit would be applied to every series
@@ -4535,7 +4593,9 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
 
         // InfluxDB 1.x counts into the aliased column "total", 2.x into the Flux column "_value"
         const counted = rows?.[0]?.[0];
-        const total = parseInt((counted?.total ?? counted?._value) as unknown as string, 10) || 0;
+        const total =
+            (parseInt((counted?.total ?? counted?._value) as unknown as string, 10) || 0) +
+            (parseInt(counted?.totalNull as unknown as string, 10) || 0);
 
         return { entries: (rows?.[1] || []).map(row => rawRowToEntry(row)), total };
     }

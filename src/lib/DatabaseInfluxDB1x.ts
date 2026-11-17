@@ -1,5 +1,5 @@
 import { InfluxDB, type IPoint, type IResults, escape } from 'influx';
-import { Database, type ValuesForInflux } from './Database';
+import { Database, NULL_MARKER_FIELD, type ValuesForInflux } from './Database';
 import { cardinalityFromSeriesKeys, type MeasurementStatistics } from './statistics';
 
 export default class DatabaseInfluxDB1x extends Database {
@@ -173,6 +173,10 @@ export default class DatabaseInfluxDB1x extends Database {
                 return;
             }
             if (key === 'from' && !pointToSend[key as keyof ValuesForInflux]) {
+                return;
+            }
+            if (key === 'value' && pointToSend.value === null) {
+                fields[NULL_MARKER_FIELD] = 1;
                 return;
             }
             fields[key] = pointToSend[key as keyof ValuesForInflux];
