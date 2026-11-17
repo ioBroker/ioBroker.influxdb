@@ -1185,7 +1185,12 @@ function register(it, expect, sendTo, adapterShortName, writeNulls, assumeExisti
             },
             result => {
                 console.log(JSON.stringify(result.result, null, 2));
-                expect(result.result.length).to.be.equal(4);
+                // One value per day with data plus the two border values. InfluxDB aligns the daily windows to
+                // midnight UTC, and the data of this suite lies in two blocks: the samples from about 29 to 25 h
+                // ago and the values written around the start of the suite. Each block may cross midnight UTC
+                // depending on the time the test runs (e.g. between 01:00 and 05:00 UTC for the first one),
+                // so there are 2 to 4 days with data.
+                expect(result.result.length).to.be.within(4, 6);
                 expect(result.result[0].id).to.be.equal(`${instanceName}.testValue`);
                 done();
             },
