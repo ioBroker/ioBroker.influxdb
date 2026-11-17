@@ -1478,11 +1478,7 @@ datasources:
             // a rarely updated state gets no values at all until then. A start value written below restarts it.
             const settings = this._influxDPs[id];
             if (settings.changesOnly && settings.changesRelogInterval > 0 && !settings.relogTimeout) {
-                settings.relogTimeout = setTimeout(
-                    _id => this.reLogHelper(_id),
-                    settings.changesRelogInterval * 1000,
-                    id,
-                );
+                this.startRelogTimer(id);
             }
             if (this.config.relogLastValueOnStart) {
                 this._tasksStart.push(id);
@@ -1494,6 +1490,9 @@ datasources:
         }
     }
 
+    // Must stay free of awaits: onStateChange does not wait for it, and an await would let two updates
+    // of the same state interleave (#595). It is async only to keep the signature of its callers.
+    // eslint-disable-next-line @typescript-eslint/require-await
     async pushHistory(
         id: string,
         state: ioBroker.State | null | undefined,
@@ -1694,17 +1693,16 @@ datasources:
                     );
                 ignoreDebounce = true;
             } else {
-                if (settings.changesOnly && this._influxDPs[id].skipped) {
-                    settings.enableDebugLogs &&
-                        this.log.debug(
-                            `Skipped value logged ${id}, value=${this._influxDPs[id].skipped.val}, ts=${this._influxDPs[id].skipped.ts}`,
-                        );
-                    try {
-                        await this.pushHelper(id, this._influxDPs[id].skipped);
-                    } catch (e) {
-                        this.logPushError(id, e);
-                    }
+                const skipped = this._influxDPs[id].skipped;
+                if (settings.changesOnly && skipped) {
                     this._influxDPs[id].skipped = null;
+                    settings.enableDebugLogs &&
+                        this.log.debug(`Skipped value logged ${id}, value=${skipped.val}, ts=${skipped.ts}`);
+                    // Not awaited on purpose (#595): an await here lets a second update of the same state run
+                    // in between. It then overtakes this one, so the older value ends up as the last state, and
+                    // each call starts its own relog timer. pushHelper buffers or starts writing the point
+                    // synchronously, so the skipped value still goes out before the new one.
+                    void this.pushHelper(id, skipped).catch(e => this.logPushError(id, e));
                 }
                 if (
                     this._influxDPs[id].state &&
@@ -1731,11 +1729,7 @@ datasources:
                             );
                         void this.pushHelper(id).catch(e => this.logPushError(id, e));
                         if (settings.changesOnly && settings.changesRelogInterval > 0) {
-                            this._influxDPs[id].relogTimeout = setTimeout(
-                                _id => this.reLogHelper(_id),
-                                settings.changesRelogInterval * 1000,
-                                id,
-                            );
+                            this.startRelogTimer(id);
                         }
                     },
                     settings.debounceTime,
@@ -1755,14 +1749,19 @@ datasources:
                 }
                 void this.pushHelper(id, state).catch(e => this.logPushError(id, e));
                 if (settings.changesOnly && settings.changesRelogInterval > 0) {
-                    this._influxDPs[id].relogTimeout = setTimeout(
-                        _id => this.reLogHelper(_id),
-                        settings.changesRelogInterval * 1000,
-                        id,
-                    );
+                    this.startRelogTimer(id);
                 }
             }
         }
+    }
+
+    /** (Re)start the timed relog. A running timer is cleared first, otherwise it would be orphaned and relog forever */
+    startRelogTimer(id: string): void {
+        const dp = this._influxDPs[id];
+        if (dp.relogTimeout) {
+            clearTimeout(dp.relogTimeout);
+        }
+        dp.relogTimeout = setTimeout(_id => this.reLogHelper(_id), dp.changesRelogInterval * 1000, id);
     }
 
     /** Remember the newest value received during blockTime and log it once blockTime is over */
@@ -1829,6 +1828,9 @@ datasources:
         if (!this._influxDPs[_id]) {
             this.log.info(`non-existing id ${_id}`);
             return;
+        }
+        if (this._influxDPs[_id].relogTimeout) {
+            clearTimeout(this._influxDPs[_id].relogTimeout);
         }
         this._influxDPs[_id].relogTimeout = null;
         if (this._influxDPs[_id].skipped) {

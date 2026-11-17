@@ -721,6 +721,9 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (GermanBluefox) Fixed: timed relog leaked timers and wrote the skipped value multiple times when a state was set twice in quick succession (#595)
+
 ### 5.3.0 (2026-11-04)
 * (GermanBluefox) Data browser: the values of a datapoint can be exported as CSV (e.g. for Excel) or as JSON (the format of `storeState`) for the selected time range
 - (copilot) Adapter requires node.js >= 22.19.0 now
