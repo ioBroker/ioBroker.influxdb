@@ -736,6 +736,10 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (GermanBluefox) Fixed connection to InfluxDB 1.x when the password contains "%" (#601)
+* (GermanBluefox) Fixed: InfluxDB 1.x stopped with "Password error" when the password contains umlauts or other characters such as "ä", "ö", "ü" or "ß"
+
 ### 5.5.0 (2026-11-23)
 * (GermanBluefox) Added the standard commands of the shared catalog: history.aggregate (one number for a period: min, max, avg, sum, count, delta, first, last, integral, duration) and history.lastChange; getHistory is marked as history.getHistory
 * (GermanBluefox) Fixed: `getHistory` with `id: '*'` (or without ID) answers an error instead of an empty result. InfluxDB keeps one measurement per state and cannot read all states at once; the example in this README that used `'*'` reads one state now

@@ -650,14 +650,6 @@ export class InfluxDBAdapter extends Adapter {
                     return this.log.error('Password error: Please re-enter the password in Admin. Stopping');
                 }
 
-                let decodedPassword: string;
-                try {
-                    decodedPassword = decodeURIComponent(this.config.password || '');
-                } catch {
-                    this.log.error('Password error: Please re-enter the password in Admin. Stopping');
-                    return;
-                }
-
                 this._client = new DatabaseInfluxDB1x(
                     {
                         log: this.log,
@@ -669,7 +661,8 @@ export class InfluxDBAdapter extends Adapter {
                     },
                     {
                         username: this.config.user,
-                        password: decodedPassword,
+                        // stored in plain text, so it must be passed unchanged (a "%" is a valid character)
+                        password: this.config.password || '',
                         validateSSL: this.config.validateSSL,
                     },
                 );
@@ -841,6 +834,12 @@ export class InfluxDBAdapter extends Adapter {
         );
         config.port = parseInt(config.port as string, 10) || 0;
         config.requestTimeout = parseInt(config.requestTimeout as string) || 30000;
+        // Only the "Test connection" button of Admin sends the password URI-encoded, the stored one is plain text
+        try {
+            config.password = decodeURIComponent(config.password || '');
+        } catch {
+            // keep raw
+        }
 
         let timeout: NodeJS.Timeout | null = null;
         try {
@@ -933,7 +932,7 @@ export class InfluxDBAdapter extends Adapter {
                         },
                         {
                             username: config.user,
-                            password: decodeURIComponent(config.password || ''),
+                            password: config.password,
                             validateSSL: config.validateSSL,
                         },
                     );
