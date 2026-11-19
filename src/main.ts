@@ -18,6 +18,7 @@ import { formatError, HostUnavailableError, isConnectionError, UnstorableValueEr
 import { normalizeCustomTags } from './lib/customTags';
 import { normalizeSeriesBuffer } from './lib/bufferFile';
 import { deleteRangeProblem, parseDeleteRequests, toTimestamp, type DeleteRange } from './lib/deleteRequests';
+import { COMMANDS, HELP } from './lib/help';
 import {
     classifyDatapoint,
     selectForCleanup,
@@ -1000,7 +1001,12 @@ export class InfluxDBAdapter extends Adapter {
         this.log.debug(`Incoming message ${msg.command} from ${msg.from}`);
         this.config.dbname ||= 'iobroker';
         try {
-            if (msg.command === 'features') {
+            if (msg.command === 'help') {
+                // what the instance answers, for AI agents and script authors; needs no connection
+                if (msg.callback) {
+                    this.sendTo(msg.from, msg.command, { help: HELP, commands: COMMANDS }, msg.callback);
+                }
+            } else if (msg.command === 'features') {
                 const supportedFeatures = [
                     'update',
                     'delete',

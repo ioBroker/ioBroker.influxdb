@@ -300,6 +300,9 @@ SELECT mean("value") FROM "system.adapter.admin.0.memRss" WHERE $timeFilter GROU
 
 Most of these values can be pre-defined in the instance settings and are then pre-filled or used for the datapoint.
 
+## Messages for scripts and AI agents
+`sendTo('influxdb.0', 'help', {})` answers `{help, commands}`: a description of all messages and of the measurement layout for AI agents (e.g. ioBroker.pi-agent) and script authors, and the list of all commands with `write: true` for the ones that change something.
+
 ## Access values from Javascript adapter
 The sorted values can be accessed from Javascript adapter.
 
@@ -731,6 +734,7 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 -->
 ### **WORK IN PROGRESS**
 * (GermanBluefox) Fixed: `delete` / `deleteRange` without a valid `ts` or range no longer deletes all values of the state. A single `{id, state: {start, end}}`, a state without `ts` or with `ts: 0` deleted everything (InfluxDB 1.x since 2000, 2.x since 1970, 3.x the whole table), an unparsable `start` everything up to `end`. Such a message is refused now with an error and nothing is deleted; `{id, state: {start, end}}` and `{id, start, end}` delete the range, `ts: 0` the value at 0
+* (GermanBluefox) Added the message "help": a description of all messages for AI agents (e.g. pi-agent), and `common.supportedMessages.help`
 
 ### 5.3.1 (2026-11-17)
 * (GermanBluefox) Fixed: timed relog leaked timers and wrote the skipped value multiple times when a state was set twice in quick succession (#595)
