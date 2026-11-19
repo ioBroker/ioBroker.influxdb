@@ -306,10 +306,10 @@ Most of these values can be pre-defined in the instance settings and are then pr
 ## Access values from Javascript adapter
 The sorted values can be accessed from Javascript adapter.
 
-* Get 50 last stored events for all IDs
+* Get the 50 last stored values of "system.adapter.admin.0.memRss" (InfluxDB keeps one measurement per state, so `id: '*'` for all IDs is not supported and answers an error)
 ```javascript
 sendTo('influxdb.0', 'getHistory', {
-    id: '*',
+    id: 'system.adapter.admin.0.memRss',
     options: {
         end:       Date.now(),
         count:     50,
@@ -732,6 +732,10 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (GermanBluefox) Fixed: `getHistory` with `id: '*'` (or without ID) answers an error instead of an empty result. InfluxDB keeps one measurement per state and cannot read all states at once; the example in this README that used `'*'` reads one state now
+* (GermanBluefox) Fixed: `getHistory` with an aggregate (e.g. average) and without `start` answers instead of failing with "Invalid time value" (the step was NaN). Like the sql and history adapters, it takes the newest `count` values and builds the intervals from them. An unparsable `start` or `end` is refused with "is not a valid date", a time stamp as text ("1700000000000") is accepted
+
 ### 5.4.0 (2026-11-19)
 * (GermanBluefox) Fixed: `delete` / `deleteRange` without a valid `ts` or range no longer deletes all values of the state. A single `{id, state: {start, end}}`, a state without `ts` or with `ts: 0` deleted everything (InfluxDB 1.x since 2000, 2.x since 1970, 3.x the whole table), an unparsable `start` everything up to `end`. Such a message is refused now with an error and nothing is deleted; `{id, state: {start, end}}` and `{id, start, end}` delete the range, `ts: 0` the value at 0
 * (GermanBluefox) Added the message "help": a description of all messages for AI agents (e.g. pi-agent), and `common.supportedMessages.help`

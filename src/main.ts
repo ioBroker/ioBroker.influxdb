@@ -146,6 +146,24 @@ function applyIntervalBorders(options: GetHistoryOptions, borders: unknown): boo
 }
 
 /**
+ * Why `getHistory` cannot read the history of this ID, or `null` if it can.
+ *
+ * InfluxDB keeps one measurement per state and cannot answer for all states at once like the sql adapter does with
+ * `'*'`. Such a request (and one without ID) read the measurement "undefined" and answered an empty result.
+ *
+ * @param id the `id` of the message
+ */
+function getHistoryIdProblem(id: unknown): string | null {
+    if (id === '*') {
+        return 'Invalid call: "*" (all states) is not supported, getHistory reads the history of one state';
+    }
+    if (typeof id !== 'string' || !id) {
+        return 'Invalid call: ID missing, getHistory reads the history of one state';
+    }
+    return null;
+}
+
+/**
  * Whether `count` limits the raw values of a `getHistory` request that InfluxDB does not aggregate itself.
  *
  * `count` is the number of values only for `none` and for a request without start, which asks for the newest values.
@@ -3007,8 +3025,18 @@ datasources:
             );
             return;
         }
+        const idError = getHistoryIdProblem(msg.message.id);
+        if (idError) {
+            this.sendTo(
+                msg.from,
+                msg.command,
+                { result: [], step: 0, error: idError, sessionId: msg.message.options.sessionId },
+                msg.callback,
+            );
+            return;
+        }
         const logId = (msg.message.id ? msg.message.id : 'all') + Date.now() + Math.random();
-        let id: string | undefined = msg.message.id === '*' ? undefined : msg.message.id;
+        let id: string = msg.message.id;
 
         const options: GetHistoryOptions = {
             start: msg.message.options.start,
@@ -3056,32 +3084,30 @@ datasources:
             }
         }
 
-        try {
-            if (options.start && typeof options.start !== 'number') {
-                options.start = new Date(options.start).getTime();
+        // `new Date()` never throws: an unparsable date gave NaN and with it a NaN step. A numeric string
+        // ("1700000000000") is a timestamp, too - as a date it is NaN as well.
+        if (options.start) {
+            options.start = toTimestamp(options.start);
+            if (options.start === undefined) {
+                this.sendTo(
+                    msg.from,
+                    msg.command,
+                    {
+                        error: `Invalid call. Start date ${JSON.stringify(msg.message.options.start)} is not a valid date`,
+                    },
+                    msg.callback,
+                );
+                return;
             }
-        } catch {
-            this.sendTo(
-                msg.from,
-                msg.command,
-                {
-                    error: `Invalid call. Start date ${JSON.stringify(options.start)} is not a valid date`,
-                },
-                msg.callback,
-            );
-            return;
         }
 
-        try {
-            if (options.end && typeof options.end !== 'number') {
-                options.end = new Date(options.end).getTime();
-            }
-        } catch {
+        options.end = toTimestamp(options.end);
+        if (options.end === undefined) {
             return this.sendTo(
                 msg.from,
                 msg.command,
                 {
-                    error: `Invalid call. End date ${JSON.stringify(options.end)} is not a valid date`,
+                    error: `Invalid call. End date ${JSON.stringify(msg.message.options.end)} is not a valid date`,
                 },
                 msg.callback,
             );
@@ -3117,12 +3143,12 @@ datasources:
             id = this._aliasMap[id];
         }
 
-        if ((options.aggregate === 'percentile' && options.percentile! < 0) || options.percentile! > 100) {
+        if (options.aggregate === 'percentile' && (options.percentile! < 0 || options.percentile! > 100)) {
             this.log.error(`Invalid percentile value: ${options.percentile}, use 50 as default`);
             options.percentile = 50;
         }
 
-        if ((options.aggregate === 'quantile' && options.quantile! < 0) || options.quantile! > 1) {
+        if (options.aggregate === 'quantile' && (options.quantile! < 0 || options.quantile! > 1)) {
             this.log.error(`Invalid quantile value: ${options.quantile}, use 0.5 as default`);
             options.quantile = 0.5;
         }
@@ -3136,10 +3162,10 @@ datasources:
         }
 
         if (!options.start && !options.count) {
-            options.start = options.end! - 86400000; // - 1 day
+            options.start = options.end - 86400000; // - 1 day
         }
 
-        if (options.start! > options.end!) {
+        if (options.start! > options.end) {
             const _end = options.end;
             options.end = options.start;
             options.start = _end;
@@ -3157,6 +3183,12 @@ datasources:
             options.aggregate !== 'minmax';
 
         if (options.aggregate === 'integral' && options.integralInterpolation === 'linear') {
+            resultsFromInfluxDB = false;
+        }
+
+        // Without start (and step) there is no range to divide into intervals: the step was NaN and the query
+        // failed. Like sql and history: read the newest `count` values, @iobroker/aggregate builds the intervals.
+        if (!options.start && !options.step) {
             resultsFromInfluxDB = false;
         }
 
@@ -3417,6 +3449,15 @@ datasources:
                 msg.callback,
             );
         }
+        const idError = getHistoryIdProblem(msg.message.id);
+        if (idError) {
+            return this.sendTo(
+                msg.from,
+                msg.command,
+                { result: [], step: 0, error: idError, sessionId: msg.message.options.sessionId },
+                msg.callback,
+            );
+        }
 
         const options: GetHistoryOptions = {
             start: msg.message.options.start,
@@ -3453,7 +3494,7 @@ datasources:
         };
         const withBorders = applyIntervalBorders(options, msg.message.options.intervalBorders);
         const logId = (msg.message.id ? msg.message.id : 'all') + Date.now() + Math.random();
-        let id: string | undefined = msg.message.id === '*' ? undefined : msg.message.id;
+        let id: string = msg.message.id;
 
         this.log.debug(`${logId} getHistory message: ${JSON.stringify(msg.message)}`);
 
@@ -3465,31 +3506,29 @@ datasources:
             }
         }
 
-        try {
-            if (options.start && typeof options.start !== 'number') {
-                options.start = new Date(options.start).getTime();
+        // `new Date()` never throws: an unparsable date gave NaN and with it a NaN step. A numeric string
+        // ("1700000000000") is a timestamp, too - as a date it is NaN as well.
+        if (options.start) {
+            options.start = toTimestamp(options.start);
+            if (options.start === undefined) {
+                return this.sendTo(
+                    msg.from,
+                    msg.command,
+                    {
+                        error: `Invalid call. Start date ${JSON.stringify(msg.message.options.start)} is not a valid date`,
+                    },
+                    msg.callback,
+                );
             }
-        } catch {
-            return this.sendTo(
-                msg.from,
-                msg.command,
-                {
-                    error: `Invalid call. Start date ${JSON.stringify(options.start)} is not a valid date`,
-                },
-                msg.callback,
-            );
         }
 
-        try {
-            if (options.end && typeof options.end !== 'number') {
-                options.end = new Date(options.end).getTime();
-            }
-        } catch {
+        options.end = toTimestamp(options.end);
+        if (options.end === undefined) {
             return this.sendTo(
                 msg.from,
                 msg.command,
                 {
-                    error: `Invalid call. End date ${JSON.stringify(options.end)} is not a valid date`,
+                    error: `Invalid call. End date ${JSON.stringify(msg.message.options.end)} is not a valid date`,
                 },
                 msg.callback,
             );
@@ -3525,12 +3564,12 @@ datasources:
             id = this._aliasMap[id];
         }
 
-        if ((options.aggregate === 'percentile' && options.percentile! < 0) || options.percentile! > 100) {
+        if (options.aggregate === 'percentile' && (options.percentile! < 0 || options.percentile! > 100)) {
             this.log.error(`Invalid percentile value: ${options.percentile}, use 50 as default`);
             options.percentile = 50;
         }
 
-        if ((options.aggregate === 'quantile' && options.quantile! < 0) || options.quantile! > 1) {
+        if (options.aggregate === 'quantile' && (options.quantile! < 0 || options.quantile! > 1)) {
             this.log.error(`Invalid quantile value: ${options.quantile}, use 0.5 as default`);
             options.quantile = 0.5;
         }
@@ -3543,10 +3582,10 @@ datasources:
             options.integralUnit = 60;
         }
         if (!options.start && !options.count) {
-            options.start = options.end! - 86400000; // - 1 day
+            options.start = options.end - 86400000; // - 1 day
         }
 
-        if (options.start! > options.end!) {
+        if (options.start! > options.end) {
             const _end = options.end;
             options.end = options.start;
             options.start = _end;
@@ -3558,6 +3597,9 @@ datasources:
 
         const resultsFromInfluxDB =
             !withBorders &&
+            // Without start (and step) there is no range to divide into intervals: the step was NaN and the query
+            // failed. Like sql and history: read the newest `count` values, @iobroker/aggregate builds the intervals.
+            !!(options.start || options.step) &&
             options.aggregate !== 'onchange' &&
             options.aggregate !== 'none' &&
             options.aggregate !== 'minmax';

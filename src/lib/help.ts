@@ -51,12 +51,13 @@ Layout (for a query):
 Commands (sendTo influxdb.0):
 - getHistory {id, options: {start?, end?, aggregate?, count?, step?, ...}}: the course of one state:
   {result: [{ts, val, ack?, from?, q?, id?}], step, sessionId}, on an error {result: [], error}. options is
-  required (may be {}).
+  required (may be {}). id: one state; "*" (all states) is refused with an error.
   aggregate: average (default), min, max, minmax (min and max of each interval), total, count, percentile
   {percentile 0-100, default 50}, quantile {quantile 0-1, default 0.5}, integral {integralUnit in s, default 60,
   3600 gives Wh from W; integralInterpolation none (default) | linear}: one value per interval, mostly computed
   by InfluxDB; none or onchange: the stored values (with their ack, q and from).
-  start: needed for one value per interval; without it, with none or onchange, the newest count values.
+  start: without it the newest count values; with an aggregate and without step, the adapter builds the
+  intervals from them (as sql and history do).
   end: default now + 5000 s. count: the number of intervals (default 500); with none/onchange the number of
   values (default limit on 1.x and 3.x, 500 on 2.x). step: the interval in ms instead of count.
   intervalBorders: [ms, ...] ascending borders of the intervals (e.g. local days), replaces start, end and step.
