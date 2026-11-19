@@ -17,6 +17,7 @@ import {
 import { formatError, HostUnavailableError, isConnectionError, UnstorableValueError } from './lib/errors';
 import { normalizeCustomTags } from './lib/customTags';
 import { normalizeSeriesBuffer } from './lib/bufferFile';
+import { deleteRangeProblem, parseDeleteRequests, toTimestamp, type DeleteRange } from './lib/deleteRequests';
 import {
     classifyDatapoint,
     selectForCleanup,
@@ -2344,14 +2345,13 @@ datasources:
         this._seriesBufferCounter = 0;
     }
 
-    async _delete(
-        id: string,
-        state: {
-            start?: number;
-            end?: number;
-            ts?: number;
-        },
-    ): Promise<void> {
+    async _delete(id: string, state: DeleteRange): Promise<void> {
+        // A missing or invalid time stamp fell through to "delete all" before: refuse it, whoever calls
+        const problem = deleteRangeProblem(state);
+        if (problem) {
+            throw new Error(`Nothing deleted for ${id}: ${problem}`);
+        }
+
         if (!this._connected) {
             throw new Error('not connected');
         }
@@ -2359,12 +2359,10 @@ datasources:
         if (this.config.dbversion === '1.x') {
             const safeId = escapeInfluxQLIdentifier(id);
             let query;
-            if (state.ts) {
+            if (state.mode === 'one') {
                 query = `DELETE FROM "${safeId}" WHERE time = '${new Date(state.ts).toISOString()}'`;
-            } else if (state.start) {
-                query = `DELETE FROM "${safeId}" WHERE time >= '${new Date(state.start).toISOString()}'${state.end ? ` AND time <= '${new Date(state.end).toISOString()}'` : ''}`;
-            } else if (state.end) {
-                query = `DELETE FROM "${safeId}" WHERE time <= '${new Date(state.end).toISOString()}'`;
+            } else if (state.mode === 'range') {
+                query = `DELETE FROM "${safeId}" WHERE time >= '${new Date(state.start).toISOString()}' AND time <= '${new Date(state.end).toISOString()}'`;
             } else {
                 query = `DELETE FROM "${safeId}" WHERE time >= '2000-01-01T00:00:00.000Z'`; // delete all
             }
@@ -2379,20 +2377,12 @@ datasources:
         } else if (this.config.dbversion === '2.x') {
             let start;
             let stop;
-            if (state.ts) {
+            if (state.mode === 'one') {
                 start = state.ts;
                 stop = state.ts;
-            } else if (state.start) {
-                // deletes from "state.start" until ...
+            } else if (state.mode === 'range') {
+                // deletes from "state.start" until "state.end"
                 start = state.start;
-                if (state.end) {
-                    stop = state.end; // ... "state.end"
-                } else {
-                    stop = new Date(); // ... now
-                }
-            } else if (state.end) {
-                // deletes from 01.01.1970 until "state.end"
-                start = new Date(0);
                 stop = state.end;
             } else {
                 // deletes from 01.01.1970 until now
@@ -2416,7 +2406,7 @@ datasources:
                 throw error;
             }
         } else if (this.config.dbversion === '3.x') {
-            if (state.ts || state.start || state.end) {
+            if (state.mode !== 'all') {
                 throw new Error('InfluxDB 3.x cannot delete single values or a time range, only a whole datapoint');
             }
             try {
@@ -2446,140 +2436,41 @@ datasources:
             );
             return;
         }
-        let id;
-        if (Array.isArray(msg.message)) {
-            this.log.debug(`deleteStateFromDB ${msg.message.length} items`);
+        // Every entry is checked before anything is deleted. A missing or invalid `ts`, `start` or `end`
+        // fell through to "delete every value of the datapoint" before.
+        const { requests, errors } = parseDeleteRequests(msg.message, Date.now(), id => this._aliasMap[id] || id);
+        if (errors.length) {
+            const error = `${errors.join('; ')}. Nothing was deleted`;
+            this.log.error(`${msg.command}: ${error}`);
+            this.sendTo(
+                msg.from,
+                msg.command,
+                {
+                    success: false,
+                    error,
+                    connected: !!this._connected,
+                },
+                msg.callback,
+            );
+            return;
+        }
 
-            for (let i = 0; i < msg.message.length; i++) {
-                id = this._aliasMap[msg.message[i].id] ? this._aliasMap[msg.message[i].id] : msg.message[i].id;
-
-                // {id: 'blabla', ts: 892}
-                if (msg.message[i].ts) {
-                    await this._delete(id, { ts: msg.message[i].ts });
-                } else if (msg.message[i].start) {
-                    if (typeof msg.message[i].start === 'string') {
-                        msg.message[i].start = new Date(msg.message[i].start).getTime();
-                    }
-                    if (typeof msg.message[i].end === 'string') {
-                        msg.message[i].end = new Date(msg.message[i].end).getTime();
-                    }
-                    await this._delete(id, { start: msg.message[i].start, end: msg.message[i].end || Date.now() });
-                } else if (
-                    typeof msg.message[i].state === 'object' &&
-                    msg.message[i].state &&
-                    msg.message[i].state.ts
-                ) {
-                    await this._delete(id, { ts: msg.message[i].state.ts });
-                } else if (
-                    typeof msg.message[i].state === 'object' &&
-                    msg.message[i].state &&
-                    msg.message[i].state.start
-                ) {
-                    if (typeof msg.message[i].state.start === 'string') {
-                        msg.message[i].state.start = new Date(msg.message[i].state.start).getTime();
-                    }
-                    if (typeof msg.message[i].state.end === 'string') {
-                        msg.message[i].state.end = new Date(msg.message[i].state.end).getTime();
-                    }
-                    await this._delete(id, {
-                        start: msg.message[i].state.start,
-                        end: msg.message[i].state.end || Date.now(),
-                    });
-                } else {
-                    this.log.warn(`Invalid state for ${JSON.stringify(msg.message[i])}`);
-                }
+        this.log.debug(`deleteStateFromDB ${requests.length} items`);
+        try {
+            for (const request of requests) {
+                await this._delete(request.id, request.range);
             }
-        } else if (msg.message.state && Array.isArray(msg.message.state)) {
-            this.log.debug(`deleteStateFromDB ${msg.message.state.length} items`);
-            id = this._aliasMap[msg.message.id] ? this._aliasMap[msg.message.id] : msg.message.id;
-
-            for (let j = 0; j < msg.message.state.length; j++) {
-                if (msg.message.state[j] && typeof msg.message.state[j] === 'object') {
-                    if (msg.message.state[j].ts) {
-                        await this._delete(id, { ts: msg.message.state[j].ts });
-                    } else if (msg.message.state[j].start) {
-                        if (typeof msg.message.state[j].start === 'string') {
-                            msg.message.state[j].start = new Date(msg.message.state[j].start).getTime();
-                        }
-                        if (typeof msg.message.state[j].end === 'string') {
-                            msg.message.state[j].end = new Date(msg.message.state[j].end).getTime();
-                        }
-                        await this._delete(id, {
-                            start: msg.message.state[j].start,
-                            end: msg.message.state[j].end || Date.now(),
-                        });
-                    }
-                } else if (msg.message.state[j] && typeof msg.message.state[j] === 'number') {
-                    await this._delete(id, { ts: msg.message.state[j] });
-                } else {
-                    this.log.warn(`Invalid state for ${JSON.stringify(msg.message.state[j])}`);
-                }
-            }
-        } else if (msg.message.ts && Array.isArray(msg.message.ts)) {
-            this.log.debug(`deleteStateFromDB ${msg.message.ts.length} items`);
-            id = this._aliasMap[msg.message.id] ? this._aliasMap[msg.message.id] : msg.message.id;
-            for (let j = 0; j < msg.message.ts.length; j++) {
-                if (msg.message.ts[j] && typeof msg.message.ts[j] === 'number') {
-                    await this._delete(id, { ts: msg.message.ts[j] });
-                } else {
-                    this.log.warn(`Invalid state for ${JSON.stringify(msg.message.ts[j])}`);
-                }
-            }
-        } else if (msg.message.id && msg.message.state && typeof msg.message.state === 'object') {
-            this.log.debug('deleteStateFromDB 1 item');
-            id = this._aliasMap[msg.message.id] ? this._aliasMap[msg.message.id] : msg.message.id;
-            try {
-                await this._delete(id, { ts: msg.message.state.ts });
-                this.sendTo(
-                    msg.from,
-                    msg.command,
-                    {
-                        success: true,
-                        connected: !!this._connected,
-                    },
-                    msg.callback,
-                );
-            } catch (error) {
-                this.sendTo(
-                    msg.from,
-                    msg.command,
-                    {
-                        success: false,
-                        error: formatError(error),
-                        connected: !!this._connected,
-                    },
-                    msg.callback,
-                );
-            }
-        } else if (msg.message.id && msg.message.ts && typeof msg.message.ts === 'number') {
-            this.log.debug('deleteStateFromDB 1 item');
-            id = this._aliasMap[msg.message.id] ? this._aliasMap[msg.message.id] : msg.message.id;
-            try {
-                await this._delete(id, { ts: msg.message.ts });
-                this.sendTo(
-                    msg.from,
-                    msg.command,
-                    {
-                        success: true,
-                        connected: !!this._connected,
-                    },
-                    msg.callback,
-                );
-            } catch (error) {
-                this.sendTo(
-                    msg.from,
-                    msg.command,
-                    {
-                        success: false,
-                        error: formatError(error),
-                        connected: !!this._connected,
-                    },
-                    msg.callback,
-                );
-            }
-        } else {
-            this.log.error('deleteStateFromDB called with invalid data');
-            this.sendTo(msg.from, msg.command, { error: `Invalid call: ${JSON.stringify(msg)}` }, msg.callback);
+        } catch (error) {
+            this.sendTo(
+                msg.from,
+                msg.command,
+                {
+                    success: false,
+                    error: formatError(error),
+                    connected: !!this._connected,
+                },
+                msg.callback,
+            );
             return;
         }
 
@@ -2613,7 +2504,7 @@ datasources:
             try {
                 for (let i = 0; i < msg.message.length; i++) {
                     id = this._aliasMap[msg.message[i].id] ? this._aliasMap[msg.message[i].id] : msg.message[i].id;
-                    await this._delete(id, {});
+                    await this._delete(id, { mode: 'all' });
                 }
                 this.sendTo(
                     msg.from,
@@ -2640,7 +2531,7 @@ datasources:
             this.log.debug('deleteStateAll 1 item');
             id = this._aliasMap[msg.message.id] ? this._aliasMap[msg.message.id] : msg.message.id;
             try {
-                await this._delete(id, {});
+                await this._delete(id, { mode: 'all' });
                 this.sendTo(
                     msg.from,
                     msg.command,
@@ -2669,6 +2560,13 @@ datasources:
     }
 
     async update(id: string, state: ioBroker.State): Promise<void> {
+        // `ts` selects the value to change; without it the old value cannot be found and deleted
+        const ts = toTimestamp(state.ts);
+        if (ts === undefined) {
+            throw new Error(`Nothing updated for ${id}: invalid or missing "ts" ${JSON.stringify(state.ts)}`);
+        }
+        state = { ...state, ts };
+
         if (!this._connected) {
             throw new Error('not connected');
         }
@@ -2737,7 +2635,7 @@ datasources:
                             }
                         }
                     } else {
-                        await this._delete(id, { ts: new Date(stored.time || stored.ts).getTime() });
+                        await this._delete(id, { mode: 'one', ts: new Date(stored.time || stored.ts).getTime() });
                     }
                     await this.pushValueIntoDB(id, storedState, true, storedTags);
                 } else {
@@ -2792,7 +2690,7 @@ datasources:
                     storedState.ts = state.ts;
 
                     try {
-                        await this._delete(id, { ts: new Date(stored.time || stored.ts).getTime() });
+                        await this._delete(id, { mode: 'one', ts: new Date(stored.time || stored.ts).getTime() });
                         await this.pushValueIntoDB(id, storedState, true);
                     } catch {
                         this.log.error(`Cannot delete value for ${id}: ${JSON.stringify(state)}`);
