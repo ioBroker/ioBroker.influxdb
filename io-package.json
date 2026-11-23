@@ -14,7 +14,7 @@
       "uk": "Збереження історії подій для окремих станів в InfluxDB",
       "zh-cn": "将状态记录到InfluxDB中"
     },
-    "version": "5.5.0",
+    "version": "5.5.1",
     "titleLang": {
       "en": "Logging data with InfluxDB",
       "de": "Daten mit InfluxDB protokollieren",
@@ -29,6 +29,19 @@
       "zh-cn": "使用InfluxDB记录数据"
     },
     "news": {
+      "5.5.1": {
+        "en": "Fixed connection to InfluxDB 1.x when the password contains \"%\" (#601)\nFixed: InfluxDB 1.x stopped with \"Password error\" when the password contains umlauts or other characters such as \"ä\", \"ö\", \"ü\" or \"ß\"",
+        "de": "Verbindung zu InfluxDB 1.x mit „%“ im Passwort behoben (#601)\nBehoben: InfluxDB 1.x stoppte mit „Passwortfehler“, wenn das Passwort Umlaute oder Zeichen wie „ä“, „ö“, „ü“ oder „ß“ enthält",
+        "ru": "Исправлено подключение к InfluxDB 1.x, когда пароль содержит «%» (#601)\nИсправлено: InfluxDB 1.x останавливается с сообщением «Ошибка пароля», когда пароль содержит умлауты или другие символы, такие как «ä», «ö», «ü» или «ß»",
+        "pt": "Conexão fixa ao InfluxDB 1.x quando a senha contém “%” (#601)\nCorrigido: o InfluxDB 1.x parou com “Erro de senha” quando a senha contém tremas ou caracteres como “ä”, “ö”, “ü” ou “ß”",
+        "nl": "Vaste verbinding met InfluxDB 1.x wanneer het wachtwoord „%” bevat (#601)\nOpgelost: InfluxDB 1.x is gestopt met „Wachtwoordfout” wanneer het wachtwoord umlauts of andere tekens bevat, zoals „ä”, „ö”, „ü” of „ß”",
+        "fr": "Connexion fixe à InfluxDB 1.x lorsque le mot de passe contient « % » (#601)\nCorrigé : InfluxDB 1.x s'arrêtait avec « Password error » lorsque le mot de passe contenait des trémas ou d'autres caractères tels que « ä », « ö » ou « ß »",
+        "it": "Connessione fissa a InfluxDB 1.x con password «%» (#601)\nRisolto: InfluxDB 1.x si fermava con «Errore password» se contiene dieresi o altri caratteri come «ä», «ö», «ü» o «ß»",
+        "es": "Conexión fija a InfluxDB 1.x cuando la contraseña contiene «%» (#601)\nCorregido: InfluxDB 1.x paraba con «error de contraseña» cuando la contraseña contenía diéresis u otros caracteres como «ä», «ö», «ü» o «ß»",
+        "pl": "Naprawiono połączenie z InfluxDB 1.x, gdy hasło zawiera „%” (#601)\nNaprawiono: InfluxDB 1.x zatrzymał się z „Błąd hasła”, gdy hasło zawiera umlauts lub inne znaki, takie jak „ä”, „ö”, „ü” lub „ß”",
+        "uk": "Виправлено підключення до InfluxDB 1.x, коли пароль містить «%» (#601)\nВиправлено: InfluxDB 1.x зупинився з «Помилкою пароля», коли пароль містить umlauts або інші символи, такі як «ä», «ö», «ü» або «ß»",
+        "zh-cn": "修复了密码包含 “%” 时与 InfluxDB 1.x 的连接 (#601)\n修复：当密码包含变音符号或其他字符（如 “ä”、“ö”、“ü” 或 “β”）时，InfluxDB 1.x 因 “密码错误” 而停止"
+      },
       "5.5.0": {
         "en": "Added the standard commands of the shared catalog: history.aggregate (one number for a period: min, max, avg, sum, count, delta, first, last, integral, duration) and history.lastChange; getHistory is marked as history.getHistory\nFixed: `getHistory` with `id: '*'` (or without ID) answers an error instead of an empty result. InfluxDB keeps one measurement per state and cannot read all states at once; the example in this README that used `'*'` reads one state now\nFixed: `getHistory` with an aggregate (e.g. average) and without `start` answers instead of failing with \"Invalid time value\" (the step was NaN). Like the sql and history adapters, it takes the newest `count` values and builds the intervals from them. An unparsable `start` or `end` is refused with \"is not a valid date\", a time stamp as text (\"1700000000000\") is accepted",
         "de": "Standardbefehle des gemeinsamen Katalogs hinzugefügt: history.aggregate (eine Zahl pro Zeitraum: min, max, avg, sum, count, delta, first, last, integral, duration) und History.LastChange; getHistory ist markiert als history.getHistory\nBehoben: `getHistory` mit `id: '*'` (oder ohne ID) gibt einen Fehler statt leer aus. InfluxDB misst eine Messung pro Staat und kann nicht alle Staaten auf einmal lesen; das Beispiel in dieser README\nBehoben: `GetHistory` mit Aggregat (z. B. Durchschnitt) und ohne Startantworten statt „Ungültiger Zeitwert“ (Schritt war NaN). Wie die SQL- und History-Adapter berechnet er die neuesten `Count`-Werte und daraus Intervalle. Unlesbares „Start“ oder „Ende“ wird mit „kein gültiges Datum“ abgelehnt, Zeitstempel als Text („1700000000000“)",
@@ -106,19 +119,6 @@
         "pl": "Okno czyszczenia karty statystyki zawiera pola wyboru, więc tylko wybrane punkty danych są usuwane (#565)",
         "uk": "У діалоговому вікні очищення вкладки статистики є прапорці, тому видаляються лише вибрані точки даних (#565)",
         "zh-cn": "统计选项卡的清理对话框有复选框，因此仅删除选定的数据点 (#565)"
-      },
-      "5.1.8": {
-        "en": "The timed relog (`changesRelogInterval`) starts right after the adapter start or a change of the datapoint settings, not only with the first update of the state",
-        "de": "Das zeitgesteuerte Relog (`changesRelogInterval`) beginnt direkt nach dem Adapterstart oder einer Änderung der Datenpunkteinstellungen, nicht nur beim ersten Status-Update",
-        "ru": "Замедленный релог (`ChangesRelogInterval`) начинается сразу после запуска адаптера или изменения настроек точки данных, а не только при первом обновлении состояния",
-        "pt": "O relog cronometrado (`changesRelogInterval`) começa logo após o adaptador iniciar ou alterar as configurações do datapoint, não só com a primeira atualização do estado",
-        "nl": "De herregistratie met timer (`ChangesRelogInterval`) start direct na het starten van de adapter of een wijziging van de datapuntinstellingen, niet alleen bij de eerste update van de status",
-        "fr": "Le relog chronométré (`ChangesRelogInterval`) commence juste après le démarrage de l'adaptateur ou une modification des paramètres du point de données",
-        "it": "Il relog a tempo (`changesRelogInterval`) inizia subito dopo l'avvio dell'adattatore o la modifica delle impostazioni del datapoint",
-        "es": "El registro temporizado (`ChangesRelogInterval`) comienza justo después del inicio del adaptador o de un cambio en la configuración del punto de datos, no solo con la primera actualización del estado",
-        "pl": "Relog czasowy (`ChangesRelogInterval`) rozpoczyna się zaraz po uruchomieniu adaptera lub zmianie ustawień punktu danych, nie tylko przy pierwszej aktualizacji stanu",
-        "uk": "Час перелогу (`ChangesRelogInterval`) починається відразу після запуску адаптера або зміни налаштувань точки даних, не тільки при першому оновленні стану",
-        "zh-cn": "定时重新日志（`ChangesRelogInterval`）在适配器启动或数据点设置更改后立即开始，不仅仅是在状态的第一次更新时开始"
       }
     },
     "mode": "daemon",
