@@ -20,6 +20,13 @@ import { normalizeSeriesBuffer } from './lib/bufferFile';
 import { deleteRangeProblem, parseDeleteRequests, toTimestamp, type DeleteRange } from './lib/deleteRequests';
 import { COMMANDS, HELP } from './lib/help';
 import {
+    aggregate,
+    lastChange,
+    readThroughGetHistory,
+    type StandardAnswer,
+    type ValueSource,
+} from './lib/standardHistory';
+import {
     classifyDatapoint,
     selectForCleanup,
     summarize,
@@ -48,6 +55,9 @@ const MAX_RAW_ENTRIES = 5000;
 
 // While the database stays unreachable, remind about it at most once an hour instead of on every retry
 const REPEATED_ERROR_INTERVAL = 3_600_000;
+
+/** How long `aggregate` and `lastChange` wait for the answer of the own `getHistory` */
+const STANDARD_TIMEOUT = 120_000;
 
 // Exclusive-resource registry of js-controller 8 (the part used here). The installed types and
 // older controllers do not have it, so it is probed at runtime.
@@ -1015,6 +1025,26 @@ export class InfluxDBAdapter extends Adapter {
         }
     }
 
+    /**
+     * Answer `aggregate` or `lastChange` of the shared catalog of sendTo commands (family history): computed from the
+     * stored values, read with the own `getHistory` (as a message to this instance, so getHistory stays as it is)
+     */
+    async answerStandard(
+        msg: ioBroker.Message,
+        command: (message: unknown, source: ValueSource) => Promise<StandardAnswer>,
+    ): Promise<void> {
+        const answer = await command(msg.message, {
+            read: readThroughGetHistory(message =>
+                this.sendToAsync(this.namespace, 'getHistory', message, { timeout: STANDARD_TIMEOUT }),
+            ),
+            unit: async id =>
+                ((await this.getForeignObjectAsync(id))?.common as ioBroker.StateCommon | undefined)?.unit,
+        });
+        if (msg.callback) {
+            this.sendTo(msg.from, msg.command, answer, msg.callback);
+        }
+    }
+
     async processMessage(msg: ioBroker.Message): Promise<void> {
         this.log.debug(`Incoming message ${msg.command} from ${msg.from}`);
         this.config.dbname ||= 'iobroker';
@@ -1071,6 +1101,10 @@ export class InfluxDBAdapter extends Adapter {
                 } else {
                     await this.getHistoryV2(msg);
                 }
+            } else if (msg.command === 'aggregate') {
+                await this.answerStandard(msg, aggregate);
+            } else if (msg.command === 'lastChange') {
+                await this.answerStandard(msg, lastChange);
             } else if (msg.command === 'test') {
                 await this.testConnection(msg);
             } else if (msg.command === 'destroy') {

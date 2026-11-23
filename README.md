@@ -303,6 +303,10 @@ Most of these values can be pre-defined in the instance settings and are then pr
 ## Messages for scripts and AI agents
 `sendTo('influxdb.0', 'help', {})` answers `{help, commands}`: a description of all messages and of the measurement layout for AI agents (e.g. ioBroker.pi-agent) and script authors, and the list of all commands with `write: true` for the ones that change something.
 
+`getHistory`, `aggregate` and `lastChange` are standard commands of the shared catalog of sendTo commands (family `history`, marked with `standard` in the answer of `help`), the same in history, sql, influxdb and recorder:
+- `aggregate {id, start, end?, fn, value?}` answers one number for a period, `{value, ts?, unit?, count}`. `fn`: `min`, `max`, `avg`, `sum`, `count` (with `value`: how often the state became it), `delta` (how much a counter rose, resets included), `first`, `last`, `integral` (value × hours, W gives Wh), `duration` (with `value`: seconds the state had it).
+- `lastChange {id, value?, before?}` answers when the state last changed (to `value`): `{ts, val}`.
+
 ## Access values from Javascript adapter
 The sorted values can be accessed from Javascript adapter.
 
@@ -733,6 +737,7 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 	### **WORK IN PROGRESS**
 -->
 ### **WORK IN PROGRESS**
+* (GermanBluefox) Added the standard commands of the shared catalog: history.aggregate (one number for a period: min, max, avg, sum, count, delta, first, last, integral, duration) and history.lastChange; getHistory is marked as history.getHistory
 * (GermanBluefox) Fixed: `getHistory` with `id: '*'` (or without ID) answers an error instead of an empty result. InfluxDB keeps one measurement per state and cannot read all states at once; the example in this README that used `'*'` reads one state now
 * (GermanBluefox) Fixed: `getHistory` with an aggregate (e.g. average) and without `start` answers instead of failing with "Invalid time value" (the step was NaN). Like the sql and history adapters, it takes the newest `count` values and builds the intervals from them. An unparsable `start` or `end` is refused with "is not a valid date", a time stamp as text ("1700000000000") is accepted
 
