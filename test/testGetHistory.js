@@ -170,6 +170,22 @@ describe('getHistory: ID and start', function () {
                 const main = adapter.queries.find(q => q.includes('ORDER BY') || q.includes('sort('));
                 assert.ok(main.includes(new Date(end - 3_600_000).toISOString()), main);
             });
+
+            it('does not enable logging for an ID that is not enabled (#603)', async function () {
+                const adapter = connected(dbversion);
+                const pushed = [];
+                adapter.pushHelper = async (id, state) => pushed.push({ id, state });
+                const answer = await getHistory(adapter, {
+                    id: ID,
+                    options: { aggregate: 'onchange', enableDebugLogs: true },
+                });
+                assert.strictEqual(answer.error, undefined, JSON.stringify(answer));
+                assert.ok(!Object.prototype.hasOwnProperty.call(adapter._influxDPs, ID), 'no entry in _influxDPs');
+
+                await adapter.pushHistory(ID, { val: 1, ts: Date.now(), lc: Date.now(), ack: true, from: 'test' });
+                await new Promise(resolve => setTimeout(resolve, 50));
+                assert.deepStrictEqual(pushed, []);
+            });
         });
     }
 });
