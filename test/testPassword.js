@@ -1,4 +1,5 @@
 const assert = require('node:assert');
+const Module = require('node:module');
 
 // Regression guard for ioBroker/ioBroker.influxdb#601: the stored password is plain text and must reach
 // InfluxDB 1.x unchanged, only the "Test connection" button of Admin sends it URI-encoded.
@@ -19,7 +20,8 @@ function testMessage(password) {
 }
 
 describe('Test password handling of InfluxDB 1.x (#601)', function () {
-    let originalCore;
+    /** The cache entry of adapter-core before this suite, if another test loaded it */
+    let originalCoreEntry;
     let originalDb1x;
     let createAdapter;
     /** Settings handed to the InfluxDB 1.x client */
@@ -28,9 +30,12 @@ describe('Test password handling of InfluxDB 1.x (#601)', function () {
     let databaseNames;
 
     before(function () {
-        require(coreId);
-        originalCore = require.cache[coreId].exports;
-        // The adapter runs without js-controller here: only what connect() and testConnection() use
+        // the first load of build/main (and its InfluxDB clients) takes longer than the default 2 s on a cold cache
+        this.timeout(30000);
+        // The real adapter-core must not be loaded: without a js-controller installation (as in CI, where it only
+        // exists in tmp/) it ends the whole process with exit code 10. A fake module with only what main.ts
+        // imports and connect()/testConnection() use takes its place in the require cache.
+        originalCoreEntry = require.cache[coreId];
         class Adapter {
             constructor() {
                 this.log = log;
@@ -40,7 +45,11 @@ describe('Test password handling of InfluxDB 1.x (#601)', function () {
                 this.answer = message;
             }
         }
-        require.cache[coreId].exports = { ...originalCore, Adapter };
+        const fakeCore = new Module(coreId);
+        fakeCore.filename = coreId;
+        fakeCore.loaded = true;
+        fakeCore.exports = { Adapter, getAbsoluteDefaultDataDir: () => '' };
+        require.cache[coreId] = fakeCore;
 
         originalDb1x = db1xModule.default;
         db1xModule.default = class {
@@ -57,7 +66,11 @@ describe('Test password handling of InfluxDB 1.x (#601)', function () {
     });
 
     after(function () {
-        require.cache[coreId].exports = originalCore;
+        if (originalCoreEntry) {
+            require.cache[coreId] = originalCoreEntry;
+        } else {
+            delete require.cache[coreId];
+        }
         db1xModule.default = originalDb1x;
         delete require.cache[mainId];
     });
@@ -67,7 +80,7 @@ describe('Test password handling of InfluxDB 1.x (#601)', function () {
         databaseNames = () => Promise.resolve([]);
     });
 
-    for (const password of ['Ab1%xy', 'Ab1%20x']) {
+    for (const password of ['Ab1%xy', 'Ab1%20x', 'Pässwörtß1']) {
         it(`passes the stored password "${password}" unchanged on start`, function () {
             // the client is created synchronously, the rest of connect() is not of interest here
             databaseNames = () => new Promise(() => {});

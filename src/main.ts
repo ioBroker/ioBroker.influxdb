@@ -645,8 +645,10 @@ export class InfluxDBAdapter extends Adapter {
                 break;
             case '1.x':
             default: {
+                // A password that was decrypted with a wrong secret contains control characters. Characters from
+                // \x80-\xFF must be allowed: they are umlauts like "ä", "ö", "ü" or "ß" of a valid password
                 // eslint-disable-next-line no-control-regex
-                if (/[\x00-\x08\x0E-\x1F\x80-\xFF]/.test(this.config.password)) {
+                if (/[\x00-\x08\x0E-\x1F]/.test(this.config.password || '')) {
                     return this.log.error('Password error: Please re-enter the password in Admin. Stopping');
                 }
 
