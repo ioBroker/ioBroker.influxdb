@@ -1,4 +1,7 @@
 # Older changes
+## 5.2.0 (2026-10-24)
+* (GermanBluefox) The cleanup dialog of the statistics tab has checkboxes, so only the selected datapoints are deleted (#565)
+
 ## 5.1.8 (2026-10-23)
 * (@GermanBluefox) The timed relog (`changesRelogInterval`) starts right after the adapter start or a change of the datapoint settings, not only with the first update of the state
 
