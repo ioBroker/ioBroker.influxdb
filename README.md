@@ -736,6 +736,9 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 	Placeholder for the next version (at the beginning of the line):
 	### **WORK IN PROGRESS**
 -->
+### **WORK IN PROGRESS**
+* (GermanBluefox) Fixed: `getHistory` for a datapoint that is not enabled in this instance no longer enables writing of this datapoint until restart (#603)
+
 ### 5.5.1 (2026-11-23)
 * (GermanBluefox) Fixed connection to InfluxDB 1.x when the password contains "%" (#601)
 * (GermanBluefox) Fixed: InfluxDB 1.x stopped with "Password error" when the password contains umlauts or other characters such as "ä", "ö", "ü" or "ß"

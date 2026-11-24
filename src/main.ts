@@ -3167,12 +3167,11 @@ datasources:
             options.round = this.config.round as number;
         }
 
-        if (id) {
-            this._influxDPs[id] ||= {} as SavedInfluxDbCustomConfig;
-            this._influxDPs[id].enableDebugLogs = !!msg.message.options.enableDebugLogs;
-            this._influxDPs[id].config ||= '{}';
-        }
-        const debugLog = (id && !!this._influxDPs[id]?.enableDebugLogs) || this.config.enableDebugLogs;
+        // Do not create an entry in _influxDPs here: its presence means "logging enabled" for this ID
+        const debugLog =
+            !!msg.message.options.enableDebugLogs ||
+            (id && !!this._influxDPs[id]?.enableDebugLogs) ||
+            this.config.enableDebugLogs;
 
         if (id && this._aliasMap[id]) {
             id = this._aliasMap[id];
@@ -3588,12 +3587,11 @@ datasources:
             options.round = this.config.round as number;
         }
 
-        if (id) {
-            this._influxDPs[id] ||= {} as SavedInfluxDbCustomConfig;
-            this._influxDPs[id].enableDebugLogs = !!msg.message.options.enableDebugLogs;
-            this._influxDPs[id].config ||= '{}';
-        }
-        const debugLog = (id && !!this._influxDPs[id]?.enableDebugLogs) || this.config.enableDebugLogs;
+        // Do not create an entry in _influxDPs here: its presence means "logging enabled" for this ID
+        const debugLog =
+            !!msg.message.options.enableDebugLogs ||
+            (id && !!this._influxDPs[id]?.enableDebugLogs) ||
+            this.config.enableDebugLogs;
 
         if (id && this._aliasMap[id]) {
             id = this._aliasMap[id];
@@ -3677,7 +3675,7 @@ ${this.config.usetags ? ' |> duplicate(column: "_value", as: "value")' : ' |> pi
                     try {
                         const result = await this._client?.query<{ error?: string }>(booleanTypeCheckQuery);
                         // If shutdown in between
-                        if (id && !this._influxDPs[id]) {
+                        if (this._finished) {
                             return;
                         }
                         if (id && this._influxDPs[id]?.storageType && this._influxDPs[id].storageType !== 'Number') {
