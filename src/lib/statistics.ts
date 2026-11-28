@@ -39,8 +39,8 @@ export type DatapointStat = {
     id: string;
     /** Storage type, or null when it cannot be determined any more */
     type: StorageType | null;
-    /** Number of stored values */
-    count: number;
+    /** Number of stored values, or null when the values could not be read (see `statisticsError` of the answer) */
+    count: number | null;
     /** Timestamp of the oldest value, or null when there is none */
     firstTs: number | null;
     /** Timestamp of the newest value, or null when there is none */
@@ -72,12 +72,22 @@ export function classifyDatapoint(objectExists: boolean, loggingEnabled: boolean
 
 export type StatisticsSummary = {
     datapoints: number;
-    /** Number of stored values over all datapoints */
-    values: number;
+    /** Number of stored values over all datapoints, null when the count of at least one is unknown */
+    values: number | null;
     /** null when the cardinality of at least one datapoint is unknown, so the sum would mislead */
     cardinality: number | null;
-    byStatus: Record<DatapointStatus, { datapoints: number; values: number }>;
+    byStatus: Record<DatapointStatus, { datapoints: number; values: number | null }>;
 };
+
+/**
+ * Add a count to a sum that stays unknown (null) once one of its parts is
+ *
+ * @param sum the sum so far
+ * @param count the count to add
+ */
+export function sumOrNull(sum: number | null, count: number | null): number | null {
+    return sum === null || count === null ? null : sum + count;
+}
 
 /**
  * Totals for the statistics table.
@@ -88,20 +98,21 @@ export type StatisticsSummary = {
  * @param stats the per-datapoint statistics
  */
 export function summarize(stats: DatapointStat[]): StatisticsSummary {
-    const byStatus: Record<DatapointStatus, { datapoints: number; values: number }> = {
+    const byStatus: Record<DatapointStatus, { datapoints: number; values: number | null }> = {
         active: { datapoints: 0, values: 0 },
         loggingDisabled: { datapoints: 0, values: 0 },
         objectMissing: { datapoints: 0, values: 0 },
     };
 
-    let values = 0;
+    let values: number | null = 0;
     let cardinality = 0;
     let cardinalityKnown = true;
 
     for (const stat of stats) {
-        values += stat.count;
         byStatus[stat.status].datapoints++;
-        byStatus[stat.status].values += stat.count;
+        // like the cardinality: an unknown count makes the sum unknown, a partial sum would understate it
+        values = sumOrNull(values, stat.count);
+        byStatus[stat.status].values = sumOrNull(byStatus[stat.status].values, stat.count);
 
         if (stat.cardinality === null) {
             cardinalityKnown = false;

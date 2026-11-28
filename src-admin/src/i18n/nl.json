@@ -63,6 +63,7 @@
     "influxdb_select_datapoint": "Selecteer een datapunt aan de linkerkant om de opgeslagen waarden te bekijken.",
     "influxdb_sort_asc": "Oudste eerst",
     "influxdb_sort_desc": "Nieuwste eerst",
+    "influxdb_statistics_unavailable": "De waarden konden niet worden geteld, daarom ontbreken het aantal en de eerste en laatste waarde: %s. Opruimen is toch mogelijk.",
     "influxdb_stats_no_match": "Geen datapunt komt overeen met het filter",
     "influxdb_stats_not_running": "De instantie draait niet, dus er kunnen geen statistieken worden gelezen",
     "influxdb_status_active": "gelogd",

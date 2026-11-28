@@ -67,6 +67,20 @@ describe('Test statistics', function () {
             );
         });
 
+        it('reports no total of values as soon as one count is unknown (#594)', function () {
+            // the database failed while counting: the datapoints are listed, their counts are null
+            const summary = summarize([
+                stat('a', { count: 10 }),
+                stat('b', { count: null, status: 'objectMissing' }),
+                stat('c', { count: 2, status: 'loggingDisabled' }),
+            ]);
+            assert.strictEqual(summary.datapoints, 3);
+            assert.strictEqual(summary.values, null);
+            assert.deepStrictEqual(summary.byStatus.active, { datapoints: 1, values: 10 });
+            assert.deepStrictEqual(summary.byStatus.objectMissing, { datapoints: 1, values: null });
+            assert.deepStrictEqual(summary.byStatus.loggingDisabled, { datapoints: 1, values: 2 });
+        });
+
         it('survives an empty database', function () {
             const summary = summarize([]);
             assert.strictEqual(summary.datapoints, 0);

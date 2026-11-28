@@ -63,6 +63,7 @@
     "influxdb_select_datapoint": "Wybierz punkt danych po lewej stronie, aby zobaczyć zapisane w nim wartości",
     "influxdb_sort_asc": "Najstarsze na początku",
     "influxdb_sort_desc": "Najnowsze na początku",
+    "influxdb_statistics_unavailable": "Nie udało się policzyć wartości, dlatego brakuje liczby oraz pierwszej i ostatniej wartości: %s. Czyszczenie jest mimo to możliwe.",
     "influxdb_stats_no_match": "Żaden punkt danych nie pasuje do filtra",
     "influxdb_stats_not_running": "Instancja nie jest uruchomiona, więc nie można odczytać statystyk",
     "influxdb_status_active": "logowany",

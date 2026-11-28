@@ -39,7 +39,8 @@ type DatapointStatus = 'active' | 'loggingDisabled' | 'objectMissing';
 type DatapointStat = {
     id: string;
     type: 'Number' | 'String' | 'Boolean' | null;
-    count: number;
+    /** null when the adapter could not count the values (see statisticsError) */
+    count: number | null;
     firstTs: number | null;
     lastTs: number | null;
     cardinality: number | null;
@@ -48,15 +49,17 @@ type DatapointStat = {
 
 type Summary = {
     datapoints: number;
-    values: number;
+    values: number | null;
     cardinality: number | null;
-    byStatus: Record<DatapointStatus, { datapoints: number; values: number }>;
+    byStatus: Record<DatapointStatus, { datapoints: number; values: number | null }>;
 };
 
 type CleanupPreview = {
     datapoints: number;
-    values: number;
+    values: number | null;
     items: DatapointStat[];
+    /** why the values could not be counted; the datapoints are listed anyway */
+    statisticsError?: string;
 };
 
 type SortField = 'id' | 'count' | 'cardinality' | 'lastTs' | 'status';
@@ -69,6 +72,8 @@ interface StatisticsState extends ConfigGenericState {
     summary: Summary | null;
     loading: boolean;
     errorText: string;
+    /** why the values could not be counted; the datapoints are listed anyway */
+    statisticsError: string;
     filter: string;
     range: Range;
     sortField: SortField;
@@ -121,8 +126,13 @@ function preselect(items: DatapointStat[], olderThanDays: string): string[] {
         return items.map(item => item.id);
     }
     const cutoff = Date.now() - days * 24 * 3600_000;
-    // a measurement without any value is not written to either
-    return items.filter(item => item.lastTs === null || item.lastTs < cutoff).map(item => item.id);
+    return items
+        .filter(item =>
+            // without a count the age of the newest value is unknown as well, so it is not ticked by itself;
+            // a measurement without any value is not written to either
+            item.count === null ? false : item.lastTs === null || item.lastTs < cutoff,
+        )
+        .map(item => item.id);
 }
 
 const STATUS_COLOR: Record<DatapointStatus, 'success' | 'warning' | 'error'> = {
@@ -146,6 +156,7 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
             summary: null,
             loading: false,
             errorText: '',
+            statisticsError: '',
             filter: '',
             range: 'all',
             sortField: 'count',
@@ -186,14 +197,19 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
     }
 
     async load(): Promise<void> {
-        this.setState({ loading: true, errorText: '', doneText: '' });
+        this.setState({ loading: true, errorText: '', statisticsError: '', doneText: '' });
         try {
             const span = RANGE_MS[this.state.range];
             const result = await this.sendToInstance(
                 'getDpStatistics',
                 span ? { start: Date.now() - span, end: Date.now() } : {},
             );
-            this.setState({ stats: result?.result || [], summary: result?.summary || null, loading: false });
+            this.setState({
+                stats: result?.result || [],
+                summary: result?.summary || null,
+                statisticsError: result?.statisticsError || '',
+                loading: false,
+            });
         } catch (e: any) {
             this.setState({ loading: false, stats: [], summary: null, errorText: e.message });
         }
@@ -212,8 +228,9 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
                 includeDisabled,
                 preview: {
                     datapoints: result.datapoints,
-                    values: result.values,
+                    values: result.values ?? null,
                     items,
+                    statisticsError: result.statisticsError,
                 },
                 selected: preselect(items, this.state.olderThanDays),
             });
@@ -238,7 +255,11 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
                 {
                     deleting: false,
                     preview: null,
-                    doneText: I18n.t('influxdb_cleanup_done', result.deleted.values, result.deleted.datapoints),
+                    doneText: I18n.t(
+                        'influxdb_cleanup_done',
+                        formatNumber(result.deleted.values ?? null),
+                        result.deleted.datapoints,
+                    ),
                     // a measurement the database refused to drop must not be reported as removed
                     errorText: result.failed?.length ? I18n.t('influxdb_cleanup_failed', result.failed.length) : '',
                 },
@@ -303,7 +324,7 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
                     {I18n.t(
                         'influxdb_summary_total',
                         summary.datapoints,
-                        summary.values,
+                        formatNumber(summary.values),
                         formatNumber(summary.cardinality),
                     )}
                 </Typography>
@@ -311,14 +332,14 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
                     <Chip
                         color="error"
                         size="small"
-                        label={I18n.t('influxdb_summary_missing', missing.datapoints, missing.values)}
+                        label={I18n.t('influxdb_summary_missing', missing.datapoints, formatNumber(missing.values))}
                     />
                 )}
                 {!!disabled.datapoints && (
                     <Chip
                         color="warning"
                         size="small"
-                        label={I18n.t('influxdb_summary_disabled', disabled.datapoints, disabled.values)}
+                        label={I18n.t('influxdb_summary_disabled', disabled.datapoints, formatNumber(disabled.values))}
                     />
                 )}
             </Box>
@@ -331,7 +352,10 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
             return null;
         }
         const selectedItems = preview.items.filter(item => selected.includes(item.id));
-        const selectedValues = selectedItems.reduce((sum, item) => sum + item.count, 0);
+        const selectedValues = selectedItems.reduce<number | null>(
+            (sum, item) => (sum === null || item.count === null ? null : sum + item.count),
+            0,
+        );
         const allSelected = !!preview.items.length && selectedItems.length === preview.items.length;
 
         return (
@@ -346,8 +370,20 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
                     {preview.datapoints ? (
                         <>
                             <DialogContentText sx={{ mb: 1 }}>
-                                {I18n.t('influxdb_cleanup_confirm_text', preview.datapoints, preview.values)}
+                                {I18n.t(
+                                    'influxdb_cleanup_confirm_text',
+                                    preview.datapoints,
+                                    formatNumber(preview.values),
+                                )}
                             </DialogContentText>
+                            {!!preview.statisticsError && (
+                                <Alert
+                                    severity="warning"
+                                    sx={{ mb: 1 }}
+                                >
+                                    {I18n.t('influxdb_statistics_unavailable', preview.statisticsError)}
+                                </Alert>
+                            )}
                             <TextField
                                 variant="standard"
                                 size="small"
@@ -373,7 +409,11 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
                                 }}
                             />
                             <DialogContentText sx={{ mb: 1 }}>
-                                {I18n.t('influxdb_cleanup_selected', selectedItems.length, selectedValues)}
+                                {I18n.t(
+                                    'influxdb_cleanup_selected',
+                                    selectedItems.length,
+                                    formatNumber(selectedValues),
+                                )}
                             </DialogContentText>
                             <TableContainer
                                 component={Paper}
@@ -563,6 +603,14 @@ export default class Statistics extends ConfigGeneric<ConfigGenericProps, Statis
                         onClose={() => this.setState({ errorText: '' })}
                     >
                         {this.state.errorText}
+                    </Alert>
+                )}
+                {!!this.state.statisticsError && (
+                    <Alert
+                        severity="warning"
+                        sx={{ mb: 1 }}
+                    >
+                        {I18n.t('influxdb_statistics_unavailable', this.state.statisticsError)}
                     </Alert>
                 )}
                 {!!this.state.doneText && (

@@ -214,6 +214,44 @@ export function isConnectionError(err: unknown, depth = 0): boolean {
     return error.cause !== undefined && error.cause !== null && isConnectionError(error.cause, depth + 1);
 }
 
+/** HTTP status codes with which a server says "not now, try again later" */
+const TEMPORARY_SERVER_ERROR_STATUS_CODES = [429];
+
+/** Wordings of an HTTP 500 that only mean the server could not keep up, not that the points are bad */
+const TEMPORARY_SERVER_ERROR_PATTERN = /(timeout|timed out|cache-max-memory-size exceeded)/i;
+
+/**
+ * Did the server answer, but could not store the points in time?
+ *
+ * InfluxDB answers with HTTP 500 "unexpected error writing points to database: timeout" (2.x) or
+ * `{"error":"timeout"}` (1.x) when its storage is too slow for a moment - compaction, a slow disk, a
+ * snapshot of the VM. That is neither a lost connection (which would trigger a reconnect, see #551) nor a
+ * bad point: the same points are accepted a little later. So they have to stay in the buffer, and they
+ * must not be split into single points or be discarded after a few attempts (#574).
+ *
+ * @param err whatever was caught
+ * @returns true if the points should simply be written again later
+ */
+export function isTemporaryServerError(err: unknown): boolean {
+    if (!err || typeof err !== 'object') {
+        return false;
+    }
+    const error = err as Record<string, any>;
+    const statusCode = getHttpStatusCode(error);
+    if (statusCode === undefined) {
+        return false;
+    }
+    if (TEMPORARY_SERVER_ERROR_STATUS_CODES.includes(statusCode)) {
+        return true;
+    }
+    if (statusCode !== 500) {
+        return false;
+    }
+    // the 1.x driver has the answer of the server in the message, the 2.x client in `body`, too
+    const texts = [error.message, error.body, error.json?.message, error.json?.error];
+    return texts.some(text => typeof text === 'string' && TEMPORARY_SERVER_ERROR_PATTERN.test(text));
+}
+
 /**
  * HTTP status of an answer of the server: `statusCode` of the 2.x client's `HttpError`, `res.statusCode`
  * of the 1.x driver's `RequestError`
