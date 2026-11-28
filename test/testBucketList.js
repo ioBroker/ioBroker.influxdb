@@ -24,7 +24,15 @@ function createDriver(bucketNames, serverBehaviour, database) {
         getBuckets: async request => {
             requests.push(request);
             if (request.name) {
-                return { buckets: buckets.filter(bucket => bucket.name === request.name) };
+                // like InfluxDB 2.x: an unknown name is answered with 404, not with an empty list
+                const found = buckets.filter(bucket => bucket.name === request.name);
+                if (!found.length) {
+                    throw Object.assign(new Error(`bucket "${request.name}" not found`), {
+                        name: 'HttpError',
+                        statusCode: 404,
+                    });
+                }
+                return { buckets: found };
             }
             if (serverBehaviour === 'firstPageOnly') {
                 return { buckets: buckets.slice(0, 20) };
@@ -80,10 +88,24 @@ describe('Test bucket list of InfluxDB 2.x (#605)', function () {
         assert.ok(requests.some(request => request.name === 'vbucket'));
     });
 
-    it('does not report a bucket that really does not exist', async function () {
-        const { driver } = createDriver(names(5), 'honest', 'missing');
+    it('does not report a bucket that really does not exist, so it can be created', async function () {
+        // the server answers the lookup by name with 404 - that must not make the connect fail
+        const { driver, requests } = createDriver(names(5), 'honest', 'missing');
         const found = await driver.getDatabaseNames();
         assert.strictEqual(found.length, 5);
         assert.ok(!found.includes('missing'));
+        assert.ok(requests.some(request => request.name === 'missing'));
+    });
+
+    it('still fails on other errors of the lookup by name', async function () {
+        const { driver } = createDriver(names(5), 'honest', 'missing');
+        const original = driver.bucketsApi.getBuckets;
+        driver.bucketsApi.getBuckets = async request => {
+            if (request.name) {
+                throw Object.assign(new Error('unauthorized access'), { name: 'HttpError', statusCode: 401 });
+            }
+            return original(request);
+        };
+        await assert.rejects(() => driver.getDatabaseNames(), /unauthorized/);
     });
 });

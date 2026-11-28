@@ -154,10 +154,17 @@ export default class DatabaseInfluxDB2x extends Database {
 
         // Ask for the configured bucket by its name before anybody concludes that it is missing and creates it
         if (this.database && !foundDatabases.includes(this.database)) {
-            const buckets = await this.trackConnection(() =>
-                this.bucketsApi.getBuckets({ orgID: this.organizationId, name: this.database }),
-            );
-            addBuckets(buckets.buckets);
+            try {
+                const buckets = await this.trackConnection(() =>
+                    this.bucketsApi.getBuckets({ orgID: this.organizationId, name: this.database }),
+                );
+                addBuckets(buckets.buckets);
+            } catch (error) {
+                // a name that does not exist is answered with 404 'bucket "..." not found', not with an empty list
+                if ((error as { statusCode?: number })?.statusCode !== 404) {
+                    throw error;
+                }
+            }
         }
 
         return foundDatabases;
