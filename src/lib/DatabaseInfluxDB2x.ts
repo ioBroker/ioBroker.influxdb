@@ -12,6 +12,12 @@ import { BucketsAPI, OrgsAPI, HealthAPI, DeleteAPI } from '@influxdata/influxdb-
  */
 const DELETE_REQUEST_TIMEOUT = 10 * 60_000;
 
+/** Buckets per request: the API answers with 20 by default and allows at most 100 */
+const BUCKET_PAGE_SIZE = 100;
+
+/** Upper limit of pages read for the bucket list (10 000 buckets), so a misbehaving server cannot keep the loop going */
+const BUCKET_PAGES_MAX = 100;
+
 // Influx 2.x auth requires token, not user/pw
 export default class DatabaseInfluxDB2x extends Database {
     private connection!: InfluxDB;
@@ -117,17 +123,42 @@ export default class DatabaseInfluxDB2x extends Database {
             throw new Error(`Could not find organization ID for organization "${this.organization}"`);
         }
 
-        const buckets = await this.trackConnection(() => this.bucketsApi.getBuckets({ orgID: this.organizationId }));
-        this.log.debug(`Buckets: ${JSON.stringify(buckets)}`);
-
         const foundDatabases: string[] = [];
+        const addBuckets = (buckets: { name?: string; id?: string }[] | undefined): number => {
+            let added = 0;
+            buckets?.forEach(bucket => {
+                if (bucket.name && bucket.id && !foundDatabases.includes(bucket.name)) {
+                    foundDatabases.push(bucket.name);
+                    this.bucketIds[bucket.name] = bucket.id;
+                    added++;
+                }
+            });
+            return added;
+        };
 
-        buckets.buckets?.forEach(bucket => {
-            if (bucket.name && bucket.id) {
-                foundDatabases.push(bucket.name);
-                this.bucketIds[bucket.name] = bucket.id;
+        // The API answers with one page of 20 buckets by default. With more buckets in the organization the
+        // configured one may not be on the first page, and the adapter would try to create it again and again
+        // (#605). So all pages are read; a page that adds nothing new ends the loop, too, in case a server
+        // ignores the offset.
+        for (let page = 0; page < BUCKET_PAGES_MAX; page++) {
+            const offset = page * BUCKET_PAGE_SIZE;
+            const buckets = await this.trackConnection(() =>
+                this.bucketsApi.getBuckets({ orgID: this.organizationId, limit: BUCKET_PAGE_SIZE, offset }),
+            );
+            this.log.debug(`Buckets (offset ${offset}): ${JSON.stringify(buckets)}`);
+            const added = addBuckets(buckets.buckets);
+            if ((buckets.buckets?.length || 0) < BUCKET_PAGE_SIZE || !added) {
+                break;
             }
-        });
+        }
+
+        // Ask for the configured bucket by its name before anybody concludes that it is missing and creates it
+        if (this.database && !foundDatabases.includes(this.database)) {
+            const buckets = await this.trackConnection(() =>
+                this.bucketsApi.getBuckets({ orgID: this.organizationId, name: this.database }),
+            );
+            addBuckets(buckets.buckets);
+        }
 
         return foundDatabases;
     }
