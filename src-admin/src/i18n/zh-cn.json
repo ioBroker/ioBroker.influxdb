@@ -63,6 +63,7 @@
     "influxdb_select_datapoint": "选择左侧的数据点以查看其存储的值",
     "influxdb_sort_asc": "最早的在前",
     "influxdb_sort_desc": "最新优先",
+    "influxdb_statistics_unavailable": "无法统计数值，因此缺少数量以及第一个和最后一个值：%s。仍然可以执行清理。",
     "influxdb_stats_no_match": "没有数据点与筛选条件匹配",
     "influxdb_stats_not_running": "实例未运行，因此无法读取统计信息",
     "influxdb_status_active": "正在记录",

@@ -63,6 +63,7 @@
     "influxdb_select_datapoint": "Select a datapoint on the left to see its stored values",
     "influxdb_sort_asc": "Oldest first",
     "influxdb_sort_desc": "Newest first",
+    "influxdb_statistics_unavailable": "The values could not be counted, so the number and the first and last value are missing: %s. Cleaning up is possible anyway.",
     "influxdb_stats_no_match": "No datapoint matches the filter",
     "influxdb_stats_not_running": "The instance is not running, so no statistics can be read",
     "influxdb_status_active": "logged",

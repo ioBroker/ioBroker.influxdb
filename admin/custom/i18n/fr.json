@@ -63,6 +63,7 @@
     "influxdb_select_datapoint": "Sélectionnez un point de données à gauche pour afficher ses valeurs stockées",
     "influxdb_sort_asc": "Du plus ancien au plus récent",
     "influxdb_sort_desc": "Du plus récent au plus ancien",
+    "influxdb_statistics_unavailable": "Les valeurs n'ont pas pu être comptées, le nombre ainsi que la première et la dernière valeur manquent donc : %s. Le nettoyage reste possible.",
     "influxdb_stats_no_match": "Aucun point de données ne correspond au filtre",
     "influxdb_stats_not_running": "L'instance n'est pas démarrée, aucune statistique ne peut être lue",
     "influxdb_status_active": "enregistré",

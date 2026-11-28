@@ -36,8 +36,10 @@ import {
     classifyDatapoint,
     selectForCleanup,
     summarize,
+    sumOrNull,
     type CleanupScope,
     type DatapointStat,
+    type MeasurementStatistics,
 } from './lib/statistics';
 import type {
     GetHistoryOptions,
@@ -4373,16 +4375,36 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
      * logging is enabled - once the custom config is gone, nothing links it back to the real
      * state, so an orphaned alias measurement is reported as `objectMissing`.
      *
+     * Counting the values reads all of them. If the database fails on that (InfluxDB 2.x crashed with a
+     * "nil pointer dereference" while reading old data, #594), the datapoints are still listed - their names
+     * come from the index and their status from ioBroker - but without count, first and last value, and
+     * `statisticsError` says why. Otherwise neither the statistics nor the cleanup would work at all.
+     *
      * @param start beginning of the examined range (ms), the epoch by default
      * @param stop end of the examined range (ms), the end of the storable range by default
      */
-    async collectStatistics(start?: number, stop?: number): Promise<DatapointStat[]> {
+    async collectStatistics(
+        start?: number,
+        stop?: number,
+    ): Promise<{ stats: DatapointStat[]; statisticsError: string | null }> {
         if (!this._client) {
             throw new Error('not connected');
         }
 
         const measurements = await this.readMeasurements();
-        const statistics = await this._client.getStatistics(start ?? MIN_INFLUX_TIME, stop ?? MAX_INFLUX_TIME);
+        let statistics: MeasurementStatistics = {};
+        let statisticsError: string | null = null;
+        try {
+            statistics = await this._client.getStatistics(start ?? MIN_INFLUX_TIME, stop ?? MAX_INFLUX_TIME);
+        } catch (error) {
+            if (isConnectionError(error) || !this._client.getHostsAvailable()) {
+                throw error;
+            }
+            statisticsError = formatError(error);
+            this.log.warn(
+                `Cannot count the values, the datapoints are listed without their counts: ${statisticsError}`,
+            );
+        }
 
         const stats: DatapointStat[] = [];
         for (const id of measurements) {
@@ -4399,7 +4421,7 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
             stats.push({
                 id,
                 type: await this.getStorageType(id),
-                count: measured?.count || 0,
+                count: statisticsError ? null : measured?.count || 0,
                 firstTs: measured?.firstTs ?? null,
                 lastTs: measured?.lastTs ?? null,
                 cardinality: measured?.cardinality ?? null,
@@ -4408,7 +4430,7 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
         }
 
         stats.sort((a, b) => a.id.localeCompare(b.id));
-        return stats;
+        return { stats, statisticsError };
     }
 
     /**
@@ -4418,11 +4440,16 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
      */
     async getDpStatistics(msg: ioBroker.Message): Promise<void> {
         try {
-            const stats = await this.collectStatistics(msg.message?.start, msg.message?.end);
+            const { stats, statisticsError } = await this.collectStatistics(msg.message?.start, msg.message?.end);
             this.sendTo(
                 msg.from,
                 msg.command,
-                { success: true, result: stats, summary: summarize(stats) },
+                {
+                    success: true,
+                    result: stats,
+                    summary: summarize(stats),
+                    ...(statisticsError ? { statisticsError } : {}),
+                },
                 msg.callback,
             );
         } catch (error) {
@@ -4454,12 +4481,13 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
         }
 
         try {
-            const stats = await this.collectStatistics();
+            const { stats, statisticsError } = await this.collectStatistics();
             const victims = selectForCleanup(stats, scope);
             const preview = {
                 datapoints: victims.length,
-                values: victims.reduce((sum, victim) => sum + victim.count, 0),
+                values: victims.reduce<number | null>((sum, victim) => sumOrNull(sum, victim.count), 0),
                 items: victims,
+                ...(statisticsError ? { statisticsError } : {}),
             };
 
             if (!confirmed) {
@@ -4486,10 +4514,10 @@ ${!this.config.usetags ? '|> pivot(rowKey:["_time"], columnKey: ["_field"], valu
                 datapoints: removed,
                 values: victims
                     .filter(victim => !failed.includes(victim.id))
-                    .reduce((sum, victim) => sum + victim.count, 0),
+                    .reduce<number | null>((sum, victim) => sumOrNull(sum, victim.count), 0),
             };
             this.log.info(
-                `Cleanup removed ${deleted.values} values of ${deleted.datapoints} datapoint(s) that are not logged any more`,
+                `Cleanup removed ${deleted.values ?? 'all'} values of ${deleted.datapoints} datapoint(s) that are not logged any more`,
             );
             this.sendTo(
                 msg.from,

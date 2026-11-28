@@ -92,6 +92,8 @@ ioBroker (family history): the same names, parameters and answers in history, sq
 - getDpStatistics {start?, end?}: per measurement the number of values (a full scan, slow on a big database):
   {success, result: [{id, type, count, firstTs, lastTs, cardinality (series), status}], summary: {datapoints,
   values, cardinality, byStatus}}. status: active, loggingDisabled (the state exists, not logged), objectMissing.
+  If the database fails while counting, the list is still complete, but count, firstTs and lastTs are null and
+  statisticsError says why.
 - getRetention {}: how long the database keeps values: {result: {name, time (s, 0 = forever)}} or {error}.
 - getConflictingPoints {}: the states whose values InfluxDB refused for another type; they are written directly
   since: {conflictingPoints: {[id]: 1}}.
@@ -122,7 +124,8 @@ ioBroker (family history): the same names, parameters and answers in history, sq
   {success: false, error}.
 - cleanupOrphaned {scope?: {objectMissing? (default true), loggingDisabled? (default false), ids?}, confirm?}: the
   measurements of states that are not logged any more. Without confirm: true only the preview {dryRun: true,
-  datapoints, values, items}; with confirm: true it drops them and adds {deleted, failed}.
+  datapoints, values, items}; with confirm: true it drops them and adds {deleted, failed}. values is null (and
+  statisticsError is set) if the database failed while counting; the cleanup works anyway.
 - resetConflictingPoints {}: empties the list of getConflictingPoints: {reset: true, conflictingPoints}.
 - destroy {noRestart?}: drops the whole database (bucket), then restarts the instance (noRestart: true creates it
   empty again instead): {error: null} or {error}. Every stored value is lost.
