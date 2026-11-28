@@ -1,5 +1,5 @@
 const assert = require('node:assert');
-const { formatError, isConnectionError, UnstorableValueError } = require('../build/lib/errors');
+const { formatError, isConnectionError, isTemporaryServerError, UnstorableValueError } = require('../build/lib/errors');
 
 describe('Test formatError', function () {
     it('unwraps an AggregateError', function () {
@@ -113,5 +113,57 @@ describe('Test isConnectionError', function () {
         assert.ok(!isConnectionError(null));
         assert.ok(!isConnectionError(undefined));
         assert.ok(!isConnectionError(new UnstorableValueError('null', 'Skipping null value for x')));
+    });
+});
+
+describe('Test isTemporaryServerError (#574)', function () {
+    it('detects a write timeout of InfluxDB 2.x', function () {
+        assert.ok(
+            isTemporaryServerError(
+                Object.assign(new Error('unexpected error writing points to database: timeout'), {
+                    name: 'HttpError',
+                    statusCode: 500,
+                }),
+            ),
+        );
+    });
+
+    it('detects a write timeout of InfluxDB 1.x', function () {
+        // the RequestError of the influx package: the answer of the server is in the message
+        assert.ok(
+            isTemporaryServerError(
+                Object.assign(new Error('A 500 Internal Server Error error occurred: {"error":"timeout"}'), {
+                    res: { statusCode: 500 },
+                }),
+            ),
+        );
+    });
+
+    it('detects a full cache and "too many requests"', function () {
+        assert.ok(
+            isTemporaryServerError(
+                Object.assign(new Error('internal error'), {
+                    statusCode: 500,
+                    body: '{"code":"internal error","message":"engine: cache-max-memory-size exceeded: (1073741824/1073741824)"}',
+                }),
+            ),
+        );
+        assert.ok(isTemporaryServerError(Object.assign(new Error('too many requests'), { statusCode: 429 })));
+    });
+
+    it('does not mistake a bad point or a lost connection for it', function () {
+        // a bad point must keep the escalation down to the single point
+        assert.ok(
+            !isTemporaryServerError(
+                Object.assign(new Error('partial write: field type conflict'), { statusCode: 422 }),
+            ),
+        );
+        assert.ok(!isTemporaryServerError(Object.assign(new Error('timeout'), { statusCode: 400 })));
+        assert.ok(!isTemporaryServerError(Object.assign(new Error('panic: runtime error'), { statusCode: 500 })));
+        // no answer of the server at all: that is a connection error
+        assert.ok(!isTemporaryServerError(Object.assign(new Error('connect ETIMEDOUT'), { code: 'ETIMEDOUT' })));
+        assert.ok(!isTemporaryServerError(new Error('Request timed out')));
+        assert.ok(!isTemporaryServerError(null));
+        assert.ok(!isTemporaryServerError('timeout'));
     });
 });

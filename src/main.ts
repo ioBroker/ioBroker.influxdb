@@ -14,7 +14,13 @@ import {
     type Database,
     type ValuesForInflux,
 } from './lib/Database';
-import { formatError, HostUnavailableError, isConnectionError, UnstorableValueError } from './lib/errors';
+import {
+    formatError,
+    HostUnavailableError,
+    isConnectionError,
+    isTemporaryServerError,
+    UnstorableValueError,
+} from './lib/errors';
 import { normalizeCustomTags } from './lib/customTags';
 import { normalizeSeriesBuffer } from './lib/bufferFile';
 import { deleteRangeProblem, parseDeleteRequests, toTimestamp, type DeleteRange } from './lib/deleteRequests';
@@ -55,6 +61,12 @@ const MAX_RAW_ENTRIES = 5000;
 
 // While the database stays unreachable, remind about it at most once an hour instead of on every retry
 const REPEATED_ERROR_INTERVAL = 3_600_000;
+
+/**
+ * How long values are only buffered after InfluxDB could not store points in time (see isTemporaryServerError).
+ * Every write meanwhile would fail the same way and keep the server busy; afterwards the buffer is written once.
+ */
+const TEMPORARY_SERVER_ERROR_BACKOFF = 30_000;
 
 /** How long `aggregate` and `lastChange` wait for the answer of the own `getHistory` */
 const STANDARD_TIMEOUT = 120_000;
@@ -286,6 +298,10 @@ export class InfluxDBAdapter extends Adapter {
     private _seriesBufferFlushPlanned = false;
     /** The write of a flush of the whole buffer, while it runs */
     private _flushInFlight: Promise<void> | null = null;
+    /** Until when values are only buffered, because InfluxDB could not store points in time */
+    private _writeBackoffUntil = 0;
+    /** Writes the buffer once the backoff after a temporary server error is over */
+    private _writeBackoffTimer: NodeJS.Timeout | null = null;
     private _seriesBuffer: { [id: string]: ValuesForInflux[] } = {};
     private _conflictingPoints: { [id: string]: number } = {};
     private readonly _errorPoints: { [id: string]: number } = {};
@@ -455,8 +471,9 @@ export class InfluxDBAdapter extends Adapter {
      *
      * @param error error to report
      * @param prefix optional text in front of the error message
+     * @param level log level of the first occurrence and of the hourly reminder
      */
-    logConnectionError(error: unknown, prefix?: string): void {
+    logConnectionError(error: unknown, prefix?: string, level: 'error' | 'warn' = 'error'): void {
         const text = `${prefix ? `${prefix}: ` : ''}${formatError(error)}`;
         const now = Date.now();
         const known = this._connectionErrors.get(text);
@@ -466,7 +483,7 @@ export class InfluxDBAdapter extends Adapter {
             known.lastSeen = now;
             if (now - known.lastLogged >= REPEATED_ERROR_INTERVAL) {
                 known.lastLogged = now;
-                this.log.error(`${text} (still failing, ${known.count} attempts)`);
+                this.log[level](`${text} (still failing, ${known.count} attempts)`);
             } else {
                 this.log.debug(`${text} (attempt ${known.count})`);
             }
@@ -480,7 +497,52 @@ export class InfluxDBAdapter extends Adapter {
             }
         }
         this._connectionErrors.set(text, { lastLogged: now, lastSeen: now, count: 1 });
-        this.log.error(text);
+        this.log[level](text);
+    }
+
+    /**
+     * Handle that InfluxDB could not store points in time (see isTemporaryServerError): log it without flooding
+     * the log - while the storage of the server is slow every write fails the same way - and only buffer for a
+     * while, then write the buffer once.
+     *
+     * @param error the caught error
+     */
+    handleTemporaryServerError(error: unknown): void {
+        this.logConnectionError(error, 'InfluxDB could not store the values in time, they stay in the buffer', 'warn');
+        this._writeBackoffUntil = Date.now() + TEMPORARY_SERVER_ERROR_BACKOFF;
+        if (!this._writeBackoffTimer && !this._finished) {
+            this._writeBackoffTimer = setTimeout(() => {
+                this._writeBackoffTimer = null;
+                void this.storeBufferedSeries().catch(e => this.logBufferError(e));
+            }, TEMPORARY_SERVER_ERROR_BACKOFF);
+        }
+    }
+
+    /** While InfluxDB could not store points in time a moment ago, values are only buffered */
+    isWriteBackoff(): boolean {
+        return Date.now() < this._writeBackoffUntil;
+    }
+
+    /**
+     * Put points back into the buffer after a failed write, to be written again with the next flush.
+     *
+     * Deliberately not addPointToSeriesBuffer(): with "seriesBufferMax" = 0 that writes the point directly
+     * again, so a failed point was retried immediately, recursively, until it was discarded after 10
+     * attempts within a few milliseconds (#574). And a flush that is triggered from within the write path
+     * of a flush only hits the same problem again.
+     *
+     * @param id the datapoint the points belong to
+     * @param points the points to write later
+     */
+    requeuePoints(id: string, points: ValuesForInflux[]): void {
+        if (!points.length) {
+            return;
+        }
+        this._seriesBuffer[id] ||= [];
+        for (const point of points) {
+            this._seriesBuffer[id].push(point);
+        }
+        this._seriesBufferCounter += points.length;
     }
 
     /**
@@ -2023,7 +2085,8 @@ datasources:
         if (
             (this._conflictingPoints[id] || this.config.seriesBufferMax === 0 || directWrite) &&
             this._connected &&
-            this._client.getHostsAvailable() > 0
+            this._client.getHostsAvailable() > 0 &&
+            !this.isWriteBackoff()
         ) {
             if (this.config.seriesBufferMax !== 0) {
                 this.log.debug(
@@ -2040,7 +2103,8 @@ datasources:
         if (
             (this._conflictingPoints[id] || this.config.seriesBufferMax === 0) &&
             this._connected &&
-            this._client?.getHostsAvailable()
+            this._client?.getHostsAvailable() &&
+            !this.isWriteBackoff()
         ) {
             if (this.config.seriesBufferMax !== 0) {
                 this.log.debug(`Direct writePoint("${id} - ${stateObj.value} / ${stateObj.time.toLocaleString()}")`);
@@ -2059,7 +2123,8 @@ datasources:
             this._seriesBufferCounter > (this.config.seriesBufferMax as number) &&
             this._connected &&
             this._client?.getHostsAvailable() &&
-            !this._seriesBufferFlushPlanned
+            !this._seriesBufferFlushPlanned &&
+            !this.isWriteBackoff()
         ) {
             // flush out
             this._seriesBufferFlushPlanned = true;
@@ -2169,6 +2234,10 @@ datasources:
                     }
                 });
                 this.reconnect();
+            } else if (isTemporaryServerError(error)) {
+                // the server is reachable, but too slow right now: the batch is fine, write it again later
+                this.handleTemporaryServerError(error);
+                Object.keys(series).forEach(id => this.requeuePoints(id, series[id]));
             } else {
                 const errorText = formatError(error);
                 this.log.warn(`Error on writeSeries: ${errorText}`);
@@ -2232,6 +2301,13 @@ datasources:
                     this.reconnect();
                     return;
                 }
+                if (isTemporaryServerError(error)) {
+                    // splitting the batch would only send more requests to a server that is already too slow
+                    this.handleTemporaryServerError(error);
+                    this.requeuePoints(seriesId, pointsToSend);
+                    this.requeuePoints(seriesId, points.splice(0));
+                    return;
+                }
                 this.log.warn(`Error on writePoints for ${seriesId}: ${formatError(error)}`);
                 this.log.warn(`Try to write ${pointsToSend.length} Points separate to find the conflicting one`);
                 // we found the conflicting id
@@ -2272,7 +2348,11 @@ datasources:
             if (!this._client?.getHostsAvailable() || isConnectionError(error)) {
                 this.logConnectionError(error, `Error on writePoint for ${pointId}`);
                 this.reconnect();
-                await this.addPointToSeriesBuffer(pointId, point);
+                this.requeuePoints(pointId, [point]);
+            } else if (isTemporaryServerError(error)) {
+                // not the fault of this point: it does not count towards the 10 attempts after which a point is discarded
+                this.handleTemporaryServerError(error);
+                this.requeuePoints(pointId, [point]);
             } else if (errorText.includes('field type conflict')) {
                 this.log.warn(`Error on writePoint("${JSON.stringify(point)}): ${errorText}"`);
                 // retry write after type correction for some easy cases
@@ -2368,7 +2448,7 @@ datasources:
                     this.log.info(
                         `Add point that had error for ${pointId} to buffer again, error-count=${this._errorPoints[pointId]}`,
                     );
-                    await this.addPointToSeriesBuffer(pointId, point);
+                    this.requeuePoints(pointId, [point]);
                 } else {
                     this.log.info(
                         `Discard point that had error for ${pointId}, error-count=${this._errorPoints[pointId]}`,
@@ -3003,6 +3083,10 @@ datasources:
         if (this._seriesBufferChecker) {
             clearInterval(this._seriesBufferChecker);
             this._seriesBufferChecker = null;
+        }
+        if (this._writeBackoffTimer) {
+            clearTimeout(this._writeBackoffTimer);
+            this._writeBackoffTimer = null;
         }
         for (const id in this._influxDPs) {
             if (!Object.prototype.hasOwnProperty.call(this._influxDPs, id)) {

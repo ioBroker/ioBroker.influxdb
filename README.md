@@ -739,6 +739,7 @@ sendTo('influxdb.0', 'cleanupOrphaned', {
 ### **WORK IN PROGRESS**
 * (GermanBluefox) Fixed: `getHistory` for a datapoint that is not enabled in this instance no longer enables writing of this datapoint until restart (#603)
 * (GermanBluefox) Fixed: InfluxDB 2.x: with more than 20 buckets in the organization the configured bucket was not found, and the adapter tried to create it again every 10 seconds (#605)
+* (GermanBluefox) Fixed: Values got lost when InfluxDB could not store them in time (HTTP 500 "timeout"): without buffer every failed value was written again 10 times at once and then discarded. Such values now stay in the buffer and are written again 30 seconds later, a buffered batch is no longer split into single points for it (#574)
 
 ### 5.5.1 (2026-11-23)
 * (GermanBluefox) Fixed connection to InfluxDB 1.x when the password contains "%" (#601)
